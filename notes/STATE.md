@@ -19,7 +19,9 @@ push, then STOP at the approval gate.
 | 1B–1G | NOT STARTED | 1B begins next session per NEXT ACTION |
 
 ## IN-FLIGHT
-(none — session ends clean)
+Milestone 1B / step 0 — F6 pre-scan (read-only grep over the seven canon
+Milestone .txt files) in progress; then the 1B §8 loop (read 1B in full →
+extract → F6 → wire → gates + 1A regression → report).
 
 ## APPROVAL LEDGER (settled — never re-ask)
 | Date | Decision |
@@ -40,6 +42,7 @@ push, then STOP at the approval gate.
 | 1 | 2026-10-14 | §9 opening report → scaffold + Milestone 1A | Opening report approved; branch m1-assembly created; game/ scaffolded per §3; extract.mjs written (6/6 blocks 1A); 1A wired, typecheck+build clean, gate PASSED 5/5; report delivered in chat — ended before writing the STATE.md/report files (protocol did not exist yet) | none written — reconciled post-hoc |
 | 2 | 2026-10-14 | Protocol install + reconcile | AGENT_BRIEF.md written verbatim (389-line paste + 47-line §10 append); session-1 work preserved as WIP d849d6b; notes/ tree created; CHANGES.md relocated to root; STATE.md written from evidence; M1A report persisted to notes/reports/M1A.md | Session parked at the 1A approval gate — resumed by session 3 |
 | 3 | 2026-10-14 | 1A approval + protocol install | approved + installed + pushed | Run the F6 pre-scan over all seven Milestone .txt files (report per file whether the acceptance-line `$` is present), then begin Milestone 1B: read Milestone/Milestone 1B.txt in full, run `node tools/extract.mjs 1B` (expect 5 blocks; the parenthetical overlay on src/core/simulation/SimulationCore.ts explicitly reported — it must be the ONLY parenthetical match), F6 check/repair on the 1B harness, register ?page=m1b, typecheck+build, run the 1B gate PLUS the 1A page as regression, write notes/reports/M1B.md with verbatim gate output and the pre-scan table, commit per the amended cadence, push, then STOP at the approval gate. |
+| 4 | 2026-10-14 | M1B execution | (continuation — session resumed after wind-down in the same live session) | in progress — parked only at the 1B approval gate |
 
 ## ANCHOR
 df1e04f — "M1A: extracted, gates green" (branch m1-assembly; chain: ea112ec
