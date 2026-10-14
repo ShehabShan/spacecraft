@@ -1,27 +1,35 @@
 # SOLARIS — ASSEMBLY STATE (see AGENT_BRIEF.md §10)
 
 ## NEXT ACTION
-Run the F6 pre-scan over all seven Milestone .txt files (report per file
-whether the acceptance-line `$` is present), then begin Milestone 1B: read
-Milestone/Milestone 1B.txt in full, run `node tools/extract.mjs 1B` (expect
-5 blocks; the parenthetical overlay on src/core/simulation/SimulationCore.ts
-explicitly reported — it must be the ONLY parenthetical match), F6
-check/repair on the 1B harness, register ?page=m1b, typecheck+build, run the
-1B gate PLUS the 1A page as regression, write notes/reports/M1B.md with
-verbatim gate output and the pre-scan table, commit per the amended cadence,
-push, then STOP at the approval gate.
+BLOCKED awaiting Lead decision (F7 proposal in notes/reports/M1B.md §3):
+two canon syntax defects in the 1B harness prevent typecheck/build —
+(A) badge-detail nested template missing `$` (extracted L466 = canon 1734),
+(B) HUD fmtSimTime ternary missing `$` AND else-branch (extracted L998 =
+canon 2266). Both are F6-forbidden string classes; exact sources pasted.
+On authorization: apply the minimal repairs to the extracted file, log in
+CHANGES.md, typecheck+build, run the 1B gate (budget 20 s) PLUS the 1A page
+as regression, complete notes/reports/M1B.md, commit per cadence, push,
+STOP at the approval gate. (Separately pending for 1C: verdict-line decision,
+see M1B.md §Step 0.)
 
 ## MILESTONE LEDGER
 | MS | Status | Evidence |
 |----|--------|----------|
 | scaffold | DONE | game/ tree committed (WIP d849d6b); deps pinned per §3.3 (react 18.2.0, three 0.165.0, R3F 8.18.0, zustand ^4.4, TS ~5.4, vite 5.4.21, playwright 1.64.0); `npm run typecheck` + `npm run build` clean |
-| 1A | APPROVED | Commit df1e04f "M1A: extracted, gates green"; gate GREEN 5/5 PASS, 9 rebases matching canon's predicted trace, zero canon edits; report: notes/reports/M1A.md (note: 1A's acceptance line shares the missing-`$` quirk — F6 pre-scan next session will table it; no repair was ordered on a green gate) |
-| 1B–1G | NOT STARTED | 1B begins next session per NEXT ACTION |
+| 1A | APPROVED | Commit df1e04f "M1A: extracted, gates green"; gate GREEN 5/5 PASS, 9 rebases matching canon's predicted trace, zero canon edits; report: notes/reports/M1A.md |
+| 1B | EXTRACTED · BLOCKED (canon defects) | Extraction 5/5 verbatim, overlay verified (commit 1d302df); F6 verdict check intact; typecheck FAILS on two canon syntax defects beyond F6 scope → F7 requested (commits fc3368c, 145bb73); report: notes/reports/M1B.md |
+| 1C–1G | NOT STARTED | 1C additionally blocked on verdict-line decision (no PASSED token in canon — M1B.md §Step 0) |
 
 ## IN-FLIGHT
-Milestone 1B / step 0 — F6 pre-scan (read-only grep over the seven canon
-Milestone .txt files) in progress; then the 1B §8 loop (read 1B in full →
-extract → F6 → wire → gates + 1A regression → report).
+Milestone 1B / step 2 — HARD STOP. Symptom: `npm run typecheck` fails on the
+verbatim-extracted 1B harness (TS1109 L470, TS1128 L661 — both cascades of
+L466; TS1005 L998). Root cause: two canon syntax defects in F6-forbidden
+string classes (badge detail nested template missing `$`; HUD fmtSimTime
+ternary missing `$` and else-branch) — NOT extraction errors (byte fidelity
+verified against canon lines 1734/2266). Tried: nothing beyond diagnosis —
+repairs require Lead authorization (F7 proposal in notes/reports/M1B.md §3).
+?page=m1b wiring + switcher registration are staged and committed (145bb73);
+build/gates deferred until authorized.
 
 ## APPROVAL LEDGER (settled — never re-ask)
 | Date | Decision |
