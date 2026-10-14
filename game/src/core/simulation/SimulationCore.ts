@@ -1,28 +1,38 @@
 /**
  * ============================================================================
  *  SIMULATION CORE — PURE TYPESCRIPT, FLOAT64, ZERO-GC FIXED TICK
- *  Milestone 1A · Spec 00.3, 01.1 (canonical tick order), 02.6 (substeps)
+ *  Milestone 1A + 1B · Spec 00.2, 01.1, 02.6
  * ============================================================================
  *  Pure core: this file must never import three / react / rapier.
  *
- *  CANONICAL TICK ORDER (Spec 01.1) — M1A-implemented subset, per Phase 2:
- *    step (a)  Integrate: P += V·dt in Float64        [01.1 step 5 stand-in]
- *    step (b)  Bubble refresh test (focus vs 1,024 m) [01.1 step 2]
- *    step (c)  Conditional rebase (exact 256 m Δ)     [01.1 step 4]
- *    step (d)  Render extract: f32 locals, all entities [01.1 step 8]
+ *  CANONICAL TICK ORDER (Spec 01.1), as implemented:
+ *    STEP 1  Macro Update (f64): simTime += dt·macroTimeScale;
+ *            KeplerRail.evaluate(simTime)              [M1B — NEW]
+ *    (a)     Integrate dynamic entities (f64)          [M1A — dynamics
+ *            stand-in; forces + Rapier arrive in later milestones]
+ *    (b)     Bubble refresh test (focus vs 1,024 m)    [01.1 step 2]
+ *    (c)     Conditional rebase (exact 256 m Δ)        [01.1 step 4]
+ *    (d)     Render extract: f32 locals for entities AND celestials
+ *            (celestial locals extracted HERE — after any rebase — never
+ *            during the macro step)                    [01.1 step 8]
  *
- *  DORMANT BY DESIGN — no stubs written (Spec 05 pacing):
- *    [01.1 step 1] Macro Kepler rails ........ M1B
- *    [01.1 step 3] Parented state compose .... M1E
- *    [01.1 step 6] Rapier physics step ....... M1D+
- *    [01.1 step 7] f32 -> f64 write-back ..... M1D+
+ *  TWO-TIER TIME (Spec 00.2 / 02.6):
+ *    - simTime (MACRO): advances dt·macroTimeScale per tick. Drives the
+ *      closed-form Kepler rails ONLY. Default scale 30 (catalog timeScale).
+ *      PAUSE (scale 0) freezes orbits but never the micro clock.
+ *    - stats.simTime (MICRO, M1A contract unchanged): advances dt at exactly
+ *      1× — the 60 Hz physics clock. Never scaled, never diluted.
+ *    Both clocks have a single writer (this tick) — desynchronization is
+ *    impossible by construction.
  *
- *  ZERO-GC AUDIT of tick(): field writes on owned objects, writes into
- *  boot-allocated scratch vectors, one pre-allocated (reused) RebaseEvent,
- *  stores into boot-allocated Float32Array buffers, indexed for-loops over
- *  dense arrays (no iterators, no closures, no spreads). Allocation count
- *  per tick: 0. The only allocations this class ever performs happen inside
- *  registerEntity / onRebase (setup paths).
+ *  M1A NO-REGRESSION GUARANTEE: every M1A member (entity registry, focus,
+ *  256 m lattice rebasing, rebase events, substep governor, stats) is
+ *  retained verbatim; the 1B suite re-executes the full M1A acceptance
+ *    against this updated core as proof.
+ *
+ *  ZERO-GC AUDIT of tick(): identical to M1A (field writes, boot-allocated
+ *  scratch, one reused RebaseEvent, indexed for-loops) plus the macro step,
+ *  which is itself allocation-free (see KeplerRail). Allocation per tick: 0.
  */
 
 
@@ -35,6 +45,9 @@ import type {
   Vec3f64,
 } from '../types';
 import { calculateOrigin, copy, shouldRebase, sub } from '../math/precisionMath';
+import type { CelestialState } from '../orbit/types';
+import { KeplerRail } from '../orbit/KeplerRail';
+import { CELESTIAL_CONFIGS } from '../orbit/celestialData';
 
 
 /** Fixed logic timestep (Spec 02.6): 1 tick = 1/60 game-seconds. */
@@ -43,51 +56,29 @@ export const FIXED_DT = 1 / 60;
 export const MAX_SUBSTEPS = 5;
 /** Wall-clock clamp per advance() call — tab-switch / stall guard. */
 export const MAX_ADVANCE_DT = 0.25;
+/** Seconds per sim-day (time jumps are expressed in days). */
+export const SECONDS_PER_DAY = 86400;
 
 
 export interface RegisterEntityOptions {
-  /** Absolute spawn position, Sun frame, metres. Cloned into core storage. */
   absPos: Vec3f64;
-  /** Initial absolute velocity, m/s. Defaults to (0,0,0). */
   velocity?: Vec3f64;
-  /** Dynamic entities integrate; static entities only refresh locals. Default true. */
   dynamic?: boolean;
 }
 
 
 export class SimulationCore {
-  /* -------------------------------------------------------------------------
-   * Entity storage — dense array + index map. Grown only by registerEntity
-   * (setup path). The tick iterates by index: Map iteration allocates an
-   * iterator object per call and is therefore banned in the hot loop.
-   * ---------------------------------------------------------------------- */
+  /* ------------------------------ M1A: entities ------------------------- */
   private _entities: EntityState[] = [];
   private _entityIndex = new Map<EntityId, number>();
-
-
-  /**
-   * The entity whose local coordinates drive the rebase trigger (Spec 01.1
-   * step 2: "the PLAYER has crossed a 256 m lattice boundary"). Static
-   * world entities may legitimately carry locals far beyond 1,024 m — only
-   * the focus entity's bound is guaranteed.
-   */
   private _focusId: EntityId | null = null;
-
-
-  /** Current floating origin, Sun frame, Float64. Exact multiple of 256 m. */
   private _origin: Vec3f64 = { x: 0, y: 0, z: 0 };
 
 
-  /* -------------------------------------------------------------------------
-   * Pre-allocated scratch — created once at construction, reused every tick.
-   * ---------------------------------------------------------------------- */
-  /** focus.absPos − origin, recomputed each tick (Float64 only). */
   private _focusLocal: Vec3f64 = { x: 0, y: 0, z: 0 };
-  /** Candidate origin during step (c). */
   private _candidateOrigin: Vec3f64 = { x: 0, y: 0, z: 0 };
 
 
-  /** THE single reused event (Zero-GC). See types.ts contract. */
   private readonly _rebaseEvent: RebaseEvent = {
     oldOrigin: { x: 0, y: 0, z: 0 },
     newOrigin: { x: 0, y: 0, z: 0 },
@@ -96,27 +87,145 @@ export class SimulationCore {
   };
 
 
-  /** Listener registry. Mutated only via onRebase (setup/teardown path). */
   private _listeners: RebaseListener[] = [];
-
-
-  /** Fixed-step governor accumulator (wall-clock seconds). */
   private _accumulator = 0;
 
 
-  /** Live telemetry. Mutated in place; treat as read-only. */
   public readonly stats: SimulationStats = {
     tickCount: 0,
     rebaseCount: 0,
-    simTime: 0,
+    simTime: 0, // MICRO clock (M1A semantics — 1× real time)
     focusMaxLocalPostTick: 0,
     shedSeconds: 0,
   };
 
 
-  /* -------------------------------------------------------------------------
-   * Entity registry — registering / updating / removing (setup paths)
-   * ---------------------------------------------------------------------- */
+  /* ------------------------------ M1B: macro ---------------------------- */
+  /** MACRO clock, Float64 seconds. Drives the Kepler rails at 30× default.
+   *  Negative values are a valid closed-form domain (reverse jumps past 0). */
+  private _simTime = 0;
+  /** Macro time scale (Spec 02.6). 0 = orbits paused; micro never pauses. */
+  private _macroTimeScale = 30;
+  /** Closed-form celestial rails (topologically ordered). */
+  private readonly _rail: KeplerRail;
+  /** id -> celestial state (render-extract lookup for the adapter). */
+  private readonly _celestialIndex = new Map<string, CelestialState>();
+
+
+  constructor(rail?: KeplerRail) {
+    this._rail = rail ?? new KeplerRail(CELESTIAL_CONFIGS);
+    const states = this._rail.states;
+    for (let i = 0; i < states.length; i++) {
+      this._celestialIndex.set(states[i].config.id, states[i]);
+    }
+    // Seed valid positions/locals before the first tick (mirrors the M1A
+    // registerEntity seeding contract).
+    this._rail.evaluate(0);
+    this._extractCelestialLocals();
+  }
+
+
+  /* =======================================================================
+   * M1B — TWO-TIER TIME CONTROL
+   * ===================================================================== */
+
+
+  /** MACRO sim time (seconds). Read-only for consumers. */
+  get simTime(): number {
+    return this._simTime;
+  }
+
+
+  get macroTimeScale(): number {
+    return this._macroTimeScale;
+  }
+
+
+  /** The celestial rail (read-only access for telemetry / tests). */
+  get rail(): KeplerRail {
+    return this._rail;
+  }
+
+
+  /**
+   * Set the macro time scale (0 = paused). Throws on negative/non-finite.
+   * The micro 60 Hz clock is NEVER affected (Spec 02.6: never dilate).
+   */
+  setTimeScale(scale: number): void {
+    if (!Number.isFinite(scale) || scale < 0) {
+      throw new Error(`[SimulationCore] invalid macro time scale: ${scale}`);
+    }
+    this._macroTimeScale = scale;
+  }
+
+
+  /**
+   * Set MACRO sim time to an exact double and evaluate the rails
+   * synchronously (plus the f32 celestial extract).
+   *
+   * EXACT-RESTORE CONTRACT: because rail evaluation is a pure deterministic
+   * function of simTime, restoring a previously saved double reproduces
+   * every celestial position BIT-IDENTICALLY. This is the hook the M1G
+   * save/load pipeline will rely on.
+   */
+  setSimTime(t: number): void {
+    if (!Number.isFinite(t)) {
+      throw new Error(`[SimulationCore] invalid simTime: ${t}`);
+    }
+    this._simTime = t;
+    this._rail.evaluate(t);
+    this._extractCelestialLocals();
+  }
+
+
+  /**
+   * Jump forward by whole sim-days. From anchor 0 this is exactly
+   * bit-reversible by reverse(days) (0 + D = D and D − D = 0 are exact in
+   * IEEE-754). From arbitrary anchors the ±D round trip is bounded by
+   * 1 ulp of simTime (~2e-7 m of position); exact restoration from any
+   * anchor is via setSimTime with a saved double. See the 1B suite.
+   */
+  fastForward(simDays: number): void {
+    this.setSimTime(this._simTime + simDays * SECONDS_PER_DAY);
+  }
+
+
+  /** Jump backward by whole sim-days. May legitimately go below 0. */
+  reverse(simDays: number): void {
+    this.setSimTime(this._simTime - simDays * SECONDS_PER_DAY);
+  }
+
+
+  /* ----------------------- celestial accessors -------------------------- */
+
+
+  getCelestialStates(): readonly CelestialState[] {
+    return this._rail.states;
+  }
+
+
+  getCelestialState(id: string): CelestialState | null {
+    return this._rail.getState(id);
+  }
+
+
+  /** Render-extract for celestials: f64 subtract, then single f32 narrowing.
+   *  Zero allocation. Called from tick step (d) — always AFTER any rebase. */
+  private _extractCelestialLocals(): void {
+    const states = this._rail.states;
+    const o = this._origin;
+    for (let i = 0; i < states.length; i++) {
+      const s = states[i];
+      s.localPosF32[0] = s.absPos.x - o.x;
+      s.localPosF32[1] = s.absPos.y - o.y;
+      s.localPosF32[2] = s.absPos.z - o.z;
+    }
+  }
+
+
+  /* =======================================================================
+   * M1A — ENTITY REGISTRY (verbatim, no regression)
+   * ===================================================================== */
 
 
   registerEntity(id: EntityId, options: RegisterEntityOptions): EntityState {
@@ -138,12 +247,9 @@ export class SimulationCore {
       id,
       absPos,
       velocity,
-      // The ONE per-entity allocation of the entire session (Zero-GC mandate).
       localPosF32: new Float32Array(3),
       dynamic: options.dynamic !== false,
     };
-    // Seed locals immediately so the render side has valid data before the
-    // first tick (f64 subtraction, then the store narrows to f32).
     state.localPosF32[0] = absPos.x - this._origin.x;
     state.localPosF32[1] = absPos.y - this._origin.y;
     state.localPosF32[2] = absPos.z - this._origin.z;
@@ -158,7 +264,6 @@ export class SimulationCore {
   }
 
 
-  /** Swap-remove keeps the dense array compact with no per-tick cost. */
   unregisterEntity(id: EntityId): boolean {
     const idx = this._entityIndex.get(id);
     if (idx === undefined) {
@@ -179,7 +284,6 @@ export class SimulationCore {
   }
 
 
-  /** Update an entity's velocity in place (writes into owned storage). */
   setVelocity(id: EntityId, vx: number, vy: number, vz: number): boolean {
     const state = this.getEntityState(id);
     if (state === null) {
@@ -205,14 +309,6 @@ export class SimulationCore {
   }
 
 
-  /* -------------------------------------------------------------------------
-   * Zero-allocation getters.
-   * READ-ONLY CONTRACT: these return internal live references so that hot
-   * consumers never allocate. Callers must treat the returned objects and
-   * typed arrays as frozen; the core is the sole writer.
-   * ---------------------------------------------------------------------- */
-
-
   getEntityState(id: EntityId): EntityState | null {
     const i = this._entityIndex.get(id);
     return i === undefined ? null : this._entities[i];
@@ -230,9 +326,19 @@ export class SimulationCore {
   }
 
 
+  /**
+   * Unified render-extract lookup: M1A entities FIRST, then celestials.
+   * (Entity precedence documented; ids are namespaced in practice.)
+   * This is what lets the M1A FloatingOriginAdapter bind planets and moons
+   * with ZERO changes.
+   */
   getLocalPositionF32(id: EntityId): Float32Array | null {
-    const e = this.getEntityState(id);
-    return e === null ? null : e.localPosF32;
+    const i = this._entityIndex.get(id);
+    if (i !== undefined) {
+      return this._entities[i].localPosF32;
+    }
+    const c = this._celestialIndex.get(id);
+    return c !== undefined ? c.localPosF32 : null;
   }
 
 
@@ -241,12 +347,6 @@ export class SimulationCore {
   }
 
 
-  /* -------------------------------------------------------------------------
-   * Rebase event system
-   * ---------------------------------------------------------------------- */
-
-
-  /** Subscribe; returns an unsubscribe function. Setup/teardown path only. */
   onRebase(listener: RebaseListener): () => void {
     this._listeners.push(listener);
     return () => {
@@ -261,8 +361,6 @@ export class SimulationCore {
   private _emitRebase(): void {
     const listeners = this._listeners;
     for (let i = 0; i < listeners.length; i++) {
-      // try/catch is free in V8 when nothing throws; it protects later
-      // listeners from a broken one.
       try {
         listeners[i](this._rebaseEvent);
       } catch (err) {
@@ -272,13 +370,7 @@ export class SimulationCore {
   }
 
 
-  /* -------------------------------------------------------------------------
-   * FIXED-STEP GOVERNOR (Spec 02.6)
-   * Accumulates wall-clock time, runs whole 1/60 s ticks, hard-caps at 5
-   * substeps per frame. If still behind after the budget, the backlog is
-   * SHED (counted in stats.shedSeconds) — the timestep is never dilated and
-   * the loop can never death-spiral.
-   * ---------------------------------------------------------------------- */
+  /* ----------------------- fixed-step governor -------------------------- */
 
 
   advance(dtRealSeconds: number): void {
@@ -294,16 +386,15 @@ export class SimulationCore {
       steps++;
     }
     if (this._accumulator >= FIXED_DT) {
-      // Over budget: discard the pending backlog rather than dilating time.
       this.stats.shedSeconds += this._accumulator;
       this._accumulator = 0;
     }
   }
 
 
-  /* -------------------------------------------------------------------------
+  /* =======================================================================
    * THE CANONICAL FIXED TICK — dt = 1/60 s, allocation-free.
-   * ---------------------------------------------------------------------- */
+   * ===================================================================== */
 
 
   tick(): void {
@@ -312,9 +403,15 @@ export class SimulationCore {
     const origin = this._origin;
 
 
+    // -- STEP 1: MACRO UPDATE (Float64, closed-form Kepler rails) ----------
+    // One evaluation per tick regardless of time scale (Spec 00.2): the
+    // 30x (or 1000x) macro clock cannot melt the CPU because the rails are
+    // analytic functions of simTime, never integrated.
+    this._simTime += FIXED_DT * this._macroTimeScale;
+    this._rail.evaluate(this._simTime);
+
+
     // -- (a) INTEGRATE — Float64: P <- P + V·dt ----------------------------
-    // M1A stand-in for the dynamics stages; forces & the Rapier step arrive
-    // in later milestones and are intentionally absent here.
     for (let i = 0; i < count; i++) {
       const e = entities[i];
       if (e.dynamic) {
@@ -326,22 +423,14 @@ export class SimulationCore {
 
 
     // -- (b) BUBBLE REFRESH TEST — focus entity vs the 1,024 m trigger ----
-    // Local coordinates are computed AND tested in Float64. Never narrow
-    // before the subtraction — that is where precision dies (see the proof
-    // in precisionMath.ts).
     const focus = this._focus();
     if (focus !== null) {
       sub(focus.absPos, origin, this._focusLocal);
       if (shouldRebase(this._focusLocal)) {
         // -- (c) CONDITIONAL REBASE — exact 256 m lattice Δ ---------------
-        // Degenerate rebases are impossible: |P − O| > 1024 implies the
-        // nearest lattice point to P is NOT O, so Δ ≠ 0 always.
         calculateOrigin(focus.absPos, this._candidateOrigin);
         const ev = this._rebaseEvent;
         copy(ev.oldOrigin, origin);
-        // Δ = O_new − O_old: exact in f64 AND bit-exact after fround (proof
-        // in precisionMath.ts). This is the value future milestones will use
-        // to translate Rapier bodies and chunk origins.
         ev.delta.x = this._candidateOrigin.x - origin.x;
         ev.delta.y = this._candidateOrigin.y - origin.y;
         ev.delta.z = this._candidateOrigin.z - origin.z;
@@ -355,21 +444,24 @@ export class SimulationCore {
 
 
     // -- (d) RENDER EXTRACT — p_local_f32 = Float32(P_abs − O) ------------
-    // Recomputed for EVERY entity (statics included) on EVERY tick, so the
-    // render side never has to apply per-object delta translation after a
-    // rebase — it just reads fresh, already-correct locals.
+    // Entities first (M1A), then celestials. Celestial locals are extracted
+    // HERE — after any rebase above — never during the macro step, so no
+    // interleave can publish stale locals.
     for (let i = 0; i < count; i++) {
       const e = entities[i];
-      // Float64 subtraction first; the typed-array store performs the single
-      // correctly-rounded narrowing to Float32.
       e.localPosF32[0] = e.absPos.x - origin.x;
       e.localPosF32[1] = e.absPos.y - origin.y;
       e.localPosF32[2] = e.absPos.z - origin.z;
     }
+    const celestials = this._rail.states;
+    for (let i = 0; i < celestials.length; i++) {
+      const c = celestials[i];
+      c.localPosF32[0] = c.absPos.x - origin.x;
+      c.localPosF32[1] = c.absPos.y - origin.y;
+      c.localPosF32[2] = c.absPos.z - origin.z;
+    }
 
 
-    // Track the focus bound from the f32 buffer (post-tick sample — the
-    // value the acceptance invariant governs).
     if (focus !== null) {
       const lp = focus.localPosF32;
       const m = Math.max(Math.abs(lp[0]), Math.abs(lp[1]), Math.abs(lp[2]));
@@ -380,11 +472,10 @@ export class SimulationCore {
 
 
     this.stats.tickCount++;
-    this.stats.simTime += FIXED_DT;
+    this.stats.simTime += FIXED_DT; // MICRO clock — always 1× (M1A contract)
   }
 
 
-  /** Resolve the focus entity (null when the registry is empty). */
   private _focus(): EntityState | null {
     if (this._focusId === null) {
       return null;
