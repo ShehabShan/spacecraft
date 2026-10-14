@@ -155,3 +155,24 @@ Observations (NO change made — recorded for the Lead):
    Change policy §6 + F6 ratification stop clause. · Evidence: tsc output
    (TS1109/TS1128/TS1005) pasted in report. · Source: AGENT_BRIEF.md §10.4
    F6; §6.
+
+## 2026-10-14 — Milestone 1B continued (F7 applied per Lead ruling)
+
+15. 2026-10-14 · 1B/step3 · game/src/test/Milestone1B_TestHarness.tsx ·
+   F7a APPROVED: L466 badge detail — inserted `$` before `{maxPosErr`
+   (one character; nested backtick legal inside the outer `${…}`).
+   F7b APPROVED: L998 fmtSimTime — `p2` completed with else branch
+   (`` (v < 10 ? `0${v}` : `${v}`) ``) and `$` restored on `{d}`/`{p2(m)}`
+   at L999 per the mandatory rule. No other byte changed. · Canon defects
+   ruled authorship errors; both lines were F6-forbidden classes → repaired
+   only under F7 authorization. · Evidence: typecheck went from 3 errors
+   (TS1109/TS1128/TS1005) to clean; cascades L470/L661 cleared. · Source:
+   Lead ruling 2026-10-14 (F7a/F7b/F7c); AGENT_BRIEF.md §10.4.
+
+16. 2026-10-14 · protocol · AGENT_BRIEF.md §10.4 · Logged the systemic
+   pre-scan rule (backtick+`{` fingerprint; single-armed ternary adjacent to
+   template literal → route to Lead, never F6-repair; cosmetic stat-string
+   strips restorable on encounter, logged) and F8 (1C verdict addendum to be
+   authored by the Lead; assembler supplies the verbatim 1C harness tail;
+   1C gated until then). · Lead rulings are the frozen carrier's content. ·
+   Evidence: §10.4 entries. · Source: Lead ruling 2026-10-14.

@@ -446,3 +446,22 @@ the next session's reconciliation handles it but must report the gap.
   pushing branch m1-assembly to origin is PRE-AUTHORIZED after every commit.
   NEVER push to main, never force-push, never stage Design_specs/ or
   Milestone/.
+- F7 RATIFIED (Lead ruling 2026-10-14): 1B canon syntax defects are canon
+  authorship errors ($-stripping transcription corruption), not extraction
+  failures. F7a (badge detail, extracted L466 = canon 1734) and F7b
+  (HUD fmtSimTime ternary + else, extracted L998–999 = canon 2266–2267)
+  applied to the extracted harness; the Lead applies the identical lines to
+  the canon themselves. SYSTEMIC PRE-SCAN RULE (alongside F6): classify as
+  canon defect → route to the Lead, never F6-repair: (a) any backtick
+  immediately followed by `{` inside a TS code block (in this codebase that
+  fingerprint is always a stripped `$` — verify context, then route);
+  (b) any single-armed ternary adjacent to a template literal. Known
+  cosmetic $-strips in 1A/1B stat strings: authorized to restore ON
+  ENCOUNTER, logged, verdict-neutral — do not hunt proactively.
+- F8 ISSUED (Lead ruling 2026-10-14): 1C's missing acceptance verdict is
+  canon truncation (content absent, not $-stripped). The Lead will author a
+  1C canon-patch addendum rebuilding the verdict on the five documented
+  criteria; the assembler must NOT synthesize it and must supply the
+  verbatim tail (~80 lines) of the 1C harness code block in the next report
+  so the addendum matches extracted variable names. 1C stays gated until the
+  addendum lands.

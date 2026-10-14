@@ -463,7 +463,7 @@ function runSuite(): void {
       maxSpeedErr <= TOL_SPEED,
     detail:
       `17/17 bodies match the independent closed-form reference (max err ` +
-      `{maxPosErr > 0 ? ` @ ${worstBody}` : ' — bit-exact'}); ` +
+      `${maxPosErr > 0 ? ` @ ${worstBody}` : ' — bit-exact'}); ` +
       `simTime = ${tJump} s exactly; Newton residual ≤ ${maxResidual.toExponential(1)} rad ` +
       `over ${probeE.length * probeM.length} probes (e ≤ 0.72); Kepler-3 ratio dev ≤ ` +
       `${maxRatioErr.toExponential(1)}; vis-viva speed dev ≤ ${maxSpeedErr.toExponential(1)} m/s.`,
@@ -995,8 +995,8 @@ function fmtSimTime(t: number): string {
   rem -= h * 3600;
   const m = Math.floor(rem / 60);
   const s = rem - m * 60;
-  const p2 = (v: number): string => (v < 10 ? `0{v}`);
-  return `{d}d {p2(m)}:${s.toFixed(1).padStart(4, '0')}`;
+  const p2 = (v: number): string => (v < 10 ? `0${v}` : `${v}`);
+  return `${d}d ${p2(m)}:${s.toFixed(1).padStart(4, '0')}`;
 }
 
 
