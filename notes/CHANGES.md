@@ -176,3 +176,25 @@ Observations (NO change made — recorded for the Lead):
    authored by the Lead; assembler supplies the verbatim 1C harness tail;
    1C gated until then). · Lead rulings are the frozen carrier's content. ·
    Evidence: §10.4 entries. · Source: Lead ruling 2026-10-14.
+
+17. 2026-10-14 · 1B/step4 · game/e2e/m1b.spec.ts (created), game/tools/
+   diag-m1b.mjs (created) · Wired the 1B gate (20 s budget) and ran both
+   gates. 1A regression: PASSED 5/5 on the overlaid core. 1B gate: TIMEOUT —
+   diagnosed via DOM/console/CDP probes: runSuite() self-deadlocks on the
+   canon auto-run path (pre-publish `started:true` triggers runSuite's
+   reentrancy guard; suite never executes; RE-RUN button equally dead).
+   Canon defect → routed to Lead as F9 (proposal: delete the single
+   pre-publish line, canon 2228). No engine code changed. · §6 + systemic
+   pre-scan rule. · Evidence: M1B.md §Step 4 (DOM state, RESPONSIVE main
+   thread, canon 1656/2226 quotes). · Source: Lead ruling 2026-10-14 (F7);
+   brief §6.
+
+18. 2026-10-14 · 1C (pre-scan) · notes/reports/M1C-canon-tail.txt,
+   notes/reports/M1C-canon-suite-tail.txt · Persisted the Lead-requested
+   verbatim last-80-lines (canon 2245–2324) plus a supplement (canon
+   1800–1945: suite results assembly, anomalous verdict line, store head).
+   NEW canon defect found: canon 1902 `seamless': {` — results key lost its
+   opening quote (syntax error, blocks 1C compile independently of the F8
+   verdict addendum). Routed. · F8 ruling asked for the tail; defect
+   discovered while supplying it. · Evidence: byte-verbatim extracts. ·
+   Source: Lead ruling 2026-10-14 (F8).

@@ -75,53 +75,88 @@ The verdict token carries its `$` — **NO F6 repair required or applied.**
 The trailing stats (`{errRoundTrip…}`, `{identityOk…}`, `{rebaseDelta}`) are
 stripped but out of F6 scope; the gate regex matches the prefix regardless.
 
-### Step 3 — ⛔ STOP: canon syntax defects beyond F6 scope (typecheck fails)
+### Step 3 — F7 applied (Lead ruling 2026-10-14)
 
-`npm run typecheck` on the verbatim 1B harness fails with 3 syntax errors:
+- F7a (one character): extracted L466 → `` `${maxPosErr > 0 ? ` @ ${worstBody}` : ' — bit-exact'}); ` `` — inserted `$` before `{maxPosErr`. Cascades L470/TS1109 and L661/TS1128 cleared.
+- F7b (content supplied): extracted L998 → `` const p2 = (v: number): string => (v < 10 ? `0${v}` : `${v}`); `` and L999 `$` restored on `{d}`/`{p2(m)}`. TS1005 cleared.
+- Typecheck: CLEAN. Build: CLEAN (1B harness chunk `Milestone1B_TestHarness-BnZHsr1B.js` 22.57 kB).
+- Canon-side: the Lead applies the identical lines to Milestone 1B.txt (L1734, L2266, L2267) — assembler never edits Milestone/.
+
+### Step 4 — Gates: 1A regression PASS, 1B gate deadlocked (canon bug) — F9 requested
+
+**1A regression page: PASSED** (with the overlaid 1B core):
 
 ```
-src/test/Milestone1B_TestHarness.tsx(470,3): error TS1109: Expression expected.
-src/test/Milestone1B_TestHarness.tsx(661,1): error TS1128: Declaration or statement expected.
-src/test/Milestone1B_TestHarness.tsx(998,53): error TS1005: ':' expected.
+[m1a gate] acceptance line: [Milestone1A] acceptance PASSED — P.x={ticks} rebases=9 maxLocal={f2(avg)}ms
+[m1a gate] badges: ["PASS","PASS","PASS","PASS","PASS"]
+  ✓  1 e2e/m1a.spec.ts:5:1 › M1A — Floating Origin acceptance (5.4s)
 ```
 
-Both root causes are in F6-FORBIDDEN strings (badge detail / HUD), pasted
-byte-exact from the extracted file (= canon; extraction fidelity verified):
+(Note: the first combined run reported 1A failed too — first-run contention;
+the clean re-run above is the verdict. 1A stays green on the overlaid core.)
 
-**Defect A** — extracted L466 (canon Milestone 1B.txt:1734), badge detail of
-`results['closed-form']`:
+**1B gate: TIMEOUT — no verdict line ever logged.** Symptom chain
+(diagnosed with a DOM/console probe, `game/tools/diag-m1b.mjs`):
+
+```
+[dom] { "m1bRoot": true, "canvas": true,
+        "badges": ["·····","·····","·····","·····","·····"],
+        "chips": ["30× MACRO", "RUNNING", "30×"] }
+[main thread] RESPONSIVE        (page.evaluate(1+1) returned — NOT a hang)
+```
+
+The harness mounts, frames render, the suite is marked started (chip
+RUNNING) — and `runSuite()` **returns before executing a single test**.
+
+Root cause — canon self-deadlock in Milestone 1B.txt (extraction is
+byte-verbatim; both sites verified in canon):
+
 ```typescript
-      `{maxPosErr > 0 ? ` @ ${worstBody}` : ' — bit-exact'}); ` +
+    // canon ~2226 (auto-run in useFrame):
+    if (!suiteAutoStarted && state.clock.elapsedTime > 0.75) {
+      suiteAutoStarted = true;
+      publishSuite({ started: true });   // ← sets started=true, done=false
+      runSuite();                        // ← guard below returns immediately
+    }
+
+    // canon ~1656 (runSuite head):
+    function runSuite(): void {
+      if (suiteState.started && !suiteState.done) {
+        return; // synchronous suite — no reentrancy
+      }
 ```
-Missing `$` before `{maxPosErr` — the brace parses as an object literal and
-the nested backtick derails the parse (errors at 470/661 are cascades of
-this line). Intended form: `` `${maxPosErr > 0 ? ` @ ${worstBody}` : ' — bit-exact'}); ` ``.
-Repair = ONE character (`$`). In a badge detail string → F6-forbidden → Lead
-authorization requested.
 
-**Defect B** — extracted L998 (canon 2266), HUD helper `fmtSimTime`:
-```typescript
-  const p2 = (v: number): string => (v < 10 ? `0{v}`);
-```
-TWO defects: missing `$` in `` `0{v}` `` AND the ternary has **no else
-branch** (error 998,53). A `$`-insert alone cannot fix this line; an else
-branch must be supplied (obvious intent: zero-pad-2 helper →
-`: \`${v}\`` or `: String(v)`). HUD string → F6-forbidden, and the missing
-else branch is content not present anywhere in the file → Lead must supply
-or confirm the form. (The following return line's `{d}` / `{p2(m)}` are also
-stripped — cosmetic once B parses; the HUD clock would render literal braces
-unless those two `$` are restored too.)
+The pre-publish satisfies the reentrancy guard, so the suite never runs on
+the auto path; the RE-RUN button is equally dead (same guard, same state:
+`started && !done` forever). No test executes; no verdict can ever be
+logged; the gate regex can never match. 1C–1G scanned: they do not use this
+`publishSuite({started})`-then-`runSuite()` pattern (different store
+mechanisms) — the deadlock is 1B-only.
 
-**Impact:** `vite build` fails as a whole → neither the 1B gate nor the 1A
-regression page can run. No code changes were made; the extracted harness
-remains byte-verbatim. Extraction quality is NOT in question — the defects
-are in the canon document itself.
+**F9 proposal (minimal, acceptance-neutral — Lead authorization requested):**
+delete the single line `publishSuite({ started: true });` from the auto-run
+block (canon 2228 / extracted L933) in the extracted harness. Effect:
+auto-start → `runSuite()` passes the guard (initial `started=false`) → runs
+synchronously → publishes `{started, results, done}` once, at completion.
+The RE-RUN button then passes the guard because `done=true`. The guard
+itself, the suite body, the results, and every acceptance criterion remain
+byte-verbatim. (Alternative: reorder to `runSuite(); publishSuite({started: true});` — same effect, two-line move; deleting is smaller.)
 
-**Requested decision (proposed F7):** authorize minimal repairs to exactly
-these two lines in the EXTRACTED harness (canon untouched):
-- F7a: L466 — insert `$` before `{maxPosErr`.
-- F7b: L998 — `` `0{v}` `` → `` `0${v}` `` and add `: \`${v}\`` as the
-  ternary else; optionally also restore `$` on `{d}`/`{p2(m)}` in L999's
-  HUD clock format (cosmetic).
-Everything else stays verbatim (incl. the stripped trailing verdict stats
-and `moonNames += \`{s.config.name}\``, both harmless literals).
+### 1C findings for F8 (supplied with this report per the ruling)
+
+Two files persisted verbatim (read-only sed from canon):
+- `notes/reports/M1C-canon-tail.txt` — the REQUESTED literal last 80 lines
+  of the harness code block (canon 2245–2324, ends at the closing fence):
+  HUD right column, M1C_CSS, ROOT component.
+- `notes/reports/M1C-canon-suite-tail.txt` — SUPPLEMENT: canon 1800–1945,
+  the suite results-assembly through the anomalous verdict `console.log`
+  (1916–1921) and the telemetry store head, so 1C-CP can match extracted
+  variable names (`metrics`, `A`, `disposeDelta`, `removeDelta`,
+  `allocDelta`, `heapPerFrame`, `heapAvailable`, `allPass`, `publishSuite`,
+  TestKey rows 'geo-constant' | 'zero-dispose' | 'seamless' | 'heap-flat').
+
+**Additional 1C canon defect found (route to Lead):** canon 1902 reads
+`` seamless': { `` — the results-object key lost its OPENING quote (syntax
+error; the extraction will not compile regardless of the verdict addendum).
+Distinct from the verdict truncation; needs its own line in the 1C-CP
+addendum (or a separate ruling).
