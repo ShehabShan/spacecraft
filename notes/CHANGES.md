@@ -1,7 +1,8 @@
-# CHANGES.md — Solaris Engine Assembly (game/)
+# Change log — see AGENT_BRIEF.md §6 for policy
 
-Change log per assembly brief §6. Format:
-date · milestone · file · what · why · evidence · source.
+(Solaris Engine Assembly; relocated from game/notes/ to the repo-root notes/
+tree by the §10 multi-session protocol install — the state carriers live at
+the repo root. Format: date · milestone · file · what · why · evidence · source.)
 
 No canon file (Design_specs/, Milestone/) is ever modified; entries below
 touch only scaffolding created by this assembly (brief §3) and, where
@@ -90,3 +91,41 @@ Observations (NO change made — recorded for the Lead):
   Milestone 1A.txt lines ~1366–1402.
 - O2 · 1A · page console · One harmless 404 (`Failed to load resource`) —
   Chrome auto-requests /favicon.ico; no favicon is linked. Cosmetic only.
+
+## 2026-10-14 — Protocol install (Lead directive)
+
+7. 2026-10-14 · protocol · AGENT_BRIEF.md · Created at repo root — the full
+   ZCode Agent Brief copied VERBATIM (byte-copy) from the original session
+   paste (this session received the brief in context, STEP 0 case 2), then
+   §10 MULTI-SESSION RESUME PROTOCOL appended verbatim per APPENDIX A. No
+   other change to the brief text. · Lead directive "install the
+   multi-session continuity protocol". · Evidence: 389-line paste → 389-line
+   copy (wc identical), +47 lines after §10 append. · Source: Lead directive
+   2026-10-14; brief §10.4 amendment log.
+
+8. 2026-10-14 · protocol · notes/ (tree), notes/CHANGES.md (this file),
+   notes/reports/ · Created the §10 state-carrier tree at the repo root;
+   relocated the change log from game/notes/CHANGES.md (git mv; contents
+   unchanged except this header note and the entries below). · The §10
+   protocol defines root-level notes/ as the canonical carrier location. ·
+   Evidence: git mv d849d6b→this commit. · Source: brief §10, Lead
+   directive STEP 3.
+
+9. 2026-10-14 · protocol · notes/STATE.md · Written from reconciled reality
+   (git log, branch list, filesystem evidence, M1A gate output), not
+   placeholders; includes the four seeded APPROVAL LEDGER entries and this
+   session's SESSION LOG row. · Lead directive STEP 4. · Evidence: see
+   STATE.md ANCHOR. · Source: brief §10.1, Lead directive STEP 4.
+
+10. 2026-10-14 · protocol · WIP commit d849d6b · All session-1 work (game/
+    scaffold + 1A extraction + gate + e2e + tooling, 18 files, 4270
+    insertions) committed as "WIP: preserved by protocol install" BEFORE any
+    protocol file was staged — never discarded, never reset. · Lead
+    directive STEP 1. · Evidence: git log d849d6b. · Source: brief §10.1
+    write discipline; directive STEP 1.
+
+11. 2026-10-14 · 1A · notes/reports/M1A.md · Milestone 1A report (§8.6)
+    persisted to the reports tree per §10 — evidence must outlive its
+    session. Content identical to the report delivered in chat; output
+    blocks verbatim. · Lead directive §10 state carriers. · Evidence: file
+    created this commit. · Source: brief §10, §8.6.
