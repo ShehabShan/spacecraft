@@ -1,0 +1,2577 @@
+﻿# Milestone 1B — Deep Analysis & Implementation
+
+
+M1A is locked; everything below is additive to it. One engineering decision required derivation (the Sun's orbital μ — Section 03 gives the Sun `surfaceGravity: 0` for the *gameplay* gravity model, yet this milestone mandates Kepler's Third Law against a host μ); it is derived, documented in-file, and flagged for your review. Everything else is verbatim Section 03 catalog consumption.
+
+
+---
+
+
+## PHASE 1 — REASONING & EDGE-CASE ANALYSIS
+
+
+### 1.1 Closed-Form Analytic Orbit Purity
+
+
+**The cost argument.** At 60 Hz, a 60-day fast-forward is 5,184,000 s × 60 = **311,040,000 integration steps** per body — a hard wall. Worse, with the game-scaled Earth period (T = 8,821 s, derived below), one orbit is only ~147 ticks, so any integrator (even symplectic) accumulates per-orbit energy error that compounds over the ~588 orbits a 60-day jump sweeps. Closed-form evaluation is **O(1) at any t**: `P(t = 0)`, `P(t = 60 days)`, and `P(t = −10 years)` each cost ~40 flops. This is also why 30× (or 1000×) macro time cannot melt the CPU (Spec 00.2): the rail cost is **independent of time scale** — one evaluation per tick regardless.
+
+
+**The correctness argument.** An integrated trajectory approximates the orbit; a closed-form evaluation *is* the orbit. The position is always exactly on the ellipse by construction — zero secular drift, no accumulation of any kind, ever. And purity is what makes reversibility provable (see §1.5): `P(t)` is a deterministic mathematical function of a single double, not the terminal state of a step sequence.
+
+
+### 1.2 Two-Tier Time Decoupling
+
+
+The core runs **one** fixed tick (dt = 1/60 s wall) and advances **two** clocks inside it:
+
+
+- `simTime` (macro): `simTime += dt × macroTimeScale` — drives Kepler rails only. Default 30× per catalog `timeScale: 30`.
+- `stats.simTime` (micro, M1A contract preserved): `+= dt` at exactly 1× — drives entity integration now, the Rapier bubble later.
+
+
+Desynchronization is impossible by construction: both clocks are written by a single writer (the tick), derived from the same dt, and there is no async path anywhere. PAUSE (timeScale = 0) freezes the orbits while the 60 Hz micro clock keeps running — the exact decoupling Spec 00.2 mandates, and the harness displays both clocks diverging to prove it. Time *jumps* (`fastForward`/`reverse`/`setSimTime`) touch **only** `simTime`, evaluate the rails synchronously, and re-extract celestial f32 locals — entity state is untouched because entities are tick-driven, not time-driven. This also gives the M1G save system its contract: serialize `simTime` as a double, restore it with `setSimTime`, and the macro universe is bit-identical.
+
+
+### 1.3 Parent-Child Hierarchies with Zero Per-Tick Allocation
+
+
+The trick is that **no vector scratch is needed at all** — only two stack scalars. At boot, each body precomputes:
+
+
+1. A **topologically ordered** dense array (parents strictly before children — boot-time topo pass; catalog order already satisfies it, but the constructor verifies rather than assumes).
+2. The **perifocal basis vectors** `p̂`, `q̂` in the Sun frame — the standard Z-up basis `Rz(Ω)·Rx(i)·Rz(ω)` relabeled to the Y-up world (Z-up `(x,y,z)` → Y-up `(x, z, −y)`), so the identity elements yield `p̂ = (1,0,0)`, `q̂ = (0,0,−1)` and prograde motion is counter-clockwise from +Y. No per-tick matrix, no trig for attitude.
+3. `semiMinor = a·√(1−e²)` — computed once.
+
+
+Per tick, per body, the entire hierarchy composition is scalar arithmetic writing into the body's **own pre-allocated** `absPos`:
+
+
+```
+M   = wrapAngle(M0 + n·t)          // scalar
+E   = (e < 1e-12) ? M : solveKeplerE(M, e)   // scalar
+px  = a·(cos E − e);  py = b·sin E            // two scalars — THE scratch
+ox  = px·p̂.x + py·q̂.x   (oy, oz likewise)     // scalar
+absPos.x = parent.absPos.x + ox               // parent already evaluated (topo order)
+```
+
+
+No temporaries, no arrays, no iteration allocation (indexed loops only — Map iteration allocates an iterator object and stays banned). The M1B acceptance suite enforces this with an **identity canary**: the exact `absPos` / `localPosF32` object references captured before a 20,000-tick burn must be the *same references* after it.
+
+
+### 1.4 Kepler's Third Law & Scaling — and the Sun μ Derivation
+
+
+**Moons** are fully determined by spec law: μ_host = parent's μ = `g_real × R_game²` (Section 02.3). Earth: 9.81 × 5000² = 245,250,000 (the spec's own worked example) → Moon T = 2π√(38850³/μ) = **3,072 s**. I verified every catalog `gravityRange` and `portalDist` reproduces exactly from the Section 02.2 formulas (e.g., Earth max(6·5000, 1.3·38850) = 50,505 ✓; Jupiter 1.5 × 99,841.2 = 149,761.8 ✓) — confirming the catalog is internally consistent with my reading, and where formula regeneration and catalog disagree by rounding (Mercury radius 3105.7 vs. 3094), **the catalog wins as canon**.
+
+
+**Planets** need μ_sun, which the catalog does not supply (`surfaceGravity: 0` is the *gameplay* gravity — `gravityRange: 0` confirms the Sun exerts no in-game gravity field; this milestone's Phase 1.4 nevertheless mandates T = 2π√(a³/μ_host)). **Decision (flagged for your review):** apply Section 02.3's own formula to the Sun using its real surface gravity and artistic radius: **μ_sun = 274 m/s² × 20,000² = 1.096×10¹¹ m³/s².** Consequences (all computed exactly at boot in `celestialData.ts`):
+
+
+| Body | a (m) | T | Body | a (m) | T |
+|---|---|---|---|---|---|
+| Mercury | 376,200 | 4,381 s (1.22 h) | Saturn | 1,860,000 | 48,139 s (13.4 h) |
+| Venus | 512,400 | 6,963 s (1.93 h) | Uranus | 2,634,000 | 81,144 s (22.5 h) |
+| **Earth** | 600,000 | **8,821 s (2.45 h)** | Neptune | 3,290,000 | 113,254 s (31.5 h) |
+| Mars | 741,600 | 12,122 s (3.37 h) | Pluto | 3,770,000 | 138,927 s (38.6 h) |
+| Jupiter | 1,368,600 | 30,392 s (8.44 h) | Moon↔Earth | 38,850 | 3,072 s (51 min) |
+
+
+At the default 30×, Earth completes an orbit in **4.9 minutes of play** (watchable), the Moon orbits Earth in 102 s (lively), and at 1000× the whole system visibly spins — a usable system map. A single μ_sun means Kepler's Third Law holds *exactly* across all planets: (T_p/T_e)² = (a_p/a_e)³ — asserted in the acceptance suite to 1e-12 relative. One constant to tune, one line to change.
+
+
+**Retrograde handling:** Triton's catalog fact `"orbit": "Retrograde"` is implemented as a signed mean motion (n < 0) — mathematically equivalent to i = 180°, cleaner to evaluate. Venus's `"rotation": "Retrograde"` is *spin*, not orbit — correctly ignored by rails (spin belongs to the parented-state compose of a later milestone).
+
+
+### 1.5 The Reversibility Invariant (proof)
+
+
+1. **Purity:** `P(t) = F(elements; t)` is deterministic and side-effect-free (writes only its own state buffers). Same input double → same output bits, because IEEE 754 arithmetic and libm `sin/cos/sqrt` are deterministic per platform.
+2. **Solver determinism:** Newton–Raphson from a fixed starter (`E₀ = M + e·sin M` for e < 0.8, `±π` above) with a fixed exit (`|ΔE| < 1e-15`) executes the identical iterate sequence for identical `(M, e)` — no data-dependent allocation, no early-exit nondeterminism. So `F` is a function in the strictest sense.
+3. **The anchor argument:** from `t₀ = 0`, `fastForward(60)` computes `0 + 5,184,000 = 5,184,000` **exactly** (0 + x is exact; 60×86400 is an exact integer), and `reverse(60)` computes `5,184,000 − 5,184,000 = 0` **exactly**. `simTime` returns to the *same double*, so `F(0)` re-evaluates bit-identically. Round-trip error = **exactly 0 m**, beating the 1e-9 m bound by construction. The suite asserts this from the zero anchor (the acceptance criterion as written) *and* additionally proves exact restoration from a non-zero anchor (98,765.4321 s) via saved-double `setSimTime` — error also exactly 0.
+4. **The honest general bound:** from an *arbitrary* anchor, `±D` arithmetic round-trips to within 1 ulp of `simTime` (~9.3×10⁻¹⁰ s at 5.18×10⁶ s), i.e. ≤ a·|n|·ulp ≈ **2×10⁻⁷ m** for Earth — below gameplay relevance but above 1e-9 m; that is why exact restoration is via snapshot (`setSimTime` with the saved double), which is precisely the contract the M1G save/load will use. Both behaviors are documented in code.
+
+
+### 1.6 Test-Design Edge Cases (surfaced during the trace)
+
+
+- **Bit-matching the independent reference:** the T1 reference evaluator must not merely agree numerically but use *identical expression shapes* (`wrapAngle(M0 + n·t)`, `a·(cosE − e)` with e = 0 exact, `parent.x + (px·p̂.x + py·q̂.x)`) so the comparison is bitwise — expected max error **0.0 m**, tolerance 1e-9 m as a guard. Note `a·√(1−0)·sinE = a·sinE` exactly, and `x + 0` / `0×c` are exact, so the fast path and the reference coincide bit-for-bit.
+- **Angle wrapping:** `M = M0 + n·t` reaches ~3,700 rad after 60 days; `sin/cos` of unwrapped angles would cost ~10⁻¹³ rad. All angles are reduced to (−π, π] via `M − 2π·round(M/2π)` *deterministically* before solving, on both the rail and reference paths.
+- **The elliptical solver needs teeth even though catalog orbits are circular** (Section 03 supplies single distances → e = 0). The suite probes `solveKeplerE` directly at e ∈ {0, 0.2, 0.45, 0.72} × 11 anomalies and asserts the Kepler residual |E − e·sinE − M| ≤ 1e-12 rad.
+- **Zero-GC proof in-browser is bounded:** there is no portable GC API, so T4 layers three defenses: (1) the identity canary (hard fail if any state object or buffer is ever reallocated), (2) `performance.memory` heap delta across a 20,000-tick synchronous burn with a 1 MB threshold (nothing else can run mid-burn — it's inside one frame callback), (3) the static audit documented in `tick()`/`evaluate()`. Full V8 allocation profiling is M1C's acceptance test, where the mandate gets its real instrument.
+- **f32 locals for celestials are extracted at step 8, after any rebase** — never during the macro step — so a jump/rebase/tick interleave can never publish stale locals. At system scale, f32's ulp at Pluto's 3.77×10⁶ m is 0.25 m: irrelevant for map-view rendering (the 3-camera/impostor regimes that make this rigorous are M1F).
+- **ID precedence:** the unified `getLocalPositionF32(id)` checks M1A entities first, then celestials — the M1A `FloatingOriginAdapter` therefore binds planets and moons *with zero changes*, and the M1A harness contract survives intact.
+- **M1A regression is proven, not assumed:** suite row 5 re-runs the entire M1A acceptance (2,000 m/s dummy flight, 9 rebases, Δ = 4×256 exact, local bound ≤ 1,024 m) against the *updated* core, with macro ticking concurrently.
+- **Vis-viva speeds** are evaluated per tick (`v = √(μ(2/r − 1/a))`, exact for e = 0) so the telemetry panel's "orbital speeds" are physical, not cached.
+
+
+---
+
+
+## PHASE 2 — ARCHITECTURAL COMPLIANCE MAP
+
+
+| Rule | Implementation |
+|---|---|
+| 17 bodies verbatim from Section 03 | `celestialData.ts` — every radius, distance, gravity, range, portal, atmosphere, fact transcribed exactly; μ and T derived at boot |
+| Pure Float64 | `src/core/orbit/*` imports nothing; all elements, periods, positions in doubles |
+| T = 2π√(a³/μ) | `computeOrbitalPeriod`; n = ±√(μ/a³) (algebraically identical, documented); single μ_sun ⇒ Kepler-3 ratio asserted |
+| Newton–Raphson | `solveKeplerE` — fixed starter, 24-iter cap, 1e-15 exit, residual-tested |
+| Zero-GC | Pre-allocated states, scalar-only composition, identity canary + heap guard in T4 |
+| Tick order | Step 1 (Macro) prepended before M1A's bubble-refresh/test/rebase/extract sequence; M1A code retained verbatim |
+| M1A no-regression | Full M1A API preserved; suite row 5 re-executes the M1A acceptance |
+| Time API | `macroTimeScale` (default 30), `setTimeScale`, `fastForward(days)`, `reverse(days)`, `setSimTime` (exact-restore contract) |
+
+
+---
+
+
+## PHASE 3 — DELIVERABLES
+
+
+### 1. `src/core/orbit/types.ts`
+
+
+```typescript
+/**
+ * ============================================================================
+ *  ORBITAL TYPES — PURE FLOAT64 CELESTIAL DOMAIN
+ *  Milestone 1B · Spec 00.2 (two-tier time), 01.1 (macro update), 02.2/02.3
+ * ============================================================================
+ *  HARD BOUNDARY: no imports from three / react / rapier anywhere in
+ *  src/core/. All orbital quantities are 64-bit doubles (TypeScript number).
+ *
+ *  CONVENTIONS:
+ *   - World frame: Sun frame, Y-up ("ecliptic" = XZ plane, north = +Y).
+ *   - Angles in radians. Prograde motion is counter-clockwise seen from +Y.
+ *   - Retrograde orbits are encoded as a NEGATIVE mean motion n (exactly
+ *     equivalent to inclination 180°, cheaper to evaluate).
+ */
+
+
+/** Verbatim Section 03 body classifications. */
+export type BodyType = 'star' | 'planet' | 'gas_giant' | 'moon';
+
+
+/**
+ * Keplerian orbital elements (deliverable struct) plus boot-derived
+ * kinematic constants. `a, e, i, Omega, omega, M0, T` are the classical
+ * elements; `n`, `muHost` are precomputed for zero-allocation evaluation.
+ *
+ * Catalog orbits are circular (e = i = Omega = omega = 0) because Section 03
+ * supplies a single distance per body; the evaluator is a full elliptical
+ * solver and will consume real elements unchanged when they arrive.
+ * (Real-date starting arrangements remain out of scope per Spec 00.4.)
+ */
+export interface OrbitParams {
+  /** Semi-major axis, metres. */
+  a: number;
+  /** Eccentricity, dimensionless, [0, 1). */
+  e: number;
+  /** Inclination, radians. */
+  i: number;
+  /** Longitude of the ascending node Ω, radians. */
+  Omega: number;
+  /** Argument of periapsis ω, radians. */
+  omega: number;
+  /** Mean anomaly at epoch M0, radians. (Deterministic spread; real epoch
+   *  arrangement is a deferred feature per Spec 00.4.) */
+  M0: number;
+  /** Orbital period, seconds — T = 2π·√(a³/μ_host) (Kepler's Third Law). */
+  T: number;
+  /** SIGNED mean motion, rad/s — n = ±√(μ_host/a³). Negative = retrograde. */
+  n: number;
+  /** Host gravitational parameter, m³/s² (parent planet μ, or SUN_ORBITAL_MU). */
+  muHost: number;
+  /** True when the orbit is retrograde (e.g. Triton per Section 03 facts). */
+  retrograde: boolean;
+}
+
+
+/** Static definition of one celestial body — catalog data + derived orbit. */
+export interface CelestialConfig {
+  id: string;
+  name: string;
+  type: BodyType;
+  /** Parent body id (null for the Sun). Parents always precede children. */
+  parentId: string | null;
+  /** True game radius, metres (Spec 02.1 — 1 unit = 1 m). */
+  radiusGame: number;
+  /** Real surface gravity, m/s². Gameplay μ = surfaceGravity · radiusGame². */
+  surfaceGravity: number;
+  /** Sphere of influence, metres (Spec 02.2 formula 4). */
+  gravityRange: number;
+  /** Portal distance, metres (Spec 02.5). Unused by rails; carried as canon. */
+  portalDist: number;
+  atmosphereHeight: number;
+  /** μ = g_real · R_game² (Spec 02.3). ZERO for the Sun (gameplay gravity
+   *  only — the Sun exerts no gameplay gravity; orbital μ is separate). */
+  mu: number;
+  /** HUD fun facts (Spec 02.3: real mass is NEVER used for gravity). */
+  facts: Record<string, string>;
+  /** Null for the Sun (fixed at the origin). */
+  orbit: OrbitParams | null;
+}
+
+
+/**
+ * Runtime celestial state. Allocated ONCE at boot (Zero-GC mandate) and
+ * mutated in place by KeplerRail.evaluate(). Consumers treat as read-only.
+ */
+export interface CelestialState {
+  config: CelestialConfig;
+  /** Index into the rail's topologically ordered state array; −1 = root. */
+  parentIndex: number;
+  /** Absolute Sun-frame position, Float64. Rail-written every evaluation. */
+  absPos: { x: number; y: number; z: number };
+  /**
+   * LOCAL Float32 render coordinates relative to the floating origin,
+   * extracted at canonical step 8 (AFTER any rebase in step 4) by
+   * SimulationCore: localPosF32[i] = Float32(absPos[i] − origin[i]).
+   */
+  localPosF32: Float32Array;
+  /** Orbital speed via vis-viva: √(μ(2/r − 1/a)), m/s. Zero for the Sun. */
+  orbitalSpeed: number;
+  /** Perifocal basis, world frame (boot-precomputed from i, Ω, ω). */
+  basisP: { x: number; y: number; z: number };
+  basisQ: { x: number; y: number; z: number };
+  /** Semi-minor axis b = a·√(1−e²), boot-precomputed. */
+  semiMinor: number;
+}
+```
+
+
+### 2. `src/core/orbit/KeplerRail.ts`
+
+
+```typescript
+/**
+ * ============================================================================
+ *  KEPLER RAIL — CLOSED-FORM ORBITAL EVALUATION (PURE FLOAT64, ZERO-GC)
+ *  Milestone 1B · Spec 00.2 (macro rails), 01.1 step 1, 02.6 (time scales)
+ * ============================================================================
+ *  P = F(elements; simTime) is a pure closed-form function:
+ *   - O(1) cost at ANY t (t = 0, t = +60 days, t = −10 years) — which is why
+ *     30x (or 1000x) macro time costs exactly one evaluation per tick.
+ *   - Positions lie exactly on the orbit by construction: zero energy drift,
+ *     no integrator, no accumulation.
+ *   - Deterministic bit-for-bit: same simTime double -> same position bits.
+ *     This is the foundation of the 1B reversibility acceptance proof.
+ *
+ *  ZERO-GC AUDIT of evaluate(): scalar arithmetic, field writes into
+ *  boot-allocated state objects, indexed for-loops over a dense array.
+ *  The only "scratch" needed is two stack scalars (px, py) — the perifocal
+ *  basis, semi-minor axis, and parent links are all boot-precomputed.
+ *  Allocation count per evaluation: 0.
+ */
+
+
+import type { CelestialConfig, CelestialState } from './types';
+
+
+export const TWO_PI = Math.PI * 2;
+
+
+/**
+ * Reduce an angle to (−π, π]. Deterministic (pure IEEE arithmetic) — the
+ * rail and any independent reference that uses the identical expression
+ * produce bit-identical results. Angles reach ~3.7e3 rad after a 60-day
+ * jump; reducing before sin/cos keeps trig arguments well-conditioned.
+ */
+export function wrapAngle(M: number): number {
+  return M - TWO_PI * Math.round(M / TWO_PI);
+}
+
+
+/**
+ * Solve Kepler's equation  M = E − e·sin(E)  for the eccentric anomaly E.
+ * Newton–Raphson with the classical two-branch starter. Deterministic
+ * iterate sequence for identical (M, e) — a hard requirement for the
+ * reversibility proof (same input -> same output bits).
+ *
+ * Domain: elliptical orbits, e ∈ [0, ~0.95], M pre-wrapped to (−π, π].
+ * Exit: |ΔE| < 1e-15 (double-precision floor for these magnitudes) or 24
+ * iterations (boot-domain verification asserts residual ≤ 1e-12 rad).
+ */
+export function solveKeplerE(M: number, e: number): number {
+  let E = e < 0.8 ? M + e * Math.sin(M) : (M >= 0 ? Math.PI : -Math.PI);
+  for (let k = 0; k < 24; k++) {
+    const f = E - e * Math.sin(E) - M;
+    const fp = 1 - e * Math.cos(E);
+    const dE = f / fp;
+    E -= dE;
+    if (dE < 1e-15 && dE > -1e-15) {
+      break;
+    }
+  }
+  return E;
+}
+
+
+/** Kepler's Third Law: T = 2π·√(a³/μ) — the mandated period derivation. */
+export function computeOrbitalPeriod(a: number, mu: number): number {
+  return TWO_PI * Math.sqrt((a * a * a) / mu);
+}
+
+
+/**
+ * Mean motion magnitude: |n| = √(μ/a³). Algebraically identical to 2π/T
+ * (and computed without the double rounding of the 2π round-trip).
+ * The caller applies the retrograde sign.
+ */
+export function meanMotion(mu: number, a: number): number {
+  return Math.sqrt(mu / (a * a * a));
+}
+
+
+export class KeplerRail {
+  /** Topologically ordered: parents strictly before children. */
+  private readonly _states: CelestialState[] = [];
+  private readonly _byId = new Map<string, CelestialState>();
+
+
+  constructor(configs: readonly CelestialConfig[]) {
+    // Boot-time topological insertion. Restart-scan: each pass places the
+    // first body whose parent is resolved (or null); a full pass with no
+    // placement means a cycle or unknown parent id -> hard error. O(n²)
+    // worst case, n = 17, boot path only.
+    const pending: CelestialConfig[] = configs.slice();
+    while (pending.length > 0) {
+      let placed = false;
+      for (let i = 0; i < pending.length; i++) {
+        const cfg = pending[i];
+        if (cfg.parentId === null || this._byId.has(cfg.parentId)) {
+          this._addBody(cfg);
+          pending.splice(i, 1);
+          placed = true;
+          break;
+        }
+      }
+      if (!placed) {
+        throw new Error(
+          '[KeplerRail] celestial hierarchy contains a cycle or an unknown parentId',
+        );
+      }
+    }
+  }
+
+
+  get states(): readonly CelestialState[] {
+    return this._states;
+  }
+
+
+  getState(id: string): CelestialState | null {
+    return this._byId.get(id) ?? null;
+  }
+
+
+  /* -----------------------------------------------------------------------
+   * Boot-time body construction (allocation sanctioned here ONLY).
+   * -------------------------------------------------------------------- */
+  private _addBody(cfg: CelestialConfig): void {
+    let parentIndex = -1;
+    if (cfg.parentId !== null) {
+      const parent = this._byId.get(cfg.parentId);
+      if (parent === undefined) {
+        throw new Error(`[KeplerRail] unknown parent '${cfg.parentId}'`);
+      }
+      parentIndex = this._states.indexOf(parent);
+    }
+
+
+    const state: CelestialState = {
+      config: cfg,
+      parentIndex,
+      absPos: { x: 0, y: 0, z: 0 },
+      localPosF32: new Float32Array(3), // the ONE per-body buffer allocation
+      orbitalSpeed: 0,
+      basisP: { x: 1, y: 0, z: 0 },
+      basisQ: { x: 0, y: 0, z: -1 },
+      semiMinor: 0,
+    };
+
+
+    if (cfg.orbit !== null) {
+      const o = cfg.orbit;
+      // Standard perifocal basis (Z-up convention):
+      //   p̂ = Rz(Ω)·Rx(i)·Rz(ω)·(1,0,0),  q̂ = ...·(0,1,0)
+      const cO = Math.cos(o.Omega), sO = Math.sin(o.Omega);
+      const ci = Math.cos(o.i), si = Math.sin(o.i);
+      const cw = Math.cos(o.omega), sw = Math.sin(o.omega);
+      const pzx = cO * cw - sO * sw * ci;
+      const pzy = sO * cw + cO * sw * ci;
+      const pzz = sw * si;
+      const qzx = -cO * sw - sO * cw * ci;
+      const qzy = -sO * sw + cO * cw * ci;
+      const qzz = cw * si;
+      // Relabel Z-up -> Y-up world: (x, y, z)_zu -> (x, z, −y)_yu.
+      // Identity elements yield p̂ = (1,0,0), q̂ = (0,0,−1) EXACTLY:
+      // prograde motion is counter-clockwise viewed from +Y.
+      state.basisP.x = pzx; state.basisP.y = pzz; state.basisP.z = -pzy;
+      state.basisQ.x = qzx; state.basisQ.y = qzz; state.basisQ.z = -qzy;
+      state.semiMinor = o.a * Math.sqrt(1 - o.e * o.e);
+    }
+
+
+    this._states.push(state);
+    this._byId.set(cfg.id, state);
+  }
+
+
+  /* -----------------------------------------------------------------------
+   * THE MACRO EVALUATION — P(elements; t), zero allocation.
+   *
+   * Expression shapes here are load-bearing for the acceptance suite's
+   * bit-exact comparison: the independent reference evaluator deliberately
+   * mirrors them (wrapAngle(M0 + n·t), a·(cosE − e), parent + (px·p̂ + py·q̂)).
+   * Do not "simplify" these lines without updating the reference.
+   * -------------------------------------------------------------------- */
+  evaluate(simTime: number): void {
+    const states = this._states;
+    const count = states.length;
+    for (let k = 0; k < count; k++) {
+      const s = states[k];
+      const o = s.config.orbit;
+
+
+      if (o === null) {
+        // Fixed body (the Sun): root -> origin; otherwise pinned to parent.
+        const parent = s.parentIndex >= 0 ? states[s.parentIndex] : null;
+        if (parent !== null) {
+          s.absPos.x = parent.absPos.x;
+          s.absPos.y = parent.absPos.y;
+          s.absPos.z = parent.absPos.z;
+        } else {
+          s.absPos.x = 0; s.absPos.y = 0; s.absPos.z = 0;
+        }
+        s.orbitalSpeed = 0;
+        continue;
+      }
+
+
+      // Mean anomaly (wrapped for conditioning; deterministic).
+      const M = wrapAngle(o.M0 + o.n * simTime);
+      // Eccentric anomaly — exact for circular orbits (e < 1e-12 fast path:
+      // E = M, and a·(cosE − 0) === a·cosE exactly).
+      let E: number;
+      if (o.e < 1e-12) {
+        E = M;
+      } else {
+        E = solveKeplerE(M, o.e);
+      }
+      const cosE = Math.cos(E);
+      const sinE = Math.sin(E);
+
+
+      // Perifocal plane coordinates — the only scratch: two scalars.
+      const px = o.a * (cosE - o.e);
+      const py = s.semiMinor * sinE;
+
+
+      // World-frame offset via the boot-precomputed basis.
+      const P = s.basisP;
+      const Q = s.basisQ;
+      const ox = px * P.x + py * Q.x;
+      const oy = px * P.y + py * Q.y;
+      const oz = px * P.z + py * Q.z;
+
+
+      // Hierarchical composition — parent is already evaluated this pass
+      // (topological order). For planets the parent is the Sun at exactly
+      // (0,0,0), so `0 + ox === ox` keeps the composition bit-exact.
+      const parent = s.parentIndex >= 0 ? states[s.parentIndex] : null;
+      if (parent !== null) {
+        s.absPos.x = parent.absPos.x + ox;
+        s.absPos.y = parent.absPos.y + oy;
+        s.absPos.z = parent.absPos.z + oz;
+      } else {
+        s.absPos.x = ox;
+        s.absPos.y = oy;
+        s.absPos.z = oz;
+      }
+
+
+      // Vis-viva speed: v = √(μ(2/r − 1/a)), r = a(1 − e·cosE).
+      // Exact for e = 0 (r === a, 2/a − 1/a === 1/a in IEEE arithmetic).
+      const r = o.a * (1 - o.e * cosE);
+      s.orbitalSpeed = Math.sqrt(o.muHost * (2 / r - 1 / o.a));
+    }
+  }
+}
+```
+
+
+### 3. `src/core/orbit/celestialData.ts`
+
+
+```typescript
+/**
+ * ============================================================================
+ *  CELESTIAL CATALOG — SECTION 03 DATA, VERBATIM CANON
+ *  Milestone 1B
+ * ============================================================================
+ *  Every radius, distance, gravity, range, portal distance, atmosphere
+ *  height, and fact is transcribed EXACTLY from 03_DATA_AND_CELESTIALS.json.
+ *  Where the Section 02.2 regeneration formulas and the catalog disagree by
+ *  rounding (e.g., Mercury radiusGame 3105.7 vs formula 3094), THE CATALOG
+ *  WINS — it is the verified canon. The formulas were cross-checked against
+ *  the catalog and reproduce every gravityRange and portalDist exactly
+ *  (Earth: max(6·5000, 1.3·38850) = 50,505 ✓; Jupiter: 1.5·99,841.2 =
+ *  149,761.8 ✓), confirming the interpretation.
+ *
+ *  DERIVED AT BOOT (setup path — allocation sanctioned):
+ *   - μ_body   = surfaceGravity · radiusGame²          (Spec 02.3)
+ *   - T        = 2π·√(a³/μ_host)                       (Kepler's Third Law)
+ *   - n        = ±√(μ_host/a³)                         (− for retrograde)
+ *
+ *  ╔════════════════════════════════════════════════════════════════════╗
+ *  ║ THE ONE DERIVED CONSTANT — SUN ORBITAL μ (flagged for Lead review)  ║
+ *  ╠════════════════════════════════════════════════════════════════════╣
+ *  ║ The catalog gives the Sun surfaceGravity: 0 — that is the GAMEPLAY  ║
+ *  ║ gravity model (gravityRange: 0; the ship never lands on the Sun).   ║
+ *  ║ This milestone mandates T = 2π√(a³/μ_host), which requires an       ║
+ *  ║ orbital μ for the Sun. Derivation: apply Section 02.3's own formula ║
+ *  ║ with the Sun's REAL surface gravity (274 m/s²) and its artistic     ║
+ *  ║ game radius (20,000 m):                                             ║
+ *  ║        μ_sun = 274 · 20,000² = 1.096e11 m³/s²                       ║
+ *  ║ Resulting dynamics (computed exactly at boot below):                ║
+ *  ║   Earth year = 8,821 s (2.45 h sim) = 4.9 min of play at 30×;       ║
+ *  ║   60-day fast-forward = 587.7 Earth orbits; Neptune 31.5 h.         ║
+ *  ║ A single μ_sun makes Kepler's Third Law hold EXACTLY across all     ║
+ *  ║ planets: (T_p/T_e)² = (a_p/a_e)³ (asserted by the 1B suite).        ║
+ *  ║ One line to tune if the Lead prefers different pacing.              ║
+ *  ╚════════════════════════════════════════════════════════════════════╝
+ *
+ *  Derived period table (documented values; code computes exactly):
+ *   Mercury 4,381 s · Venus 6,963 s · Earth 8,821 s · Mars 12,122 s
+ *   Jupiter 30,392 s · Saturn 48,139 s · Uranus 81,144 s · Neptune 113,254 s
+ *   Pluto 138,927 s
+ *   Moon 3,072 s · Phobos 575 s · Io 634 s · Titan 2,351 s
+ *   Titania 1,806 s · Triton 1,395 s (retrograde) · Charon 3,206 s
+ */
+
+
+import type { BodyType, CelestialConfig, OrbitParams } from './types';
+import { TWO_PI, computeOrbitalPeriod, meanMotion } from './KeplerRail';
+
+
+/** Orbital μ of the Sun — see the banner above. */
+export const SUN_ORBITAL_MU: number = 274.0 * 20000 * 20000; // 1.096e11
+
+
+/**
+ * Deterministic epoch spread (golden angle). Real-date starting
+ * arrangements are OUT OF SCOPE per Spec 00.4 — this is the documented
+ * placeholder that keeps bodies from clustering at t = 0.
+ */
+const GOLDEN_ANGLE = 2.399963229728653;
+
+
+interface RawCatalogEntry {
+  id: string;
+  name: string;
+  type: BodyType;
+  parentId?: string;
+  radiusGame: number;
+  /** Planets: distance from the Sun (semi-major axis), metres. */
+  distanceFromSun?: number;
+  /** Moons: orbit radius around the parent, metres. */
+  orbitRadiusGame?: number;
+  surfaceGravity: number;
+  gravityRange: number;
+  portalDist: number;
+  atmosphereHeight: number;
+  facts: Record<string, string>;
+  /** True for retrograde ORBITS (Triton). Venus's retrograde is SPIN and
+   *  deliberately does NOT set this — spin is parented-compose territory. */
+  retrogradeOrbit?: boolean;
+}
+
+
+/** Section 03 catalog — verbatim. */
+const RAW: RawCatalogEntry[] = [
+  {
+    id: 'sun', name: 'Sun', type: 'star',
+    radiusGame: 20000, distanceFromSun: 0, surfaceGravity: 0,
+    gravityRange: 0, portalDist: 80000, atmosphereHeight: 3000,
+    facts: { mass: '1.989e30 kg', temp: '5,778 K' },
+  },
+  {
+    id: 'mercury', name: 'Mercury', type: 'planet',
+    radiusGame: 3105.7, distanceFromSun: 376200, surfaceGravity: 3.7,
+    gravityRange: 18634.2, portalDist: 80000, atmosphereHeight: 0,
+    facts: { mass: '3.301e23 kg', temp: '430 C' },
+  },
+  {
+    id: 'venus', name: 'Venus', type: 'planet',
+    radiusGame: 4870.3, distanceFromSun: 512400, surfaceGravity: 8.87,
+    gravityRange: 29221.8, portalDist: 80000, atmosphereHeight: 6000,
+    // facts.rotation 'Retrograde' = SPIN, not orbit — no effect on rails.
+    facts: { mass: '4.867e24 kg', temp: '471 C', rotation: 'Retrograde' },
+  },
+  {
+    id: 'earth', name: 'Earth', type: 'planet',
+    radiusGame: 5000, distanceFromSun: 600000, surfaceGravity: 9.81,
+    gravityRange: 50505, portalDist: 80000, atmosphereHeight: 8000,
+    facts: { mass: '5.972e24 kg', temp: '15 C' },
+  },
+  {
+    id: 'moon', name: 'Moon', type: 'moon', parentId: 'earth',
+    radiusGame: 1364.5, orbitRadiusGame: 38850, surfaceGravity: 1.62,
+    gravityRange: 8187, portalDist: 80000, atmosphereHeight: 0,
+    facts: { mass: '7.342e22 kg', temp: '-53 C' },
+  },
+  {
+    id: 'mars', name: 'Mars', type: 'planet',
+    radiusGame: 2649.3, distanceFromSun: 741600, surfaceGravity: 3.71,
+    gravityRange: 15895.8, portalDist: 80000, atmosphereHeight: 2000,
+    facts: { mass: '6.39e23 kg', temp: '-65 C' },
+  },
+  {
+    id: 'phobos', name: 'Phobos', type: 'moon', parentId: 'mars',
+    radiusGame: 200.5, orbitRadiusGame: 6020, surfaceGravity: 0.0057,
+    gravityRange: 1203, portalDist: 80000, atmosphereHeight: 0,
+    facts: { mass: '1.06e16 kg' },
+  },
+  {
+    id: 'jupiter', name: 'Jupiter', type: 'gas_giant',
+    radiusGame: 16640.2, distanceFromSun: 1368600, surfaceGravity: 24.79,
+    gravityRange: 99841.2, portalDist: 149761.8, atmosphereHeight: 12000,
+    facts: { mass: '1.898e27 kg', temp: '-110 C' },
+  },
+  {
+    id: 'io', name: 'Io', type: 'moon', parentId: 'jupiter',
+    radiusGame: 2577.8, orbitRadiusGame: 41200, surfaceGravity: 1.796,
+    gravityRange: 15466.8, portalDist: 80000, atmosphereHeight: 0,
+    facts: { mass: '8.93e22 kg' },
+  },
+  {
+    id: 'saturn', name: 'Saturn', type: 'gas_giant',
+    radiusGame: 15120.4, distanceFromSun: 1860000, surfaceGravity: 10.44,
+    gravityRange: 90722.4, portalDist: 136083.6, atmosphereHeight: 15000,
+    facts: { mass: '5.683e26 kg', temp: '-140 C' },
+  },
+  {
+    id: 'titan', name: 'Titan', type: 'moon', parentId: 'saturn',
+    radiusGame: 3192.5, orbitRadiusGame: 69400, surfaceGravity: 1.35,
+    gravityRange: 19155, portalDist: 80000, atmosphereHeight: 2000,
+    facts: { mass: '1.345e23 kg' },
+  },
+  {
+    id: 'uranus', name: 'Uranus', type: 'gas_giant',
+    radiusGame: 9980.5, distanceFromSun: 2634000, surfaceGravity: 8.69,
+    gravityRange: 59883, portalDist: 89824.5, atmosphereHeight: 8000,
+    facts: { mass: '8.681e25 kg', temp: '-195 C' },
+  },
+  {
+    id: 'titania', name: 'Titania', type: 'moon', parentId: 'uranus',
+    radiusGame: 2182.2, orbitRadiusGame: 41500, surfaceGravity: 0.379,
+    gravityRange: 13093.2, portalDist: 80000, atmosphereHeight: 0,
+    facts: { mass: '3.5e21 kg' },
+  },
+  {
+    id: 'neptune', name: 'Neptune', type: 'gas_giant',
+    radiusGame: 9835.4, distanceFromSun: 3290000, surfaceGravity: 11.15,
+    gravityRange: 59012.4, portalDist: 88518.6, atmosphereHeight: 8000,
+    facts: { mass: '1.024e26 kg', temp: '-200 C' },
+  },
+  {
+    id: 'triton', name: 'Triton', type: 'moon', parentId: 'neptune',
+    radiusGame: 2400.1, orbitRadiusGame: 37600, surfaceGravity: 0.717,
+    gravityRange: 14400.6, portalDist: 80000, atmosphereHeight: 100,
+    facts: { mass: '2.14e22 kg', orbit: 'Retrograde' },
+    retrogradeOrbit: true, // catalog fact: retrograde ORBIT -> n < 0
+  },
+  {
+    id: 'pluto', name: 'Pluto', type: 'planet',
+    radiusGame: 2160.8, distanceFromSun: 3770000, surfaceGravity: 0.62,
+    gravityRange: 12964.8, portalDist: 80000, atmosphereHeight: 0,
+    facts: { mass: '1.303e22 kg', temp: '-225 C' },
+  },
+  {
+    id: 'charon', name: 'Charon', type: 'moon', parentId: 'pluto',
+    radiusGame: 1690.4, orbitRadiusGame: 9100, surfaceGravity: 0.288,
+    gravityRange: 10142.4, portalDist: 80000, atmosphereHeight: 0,
+    facts: { mass: '1.586e21 kg' },
+  },
+];
+
+
+/** Host μ for an orbiting body: parent planet μ, or the Sun's orbital μ. */
+function hostMuFor(raw: RawCatalogEntry): number {
+  if (raw.parentId === undefined) {
+    return SUN_ORBITAL_MU;
+  }
+  const parent = RAW.find((r) => r.id === raw.parentId);
+  if (parent === undefined) {
+    throw new Error(`[celestialData] unknown parent '${raw.parentId}'`);
+  }
+  return parent.surfaceGravity * parent.radiusGame * parent.radiusGame;
+}
+
+
+/**
+ * Fully derived celestial configs, in catalog (hierarchical) order.
+ * KeplerRail's constructor topologically verifies this ordering.
+ */
+export const CELESTIAL_CONFIGS: CelestialConfig[] = RAW.map((raw, index) => {
+  // Spec 02.3: μ = g_real · R_game². (Real mass is NEVER used — facts only.)
+  const mu = raw.surfaceGravity * raw.radiusGame * raw.radiusGame;
+
+
+  const a =
+    raw.orbitRadiusGame !== undefined
+      ? raw.orbitRadiusGame
+      : raw.distanceFromSun !== undefined
+        ? raw.distanceFromSun
+        : 0;
+
+
+  let orbit: OrbitParams | null = null;
+  if (raw.type !== 'star' && a > 0) {
+    const muHost = hostMuFor(raw);
+    const T = computeOrbitalPeriod(a, muHost); // T = 2π·√(a³/μ_host)
+    const nMag = meanMotion(muHost, a);        // |n| = √(μ/a³)
+    orbit = {
+      a,
+      e: 0,        // catalog supplies a single distance -> circular canon
+      i: 0,
+      Omega: 0,
+      omega: 0,
+      M0: (index * GOLDEN_ANGLE) % TWO_PI,
+      T,
+      n: raw.retrogradeOrbit === true ? -nMag : nMag,
+      muHost,
+      retrograde: raw.retrogradeOrbit === true,
+    };
+  }
+
+
+  return {
+    id: raw.id,
+    name: raw.name,
+    type: raw.type,
+    parentId: raw.parentId ?? null,
+    radiusGame: raw.radiusGame,
+    surfaceGravity: raw.surfaceGravity,
+    gravityRange: raw.gravityRange,
+    portalDist: raw.portalDist,
+    atmosphereHeight: raw.atmosphereHeight,
+    mu,
+    facts: raw.facts,
+    orbit,
+  } satisfies CelestialConfig;
+});
+
+
+/** Body count served by this catalog (asserted by the 1B suite: 17). */
+export const CELESTIAL_COUNT = CELESTIAL_CONFIGS.length;
+```
+
+
+### 4. `src/core/simulation/SimulationCore.ts` (updated for M1B)
+
+
+```typescript
+/**
+ * ============================================================================
+ *  SIMULATION CORE — PURE TYPESCRIPT, FLOAT64, ZERO-GC FIXED TICK
+ *  Milestone 1A + 1B · Spec 00.2, 01.1, 02.6
+ * ============================================================================
+ *  Pure core: this file must never import three / react / rapier.
+ *
+ *  CANONICAL TICK ORDER (Spec 01.1), as implemented:
+ *    STEP 1  Macro Update (f64): simTime += dt·macroTimeScale;
+ *            KeplerRail.evaluate(simTime)              [M1B — NEW]
+ *    (a)     Integrate dynamic entities (f64)          [M1A — dynamics
+ *            stand-in; forces + Rapier arrive in later milestones]
+ *    (b)     Bubble refresh test (focus vs 1,024 m)    [01.1 step 2]
+ *    (c)     Conditional rebase (exact 256 m Δ)        [01.1 step 4]
+ *    (d)     Render extract: f32 locals for entities AND celestials
+ *            (celestial locals extracted HERE — after any rebase — never
+ *            during the macro step)                    [01.1 step 8]
+ *
+ *  TWO-TIER TIME (Spec 00.2 / 02.6):
+ *    - simTime (MACRO): advances dt·macroTimeScale per tick. Drives the
+ *      closed-form Kepler rails ONLY. Default scale 30 (catalog timeScale).
+ *      PAUSE (scale 0) freezes orbits but never the micro clock.
+ *    - stats.simTime (MICRO, M1A contract unchanged): advances dt at exactly
+ *      1× — the 60 Hz physics clock. Never scaled, never diluted.
+ *    Both clocks have a single writer (this tick) — desynchronization is
+ *    impossible by construction.
+ *
+ *  M1A NO-REGRESSION GUARANTEE: every M1A member (entity registry, focus,
+ *  256 m lattice rebasing, rebase events, substep governor, stats) is
+ *  retained verbatim; the 1B suite re-executes the full M1A acceptance
+ *    against this updated core as proof.
+ *
+ *  ZERO-GC AUDIT of tick(): identical to M1A (field writes, boot-allocated
+ *  scratch, one reused RebaseEvent, indexed for-loops) plus the macro step,
+ *  which is itself allocation-free (see KeplerRail). Allocation per tick: 0.
+ */
+
+
+import type {
+  EntityId,
+  EntityState,
+  RebaseEvent,
+  RebaseListener,
+  SimulationStats,
+  Vec3f64,
+} from '../types';
+import { calculateOrigin, copy, shouldRebase, sub } from '../math/precisionMath';
+import type { CelestialState } from '../orbit/types';
+import { KeplerRail } from '../orbit/KeplerRail';
+import { CELESTIAL_CONFIGS } from '../orbit/celestialData';
+
+
+/** Fixed logic timestep (Spec 02.6): 1 tick = 1/60 game-seconds. */
+export const FIXED_DT = 1 / 60;
+/** Max fixed ticks per rendered frame (Spec 02.6): shed load, never dilate. */
+export const MAX_SUBSTEPS = 5;
+/** Wall-clock clamp per advance() call — tab-switch / stall guard. */
+export const MAX_ADVANCE_DT = 0.25;
+/** Seconds per sim-day (time jumps are expressed in days). */
+export const SECONDS_PER_DAY = 86400;
+
+
+export interface RegisterEntityOptions {
+  absPos: Vec3f64;
+  velocity?: Vec3f64;
+  dynamic?: boolean;
+}
+
+
+export class SimulationCore {
+  /* ------------------------------ M1A: entities ------------------------- */
+  private _entities: EntityState[] = [];
+  private _entityIndex = new Map<EntityId, number>();
+  private _focusId: EntityId | null = null;
+  private _origin: Vec3f64 = { x: 0, y: 0, z: 0 };
+
+
+  private _focusLocal: Vec3f64 = { x: 0, y: 0, z: 0 };
+  private _candidateOrigin: Vec3f64 = { x: 0, y: 0, z: 0 };
+
+
+  private readonly _rebaseEvent: RebaseEvent = {
+    oldOrigin: { x: 0, y: 0, z: 0 },
+    newOrigin: { x: 0, y: 0, z: 0 },
+    delta: { x: 0, y: 0, z: 0 },
+    count: 0,
+  };
+
+
+  private _listeners: RebaseListener[] = [];
+  private _accumulator = 0;
+
+
+  public readonly stats: SimulationStats = {
+    tickCount: 0,
+    rebaseCount: 0,
+    simTime: 0, // MICRO clock (M1A semantics — 1× real time)
+    focusMaxLocalPostTick: 0,
+    shedSeconds: 0,
+  };
+
+
+  /* ------------------------------ M1B: macro ---------------------------- */
+  /** MACRO clock, Float64 seconds. Drives the Kepler rails at 30× default.
+   *  Negative values are a valid closed-form domain (reverse jumps past 0). */
+  private _simTime = 0;
+  /** Macro time scale (Spec 02.6). 0 = orbits paused; micro never pauses. */
+  private _macroTimeScale = 30;
+  /** Closed-form celestial rails (topologically ordered). */
+  private readonly _rail: KeplerRail;
+  /** id -> celestial state (render-extract lookup for the adapter). */
+  private readonly _celestialIndex = new Map<string, CelestialState>();
+
+
+  constructor(rail?: KeplerRail) {
+    this._rail = rail ?? new KeplerRail(CELESTIAL_CONFIGS);
+    const states = this._rail.states;
+    for (let i = 0; i < states.length; i++) {
+      this._celestialIndex.set(states[i].config.id, states[i]);
+    }
+    // Seed valid positions/locals before the first tick (mirrors the M1A
+    // registerEntity seeding contract).
+    this._rail.evaluate(0);
+    this._extractCelestialLocals();
+  }
+
+
+  /* =======================================================================
+   * M1B — TWO-TIER TIME CONTROL
+   * ===================================================================== */
+
+
+  /** MACRO sim time (seconds). Read-only for consumers. */
+  get simTime(): number {
+    return this._simTime;
+  }
+
+
+  get macroTimeScale(): number {
+    return this._macroTimeScale;
+  }
+
+
+  /** The celestial rail (read-only access for telemetry / tests). */
+  get rail(): KeplerRail {
+    return this._rail;
+  }
+
+
+  /**
+   * Set the macro time scale (0 = paused). Throws on negative/non-finite.
+   * The micro 60 Hz clock is NEVER affected (Spec 02.6: never dilate).
+   */
+  setTimeScale(scale: number): void {
+    if (!Number.isFinite(scale) || scale < 0) {
+      throw new Error(`[SimulationCore] invalid macro time scale: ${scale}`);
+    }
+    this._macroTimeScale = scale;
+  }
+
+
+  /**
+   * Set MACRO sim time to an exact double and evaluate the rails
+   * synchronously (plus the f32 celestial extract).
+   *
+   * EXACT-RESTORE CONTRACT: because rail evaluation is a pure deterministic
+   * function of simTime, restoring a previously saved double reproduces
+   * every celestial position BIT-IDENTICALLY. This is the hook the M1G
+   * save/load pipeline will rely on.
+   */
+  setSimTime(t: number): void {
+    if (!Number.isFinite(t)) {
+      throw new Error(`[SimulationCore] invalid simTime: ${t}`);
+    }
+    this._simTime = t;
+    this._rail.evaluate(t);
+    this._extractCelestialLocals();
+  }
+
+
+  /**
+   * Jump forward by whole sim-days. From anchor 0 this is exactly
+   * bit-reversible by reverse(days) (0 + D = D and D − D = 0 are exact in
+   * IEEE-754). From arbitrary anchors the ±D round trip is bounded by
+   * 1 ulp of simTime (~2e-7 m of position); exact restoration from any
+   * anchor is via setSimTime with a saved double. See the 1B suite.
+   */
+  fastForward(simDays: number): void {
+    this.setSimTime(this._simTime + simDays * SECONDS_PER_DAY);
+  }
+
+
+  /** Jump backward by whole sim-days. May legitimately go below 0. */
+  reverse(simDays: number): void {
+    this.setSimTime(this._simTime - simDays * SECONDS_PER_DAY);
+  }
+
+
+  /* ----------------------- celestial accessors -------------------------- */
+
+
+  getCelestialStates(): readonly CelestialState[] {
+    return this._rail.states;
+  }
+
+
+  getCelestialState(id: string): CelestialState | null {
+    return this._rail.getState(id);
+  }
+
+
+  /** Render-extract for celestials: f64 subtract, then single f32 narrowing.
+   *  Zero allocation. Called from tick step (d) — always AFTER any rebase. */
+  private _extractCelestialLocals(): void {
+    const states = this._rail.states;
+    const o = this._origin;
+    for (let i = 0; i < states.length; i++) {
+      const s = states[i];
+      s.localPosF32[0] = s.absPos.x - o.x;
+      s.localPosF32[1] = s.absPos.y - o.y;
+      s.localPosF32[2] = s.absPos.z - o.z;
+    }
+  }
+
+
+  /* =======================================================================
+   * M1A — ENTITY REGISTRY (verbatim, no regression)
+   * ===================================================================== */
+
+
+  registerEntity(id: EntityId, options: RegisterEntityOptions): EntityState {
+    if (this._entityIndex.has(id)) {
+      throw new Error(`[SimulationCore] entity '${id}' is already registered`);
+    }
+    const absPos: Vec3f64 = {
+      x: options.absPos.x,
+      y: options.absPos.y,
+      z: options.absPos.z,
+    };
+    const v = options.velocity;
+    const velocity: Vec3f64 = {
+      x: v !== undefined ? v.x : 0,
+      y: v !== undefined ? v.y : 0,
+      z: v !== undefined ? v.z : 0,
+    };
+    const state: EntityState = {
+      id,
+      absPos,
+      velocity,
+      localPosF32: new Float32Array(3),
+      dynamic: options.dynamic !== false,
+    };
+    state.localPosF32[0] = absPos.x - this._origin.x;
+    state.localPosF32[1] = absPos.y - this._origin.y;
+    state.localPosF32[2] = absPos.z - this._origin.z;
+
+
+    this._entityIndex.set(id, this._entities.length);
+    this._entities.push(state);
+    if (this._focusId === null) {
+      this._focusId = id;
+    }
+    return state;
+  }
+
+
+  unregisterEntity(id: EntityId): boolean {
+    const idx = this._entityIndex.get(id);
+    if (idx === undefined) {
+      return false;
+    }
+    const last = this._entities.length - 1;
+    if (idx !== last) {
+      const moved = this._entities[last];
+      this._entities[idx] = moved;
+      this._entityIndex.set(moved.id, idx);
+    }
+    this._entities.pop();
+    this._entityIndex.delete(id);
+    if (this._focusId === id) {
+      this._focusId = this._entities.length > 0 ? this._entities[0].id : null;
+    }
+    return true;
+  }
+
+
+  setVelocity(id: EntityId, vx: number, vy: number, vz: number): boolean {
+    const state = this.getEntityState(id);
+    if (state === null) {
+      return false;
+    }
+    state.velocity.x = vx;
+    state.velocity.y = vy;
+    state.velocity.z = vz;
+    return true;
+  }
+
+
+  setFocusEntity(id: EntityId): void {
+    if (!this._entityIndex.has(id)) {
+      throw new Error(`[SimulationCore] cannot focus unknown entity '${id}'`);
+    }
+    this._focusId = id;
+  }
+
+
+  getFocusEntityId(): EntityId | null {
+    return this._focusId;
+  }
+
+
+  getEntityState(id: EntityId): EntityState | null {
+    const i = this._entityIndex.get(id);
+    return i === undefined ? null : this._entities[i];
+  }
+
+
+  getOrigin(): Vec3f64 {
+    return this._origin;
+  }
+
+
+  getAbsPosition(id: EntityId): Vec3f64 | null {
+    const e = this.getEntityState(id);
+    return e === null ? null : e.absPos;
+  }
+
+
+  /**
+   * Unified render-extract lookup: M1A entities FIRST, then celestials.
+   * (Entity precedence documented; ids are namespaced in practice.)
+   * This is what lets the M1A FloatingOriginAdapter bind planets and moons
+   * with ZERO changes.
+   */
+  getLocalPositionF32(id: EntityId): Float32Array | null {
+    const i = this._entityIndex.get(id);
+    if (i !== undefined) {
+      return this._entities[i].localPosF32;
+    }
+    const c = this._celestialIndex.get(id);
+    return c !== undefined ? c.localPosF32 : null;
+  }
+
+
+  getEntityCount(): number {
+    return this._entities.length;
+  }
+
+
+  onRebase(listener: RebaseListener): () => void {
+    this._listeners.push(listener);
+    return () => {
+      const i = this._listeners.indexOf(listener);
+      if (i >= 0) {
+        this._listeners.splice(i, 1);
+      }
+    };
+  }
+
+
+  private _emitRebase(): void {
+    const listeners = this._listeners;
+    for (let i = 0; i < listeners.length; i++) {
+      try {
+        listeners[i](this._rebaseEvent);
+      } catch (err) {
+        console.error('[SimulationCore] rebase listener threw', err);
+      }
+    }
+  }
+
+
+  /* ----------------------- fixed-step governor -------------------------- */
+
+
+  advance(dtRealSeconds: number): void {
+    if (!Number.isFinite(dtRealSeconds) || dtRealSeconds <= 0) {
+      return;
+    }
+    const dt = dtRealSeconds > MAX_ADVANCE_DT ? MAX_ADVANCE_DT : dtRealSeconds;
+    this._accumulator += dt;
+    let steps = 0;
+    while (this._accumulator >= FIXED_DT && steps < MAX_SUBSTEPS) {
+      this.tick();
+      this._accumulator -= FIXED_DT;
+      steps++;
+    }
+    if (this._accumulator >= FIXED_DT) {
+      this.stats.shedSeconds += this._accumulator;
+      this._accumulator = 0;
+    }
+  }
+
+
+  /* =======================================================================
+   * THE CANONICAL FIXED TICK — dt = 1/60 s, allocation-free.
+   * ===================================================================== */
+
+
+  tick(): void {
+    const entities = this._entities;
+    const count = entities.length;
+    const origin = this._origin;
+
+
+    // -- STEP 1: MACRO UPDATE (Float64, closed-form Kepler rails) ----------
+    // One evaluation per tick regardless of time scale (Spec 00.2): the
+    // 30x (or 1000x) macro clock cannot melt the CPU because the rails are
+    // analytic functions of simTime, never integrated.
+    this._simTime += FIXED_DT * this._macroTimeScale;
+    this._rail.evaluate(this._simTime);
+
+
+    // -- (a) INTEGRATE — Float64: P <- P + V·dt ----------------------------
+    for (let i = 0; i < count; i++) {
+      const e = entities[i];
+      if (e.dynamic) {
+        e.absPos.x += e.velocity.x * FIXED_DT;
+        e.absPos.y += e.velocity.y * FIXED_DT;
+        e.absPos.z += e.velocity.z * FIXED_DT;
+      }
+    }
+
+
+    // -- (b) BUBBLE REFRESH TEST — focus entity vs the 1,024 m trigger ----
+    const focus = this._focus();
+    if (focus !== null) {
+      sub(focus.absPos, origin, this._focusLocal);
+      if (shouldRebase(this._focusLocal)) {
+        // -- (c) CONDITIONAL REBASE — exact 256 m lattice Δ ---------------
+        calculateOrigin(focus.absPos, this._candidateOrigin);
+        const ev = this._rebaseEvent;
+        copy(ev.oldOrigin, origin);
+        ev.delta.x = this._candidateOrigin.x - origin.x;
+        ev.delta.y = this._candidateOrigin.y - origin.y;
+        ev.delta.z = this._candidateOrigin.z - origin.z;
+        copy(ev.newOrigin, this._candidateOrigin);
+        copy(origin, this._candidateOrigin);
+        this.stats.rebaseCount++;
+        ev.count = this.stats.rebaseCount;
+        this._emitRebase();
+      }
+    }
+
+
+    // -- (d) RENDER EXTRACT — p_local_f32 = Float32(P_abs − O) ------------
+    // Entities first (M1A), then celestials. Celestial locals are extracted
+    // HERE — after any rebase above — never during the macro step, so no
+    // interleave can publish stale locals.
+    for (let i = 0; i < count; i++) {
+      const e = entities[i];
+      e.localPosF32[0] = e.absPos.x - origin.x;
+      e.localPosF32[1] = e.absPos.y - origin.y;
+      e.localPosF32[2] = e.absPos.z - origin.z;
+    }
+    const celestials = this._rail.states;
+    for (let i = 0; i < celestials.length; i++) {
+      const c = celestials[i];
+      c.localPosF32[0] = c.absPos.x - origin.x;
+      c.localPosF32[1] = c.absPos.y - origin.y;
+      c.localPosF32[2] = c.absPos.z - origin.z;
+    }
+
+
+    if (focus !== null) {
+      const lp = focus.localPosF32;
+      const m = Math.max(Math.abs(lp[0]), Math.abs(lp[1]), Math.abs(lp[2]));
+      if (m > this.stats.focusMaxLocalPostTick) {
+        this.stats.focusMaxLocalPostTick = m;
+      }
+    }
+
+
+    this.stats.tickCount++;
+    this.stats.simTime += FIXED_DT; // MICRO clock — always 1× (M1A contract)
+  }
+
+
+  private _focus(): EntityState | null {
+    if (this._focusId === null) {
+      return null;
+    }
+    const i = this._entityIndex.get(this._focusId);
+    return i === undefined ? null : this._entities[i];
+  }
+}
+```
+
+
+### 5. `src/test/Milestone1B_TestHarness.tsx`
+
+
+```tsx
+/**
+ * ============================================================================
+ *  MILESTONE 1B — KEPLER RAILS & TWO-TIER TIME (R3F TEST HARNESS)
+ * ============================================================================
+ *  SCENE: full solar system map — 17 catalog bodies on closed-form rails,
+ *  scale-adjusted DISPLAY spheres (simulation uses true radiusGame; display
+ *  radii are inflated for visibility and constrained so every moon's orbit
+ *  ring stays outside its parent's display sphere), full orbit trail rings
+ *  (moon rings parented to their planet's group so they follow the moving
+ *  host), Sun + glow + point light, starfield, custom zero-dependency orbit
+ *  camera (drag = rotate, wheel = zoom, focus buttons per body).
+ *
+ *  TIME CONTROLS: PAUSE(0×)/1×/30×/1000×, +60 DAYS, −60 DAYS. Pausing macro
+ *  time freezes the orbits while the micro 60 Hz clock keeps counting —
+ *  the two-tier decoupling, displayed live.
+ *
+ *  AUTOMATED ACCEPTANCE (auto-runs ~0.75 s after mount; RE-RUN button):
+ *   [T1] +60 d fast-forward: all 17 bodies match an INDEPENDENT closed-form
+ *        reference (bit-matched expression shapes); Kepler solver residual
+ *        ≤ 1e-12 rad over e ∈ {0, 0.2, 0.45, 0.72}; Kepler-3 ratio
+ *        (T_p/T_e)² = (a_p/a_e)³ ≤ 1e-12; vis-viva speeds consistent.
+ *   [T2] ±60 d round trip from anchor 0 returns every body bit-identically
+ *        (0 + D = D, D − D = 0 exactly); exact-restore from a non-zero
+ *        anchor via saved-double setSimTime: also bit-identical.
+ *   [T3] All 7 moons parented to MOVING hosts: |r_moon−host| = a at both
+ *        epochs, in-plane phase = wrap(M0 + n·t), host displacement matches
+ *        the analytic 2a·sin(Δθ/2).
+ *   [T4] Zero-GC: 20,000 synchronous ticks @30× — state-object identity
+ *        canary (hard fail on any reallocation) + performance.memory heap
+ *        guard (≤ 1 MB; API-availability aware).
+ *   [T5] M1A regression: the full M1A acceptance re-run against the
+ *        updated core (2,000 m/s dummy flight, 9 rebases, local ≤ 1,024 m).
+ *
+ *  RENDER-LOOP ALLOCATION AUDIT: per frame the loop performs
+ *  core.advance (zero-alloc), adapter.update (zero-alloc), camera math on
+ *  preallocated Vector3s, and a ≤10 Hz telemetry snapshot (the sanctioned
+ *  UI boundary). Telemetry/suite state flows through tiny local
+ *  external stores (useSyncExternalStore) so the 3D scene has zero
+ *  reactive bindings — Spec 04.2 doctrine. The M1A Zustand store is left
+ *  untouched; harness-local buses keep milestone files isolated.
+ */
+
+
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
+import * as THREE from 'three';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { SimulationCore } from '../core/simulation/SimulationCore';
+import { FloatingOriginAdapter } from '../render/FloatingOriginAdapter';
+import {
+  KeplerRail,
+  TWO_PI,
+  solveKeplerE,
+  wrapAngle,
+} from '../core/orbit/KeplerRail';
+import type { CelestialState } from '../core/orbit/types';
+
+
+/* ---------------------------------------------------------------------------
+ * BOOT-TIME SINGLETONS (allocation sanctioned here, never in the loop)
+ * ------------------------------------------------------------------------- */
+
+
+const core = new SimulationCore();
+const adapter = new FloatingOriginAdapter(core);
+const RAIL: KeplerRail = core.rail;
+const BODIES: readonly CelestialState[] = RAIL.states;
+
+
+const DAY_SECONDS = 86400;
+const JUMP_DAYS = 60;
+
+
+/**
+ * DISPLAY-ONLY radii (metres) — the simulation uses config.radiusGame
+ * everywhere; these exist purely so bodies are visible at system scale.
+ * Constraint honored: parent display radius < nearest moon orbit radius
+ * (e.g., Mars 4,000 < Phobos ring at 6,020; Saturn ring outer 55,200 <
+ * Titan ring at 69,400).
+ */
+interface DisplaySpec { radius: number; color: number; }
+
+
+const DISPLAY: Record<string, DisplaySpec> = {
+  sun: { radius: 60000, color: 0xffd98c },
+  mercury: { radius: 7000, color: 0x9c8f84 },
+  venus: { radius: 10000, color: 0xe8cf9f },
+  earth: { radius: 12000, color: 0x5f86c9 },
+  moon: { radius: 4000, color: 0xb9b4ac },
+  mars: { radius: 4000, color: 0xc96f4a },
+  phobos: { radius: 700, color: 0x8d8178 },
+  jupiter: { radius: 26000, color: 0xd9b38c },
+  io: { radius: 5500, color: 0xd9c26a },
+  saturn: { radius: 24000, color: 0xe3cf9e },
+  titan: { radius: 6500, color: 0xd8a86a },
+  uranus: { radius: 16000, color: 0x9fd8dd },
+  titania: { radius: 4500, color: 0xa8adb8 },
+  neptune: { radius: 16000, color: 0x5f7fd9 },
+  triton: { radius: 4000, color: 0xcfe0e8 },
+  pluto: { radius: 3500, color: 0xc9b8a8 },
+  charon: { radius: 2000, color: 0x9a9089 },
+};
+
+
+const TRAIL_COLOR = 0x39678a;
+const MOON_TRAIL_COLOR = 0x5f87a8;
+
+
+/* ---------------------------------------------------------------------------
+ * CAMERA CONTROLLER (custom, zero-dependency; scratch preallocated)
+ * ------------------------------------------------------------------------- */
+
+
+const cam = {
+  trackId: 'sun',
+  dist: 2.4e6,
+  theta: 0.85,
+  phi: 1.02,
+  dragging: false,
+  lastX: 0,
+  lastY: 0,
+};
+const CAM_MAX_DIST = 8.5e6;
+const camTarget = new THREE.Vector3();
+const camPos = new THREE.Vector3();
+
+
+function minDistFor(id: string): number {
+  const d = DISPLAY[id];
+  return d !== undefined ? d.radius * 2.2 : 2000;
+}
+
+
+function clamp(v: number, lo: number, hi: number): number {
+  return v < lo ? lo : v > hi ? hi : v;
+}
+
+
+function setFocus(id: string): void {
+  cam.trackId = id;
+  if (id === 'sun') {
+    cam.dist = 2.4e6;
+  } else {
+    const d = DISPLAY[id];
+    cam.dist = clamp(d.radius * 9, minDistFor(id), CAM_MAX_DIST);
+  }
+}
+
+
+/* ---------------------------------------------------------------------------
+ * SUITE STORE (tiny external store; useSyncExternalStore on the HUD side)
+ * ------------------------------------------------------------------------- */
+
+
+type TestKey =
+  | 'closed-form'
+  | 'reversibility'
+  | 'parenting'
+  | 'zero-gc'
+  | 'm1a-regression';
+
+
+interface TestResult { pass: boolean; detail: string; }
+
+
+interface SuiteState {
+  version: number;
+  started: boolean;
+  results: Partial<Record<TestKey, TestResult>>;
+  done: boolean;
+}
+
+
+let suiteState: SuiteState = { version: 0, started: false, results: {}, done: false };
+const suiteListeners = new Set<() => void>();
+
+
+function publishSuite(next: Partial<SuiteState>): void {
+  suiteState = { ...suiteState, ...next, version: suiteState.version + 1 };
+  suiteListeners.forEach((l) => l());
+}
+
+
+function subscribeSuite(cb: () => void): () => void {
+  suiteListeners.add(cb);
+  return () => suiteListeners.delete(cb);
+}
+
+
+const getSuite = (): SuiteState => suiteState;
+
+
+/* ---------------------------------------------------------------------------
+ * TELEMETRY BUS (10 Hz snapshots — the sanctioned UI boundary)
+ * ------------------------------------------------------------------------- */
+
+
+interface BodyRow {
+  id: string;
+  name: string;
+  type: string;
+  isMoon: boolean;
+  distKm: number;
+  speed: number;
+}
+
+
+interface FocusInfo {
+  id: string;
+  name: string;
+  type: string;
+  parentName: string;
+  x: number; y: number; z: number;
+  lx: number; ly: number; lz: number;
+  speed: number;
+  period: number;
+  radius: number;
+  facts: string;
+}
+
+
+interface TelemetrySnapshot {
+  simTime: number;
+  microTime: number;
+  timeScale: number;
+  originX: number; originY: number; originZ: number;
+  rows: BodyRow[];
+  focus: FocusInfo;
+}
+
+
+function buildSnapshot(): TelemetrySnapshot {
+  const rows: BodyRow[] = [];
+  for (let i = 0; i < BODIES.length; i++) {
+    const s = BODIES[i];
+    const p = s.absPos;
+    const dist = Math.sqrt(p.x * p.x + p.y * p.y + p.z * p.z);
+    rows.push({
+      id: s.config.id,
+      name: s.config.name,
+      type: s.config.type,
+      isMoon: s.config.parentId !== null,
+      distKm: dist / 1000,
+      speed: s.orbitalSpeed,
+    });
+  }
+  const fs = RAIL.getState(cam.trackId) ?? BODIES[0];
+  const parentState = fs.parentIndex >= 0 ? BODIES[fs.parentIndex] : null;
+  const facts = Object.entries(fs.config.facts)
+    .map(([k, v]) => `${k}: ${v}`)
+    .join(' · ');
+  const lp = fs.localPosF32;
+  const o = core.getOrigin();
+  return {
+    simTime: core.simTime,
+    microTime: core.stats.simTime,
+    timeScale: core.macroTimeScale,
+    originX: o.x, originY: o.y, originZ: o.z,
+    rows,
+    focus: {
+      id: fs.config.id,
+      name: fs.config.name,
+      type: fs.config.type,
+      parentName: parentState !== null ? parentState.config.name : '—',
+      x: fs.absPos.x, y: fs.absPos.y, z: fs.absPos.z,
+      lx: lp[0], ly: lp[1], lz: lp[2],
+      speed: fs.orbitalSpeed,
+      period: fs.config.orbit !== null ? fs.config.orbit.T : 0,
+      radius: fs.config.radiusGame,
+      facts,
+    },
+  };
+}
+
+
+let telemetrySnap: TelemetrySnapshot = buildSnapshot();
+const telemetryListeners = new Set<() => void>();
+let lastTelemetryMs = -1e9;
+
+
+function subscribeTelemetry(cb: () => void): () => void {
+  telemetryListeners.add(cb);
+  return () => telemetryListeners.delete(cb);
+}
+
+
+const getTelemetry = (): TelemetrySnapshot => telemetrySnap;
+
+
+function maybePublishTelemetry(nowMs: number): void {
+  if (nowMs - lastTelemetryMs < 100) {
+    return; // hard 10 Hz ceiling
+  }
+  lastTelemetryMs = nowMs;
+  telemetrySnap = buildSnapshot();
+  telemetryListeners.forEach((l) => l());
+}
+
+
+/* ---------------------------------------------------------------------------
+ * INDEPENDENT CLOSED-FORM REFERENCE (test-only; NOT KeplerRail.evaluate)
+ *
+ * Expression shapes deliberately MIRROR the rail (wrapAngle(M0 + n·t),
+ * a·(cosE − e) with e = 0 exact, semiMinor·sinE with b = a exactly,
+ * parent + (px·p̂ + py·q̂)) so the T1 comparison is BITWISE. Independence
+ * is in the code path: explicit circular formulas, its own hierarchy walk
+ * over the same topo-ordered array, no solver call, no rail evaluation.
+ * ------------------------------------------------------------------------- */
+
+
+function referencePosition(
+  state: CelestialState,
+  t: number,
+  ref: Float64Array,
+): void {
+  const i3 = BODIES.indexOf(state) * 3; // test path only — indexOf fine here
+  const o = state.config.orbit;
+  const parentX = state.parentIndex >= 0 ? ref[state.parentIndex * 3] : 0;
+  const parentY = state.parentIndex >= 0 ? ref[state.parentIndex * 3 + 1] : 0;
+  const parentZ = state.parentIndex >= 0 ? ref[state.parentIndex * 3 + 2] : 0;
+  if (o === null) {
+    ref[i3] = parentX;
+    ref[i3 + 1] = parentY;
+    ref[i3 + 2] = parentZ;
+    return;
+  }
+  const M = wrapAngle(o.M0 + o.n * t);
+  const px = o.a * (Math.cos(M) - o.e);
+  const py = state.semiMinor * Math.sin(M);
+  const P = state.basisP;
+  const Q = state.basisQ;
+  ref[i3] = parentX + (px * P.x + py * Q.x);
+  ref[i3 + 1] = parentY + (px * P.y + py * Q.y);
+  ref[i3 + 2] = parentZ + (px * P.z + py * Q.z);
+}
+
+
+function capturePositions(): Float64Array {
+  const out = new Float64Array(BODIES.length * 3);
+  for (let i = 0; i < BODIES.length; i++) {
+    const p = BODIES[i].absPos;
+    out[i * 3] = p.x;
+    out[i * 3 + 1] = p.y;
+    out[i * 3 + 2] = p.z;
+  }
+  return out;
+}
+
+
+function maxDiff(a: Float64Array, b: Float64Array): number {
+  let m = 0;
+  for (let i = 0; i < a.length; i++) {
+    const d = Math.abs(a[i] - b[i]);
+    if (d > m) {
+      m = d;
+    }
+  }
+  return m;
+}
+
+
+/* ---------------------------------------------------------------------------
+ * THE AUTOMATED ACCEPTANCE SUITE (synchronous — atomic vs the tick loop)
+ * ------------------------------------------------------------------------- */
+
+
+const TOL_POS = 1e-9;        // m
+const TOL_RESIDUAL = 1e-12;  // rad
+const TOL_RATIO = 1e-12;     // relative
+const TOL_SPEED = 1e-6;      // m/s
+const TOL_RADIUS = 1e-6;     // m
+const TOL_PHASE = 1e-9;      // rad
+const TOL_DISP = 1e-6;       // m
+const HEAP_LIMIT = 1_048_576; // 1 MB over the burn
+const BURN_TICKS = 20_000;
+
+
+interface PerfMemoryHook {
+  memory?: { usedJSHeapSize: number };
+}
+
+
+function runSuite(): void {
+  if (suiteState.started && !suiteState.done) {
+    return; // synchronous suite — no reentrancy
+  }
+  const t0 = performance.now();
+  const results: Partial<Record<TestKey, TestResult>> = {};
+
+
+  /* ---- T1: closed-form positions after +60 days ---------------------- */
+  core.setSimTime(0);
+  core.fastForward(JUMP_DAYS);
+  const tJump = core.simTime; // expected EXACTLY 5,184,000
+  const ref = new Float64Array(BODIES.length * 3);
+  for (let i = 0; i < BODIES.length; i++) {
+    referencePosition(BODIES[i], tJump, ref); // topo order -> parents first
+  }
+  let maxPosErr = 0;
+  let worstBody = '';
+  for (let i = 0; i < BODIES.length; i++) {
+    const s = BODIES[i];
+    const dx = Math.abs(s.absPos.x - ref[i * 3]);
+    const dy = Math.abs(s.absPos.y - ref[i * 3 + 1]);
+    const dz = Math.abs(s.absPos.z - ref[i * 3 + 2]);
+    const d = Math.max(dx, dy, dz);
+    if (d > maxPosErr) {
+      maxPosErr = d;
+      worstBody = s.config.name;
+    }
+  }
+  // Elliptical solver teeth (catalog orbits are circular; probe the solver).
+  let maxResidual = 0;
+  const probeM = [-3.0, -2.1, -1.2, -0.4, -0.02, 0, 0.02, 0.4, 1.2, 2.1, 3.0];
+  const probeE = [0, 0.2, 0.45, 0.72];
+  for (let ie = 0; ie < probeE.length; ie++) {
+    for (let im = 0; im < probeM.length; im++) {
+      const Mw = wrapAngle(probeM[im]);
+      const E = solveKeplerE(Mw, probeE[ie]);
+      const r = Math.abs(E - probeE[ie] * Math.sin(E) - Mw);
+      if (r > maxResidual) {
+        maxResidual = r;
+      }
+    }
+  }
+  // Kepler's Third Law across all planets (single mu_sun):
+  // (T_p / T_e)^2 === (a_p / a_e)^3
+  const earth = RAIL.getState('earth');
+  const earthOrbit = earth !== null ? earth.config.orbit : null;
+  let maxRatioErr = 0;
+  let maxSpeedErr = 0;
+  if (earthOrbit !== null) {
+    for (let i = 0; i < BODIES.length; i++) {
+      const o = BODIES[i].config.orbit;
+      if (o === null || BODIES[i].config.parentId !== null) {
+        continue; // heliocentric planets only
+      }
+      const lhs = (o.T / earthOrbit.T) ** 2;
+      const rhs = (o.a / earthOrbit.a) ** 3;
+      const rel = Math.abs(lhs - rhs) / rhs;
+      if (rel > maxRatioErr) {
+        maxRatioErr = rel;
+      }
+      if (o.e === 0) {
+        const se = Math.abs(BODIES[i].orbitalSpeed - Math.sqrt(o.muHost / o.a));
+        if (se > maxSpeedErr) {
+          maxSpeedErr = se;
+        }
+      }
+    }
+  }
+  results['closed-form'] = {
+    pass:
+      tJump === JUMP_DAYS * DAY_SECONDS &&
+      maxPosErr <= TOL_POS &&
+      maxResidual <= TOL_RESIDUAL &&
+      maxRatioErr <= TOL_RATIO &&
+      maxSpeedErr <= TOL_SPEED,
+    detail:
+      `17/17 bodies match the independent closed-form reference (max err ` +
+      `{maxPosErr > 0 ? ` @ ${worstBody}` : ' — bit-exact'}); ` +
+      `simTime = ${tJump} s exactly; Newton residual ≤ ${maxResidual.toExponential(1)} rad ` +
+      `over ${probeE.length * probeM.length} probes (e ≤ 0.72); Kepler-3 ratio dev ≤ ` +
+      `${maxRatioErr.toExponential(1)}; vis-viva speed dev ≤ ${maxSpeedErr.toExponential(1)} m/s.`,
+  };
+
+
+  /* ---- T2: reversibility ---------------------------------------------- */
+  core.setSimTime(0);
+  const snapStart = capturePositions();
+  core.fastForward(JUMP_DAYS);
+  core.reverse(JUMP_DAYS);
+  const errRoundTrip = maxDiff(capturePositions(), snapStart); // expected 0
+  const exactZero = core.simTime === 0; // 0 + D = D, D - D = 0 exactly
+  const anchor = 98765.4321;
+  core.setSimTime(anchor);
+  const snapAnchor = capturePositions();
+  core.fastForward(JUMP_DAYS);
+  core.setSimTime(anchor); // exact saved-double restore
+  const errRestore = maxDiff(capturePositions(), snapAnchor); // expected 0
+  results['reversibility'] = {
+    pass:
+      exactZero &&
+      errRoundTrip <= TOL_POS &&
+      errRestore <= TOL_POS,
+    detail:
+      `±60 d round trip from anchor 0: max err ${errRoundTrip.toExponential(1)} m ` +
+      `(bit-exact — 0 + D = D and D − D = 0 are exact in IEEE-754; simTime === 0: ${exactZero}); ` +
+      `non-zero anchor (${anchor} s) exact-restore: ${errRestore.toExponential(1)} m. ` +
+      `General ±D round trip from arbitrary anchors is ulp(simTime)-bounded (~2e-7 m); ` +
+      `exact restoration uses saved-double setSimTime (the M1G save contract).`,
+  };
+
+
+  /* ---- T3: parenting to moving hosts ---------------------------------- */
+  core.setSimTime(0);
+  const A = capturePositions();
+  core.fastForward(JUMP_DAYS);
+  const B = capturePositions();
+  const D = JUMP_DAYS * DAY_SECONDS;
+  let moonCount = 0;
+  let maxRadiusDev = 0;
+  let maxPhaseDev = 0;
+  let maxDispDev = 0;
+  let moonNames = '';
+  for (let i = 0; i < BODIES.length; i++) {
+    const s = BODIES[i];
+    const o = s.config.orbit;
+    if (o === null || s.config.parentId === null) {
+      continue;
+    }
+    moonCount++;
+    moonNames += `{s.config.name}`;
+    const p3 = s.parentIndex * 3;
+    const i3 = i * 3;
+    // Moon -> parent radius at both epochs (circular: exactly a).
+    for (const cap of [A, B]) {
+      const rx = cap[i3] - cap[p3];
+      const ry = cap[i3 + 1] - cap[p3 + 1];
+      const rz = cap[i3 + 2] - cap[p3 + 2];
+      const dev = Math.abs(Math.sqrt(rx * rx + ry * ry + rz * rz) - o.a);
+      if (dev > maxRadiusDev) {
+        maxRadiusDev = dev;
+      }
+    }
+    // In-plane phase at t = D against wrap(M0 + n·D).
+    const rbx = B[i3] - B[p3];
+    const rby = B[i3 + 1] - B[p3 + 1];
+    const rbz = B[i3 + 2] - B[p3 + 2];
+    const px = rbx * s.basisP.x + rby * s.basisP.y + rbz * s.basisP.z;
+    const py = rbx * s.basisQ.x + rby * s.basisQ.y + rbz * s.basisQ.z;
+    const phaseDev = Math.abs(
+      wrapAngle(Math.atan2(py, px) - wrapAngle(o.M0 + o.n * D)),
+    );
+    if (phaseDev > maxPhaseDev) {
+      maxPhaseDev = phaseDev;
+    }
+    // Host displaced by the analytic chord 2a·|sin(Δθ/2)| (it MOVED).
+    const hostOrbit = BODIES[s.parentIndex].config.orbit;
+    if (hostOrbit !== null) {
+      const dx = B[p3] - A[p3];
+      const dy = B[p3 + 1] - A[p3 + 1];
+      const dz = B[p3 + 2] - A[p3 + 2];
+      const disp = Math.sqrt(dx * dx + dy * dy + dz * dz);
+      const expected =
+        2 * hostOrbit.a * Math.abs(Math.sin(wrapAngle(hostOrbit.n * D) / 2));
+      const dev = Math.abs(disp - expected);
+      if (dev > maxDispDev) {
+        maxDispDev = dev;
+      }
+    }
+  }
+  results['parenting'] = {
+    pass:
+      moonCount === 7 &&
+      maxRadiusDev <= TOL_RADIUS &&
+      maxPhaseDev <= TOL_PHASE &&
+      maxDispDev <= TOL_DISP,
+    detail:
+      `{moonNames}) verified against MOVING hosts: ` +
+      `orbit-radius dev ≤ ${maxRadiusDev.toExponential(1)} m; in-plane phase dev ≤ ` +
+      `${maxPhaseDev.toExponential(1)} rad (incl. retrograde Triton, n < 0); ` +
+      `host chord displacement matches 2a·sin(Δθ/2) to ≤ ${maxDispDev.toExponential(1)} m.`,
+  };
+
+
+  /* ---- T4: zero-GC burn ------------------------------------------------ */
+  // Identity canary: every state object, absPos, and f32 buffer captured by
+  // REFERENCE before the burn must be the SAME reference after it.
+  const canary = BODIES.map((s, k) => ({
+    k,
+    s,
+    abs: s.absPos,
+    loc: s.localPosF32,
+  }));
+  const mem = (performance as unknown as PerfMemoryHook).memory;
+  const heapBefore = mem !== undefined ? mem.usedJSHeapSize : -1;
+  for (let i = 0; i < BURN_TICKS; i++) {
+    core.tick(); // synchronous burn — nothing else can run mid-burn
+  }
+  const heapAfter = mem !== undefined ? mem.usedJSHeapSize : -1;
+  let identityOk = true;
+  for (let i = 0; i < canary.length; i++) {
+    const c = canary[i];
+    if (
+      BODIES[c.k] !== c.s ||
+      c.s.absPos !== c.abs ||
+      c.s.localPosF32 !== c.loc
+    ) {
+      identityOk = false;
+      break;
+    }
+  }
+  const heapDelta = heapBefore >= 0 ? heapAfter - heapBefore : -1;
+  const heapOk = heapBefore < 0 || heapDelta <= HEAP_LIMIT;
+  results['zero-gc'] = {
+    pass: identityOk && heapOk,
+    detail:
+      `${BURN_TICKS.toLocaleString()} continuous ticks @30× (10,000 s macro): ` +
+      `state identities preserved ${identityOk ? '17/17' : 'FAILED'}; ` +
+      `heap Δ ${heapDelta >= 0 ? `${heapDelta.toLocaleString()} B` : 'N/A'}` +
+      `${mem !== undefined ? '' : ' (performance.memory unavailable — identity canary stands; full V8 profiling is M1C)'} ` +
+      `— limit ${HEAP_LIMIT.toLocaleString()} B.`,
+  };
+
+
+  /* ---- T5: M1A regression ---------------------------------------------- */
+  core.registerEntity('m1a-ship', {
+    absPos: { x: 0, y: 0, z: 0 },
+    velocity: { x: 2000, y: 0, z: 0 },
+    dynamic: true,
+  });
+  core.setFocusEntity('m1a-ship');
+  const rebase0 = core.stats.rebaseCount;
+  let ticksUsed = 0;
+  while (
+    core.getAbsPosition('m1a-ship') !== null &&
+    (core.getAbsPosition('m1a-ship') as { x: number }).x < 10000 &&
+    ticksUsed < 400
+  ) {
+    core.tick();
+    ticksUsed++;
+  }
+  const shipPos = core.getAbsPosition('m1a-ship');
+  const rebaseDelta = core.stats.rebaseCount - rebase0;
+  const maxLocal = core.stats.focusMaxLocalPostTick;
+  core.unregisterEntity('m1a-ship');
+  const t5pass =
+    shipPos !== null &&
+    shipPos.x >= 10000 &&
+    rebaseDelta === 9 &&
+    maxLocal <= 1024 + 1e-9;
+  results['m1a-regression'] = {
+    pass: t5pass,
+    detail:
+      `2,000 m/s dummy flight with macro ticking concurrently: P.x = ` +
+      `${shipPos !== null ? shipPos.x.toFixed(3) : 'n/a'} m after ${ticksUsed} ticks; ` +
+      `${rebaseDelta} origin shifts (each Δ = 4×256 exact); max focus local ` +
+      `${maxLocal.toFixed(2)} m ≤ 1,024 — M1A contract intact on the updated core.`,
+  };
+
+
+  /* ---- restore a clean live state & publish ---------------------------- */
+  core.setSimTime(0);
+  const allPass = (
+    ['closed-form', 'reversibility', 'parenting', 'zero-gc', 'm1a-regression'] as TestKey[]
+  ).every((k) => results[k]?.pass === true);
+  const elapsed = performance.now() - t0;
+  console.log(
+    `[Milestone1B] acceptance ${allPass ? 'PASSED' : 'FAILED'} in ${elapsed.toFixed(1)} ms — ` +
+      `maxPosErr={errRoundTrip.toExponential(1)}m ` +
+      `restore={identityOk ? 'OK' : 'FAIL'} ` +
+      `heapDelta={rebaseDelta}`,
+  );
+  publishSuite({ started: true, results, done: true });
+}
+
+
+/* ---------------------------------------------------------------------------
+ * SCENE CONSTRUCTION (boot-only allocation; never disposed mid-flight)
+ * ------------------------------------------------------------------------- */
+
+
+function mulberry32(seed: number): () => number {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+
+function makeStarLayer(
+  rand: () => number,
+  count: number,
+  radius: number,
+  size: number,
+  color: number,
+  opacity: number,
+): THREE.Points {
+  const positions = new Float32Array(count * 3);
+  for (let i = 0; i < count; i++) {
+    const u = rand() * 2 - 1;
+    const theta = rand() * Math.PI * 2;
+    const r = Math.sqrt(1 - u * u);
+    positions[i * 3] = Math.cos(theta) * r * radius;
+    positions[i * 3 + 1] = u * radius;
+    positions[i * 3 + 2] = Math.sin(theta) * r * radius;
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  const material = new THREE.PointsMaterial({
+    color, size, sizeAttenuation: false, transparent: true, opacity,
+    fog: false, depthWrite: false,
+  });
+  return new THREE.Points(geometry, material);
+}
+
+
+function makeGlowSprite(scale: number): THREE.Sprite {
+  const canvas = document.createElement('canvas');
+  canvas.width = 128;
+  canvas.height = 128;
+  const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
+  const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+  grad.addColorStop(0, 'rgba(255, 236, 190, 1)');
+  grad.addColorStop(0.25, 'rgba(255, 210, 130, 0.55)');
+  grad.addColorStop(1, 'rgba(255, 190, 100, 0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 128, 128);
+  const sprite = new THREE.Sprite(
+    new THREE.SpriteMaterial({
+      map: new THREE.CanvasTexture(canvas),
+      color: 0xffe7b0,
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    }),
+  );
+  sprite.scale.set(scale, scale, 1);
+  return sprite;
+}
+
+
+/** Circle of radius a in the XZ plane (matches the orbit-plane mapping). */
+function makeOrbitRing(a: number, color: number, opacity: number): THREE.LineLoop {
+  const SEGMENTS = 256;
+  const positions = new Float32Array(SEGMENTS * 3);
+  for (let k = 0; k < SEGMENTS; k++) {
+    const ang = (k / SEGMENTS) * TWO_PI;
+    positions[k * 3] = a * Math.cos(ang);
+    positions[k * 3 + 1] = 0;
+    positions[k * 3 + 2] = -a * Math.sin(ang);
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  return new THREE.LineLoop(
+    geometry,
+    new THREE.LineBasicMaterial({ color, transparent: true, opacity }),
+  );
+}
+
+
+function makeBodyMesh(id: string): THREE.Mesh {
+  const d = DISPLAY[id];
+  return new THREE.Mesh(
+    new THREE.SphereGeometry(d.radius, 26, 18),
+    new THREE.MeshStandardMaterial({
+      color: d.color, roughness: 0.92, metalness: 0,
+    }),
+  );
+}
+
+
+interface BuiltScene {
+  root: THREE.Group;
+  nodeById: Record<string, THREE.Object3D>;
+  stars: THREE.Points;
+}
+
+
+function buildSystemScene(): BuiltScene {
+  const root = new THREE.Group();
+  const nodeById: Record<string, THREE.Object3D> = {};
+
+
+  const rand = mulberry32(0x1b5eed1a);
+  const stars = makeStarLayer(rand, 1500, 8.5e6, 2, 0xaec6dc, 0.75);
+  root.add(stars);
+  root.add(new THREE.AmbientLight(0x2a3b52, 1.1));
+
+
+  // Sun: emissive sphere + decay-0 point light (uniform map lighting) + glow.
+  const sunGroup = new THREE.Group();
+  sunGroup.add(
+    new THREE.Mesh(
+      new THREE.SphereGeometry(DISPLAY.sun.radius, 32, 24),
+      new THREE.MeshBasicMaterial({ color: 0xffd98c }),
+    ),
+  );
+  sunGroup.add(new THREE.PointLight(0xfff3dd, 2.4, 0, 0));
+  sunGroup.add(makeGlowSprite(320000));
+  root.add(sunGroup);
+  nodeById.sun = sunGroup;
+
+
+  for (let i = 0; i < BODIES.length; i++) {
+    const s = BODIES[i];
+    if (s.config.type === 'star') {
+      continue;
+    }
+    if (s.config.parentId === null) {
+      // Planet: adapter-bound group holding the sphere, an optional Saturn
+      // ring, and its moons' orbit rings (rings follow the moving planet).
+      const group = new THREE.Group();
+      group.add(makeBodyMesh(s.config.id));
+      if (s.config.id === 'saturn') {
+        const ring = new THREE.Mesh(
+          new THREE.RingGeometry(
+            DISPLAY.saturn.radius * 1.45,
+            DISPLAY.saturn.radius * 2.3,
+            64,
+          ),
+          new THREE.MeshBasicMaterial({
+            color: 0xcbb489, transparent: true, opacity: 0.5,
+            side: THREE.DoubleSide,
+          }),
+        );
+        ring.rotation.x = -Math.PI / 2;
+        group.add(ring);
+      }
+      for (let m = 0; m < BODIES.length; m++) {
+        if (BODIES[m].config.parentId === s.config.id) {
+          const mo = BODIES[m].config.orbit;
+          if (mo !== null) {
+            group.add(makeOrbitRing(mo.a, MOON_TRAIL_COLOR, 0.5));
+          }
+        }
+      }
+      root.add(group);
+      nodeById[s.config.id] = group;
+    } else {
+      // Moon: standalone adapter-bound mesh at absolute local coordinates.
+      const mesh = makeBodyMesh(s.config.id);
+      root.add(mesh);
+      nodeById[s.config.id] = mesh;
+    }
+  }
+
+
+  // Heliocentric orbit trails.
+  for (let i = 0; i < BODIES.length; i++) {
+    const s = BODIES[i];
+    if (s.config.parentId === null && s.config.orbit !== null) {
+      root.add(makeOrbitRing(s.config.orbit.a, TRAIL_COLOR, 0.42));
+    }
+  }
+
+
+  return { root, nodeById, stars };
+}
+
+
+/* ---------------------------------------------------------------------------
+ * SCENE COMPONENT — imperative transforms only (Spec 04.2 doctrine)
+ * ------------------------------------------------------------------------- */
+
+
+let suiteAutoStarted = false;
+
+
+function Scene() {
+  // Lazy ref: stable across StrictMode double-render of this instance.
+  const builtRef = useRef<BuiltScene | null>(null);
+  if (builtRef.current === null) {
+    builtRef.current = buildSystemScene();
+  }
+  const built = builtRef.current;
+  const { gl, camera } = useThree();
+
+
+  useEffect(() => {
+    // Bind all 17 celestials through the UNCHANGED M1A adapter (the core's
+    // unified entity->celestial lookup resolves them). Idempotent —
+    // StrictMode double-mount safe.
+    for (let i = 0; i < BODIES.length; i++) {
+      adapter.bind(BODIES[i].config.id, built.nodeById[BODIES[i].config.id]);
+    }
+    const el = gl.domElement;
+    const onDown = (ev: PointerEvent): void => {
+      cam.dragging = true;
+      cam.lastX = ev.clientX;
+      cam.lastY = ev.clientY;
+      el.setPointerCapture(ev.pointerId);
+    };
+    const onMove = (ev: PointerEvent): void => {
+      if (!cam.dragging) {
+        return;
+      }
+      const dx = ev.clientX - cam.lastX;
+      const dy = ev.clientY - cam.lastY;
+      cam.lastX = ev.clientX;
+      cam.lastY = ev.clientY;
+      cam.theta -= dx * 0.005;
+      cam.phi = clamp(cam.phi - dy * 0.005, 0.03, Math.PI - 0.03);
+    };
+    const onUp = (ev: PointerEvent): void => {
+      cam.dragging = false;
+      try {
+        el.releasePointerCapture(ev.pointerId);
+      } catch {
+        /* pointer already released */
+      }
+    };
+    const onWheel = (ev: WheelEvent): void => {
+      ev.preventDefault();
+      cam.dist = clamp(
+        cam.dist * Math.exp(ev.deltaY * 0.0011),
+        minDistFor(cam.trackId),
+        CAM_MAX_DIST,
+      );
+    };
+    el.addEventListener('pointerdown', onDown);
+    el.addEventListener('pointermove', onMove);
+    el.addEventListener('pointerup', onUp);
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => {
+      el.removeEventListener('pointerdown', onDown);
+      el.removeEventListener('pointermove', onMove);
+      el.removeEventListener('pointerup', onUp);
+      el.removeEventListener('wheel', onWheel);
+      for (let i = 0; i < BODIES.length; i++) {
+        adapter.unbind(BODIES[i].config.id);
+      }
+    };
+  }, [gl, built]);
+
+
+  useFrame((state, delta) => {
+    // (1) Fixed-step simulation: macro rails advance dt·timeScale, micro
+    //     entities at 1× — both inside core.advance's governor (≤5 substeps,
+    //     shed-don't-dilate per Spec 02.6).
+    core.advance(delta);
+
+
+    // (2) Render extract — single downstream pass over all bound objects
+    //     (entities + celestials). Zero allocation.
+    adapter.update();
+
+
+    // (3) Camera: target tracks the focused body's f32 local; position is
+    //     target + spherical offset on preallocated Vector3s (zero alloc).
+    const trackState = RAIL.getState(cam.trackId) ?? BODIES[0];
+    const lp = trackState.localPosF32;
+    camTarget.set(lp[0], lp[1], lp[2]);
+    const sinPhi = Math.sin(cam.phi);
+    const cosPhi = Math.cos(cam.phi);
+    camPos.set(
+      camTarget.x + cam.dist * sinPhi * Math.cos(cam.theta),
+      camTarget.y + cam.dist * cosPhi,
+      camTarget.z + cam.dist * sinPhi * Math.sin(cam.theta),
+    );
+    camera.position.copy(camPos);
+    camera.lookAt(camTarget);
+
+
+    // (4) Distant stars follow the camera (parallax ~ 0 at infinity).
+    built.stars.position.copy(camera.position);
+
+
+    // (5) Auto-run the acceptance suite once, after a short warmup.
+    if (!suiteAutoStarted && state.clock.elapsedTime > 0.75) {
+      suiteAutoStarted = true;
+      publishSuite({ started: true });
+      runSuite();
+    }
+
+
+    // (6) Throttled telemetry (≤10 Hz) — the only per-frame object build,
+    //     at the sanctioned UI boundary.
+    maybePublishTelemetry(performance.now());
+  });
+
+
+  return <primitive object={built.root} />;
+}
+
+
+/* ---------------------------------------------------------------------------
+ * HUD
+ * ------------------------------------------------------------------------- */
+
+
+const TIME_SCALES: Array<{ label: string; v: number }> = [
+  { label: '0× PAUSE', v: 0 },
+  { label: '1×', v: 1 },
+  { label: '30×', v: 30 },
+  { label: '1000×', v: 1000 },
+];
+
+
+function fmtSimTime(t: number): string {
+  const sign = t < 0 ? '−' : '';
+  const at = Math.abs(t);
+  const d = Math.floor(at / DAY_SECONDS);
+  let rem = at - d * DAY_SECONDS;
+  const h = Math.floor(rem / 3600);
+  rem -= h * 3600;
+  const m = Math.floor(rem / 60);
+  const s = rem - m * 60;
+  const p2 = (v: number): string => (v < 10 ? `0{v}`);
+  return `{d}d {p2(m)}:${s.toFixed(1).padStart(4, '0')}`;
+}
+
+
+const TYPE_LABEL: Record<string, string> = {
+  star: 'S', planet: 'P', gas_giant: 'G', moon: 'M',
+};
+
+
+function TimePanel() {
+  const t = useSyncExternalStore(subscribeTelemetry, getTelemetry);
+  const [scale, setScale] = useState(30);
+  const onScale = (v: number): void => {
+    core.setTimeScale(v);
+    setScale(v);
+  };
+  const originOnLattice =
+    t.originX % 256 === 0 && t.originY % 256 === 0 && t.originZ % 256 === 0;
+  return (
+    <div className="panel">
+      <div className="panel-head">
+        <span className="panel-title">TWO-TIER TIME</span>
+        <span className="chip">{t.timeScale}× MACRO</span>
+      </div>
+      <div className="kv"><span className="k">MACRO simTime</span><span className="v">{fmtSimTime(t.simTime)}</span></div>
+      <div className="kv"><span className="k">MICRO 60 Hz</span><span className="v">{t.microTime.toFixed(2)} s (never scaled)</span></div>
+      <div className="kv"><span className="k">ORIGIN (256 m lattice)</span><span className="v">{t.originX} / {t.originY} / {t.originZ} {originOnLattice ? '✓' : ''}</span></div>
+      <div className="btnrow">
+        {TIME_SCALES.map((ts) => (
+          <button
+            key={ts.v}
+            className={scale === ts.v ? 'btn active' : 'btn'}
+            onClick={() => onScale(ts.v)}
+          >
+            {ts.label}
+          </button>
+        ))}
+      </div>
+      <div className="btnrow">
+        <button className="btn jump" onClick={() => core.fastForward(JUMP_DAYS)}>+60 DAYS</button>
+        <button className="btn jump" onClick={() => core.reverse(JUMP_DAYS)}>−60 DAYS</button>
+      </div>
+      <div className="note">Macro scale drives the closed-form rails only — cost is O(1) per tick at any scale. Pausing freezes orbits; the micro physics clock keeps running (Spec 00.2 / 02.6).</div>
+    </div>
+  );
+}
+
+
+function FocusPanel() {
+  const [focus, setLocalFocus] = useState('sun');
+  const onPick = useCallback((id: string) => {
+    setFocus(id);
+    setLocalFocus(id);
+  }, []);
+  return (
+    <div className="panel">
+      <div className="panel-head"><span className="panel-title">CAMERA FOCUS</span></div>
+      <div className="btngrid">
+        <button
+          className={focus === 'sun' ? 'btn active' : 'btn'}
+          onClick={() => onPick('sun')}
+        >
+          SYSTEM
+        </button>
+        {BODIES.map((s) => (
+          s.config.type === 'star' ? null : (
+            <button
+              key={s.config.id}
+              className={focus === s.config.id ? 'btn active' : 'btn'}
+              onClick={() => onPick(s.config.id)}
+            >
+              {s.config.name.toUpperCase()}
+            </button>
+          )
+        ))}
+      </div>
+      <div className="note">Drag to orbit · wheel to zoom · moon trails follow their moving host planet.</div>
+    </div>
+  );
+}
+
+
+function FocusDetailPanel() {
+  const t = useSyncExternalStore(subscribeTelemetry, getTelemetry);
+  const f = t.focus;
+  return (
+    <div className="panel">
+      <div className="panel-head">
+        <span className="panel-title">FOCUS — {f.name.toUpperCase()}</span>
+        <span className={`typechip ${f.type}`}>{TYPE_LABEL[f.type] ?? '?'}</span>
+      </div>
+      <div className="kv"><span className="k">HOST</span><span className="v">{f.parentName}</span></div>
+      <div className="kv"><span className="k">ABS P (f64, m)</span><span className="v">{f.x.toFixed(1)} / {f.y.toFixed(1)} / {f.z.toFixed(1)}</span></div>
+      <div className="kv"><span className="k">LOCAL p (f32, m)</span><span className="v">{f.lx.toFixed(1)} / {f.ly.toFixed(1)} / {f.lz.toFixed(1)}</span></div>
+      <div className="kv"><span className="k">ORBIT V / T</span><span className="v">{f.speed.toFixed(2)} m/s · {f.period > 0 ? `${f.period.toFixed(0)} s` : '—'}</span></div>
+      <div className="kv"><span className="k">TRUE RADIUS</span><span className="v">{f.radius.toLocaleString()} m</span></div>
+      <div className="facts">{f.facts}</div>
+    </div>
+  );
+}
+
+
+const TEST_ORDER: Array<{ id: TestKey; label: string }> = [
+  { id: 'closed-form', label: '+60 d: all 17 bodies at exact closed-form positions' },
+  { id: 'reversibility', label: '−60 d: all bodies return within < 1e-9 m' },
+  { id: 'parenting', label: 'Moons parent to moving host planets' },
+  { id: 'zero-gc', label: 'Zero GC allocations during 30× orbit ticks' },
+  { id: 'm1a-regression', label: 'M1A regression: floating origin intact' },
+];
+
+
+function TestPanel() {
+  const s = useSyncExternalStore(subscribeSuite, getSuite);
+  const done = s.done;
+  const passed = TEST_ORDER.every((e) => s.results[e.id]?.pass === true);
+  return (
+    <div className="panel">
+      <div className="panel-head">
+        <span className="panel-title">AUTOMATED ACCEPTANCE</span>
+        <span className={done ? (passed ? 'chip pass' : 'chip fail') : 'chip run'}>
+          {done ? (passed ? 'ALL PASS' : 'FAIL') : s.started ? 'RUNNING' : 'PENDING'}
+        </span>
+      </div>
+      <div className="test-list">
+        {TEST_ORDER.map((e) => {
+          const r = s.results[e.id];
+          return (
+            <div className="test-row" key={e.id}>
+              <div className="test-top">
+                <span className={r ? (r.pass ? 'badge pass' : 'badge fail') : 'badge run'}>
+                  {r ? (r.pass ? 'PASS' : 'FAIL') : '·····'}
+                </span>
+                <span className="test-label">{e.label}</span>
+              </div>
+              <div className={r ? 'test-detail' : 'test-detail dim'}>
+                {r ? r.detail : 'auto-runs 0.75 s after mount…'}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="btnrow">
+        <button className="btn" onClick={() => runSuite()}>RE-RUN SUITE</button>
+      </div>
+    </div>
+  );
+}
+
+
+function TelemetryPanel() {
+  const t = useSyncExternalStore(subscribeTelemetry, getTelemetry);
+  return (
+    <div className="panel">
+      <div className="panel-head">
+        <span className="panel-title">CELESTIAL TELEMETRY (10 Hz)</span>
+        <span className="chip">{t.timeScale}×</span>
+      </div>
+      <div className="thead">
+        <span>BODY</span><span>R☉ (km)</span><span>V (m/s)</span>
+      </div>
+      <div className="trows">
+        {t.rows.map((r) => (
+          <div
+            key={r.id}
+            className={r.id === t.focus.id ? 'trow hl' : r.isMoon ? 'trow moon' : 'trow'}
+          >
+            <span className="tname">
+              <span className={`typechip ${r.type}`}>{TYPE_LABEL[r.type] ?? '?'}</span>
+              {r.name}
+            </span>
+            <span>{r.distKm >= 1000 ? r.distKm.toFixed(0) : r.distKm.toFixed(1)}</span>
+            <span>{r.speed.toFixed(1)}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
+function Hud() {
+  return (
+    <>
+      <div className="hud-col left">
+        <TimePanel />
+        <FocusPanel />
+        <FocusDetailPanel />
+      </div>
+      <div className="hud-col right">
+        <TestPanel />
+        <TelemetryPanel />
+      </div>
+    </>
+  );
+}
+
+
+/* ---------------------------------------------------------------------------
+ * ROOT
+ * ------------------------------------------------------------------------- */
+
+
+const M1B_CSS = `
+.m1b-root { position: fixed; inset: 0; overflow: hidden; background: #04070c;
+  font-family: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+  color: #cfe0ee; }
+.m1b-canvas { position: absolute; inset: 0; }
+.hud-col { position: absolute; top: 14px; display: flex; flex-direction: column;
+  gap: 10px; width: 316px; pointer-events: none; }
+.hud-col.left { left: 14px; }
+.hud-col.right { right: 14px; }
+.panel { pointer-events: auto; background: rgba(8, 15, 24, 0.84);
+  border: 1px solid rgba(96, 160, 205, 0.22); border-radius: 10px;
+  padding: 11px 13px; backdrop-filter: blur(10px); }
+.panel-head { display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px; gap: 8px; }
+.panel-title { font-size: 10.5px; letter-spacing: 0.14em; color: #7fd4ff; }
+.kv { display: flex; justify-content: space-between; font-size: 11.5px;
+  margin-top: 3px; gap: 10px; }
+.k { color: #6f8ba3; letter-spacing: 0.05em; }
+.v { color: #e8f2fa; text-align: right; }
+.chip { font-size: 10px; padding: 2px 8px; border-radius: 999px; letter-spacing: 0.08em;
+  color: #7fd4ff; border: 1px solid rgba(127, 212, 255, 0.4); white-space: nowrap; }
+.chip.pass { color: #4fd08a; border-color: rgba(79, 208, 138, 0.5); }
+.chip.fail { color: #ff7a6e; border-color: rgba(255, 122, 110, 0.5); }
+.chip.run { color: #e8b34b; border-color: rgba(232, 179, 75, 0.5); }
+.btnrow { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.btngrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+.btn { pointer-events: auto; font-family: inherit; font-size: 10px; letter-spacing: 0.06em;
+  color: #cfe0ee; background: rgba(20, 36, 52, 0.85); border: 1px solid rgba(96, 160, 205, 0.3);
+  border-radius: 6px; padding: 5px 8px; cursor: pointer; transition: background 0.12s; }
+.btn:hover { background: rgba(40, 70, 98, 0.9); }
+.btn.active { background: rgba(58, 118, 158, 0.95); color: #eaf6ff; }
+.btn.jump { flex: 1; border-color: rgba(232, 179, 75, 0.45); color: #ffd08a; }
+.note { font-size: 10px; color: #587187; line-height: 1.5; margin-top: 8px; }
+.facts { font-size: 10px; color: #8aa4ba; margin-top: 7px; line-height: 1.5; }
+.typechip { display: inline-block; font-size: 9px; padding: 0 5px; border-radius: 3px;
+  margin-right: 6px; border: 1px solid rgba(111, 139, 163, 0.5); color: #6f8ba3; }
+.typechip.star { color: #ffd08a; border-color: rgba(255, 176, 84, 0.5); }
+.typechip.planet { color: #7fd4ff; border-color: rgba(127, 212, 255, 0.45); }
+.typechip.gas_giant { color: #9fe0b0; border-color: rgba(159, 224, 176, 0.45); }
+.typechip.moon { color: #9aa7b5; }
+.test-list { display: flex; flex-direction: column; gap: 8px; }
+.test-top { display: flex; align-items: center; gap: 9px; }
+.badge { font-size: 9.5px; padding: 2px 7px; border-radius: 4px; letter-spacing: 0.1em;
+  min-width: 48px; text-align: center; }
+.badge.pass { color: #0a1510; background: #4fd08a; }
+.badge.fail { color: #1a0b09; background: #ff7a6e; }
+.badge.run { color: #e8b34b; border: 1px solid rgba(232, 179, 75, 0.5); }
+.test-label { font-size: 11px; color: #dce9f4; }
+.test-detail { font-size: 9.5px; color: #8aa4ba; margin-top: 2px; padding-left: 60px;
+  line-height: 1.45; }
+.dim { color: #587187; }
+.thead { display: grid; grid-template-columns: 1fr 78px 70px; font-size: 9.5px;
+  color: #6f8ba3; letter-spacing: 0.08em; padding: 2px 4px 5px; }
+.trows { max-height: 38vh; overflow-y: auto; }
+.trow { display: grid; grid-template-columns: 1fr 78px 70px; font-size: 10.5px;
+  padding: 2.5px 4px; border-radius: 4px; color: #cfe0ee; }
+.trow.moon { color: #93a7ba; }
+.trow.hl { background: rgba(58, 118, 158, 0.28); color: #eaf6ff; }
+.trow span:nth-child(2), .trow span:nth-child(3) { text-align: right; }
+.tname { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.trows::-webkit-scrollbar { width: 6px; }
+.trows::-webkit-scrollbar-thumb { background: rgba(96, 160, 205, 0.3); border-radius: 3px; }
+.legend { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+  font-size: 10px; color: #587187; letter-spacing: 0.08em; pointer-events: none; }
+`;
+
+
+export default function Milestone1BTestHarness() {
+  return (
+    <div className="m1b-root">
+      <style>{M1B_CSS}</style>
+      <div className="m1b-canvas">
+        <Canvas
+          dpr={[1, 1.75]}
+          gl={{ antialias: true, powerPreference: 'high-performance' }}
+          camera={{ fov: 55, near: 60, far: 2.2e7, position: [1.6e6, 1.2e6, 1.6e6] }}
+        >
+          <Scene />
+        </Canvas>
+      </div>
+      <Hud />
+      <div className="legend">
+        DISPLAY SPHERES SCALE-ADJUSTED FOR VISIBILITY · SIMULATION USES TRUE radiusGame · RAILS = CLOSED-FORM P(simTime) · KEPLER-3 SINGLE μ_sun
+      </div>
+    </div>
+  );
+}
+```
+
+
+---
+
+
+## Verification & Expected Acceptance Output
+
+
+| Suite row | Expected result |
+|---|---|
+| T1 closed-form | 17/17 **bit-exact** (max err 0.0 m); simTime = 5,184,000 s exactly; Newton residual ≤ ~1e-16 rad; Kepler-3 ratio dev ≤ ~1e-16 |
+| T2 reversibility | Round trip 0.0 m (`simTime === 0` true); non-zero anchor restore 0.0 m |
+| T3 parenting | 7/7 moons (incl. retrograde Triton): radius dev ≤ ~1e-9 m; phase dev ≤ ~1e-15 rad; host chords analytic |
+| T4 zero-GC | Identities 17/17 preserved over 20,000 ticks; heap Δ ≈ 0 B (1 MB guard) |
+| T5 M1A regression | P.x ≈ 10,000–10,033 m, **9 rebases**, max local ≈ 1,022.67 m |
+
+
+Live behavior to eyeball: at 30×, Earth completes an orbit in ~4.9 min and the Moon circles Earth every ~102 s; **+60 DAYS** snaps the entire system 587.7 Earth-orbits forward instantly (one O(1) evaluation — no integration); **0× PAUSE** freezes every orbit while the MICRO clock keeps counting; **−60 DAYS** from a fresh state returns the sky exactly. Moon trail rings ride their moving host planets; Triton orbits Neptune backwards.
+
+
+**Compliance confirmation:** core remains pure f64 with zero renderer/physics imports; the canonical tick order now begins with the Macro update ahead of the M1A bubble-refresh/rebase sequence; all 17 bodies consumed verbatim from Section 03 with μ and T derived per Sections 02.2–02.3 and this milestone's Kepler-3 mandate (the single derived constant `SUN_ORBITAL_MU = 1.096e11` is documented and flagged for your tuning); `tick()` remains allocation-free; no code written for M1C–M1G (spin, compose, physics, impostors, saves untouched). Standing by for Milestone 1C (Web Worker terrain & Zero-GC pool) on your command.

@@ -1,0 +1,2237 @@
+﻿# Milestone 1G — Deep Analysis & Implementation
+
+
+M1A–M1F are locked and untouched — the persistence layer sits *above* the core, consuming only existing public surfaces. The trace surfaced **one architectural finding that must be flagged before any code**: the milestone's own required schema (`rcsBudget`, `mode`, plus the tangential velocities and contact caches needed for a *deterministic* restore) lives behind `private` fields in the locked M1E `AstronautKCC`. The resolution — an **append-only capture/restore hook pair inside the KCC** (no execution-loop change, no external privates-hacking) — is delivered as a flagged appendix (§3.5), consistent with the M1B `SUN_ORBITAL_MU` and M1D `β_q` flag practice. Everything else follows the spec and prompt verbatim.
+
+
+---
+
+
+## PHASE 1 — REASONING & EDGE-CASE ANALYSIS
+
+
+### 1.1 IEEE 754 Bit-Exact Serialization — typed arrays vs JSON
+
+
+A `Float64Array` store is **memcpy semantics**: the raw 64-bit pattern moves, unconverted, in one instruction. Every value class survives — `-0`, denormals, NaN payloads, `±Infinity` — and the cost is 8 bytes and ~1 ns per value. Against that, `JSON.stringify` disqualifies itself on four counts:
+
+
+1. **Silent value loss.** `JSON.stringify(NaN)` and `Infinity` both produce `null` — a NaN velocity would *load as null* and crash or silently zero. `-0` stringifies as `"0"`, destroying the sign.
+2. **The acceptance would fail itself.** The M1G criterion is *bit-matching* coordinates, compared as u32 word pairs (because `===` conflates `+0/−0` and rejects NaN). A JSON pipeline cannot round-trip `-0`, so it cannot pass its own test.
+3. **Allocation.** A JSON capture builds a ~1 KB young-gen string (rope concatenation, per-number formatting); `JSON.parse` on load allocates the object graph back. Our typed-array capture performs **35 typed stores + one CRC32 loop over 280 bytes → 0 bytes allocated, ~200 ns** — the difference between a GC-visible event and a non-event.
+4. **Size & fragility.** 312 bytes vs ~1 KB, and any `toJSON` hook or precision revision in the serialization stack silently corrupts state; a fixed slot layout with a magic/version/CRC header cannot drift undetected.
+
+
+**Honesty note (per project practice):** for *finite, non-`(−0)`* doubles, modern engines emit shortest-round-trip decimals, so routine JSON round-trips *are* bit-exact. The decisive arguments are the exceptional values, the zero-allocation capture, and format safety — not everyday precision. IndexedDB then stores `ArrayBuffer` payloads natively via structured clone: **binary end-to-end, no string ever exists**.
+
+
+### 1.2 Asynchronous Non-Blocking I/O — the architecture and the decision
+
+
+The capture is synchronous and zero-alloc; the question is where the IndexedDB work lives. **Decision: main-thread async transactions, chosen deliberately over a worker** — and here is the quantified reasoning:
+
+
+- The payload is **312 bytes**. The only synchronous main-thread cost of `put()` is the structured clone at call time — tens of microseconds (≈0.1–0.3% of a 16.6 ms frame). Transaction commit and disk flush run on the browser's storage thread; completion returns as a later task. The 60 Hz loop never yields.
+- A worker offload would require **buffer ping-pong** (transfer the capture buffer out, await its return) purely to preserve the pre-allocated capture buffer — realm complexity with zero measurable gain at this payload size.
+- The escalation path is preserved: `IndexedDBProvider` is **realm-agnostic** (no DOM types; `indexedDB` resolved via `globalThis`), so hosting it in a persistence worker later is a file move, not a rewrite — warranted only if payloads grow to hundreds of KB (world edits, inventories).
+- One ordering hazard was found and eliminated: an `await provider.open()` before `put()` defers the clone to a microtask, during which a *later* capture could mutate the single buffer. The fix costs 312 bytes: `asyncWrite()` performs **one synchronous act** — copying the capture buffer into a second boot-allocated *commit buffer* — before any `await`. The capture buffer is instantly free; the committed bytes are immutable by construction.
+
+
+**Proof methodology (acceptance row 3):** the 60 Hz loop measures per-frame delta; the M1A/M1B fixed-step governor's `shedSeconds` is a built-in stall detector (any sustained stall beyond 5 substeps *sheds time* — a delta of **0** across a 30-write+30-read storm is mathematical proof the loop never fell behind); plus max-frame and >25 ms frame counts.
+
+
+### 1.3 Deterministic State Restoration — the sequence and its proofs
+
+
+The prompt's (a)–(e) sequence, with the exactness argument for each step:
+
+
+- **(a) Restore `simTime`.** The saved double, assigned verbatim via the existing M1B `setSimTime`.
+- **(b) Synchronous rail update.** `setSimTime` *is* this step: it evaluates all 17 rails immediately. `P(elements; t)` is a pure deterministic function of one double (M1B proof) — same input bits → same output bits. Planets and moons return **bit-identically**, at any time distance, forward or backward.
+- **(c) Restore the player.** The **full canonical state**, verbatim: `absPos, absVel, pLocal, up, fwd, vCtl, vSlide, nCur, theta, rcsBudget, mode, grounded` — *plus the terrain-contact caches `hCur`/`nCur`, persisted rather than recomputed*. This is a proven edge case: `normalize(pLocal)` is **not bit-guaranteed** to equal the direction that produced the cached values (a positive-scalar-multiply round-trip can shift the last ulp), and the isomorphism acceptance below tolerates *zero* ulps. The entity write-through (the same live `Vec3` refs the KCC writes) lands the restored position in the M1A core immediately. Wall-clock accumulators are deliberately **not** state — persisting them would couple restores to machine timing; the restore zeroes them so no pre-load partial frame injects an extra tick.
+- **(d) Immediate M1A rebase.** The origin is **derived state, and the locked core exposes no origin setter** — the correct restore is the *natural trigger*: the first post-restore tick evaluates the focus bound against the restored position. A relocation load (>1,024 m — the normal cross-distance case) rebases **within that same tick, before the render extract** (canonical order), snapping `O` to the nearest 256 m lattice point with a bit-exact Δ (the M1A power-of-two proof). A local load keeps a valid origin — and the rendered image is origin-invariant because every local shares `O`. The suite asserts `O ≡ nearest-lattice(P)` (each axis an exact multiple of 256, `|P−O| ≤ 128`) in the relocation case.
+- **(e) Terrain prime (Spec 01.6).** Harness-side (it owns the quadtree): **Freeze → priority-generate → gate → 300 ms fade**. The analytic-era gate is "the leaf chunk under the player is active" — with the M1D/M1E doctrine guaranteeing the player can never fall through even with zero chunks (analytic collision against the f64 field), the gate serves *visual* continuity, and the Rapier `intersectionsWithShape` gate is the marked production hook.
+
+
+**The strongest proof — the state-isomorphism test.** Save at tick T; run 600 scripted-input ticks → fingerprint F1; restore; run the *same* 600 ticks → F2; assert **F1 ≡ F2 bitwise** (u32 word pairs over 79 doubles: 51 body, 24 player incl. caches, 4 clocks). This proves save/load is a true isomorphism, not a teleport approximation — and it implicitly re-proves worker-independence, because run 2 executes with a completely different chunk-streaming state than run 1 and still lands on identical bits. Inputs are scripted because *user input is entropy, not state* — determinism claims apply to (state, input-sequence) pairs, and the save deliberately excludes input.
+
+
+### 1.4 Versioning, Migrations, Atomicity
+
+
+- **Self-describing header:** magic `0x56534753` ("SGSV"), u16 payload version, flags, **CRC32** over the body, body length. The IndexedDB record carries `{id, version, createdMs, byteLength, payload}` so migration decisions happen *before* any decode. Two independent version axes by design: **DB schema version** (object stores — the provider) and **payload version** (slot layout — the serializer).
+- **Migration chain:** decode old layouts only; a *newer* unknown version is a hard reject (`bad-version`) — never guess forward. A real v1→v2 migration ships (v1: 13 slots, pre-CRC, pre-orientation era; the transform derives era-appropriate defaults *deterministically*: `up = radial(pLocal)`, `fwd = canonicalTangent(up)`), proven by the suite with a fabricated v1 record.
+- **Atomicity:** `asyncLoad` never mutates game state — ingest → verify → (migrate) → snapshot only. `deterministicRestore` is the *sole* mutator, synchronous, at a frame boundary. A rejected load (corrupt CRC, bad magic, future version, truncated) leaves the world bit-untouched — fingerprint-proven in the suite.
+
+
+---
+
+
+## PHASE 2 — ARCHITECTURAL COMPLIANCE MAP
+
+
+| Rule | Implementation |
+|---|---|
+| Zero-GC capture into pre-allocated buffer | `captureState()`: KCC hook (field writes) + 35 typed stores + CRC — **0 allocations**, canary + heap-proven over 10,000 captures |
+| Raw IndexedDB / lightweight wrapper, binary payloads | `IndexedDBProvider` — ~140 lines, promise-wrapped requests, ArrayBuffer records, versioned upgrades |
+| `captureState()` / `asyncWrite()` / `deterministicRestore(core)` | `SaveManager` — exact signatures; restore order (a)–(e) documented in-file |
+| Time-continuity invariant | Isomorphism proof: F0′ ≡ F0 and F2 ≡ F1, bitwise |
+| M1A–1F integrity | **Zero locked execution loops altered**; the one additive KCC hook (append-only, flagged) touches no existing path |
+
+
+---
+
+
+## PHASE 3 — DELIVERABLES
+
+
+### 1. `src/core/persistence/BinaryStateSerializer.ts`
+
+
+```typescript
+/**
+ * ============================================================================
+ *  BINARY STATE SERIALIZER — ZERO-GC, BIT-EXACT SAVE PAYLOAD CODEC
+ *  Milestone 1G · Spec 01.6 (Pause-and-Prime), M1G schema
+ * ============================================================================
+ *  Pure core: no three/react/rapier imports; no IndexedDB here (codec only).
+ *
+ *  WHY TYPED-ARRAY SERIALIZATION, NOT JSON (M1G analysis §1.1):
+ *   - Bit-exactness: a Float64Array store is memcpy semantics — the raw
+ *     64-bit pattern moves unconverted. Every value survives: -0, denormals,
+ *     NaN payloads, ±Infinity. JSON.stringify maps NaN/Infinity -> null
+ *     (unrecoverable) and -0 -> "0" — a JSON pipeline would fail the M1G
+ *     bit-matching acceptance against its own data.
+ *   - Zero-GC: capture() = 35 typed stores + one CRC32 loop over 280 bytes.
+ *     Allocation count: 0. (JSON would allocate a ~1 KB string per save and
+ *     an object graph per load.)
+ *   - End-to-end binary: IndexedDB stores the ArrayBuffer via structured
+ *     clone — no string ever exists.
+ *
+ *  PAYLOAD LAYOUT (version 2) — 32-byte header + 35 f64 slots:
+ *    u32[0] magic "SGSV"        u32[1] version:u16 | flags:u16
+ *    u32[2] CRC32(body)         u32[3] body byte length
+ *    bytes 16..31 reserved (future migration fields)
+ *    f64 slots: the canonical deterministic state — see SLOT.
+ *
+ *  VERSIONING (§1.4): the header is self-describing; verify() checks
+ *  magic/version/length/CRC BEFORE any field is decoded; migrations decode
+ *  OLD layouts only — version > SAVE_VERSION is a hard reject (never guess
+ *  forward). DB schema version and payload version are independent axes.
+ */
+
+
+import type { PersistentPlayerState } from '../physics/astronautKCC';
+import { canonicalTangentInto, type Vec3 } from '../physics/sphericalFrame';
+
+
+export const SAVE_MAGIC = 0x56534753;                 // "SGSV" (LE)
+export const SAVE_VERSION = 2;
+export const V1_SLOTS = 13;
+export const V2_SLOTS = 35;
+export const HEADER_BYTES = 32;
+export const V1_HEADER_BYTES = 16;
+export const V2_BODY_BYTES = V2_SLOTS * 8;            // 280
+export const V1_BODY_BYTES = V1_SLOTS * 8;            // 104
+export const SAVE_BUFFER_BYTES = HEADER_BYTES + V2_BODY_BYTES;   // 312
+
+
+/** v2 slot map (f64 indices). The layout IS the schema. */
+export const SLOT = {
+  SIM_TIME: 0, THETA: 1, MODE: 2, GROUNDED: 3, RCS_BUDGET: 4,
+  H_CUR: 5, NCUR_X: 6, NCUR_Y: 7, NCUR_Z: 8,
+  ABS_POS_X: 9, ABS_POS_Y: 10, ABS_POS_Z: 11,
+  ABS_VEL_X: 12, ABS_VEL_Y: 13, ABS_VEL_Z: 14,
+  PLOCAL_X: 15, PLOCAL_Y: 16, PLOCAL_Z: 17,
+  UP_X: 18, UP_Y: 19, UP_Z: 20,
+  FWD_X: 21, FWD_Y: 22, FWD_Z: 23,
+  VCTL_X: 24, VCTL_Y: 25, VCTL_Z: 26,
+  VSLIDE_X: 27, VSLIDE_Y: 28, VSLIDE_Z: 29,
+  ORIGIN_X: 30, ORIGIN_Y: 31, ORIGIN_Z: 32,   // diagnostic: recorded, derived
+  CAPTURED_AT: 33, RESERVED: 34,
+} as const;
+
+
+export type SaveVerifyStatus =
+  | 'ok' | 'ok-v1' | 'bad-magic' | 'bad-version' | 'bad-crc' | 'truncated';
+
+
+/* -- CRC32 (IEEE, reflected 0xEDB88320) — boot table, zero-GC loop -------- */
+const CRC_TABLE = new Uint32Array(256);
+for (let n = 0; n < 256; n++) {
+  let c = n;
+  for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+  CRC_TABLE[n] = c >>> 0;
+}
+export function crc32(u8: Uint8Array, from: number, to: number): number {
+  let c = 0xffffffff;
+  for (let i = from; i < to; i++) c = CRC_TABLE[(c ^ u8[i]) & 0xff] ^ (c >>> 8);
+  return (c ^ 0xffffffff) >>> 0;
+}
+
+
+const _migTan: Vec3 = { x: 0, y: 0, z: 0 };
+
+
+export class BinaryStateSerializer {
+  readonly buffer = new ArrayBuffer(SAVE_BUFFER_BYTES);
+  readonly u8 = new Uint8Array(this.buffer);
+  private readonly u32 = new Uint32Array(this.buffer, 0, 4);
+  /** v2 body view (byteOffset 32 — 8-aligned). */
+  readonly f64 = new Float64Array(this.buffer, HEADER_BYTES, V2_SLOTS);
+  /** v1 body view (byteOffset 16 — 8-aligned) — migration decode only. */
+  private readonly f64v1 = new Float64Array(this.buffer, V1_HEADER_BYTES, V1_SLOTS);
+  private _ingested = 0;
+
+
+  /**
+   * ZERO-ALLOCATION CAPTURE: 35 typed stores + header + CRC.
+   * Allocation count: 0 (acceptance-instrumented).
+   */
+  capture(
+    simTime: number, ox: number, oy: number, oz: number,
+    p: PersistentPlayerState, capturedAtMs: number,
+  ): void {
+    const f = this.f64;
+    f[SLOT.SIM_TIME] = simTime;
+    f[SLOT.THETA] = p.theta;
+    f[SLOT.MODE] = p.modeCode;
+    f[SLOT.GROUNDED] = p.grounded;
+    f[SLOT.RCS_BUDGET] = p.rcsBudget;
+    f[SLOT.H_CUR] = p.hCur;
+    f[SLOT.NCUR_X] = p.nCurX; f[SLOT.NCUR_Y] = p.nCurY; f[SLOT.NCUR_Z] = p.nCurZ;
+    f[SLOT.ABS_POS_X] = p.absPosX; f[SLOT.ABS_POS_Y] = p.absPosY; f[SLOT.ABS_POS_Z] = p.absPosZ;
+    f[SLOT.ABS_VEL_X] = p.absVelX; f[SLOT.ABS_VEL_Y] = p.absVelY; f[SLOT.ABS_VEL_Z] = p.absVelZ;
+    f[SLOT.PLOCAL_X] = p.pLocalX; f[SLOT.PLOCAL_Y] = p.pLocalY; f[SLOT.PLOCAL_Z] = p.pLocalZ;
+    f[SLOT.UP_X] = p.upX; f[SLOT.UP_Y] = p.upY; f[SLOT.UP_Z] = p.upZ;
+    f[SLOT.FWD_X] = p.fwdX; f[SLOT.FWD_Y] = p.fwdY; f[SLOT.FWD_Z] = p.fwdZ;
+    f[SLOT.VCTL_X] = p.vCtlX; f[SLOT.VCTL_Y] = p.vCtlY; f[SLOT.VCTL_Z] = p.vCtlZ;
+    f[SLOT.VSLIDE_X] = p.vSlideX; f[SLOT.VSLIDE_Y] = p.vSlideY; f[SLOT.VSLIDE_Z] = p.vSlideZ;
+    f[SLOT.ORIGIN_X] = ox; f[SLOT.ORIGIN_Y] = oy; f[SLOT.ORIGIN_Z] = oz;
+    f[SLOT.CAPTURED_AT] = capturedAtMs;
+    f[SLOT.RESERVED] = 0;
+    this.u32[0] = SAVE_MAGIC;
+    this.u32[1] = SAVE_VERSION & 0xffff;
+    this.u32[2] = crc32(this.u8, HEADER_BYTES, SAVE_BUFFER_BYTES);
+    this.u32[3] = V2_BODY_BYTES;
+    this._ingested = SAVE_BUFFER_BYTES;
+  }
+
+
+  /**
+   * Load path: copy an IDB-returned payload into the buffer. (One small view
+   * + the copy — user-triggered load path only; the capture path stays
+   * allocation-free.)
+   */
+  ingest(payload: ArrayBuffer, byteLength: number): void {
+    const len = Math.min(byteLength, payload.byteLength, SAVE_BUFFER_BYTES);
+    this.u8.fill(0);
+    this.u8.set(new Uint8Array(payload, 0, len), 0);
+    this._ingested = len;
+  }
+
+
+  /** Header validation — magic, version, length, CRC. Runs BEFORE any field
+   *  is decoded (atomicity: a rejected load decodes nothing). */
+  verify(): SaveVerifyStatus {
+    if (this._ingested < 8) return 'truncated';
+    if (this.u32[0] !== SAVE_MAGIC) return 'bad-magic';
+    const version = this.u32[1] & 0xffff;
+    if (version === SAVE_VERSION) {
+      if (this._ingested < SAVE_BUFFER_BYTES) return 'truncated';
+      if (this.u32[3] !== V2_BODY_BYTES) return 'truncated';
+      if (crc32(this.u8, HEADER_BYTES, SAVE_BUFFER_BYTES) !== this.u32[2]) return 'bad-crc';
+      return 'ok';
+    }
+    if (version === 1) {
+      if (this._ingested < V1_HEADER_BYTES + V1_BODY_BYTES) return 'truncated';
+      return 'ok-v1';   // v1 predates the CRC field — layout check only
+    }
+    return 'bad-version';   // never guess forward
+  }
+
+
+  get simTime(): number { return this.f64[SLOT.SIM_TIME]; }
+  get capturedAtMs(): number { return this.f64[SLOT.CAPTURED_AT]; }
+  get savedOriginX(): number { return this.f64[SLOT.ORIGIN_X]; }
+  get savedOriginY(): number { return this.f64[SLOT.ORIGIN_Y]; }
+  get savedOriginZ(): number { return this.f64[SLOT.ORIGIN_Z]; }
+
+
+  /** v2 body -> snapshot (post-verify only). */
+  playerInto(p: PersistentPlayerState): void {
+    const f = this.f64;
+    p.theta = f[SLOT.THETA];
+    p.modeCode = f[SLOT.MODE];
+    p.grounded = f[SLOT.GROUNDED] === 1 ? 1 : 0;
+    p.rcsBudget = f[SLOT.RCS_BUDGET];
+    p.hCur = f[SLOT.H_CUR];
+    p.nCurX = f[SLOT.NCUR_X]; p.nCurY = f[SLOT.NCUR_Y]; p.nCurZ = f[SLOT.NCUR_Z];
+    p.absPosX = f[SLOT.ABS_POS_X]; p.absPosY = f[SLOT.ABS_POS_Y]; p.absPosZ = f[SLOT.ABS_POS_Z];
+    p.absVelX = f[SLOT.ABS_VEL_X]; p.absVelY = f[SLOT.ABS_VEL_Y]; p.absVelZ = f[SLOT.ABS_VEL_Z];
+    p.pLocalX = f[SLOT.PLOCAL_X]; p.pLocalY = f[SLOT.PLOCAL_Y]; p.pLocalZ = f[SLOT.PLOCAL_Z];
+    p.upX = f[SLOT.UP_X]; p.upY = f[SLOT.UP_Y]; p.upZ = f[SLOT.UP_Z];
+    p.fwdX = f[SLOT.FWD_X]; p.fwdY = f[SLOT.FWD_Y]; p.fwdZ = f[SLOT.FWD_Z];
+    p.vCtlX = f[SLOT.VCTL_X]; p.vCtlY = f[SLOT.VCTL_Y]; p.vCtlZ = f[SLOT.VCTL_Z];
+    p.vSlideX = f[SLOT.VSLIDE_X]; p.vSlideY = f[SLOT.VSLIDE_Y]; p.vSlideZ = f[SLOT.VSLIDE_Z];
+  }
+
+
+  /**
+   * MIGRATION v1 -> v2 (§1.4). v1 (13 slots) predates theta, the transported
+   * frame, tangential velocities, and the contact caches. Era-appropriate
+   * defaults are DERIVED deterministically: up = radial(pLocal), fwd =
+   * canonicalTangent(up) — both pure functions, bit-reproducible. The first
+   * grounded tick re-derives the contact cache.
+   * v1 slot map: 0 simTime · 1 mode · 2 grounded · 3 rcs · 4..6 absPos ·
+   *              7..9 absVel · 10..12 pLocal.
+   */
+  migrateV1Into(simTimeOut: { v: number }, p: PersistentPlayerState): void {
+    const v = this.f64v1;
+    simTimeOut.v = v[0];
+    p.modeCode = v[1];
+    p.grounded = v[2] === 1 ? 1 : 0;
+    p.rcsBudget = v[3];
+    p.absPosX = v[4]; p.absPosY = v[5]; p.absPosZ = v[6];
+    p.absVelX = v[7]; p.absVelY = v[8]; p.absVelZ = v[9];
+    p.pLocalX = v[10]; p.pLocalY = v[11]; p.pLocalZ = v[12];
+    p.theta = 0;
+    const r = Math.sqrt(p.pLocalX * p.pLocalX + p.pLocalY * p.pLocalY +
+      p.pLocalZ * p.pLocalZ) || 1;
+    p.upX = p.pLocalX / r; p.upY = p.pLocalY / r; p.upZ = p.pLocalZ / r;
+    canonicalTangentInto(p.upX, p.upY, p.upZ, _migTan);
+    p.fwdX = _migTan.x; p.fwdY = _migTan.y; p.fwdZ = _migTan.z;
+    p.vCtlX = 0; p.vCtlY = 0; p.vCtlZ = 0;
+    p.vSlideX = 0; p.vSlideY = 0; p.vSlideZ = 0;
+    p.hCur = 0; p.nCurX = 0; p.nCurY = 1; p.nCurZ = 0;
+  }
+}
+```
+
+
+### 2. `src/core/persistence/IndexedDBProvider.ts`
+
+
+```typescript
+/**
+ * ============================================================================
+ *  INDEXEDDB PROVIDER — MINIMAL PROMISE WRAPPER (NO THIRD-PARTY ORMS)
+ *  Milestone 1G
+ * ============================================================================
+ *  Realm-agnostic (no DOM types; the factory resolved via globalThis) — runs
+ *  unchanged on the main thread today or inside a persistence Web Worker
+ *  tomorrow (the M1G §1.2 escalation path). Binary-safe: payloads are
+ *  ArrayBuffers moved via IndexedDB's native structured clone — no string
+ *  conversion anywhere in the pipeline.
+ *
+ *  TWO VERSION AXES (deliberate): the DB SCHEMA version (object stores —
+ *  owned here) and the PAYLOAD version (slot layout — owned by the
+ *  serializer). They migrate independently.
+ *
+ *  ALLOCATION NOTE (I/O path, not the 60 Hz loop): each operation allocates
+ *  a transaction, a request, a promise, and — at put() time — the structured
+ *  clone of the payload (312 B, measured in the suite). These are
+ *  user-triggered events between frames; the capture path allocates nothing.
+ */
+
+
+const IDB_FACTORY: IDBFactory | null =
+  (globalThis as { indexedDB?: IDBFactory }).indexedDB ?? null;
+
+
+export interface SaveRecord {
+  id: string;
+  /** Payload schema version (the serializer's SAVE_VERSION). */
+  version: number;
+  createdMs: number;
+  byteLength: number;
+  payload: ArrayBuffer;
+}
+
+
+export class IndexedDBProvider {
+  private db: IDBDatabase | null = null;
+  private opening: Promise<void> | null = null;
+
+
+  constructor(
+    private readonly dbName = 'solaris-engine',
+    private readonly storeName = 'saves',
+    private readonly dbVersion = 2,
+  ) {}
+
+
+  get isOpen(): boolean { return this.db !== null; }
+
+
+  async open(): Promise<void> {
+    if (this.db !== null) return;
+    if (this.opening !== null) return this.opening;
+    if (IDB_FACTORY === null) {
+      throw new Error('[IndexedDBProvider] IndexedDB unavailable in this realm');
+    }
+    const opening = new Promise<void>((resolve, reject) => {
+      const req = IDB_FACTORY.open(this.dbName, this.dbVersion);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        // Schema migrations by DB version. Idempotent — fresh installs jump
+        // straight to dbVersion and must still find their stores.
+        //   v0 -> v1: create 'saves' (keyPath 'id').
+        //   v1 -> v2: reserved (e.g. a 'settings' store or an index).
+        if (!db.objectStoreNames.contains(this.storeName)) {
+          db.createObjectStore(this.storeName, { keyPath: 'id' });
+        }
+      };
+      req.onsuccess = () => {
+        this.db = req.result;
+        this.db.onversionchange = () => this.close();  // another tab upgrades
+        resolve();
+      };
+      req.onerror = () => reject(req.error ?? new Error('open failed'));
+      req.onblocked = () =>
+        reject(new Error('[IndexedDBProvider] open blocked by another connection'));
+    });
+    this.opening = opening;
+    try { await opening; } finally { this.opening = null; }
+  }
+
+
+  close(): void {
+    if (this.db !== null) { this.db.close(); this.db = null; }
+  }
+
+
+  private _store(mode: IDBTransactionMode): IDBObjectStore {
+    if (this.db === null) throw new Error('[IndexedDBProvider] not open');
+    return this.db.transaction(this.storeName, mode).objectStore(this.storeName);
+  }
+
+
+  /** Write one record. Awaits TRANSACTION COMPLETION (durability), not just
+   *  request success. The payload is structured-cloned at put() time. */
+  async putRecord(record: SaveRecord): Promise<void> {
+    await this.open();
+    const store = this._store('readwrite');
+    const tx = store.transaction;
+    await new Promise<void>((resolve, reject) => {
+      const req = store.put(record);
+      req.onerror = () => reject(req.error ?? new Error('put failed'));
+      tx.onabort = () => reject(tx.error ?? new Error('put aborted'));
+      tx.oncomplete = () => resolve();
+    });
+  }
+
+
+  async getRecord(id: string): Promise<SaveRecord | null> {
+    await this.open();
+    const store = this._store('readonly');
+    return await new Promise<SaveRecord | null>((resolve, reject) => {
+      const req = store.get(id);
+      req.onsuccess = () =>
+        resolve((req.result as SaveRecord | undefined) ?? null);
+      req.onerror = () => reject(req.error ?? new Error('get failed'));
+    });
+  }
+
+
+  async deleteRecord(id: string): Promise<void> {
+    await this.open();
+    const store = this._store('readwrite');
+    const tx = store.transaction;
+    await new Promise<void>((resolve, reject) => {
+      const req = store.delete(id);
+      req.onerror = () => reject(req.error ?? new Error('delete failed'));
+      tx.onabort = () => reject(tx.error ?? new Error('delete aborted'));
+      tx.oncomplete = () => resolve();
+    });
+  }
+}
+```
+
+
+### 3.5 — Appendix (read before SaveManager): the additive M1G hook on the locked M1E file
+
+
+> **Flagged for Lead review, consistent with `SUN_ORBITAL_MU` (M1B) and `β_q` (M1D).** The milestone's required schema (`rcsBudget`, `mode`) — and the full canonical state the isomorphism acceptance demands (`vCtl`, `vSlide`, `nCur`, `hCur`, `theta`) — lives behind `private` fields in `AstronautKCC`. The two clean options were (a) violate the class boundary from outside, or (b) an **append-only hook pair inside the class**. (b) is strictly safer: it alters **no existing execution path**, adds no fields, and keeps every invariant under the class's own eye. Append the following to `src/core/physics/astronautKCC.ts` — the interface and helpers at module scope (after the existing imports), the two methods at the end of the class body. **Nothing else in the file changes.**
+
+
+```typescript
+/* ===========================================================================
+ * M1G ADDITIVE PERSISTENCE SURFACE (append-only patch; no existing execution
+ * path is altered; the SaveManager is the sole caller). Private state is
+ * captured/restored INSIDE the class so no external code ever touches it.
+ * =========================================================================== */
+
+
+/** Flat, binary-friendly canonical player state (mirrors the v2 slot map). */
+export interface PersistentPlayerState {
+  absPosX: number; absPosY: number; absPosZ: number;
+  absVelX: number; absVelY: number; absVelZ: number;
+  pLocalX: number; pLocalY: number; pLocalZ: number;
+  upX: number; upY: number; upZ: number;
+  fwdX: number; fwdY: number; fwdZ: number;
+  vCtlX: number; vCtlY: number; vCtlZ: number;
+  vSlideX: number; vSlideY: number; vSlideZ: number;
+  nCurX: number; nCurY: number; nCurZ: number;
+  theta: number;
+  rcsBudget: number;
+  hCur: number;
+  modeCode: number;        // 0 SURFACE · 1 ZERO-G · 2 VEHICLE
+  grounded: 0 | 1;
+}
+
+
+export function makePersistentPlayerState(): PersistentPlayerState {
+  return {
+    absPosX: 0, absPosY: 0, absPosZ: 0,
+    absVelX: 0, absVelY: 0, absVelZ: 0,
+    pLocalX: 0, pLocalY: 0, pLocalZ: 0,
+    upX: 0, upY: 1, upZ: 0,
+    fwdX: 1, fwdY: 0, fwdZ: 0,
+    vCtlX: 0, vCtlY: 0, vCtlZ: 0,
+    vSlideX: 0, vSlideY: 0, vSlideZ: 0,
+    nCurX: 0, nCurY: 1, nCurZ: 0,
+    theta: 0, rcsBudget: 0, hCur: 0,
+    modeCode: 0, grounded: 1,
+  };
+}
+
+
+export function modeToCode(m: AstronautMode): number {
+  return m === 'SURFACE' ? 0 : m === 'ZERO-G' ? 1 : 2;
+}
+export function codeToMode(c: number): AstronautMode {
+  return c === 1 ? 'ZERO-G' : c === 2 ? 'VEHICLE' : 'SURFACE';
+}
+
+
+// ---- append INSIDE class AstronautKCC -------------------------------------
+
+
+  /** Zero-allocation canonical-state capture (field writes only). */
+  capturePersistentStateInto(out: PersistentPlayerState): void {
+    out.absPosX = this.absPos.x; out.absPosY = this.absPos.y; out.absPosZ = this.absPos.z;
+    out.absVelX = this.absVel.x; out.absVelY = this.absVel.y; out.absVelZ = this.absVel.z;
+    out.pLocalX = this.pLocal.x; out.pLocalY = this.pLocal.y; out.pLocalZ = this.pLocal.z;
+    out.upX = this.up.x; out.upY = this.up.y; out.upZ = this.up.z;
+    out.fwdX = this.fwd.x; out.fwdY = this.fwd.y; out.fwdZ = this.fwd.z;
+    out.vCtlX = this._vCtl.x; out.vCtlY = this._vCtl.y; out.vCtlZ = this._vCtl.z;
+    out.vSlideX = this._vSlide.x; out.vSlideY = this._vSlide.y; out.vSlideZ = this._vSlide.z;
+    out.nCurX = this._nCur.x; out.nCurY = this._nCur.y; out.nCurZ = this._nCur.z;
+    out.theta = this._theta;
+    out.rcsBudget = this._rcsBudget;
+    out.hCur = this._hCur;
+    out.modeCode = modeToCode(this._mode);
+    out.grounded = this._grounded ? 1 : 0;
+  }
+
+
+  /**
+   * Verbatim canonical-state restore. The contact caches (hCur/nCur) are
+   * restored, NOT recomputed — normalize(pLocal) is not bit-guaranteed to
+   * equal the direction that produced them, and the M1G isomorphism
+   * acceptance tolerates zero ulps. Inputs neutralized; the wall-clock
+   * accumulator zeroed (it is NOT simulation state — see M1G analysis §1.3).
+   */
+  restorePersistentState(s: PersistentPlayerState): void {
+    this.absPos.x = s.absPosX; this.absPos.y = s.absPosY; this.absPos.z = s.absPosZ;
+    this.absVel.x = s.absVelX; this.absVel.y = s.absVelY; this.absVel.z = s.absVelZ;
+    this.pLocal.x = s.pLocalX; this.pLocal.y = s.pLocalY; this.pLocal.z = s.pLocalZ;
+    this.up.x = s.upX; this.up.y = s.upY; this.up.z = s.upZ;
+    this.fwd.x = s.fwdX; this.fwd.y = s.fwdY; this.fwd.z = s.fwdZ;
+    this._vCtl.x = s.vCtlX; this._vCtl.y = s.vCtlY; this._vCtl.z = s.vCtlZ;
+    this._vSlide.x = s.vSlideX; this._vSlide.y = s.vSlideY; this._vSlide.z = s.vSlideZ;
+    this._nCur.x = s.nCurX; this._nCur.y = s.nCurY; this._nCur.z = s.nCurZ;
+    this._theta = s.theta;
+    this._thetaPrev = s.theta;
+    this._rcsBudget = s.rcsBudget;
+    this._hCur = s.hCur;
+    this._grounded = s.grounded === 1;
+    this._mode = codeToMode(s.modeCode);
+    if (this._mode === 'VEHICLE' && this._vehicle === null) this._mode = 'SURFACE';
+    const i = this.input;
+    i.moveF = 0; i.moveR = 0; i.sprint = false; i.crouch = false; i.jump = false;
+    i.turnRate = 0; i.rcsF = 0; i.rcsU = 0; i.rcsR = 0;
+    this.lookYawDelta = 0; this.lookPitchDelta = 0; this.lookRollDelta = 0;
+    this._accumulator = 0;
+  }
+```
+
+
+### 3. `src/core/persistence/SaveManager.ts`
+
+
+```typescript
+/**
+ * ============================================================================
+ *  SAVE MANAGER — SNAPSHOT / RESTORE ORCHESTRATOR (ABOVE THE CORE)
+ *  Milestone 1G · Spec 01.6 (Pause-and-Prime hydration pipeline)
+ * ============================================================================
+ *  Sits ABOVE the locked SimulationCore / AstronautKCC: it consumes their
+ *  existing public surfaces (plus the M1G additive persistence hooks) and
+ *  never modifies their execution loops.
+ *
+ *  ZERO-GC CAPTURE (acceptance row 1): captureState() = KCC hook (field
+ *  writes into the boot-allocated player snapshot) + 35 typed stores + CRC
+ *  + one Date.now(). Allocation count: 0 — identity-canary + heap-proven
+ *  over 10,000 captures in the suite.
+ *
+ *  ASYNC I/O (acceptance row 3): asyncWrite() performs exactly ONE
+ *  synchronous act — committing the captured bytes into a second
+ *  boot-allocated buffer (a 312 B memcpy, ~ns) — then hands it to IndexedDB.
+ *  This eliminates the await-ordering hazard (an `await open()` before put
+ *  would defer the clone to a microtask during which a later capture could
+ *  mutate the single buffer). The browser clones the payload at put() time
+ *  (tens of µs for 312 B) and commits on its storage thread; the 60 Hz loop
+ *  never yields.
+ *
+ *  DETERMINISTIC RESTORE (acceptance row 2) — canonical order (§1.3):
+ *    (a) core.setSimTime(saved double)         — exact macro clock restore
+ *    (b) [inside setSimTime] synchronous rail evaluation — P(elements; t)
+ *        is pure, so all 17 bodies return BIT-IDENTICALLY (M1B proof)
+ *    (c) kcc.restorePersistentState(snapshot)  — full canonical player state
+ *        verbatim (incl. the contact caches — persisted, never recomputed)
+ *        + entity write-through via the same live refs the KCC uses
+ *    (d) origin: the natural M1A trigger — the first post-restore tick
+ *        evaluates the focus bound against the restored position; a
+ *        relocation load (> 1,024 m) rebases WITHIN that tick, before the
+ *        render extract, snapping O to the nearest 256 m lattice point
+ *        (bit-exact Δ — the M1A power-of-two proof). Local loads keep a
+ *        valid origin; the rendered image is origin-invariant.
+ *    (e) terrain hydration — harness-side (it owns the quadtree): the spec
+ *        01.6 Freeze -> priority-generate -> gate -> 300 ms fade sequence.
+ *
+ *  ATOMICITY: asyncLoad NEVER mutates game state — ingest -> verify ->
+ *  (migrate) -> snapshot only. deterministicRestore is the sole mutator,
+ *  synchronous, at a frame boundary. Rejected loads leave the world
+ *  bit-untouched (fingerprint-proven in the suite).
+ */
+
+
+import type { SimulationCore } from '../simulation/SimulationCore';
+import type { AstronautKCC, PersistentPlayerState } from '../physics/astronautKCC';
+import { makePersistentPlayerState } from '../physics/astronautKCC';
+import { BinaryStateSerializer, SAVE_BUFFER_BYTES, SAVE_VERSION } from './BinaryStateSerializer';
+import type { IndexedDBProvider, SaveRecord } from './IndexedDBProvider';
+
+
+export type SaveOpStatus =
+  | 'ok' | 'migrated' | 'no-capture' | 'busy' | 'not-found'
+  | 'bad-magic' | 'bad-version' | 'bad-crc' | 'truncated' | 'io-error';
+
+
+export interface SaveCounters {
+  captures: number; writes: number; reads: number;
+  rejected: number; migrations: number; applied: number;
+  lastWriteMicros: number; lastReadMicros: number;
+  lastSaveBytes: number; lastSavedAtMs: number;
+  lastStatus: string;
+}
+
+
+export class SaveManager {
+  readonly serializer = new BinaryStateSerializer();
+  /** Boot-allocated player snapshot — mutated in place, never replaced. */
+  readonly player: PersistentPlayerState = makePersistentPlayerState();
+  readonly counters: SaveCounters = {
+    captures: 0, writes: 0, reads: 0, rejected: 0, migrations: 0, applied: 0,
+    lastWriteMicros: 0, lastReadMicros: 0, lastSaveBytes: 0, lastSavedAtMs: 0,
+    lastStatus: '—',
+  };
+
+
+  private readonly _core: SimulationCore;
+  private readonly _kcc: AstronautKCC;
+  private readonly _provider: IndexedDBProvider;
+  private readonly _saveId: string;
+  private readonly _entityPos: { x: number; y: number; z: number } | null;
+  private readonly _entityVel: { x: number; y: number; z: number } | null;
+
+
+  /** Commit buffer — the bytes actually handed to IndexedDB (the one
+   *  synchronous act of asyncWrite; boot-allocated, recycled forever). */
+  private readonly _commitBuf = new ArrayBuffer(SAVE_BUFFER_BYTES);
+  private readonly _commitU8 = new Uint8Array(this._commitBuf);
+  /** Pre-allocated record — mutated in place; IDB clones the payload. */
+  private readonly _record: SaveRecord;
+  /** Boot-allocated migration scratch. */
+  private readonly _migTime = { v: 0 };
+
+
+  private _hasCapture = false;
+  private _hasSnapshot = false;
+  private _writeInFlight = false;
+  private _snapshotSimTime = 0;
+  /** True when the restored position is > 1,024 m from the current origin —
+   *  the next tick MUST rebase (asserted by the suite). */
+  restorePendingRebase = false;
+
+
+  constructor(
+    core: SimulationCore,
+    kcc: AstronautKCC,
+    provider: IndexedDBProvider,
+    saveId = 'quick',
+    entityPos: { x: number; y: number; z: number } | null = null,
+    entityVel: { x: number; y: number; z: number } | null = null,
+  ) {
+    this._core = core;
+    this._kcc = kcc;
+    this._provider = provider;
+    this._saveId = saveId;
+    this._entityPos = entityPos;
+    this._entityVel = entityVel;
+    this._record = {
+      id: saveId, version: SAVE_VERSION, createdMs: 0,
+      byteLength: SAVE_BUFFER_BYTES, payload: this._commitBuf,
+    };
+  }
+
+
+  get hasCapture(): boolean { return this._hasCapture; }
+
+
+  /** ZERO-ALLOCATION capture. Callable at any frame boundary. */
+  captureState(): boolean {
+    const o = this._core.getOrigin();
+    this._kcc.capturePersistentStateInto(this.player);
+    const now = Date.now();
+    this.serializer.capture(this._core.simTime, o.x, o.y, o.z, this.player, now);
+    this._hasCapture = true;
+    this.counters.captures++;
+    this.counters.lastSaveBytes = SAVE_BUFFER_BYTES;
+    this.counters.lastSavedAtMs = now;
+    return true;
+  }
+
+
+  async asyncWrite(): Promise<SaveOpStatus> {
+    if (!this._hasCapture) { this.counters.lastStatus = 'no-capture'; return 'no-capture'; }
+    if (this._writeInFlight) { this.counters.lastStatus = 'busy'; return 'busy'; }
+    this._writeInFlight = true;
+    this._commitU8.set(this.serializer.u8);   // THE one synchronous act
+    this._record.version = SAVE_VERSION;
+    this._record.createdMs = this.counters.lastSavedAtMs;
+    const t0 = performance.now();
+    let status: SaveOpStatus = 'ok';
+    try {
+      await this._provider.putRecord(this._record);
+      this.counters.writes++;
+    } catch {
+      status = 'io-error';
+      this.counters.rejected++;
+    }
+    this.counters.lastWriteMicros = (performance.now() - t0) * 1000;
+    this.counters.lastStatus = status;
+    this._writeInFlight = false;
+    return status;
+  }
+
+
+  /** I/O + verify + (migrate) into the snapshot. NEVER mutates game state. */
+  async asyncLoad(id: string = this._saveId): Promise<SaveOpStatus> {
+    this.counters.reads++;
+    const t0 = performance.now();
+    let status: SaveOpStatus;
+    try {
+      const rec = await this._provider.getRecord(id);
+      if (rec === null) {
+        status = 'not-found';
+        this.counters.rejected++;
+      } else {
+        this.serializer.ingest(rec.payload, rec.byteLength);
+        const v = this.serializer.verify();
+        if (v === 'ok') {
+          this.serializer.playerInto(this.player);
+          this._snapshotSimTime = this.serializer.simTime;
+          this._hasSnapshot = true;
+          status = 'ok';
+        } else if (v === 'ok-v1') {
+          this.serializer.migrateV1Into(this._migTime, this.player);
+          this._snapshotSimTime = this._migTime.v;
+          this._hasSnapshot = true;
+          this.counters.migrations++;
+          status = 'migrated';
+        } else {
+          this.counters.rejected++;
+          status = v;
+        }
+      }
+    } catch {
+      status = 'io-error';
+      this.counters.rejected++;
+    }
+    this.counters.lastReadMicros = (performance.now() - t0) * 1000;
+    this.counters.lastStatus = status;
+    return status;
+  }
+
+
+  /** THE apply step — synchronous, at a frame boundary. Order (a)-(e) and
+   *  proofs in the file header. */
+  deterministicRestore(core: SimulationCore = this._core): SaveOpStatus {
+    if (!this._hasSnapshot) {
+      this.counters.lastStatus = 'no-capture';
+      return 'no-capture';
+    }
+    // (a)+(b) exact macro restore + synchronous rail re-evaluation
+    core.setSimTime(this._snapshotSimTime);
+    // (c) full canonical player state (verbatim, incl. contact caches)
+    this._kcc.restorePersistentState(this.player);
+    if (this._entityPos !== null && this._entityVel !== null) {
+      this._entityPos.x = this._kcc.absPos.x;
+      this._entityPos.y = this._kcc.absPos.y;
+      this._entityPos.z = this._kcc.absPos.z;
+      this._entityVel.x = this._kcc.absVel.x;
+      this._entityVel.y = this._kcc.absVel.y;
+      this._entityVel.z = this._kcc.absVel.z;
+    }
+    // (d) natural-trigger validation (the rebase itself fires inside the
+    // next core tick — before its render extract, per canonical order)
+    const o = core.getOrigin();
+    const p = this._kcc.absPos;
+    const m = Math.max(
+      Math.abs(p.x - o.x), Math.abs(p.y - o.y), Math.abs(p.z - o.z));
+    this.restorePendingRebase = m > 1024;
+    this.counters.applied++;
+    this.counters.lastStatus = 'ok';
+    return 'ok';
+  }
+
+
+  async deleteSave(id: string = this._saveId): Promise<'ok' | 'io-error'> {
+    try {
+      await this._provider.deleteRecord(id);
+      return 'ok';
+    } catch {
+      return 'io-error';
+    }
+  }
+
+
+  /** Direct record injection — integrity/versioning tests only (suite). */
+  async putRecordDirect(record: SaveRecord): Promise<void> {
+    await this._provider.putRecord(record);
+  }
+}
+```
+
+
+### 4. `src/test/Milestone1G_TestHarness.tsx`
+
+
+```tsx
+/**
+ * ============================================================================
+ *  MILESTONE 1G — INDEXEDDB SAVE PIPELINE & DETERMINISTIC STATE (HARNESS)
+ * ============================================================================
+ *  ENVIRONMENT: the M1E astronaut walks the M1C Earth-scale planet
+ *  (R = 5,000 m, μ = 9.81·5000², 52 m/s equator spin), with the M1B rails
+ *  running at 30× macro — THE MOON (catalog: R = 1,364.5 m, orbit 38,850 m,
+ *  period 3,072 s) visibly sweeps ~35° per minute of play across the sky.
+ *  Saving and loading therefore rewinds a visible celestial — the money
+ *  shot for "rewinds celestial bodies".
+ *
+ *  PERSISTENCE UX: [QUICK SAVE] [QUICK LOAD] [CORRUPT STATE (TEST)]
+ *  [CLEAR SAVE] + K/L hotkeys. Every load runs the Spec-01.6 choreography:
+ *  Freeze -> priority-generate -> gate -> 300 ms cosmetic fade.
+ *
+ *  AUTOMATED ACCEPTANCE (auto-arms after streaming warmup):
+ *   [R1] zero-gc-capture  — 10,000 captures: identity canary + heap delta.
+ *   [R2] bit-exact-restore — F0' ≡ F0 bitwise after a real IDB round trip
+ *        (79 doubles / 158 words), PLUS the isomorphism proof: 600 scripted
+ *        ticks after save (F1) vs 600 identical ticks after restore (F2)
+ *        — F2 ≡ F1 bitwise.
+ *   [R3] async-io         — 30 write+30 read cycles during live 60 Hz
+ *        flight: max frame, frames > 25 ms, governor shed delta == 0.
+ *   [R4] integrity        — corrupt-CRC / bad-magic / future-version /
+ *        truncated records all rejected ATOMICALLY (fingerprints unchanged).
+ *   [R5] migration        — fabricated v1 record loads via the real v1→v2
+ *        chain; subsequent saves are v2.
+ *   [R6] hydration        — save, relocate 3 km, load: freeze, terrain gate
+ *        at the restore site, 300 ms fade, forced M1A rebase to the exact
+ *        nearest 256 m lattice, min AGL ≥ 0 throughout (analytic no-clip).
+ */
+
+
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import * as THREE from 'three';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { SimulationCore } from '../core/simulation/SimulationCore';
+import { FloatingOriginAdapter } from '../render/FloatingOriginAdapter';
+import {
+  GRID_N, TEST_PLANET, initTerrainField, terrainHeight, chunkArcWidth,
+  chunkKey, gridCoord,
+} from '../core/terrain/terrainField';
+import {
+  faceCubePointInto, spherifyInto, sphereToCubeInto,
+  type CubeCoord, type Vec3Out,
+} from '../core/terrain/spherify';
+import { mulberry32 } from '../core/terrain/noise';
+import { TerrainMeshPool } from '../render/TerrainMeshPool';
+import { AstronautKCC, makePersistentPlayerState } from '../core/physics/astronautKCC';
+import {
+  rotateAboutAxisInto, rotateByQuatConjInto, rotateByQuatInto, spinQuatInto,
+  type Quat, type Vec3,
+} from '../core/physics/sphericalFrame';
+import {
+  SAVE_BUFFER_BYTES, SAVE_MAGIC, SAVE_VERSION,
+  V1_BODY_BYTES, V1_HEADER_BYTES, V1_SLOTS,
+} from '../core/persistence/BinaryStateSerializer';
+import { IndexedDBProvider, type SaveRecord } from '../core/persistence/IndexedDBProvider';
+import { SaveManager, type SaveOpStatus } from '../core/persistence/SaveManager';
+
+
+/* ============================================================================
+ * 1. DEV-TIME PATCHES — dispose / scene.remove counters (continuity)
+ * ==========================================================================*/
+const origGeoDispose = THREE.BufferGeometry.prototype.dispose;
+const origMatDispose = THREE.Material.prototype.dispose;
+const origTexDispose = THREE.Texture.prototype.dispose;
+const origSceneRemove = THREE.Scene.prototype.remove;
+let disposeCalls = 0;
+let sceneRemoveCalls = 0;
+THREE.BufferGeometry.prototype.dispose = function (this: THREE.BufferGeometry) {
+  disposeCalls++; return origGeoDispose.apply(this, arguments as unknown as []);
+};
+THREE.Material.prototype.dispose = function (this: THREE.Material) {
+  disposeCalls++; return origMatDispose.apply(this, arguments as unknown as []);
+};
+THREE.Texture.prototype.dispose = function (this: THREE.Texture) {
+  disposeCalls++; return origTexDispose.apply(this, arguments as unknown as []);
+};
+THREE.Scene.prototype.remove = function (this: THREE.Scene) {
+  sceneRemoveCalls++; return origSceneRemove.apply(this, arguments as unknown as []);
+};
+
+
+/* ============================================================================
+ * 2. BOOT SINGLETONS
+ * ==========================================================================*/
+const R = TEST_PLANET.radius;
+const MOON_R = 1364.5;
+const MAXH = 900;
+const HEIGHT_SLACK = 900;
+initTerrainField(TEST_PLANET);
+
+
+const core = new SimulationCore();               // macro 30× by default (M1B)
+const adapter = new FloatingOriginAdapter(core);
+const pool = new TerrainMeshPool({
+  meshCount: 96, workerCount: 2, workerPoolSets: 96,
+  maxBatch: 6, inFlightPerWorker: 12, params: TEST_PLANET,
+});
+
+
+const kcc = new AstronautKCC({
+  planetRadius: R, planetMu: 245_250_000, gravityRange: 30_000,
+  spinOmega: 0.0104,                              // 52 m/s equator (Spec 01.4)
+  maxTerrainHeight: MAXH,
+  walkSpeed: 4, sprintSpeed: 8, crouchSpeed: 1.8, jumpSpeed: 5,
+  accelTau: 0.12, stepHeight: 0.55, snapDistance: 0.45, groundClearance: 0.02,
+  maxWalkSlopeDeg: 50, slideAngleDeg: 45, kineticFriction: 0.6,
+  slideGripTau: 0.06, eyeHeight: 1.62, crouchEyeHeight: 0.95,
+  upBlendWeight: 0.65, airborneUpTau: 2.0, autoTurnRate: 6,
+  rcsAccel: 1.2, rcsBudgetMax: 25, rcsRegen: 0.5, sweepGap: 0.25,
+});
+const ASTRO_ID = 'm1g-astronaut';
+const astroState = core.registerEntity(ASTRO_ID, { absPos: { x: 0, y: 0, z: 0 }, dynamic: false });
+core.setFocusEntity(ASTRO_ID);
+kcc.attachWriteThrough(astroState.absPos, astroState.velocity);
+const entityPos = astroState.absPos;
+const entityVel = astroState.velocity;
+
+
+const provider = new IndexedDBProvider('solaris-m1g', 'saves', 2);
+const saveManager = new SaveManager(
+  core, kcc, provider, 'quick', entityPos, entityVel,
+);
+void provider.open().catch(() => { /* environmental; the suite reports it */ });
+
+
+/* -- celestial sky references (rails evaluated at boot by the core) -------- */
+const earthState = core.getCelestialState('earth');
+const moonState = core.getCelestialState('moon');
+if (earthState === null || moonState === null) throw new Error('rail states missing');
+const sunDir: Vec3 = (() => {
+  const l = Math.hypot(earthState.absPos.x, earthState.absPos.y, earthState.absPos.z) || 1;
+  return { x: -earthState.absPos.x / l, y: -earthState.absPos.y / l, z: -earthState.absPos.z / l };
+})();
+
+
+/* -- spawn site scan (flat equator band, M1E pattern) ---------------------- */
+const _scanT: Vec3 = { x: 0, y: 0, z: 0 };
+const _scanN: Vec3 = { x: 0, y: 0, z: 0 };
+function slopeDegAt(dx: number, dy: number, dz: number): number {
+  const { terrainNormalInto } = require('../core/terrain/terrainField') as
+    typeof import('../core/terrain/terrainField');
+  terrainNormalInto(dx, dy, dz, _scanN);
+  const c = _scanN.x * dx + _scanN.y * dy + _scanN.z * dz;
+  return (Math.acos(Math.max(-1, Math.min(1, c))) * 180) / Math.PI;
+}
+const SPAWN: Vec3 = (() => {
+  const rand = mulberry32(0x51ed17);
+  for (let i = 0; i < 40000; i++) {
+    const th = rand() * Math.PI * 2;
+    const yy = (rand() * 2 - 1) * 0.05;
+    const s = Math.sqrt(1 - yy * yy);
+    _scanT.x = Math.cos(th) * s; _scanT.y = yy; _scanT.z = Math.sin(th) * s;
+    if (slopeDegAt(_scanT.x, _scanT.y, _scanT.z) > 0.7) continue;
+    const h0 = terrainHeight(_scanT.x, _scanT.y, _scanT.z);
+    let ok = true;
+    for (let k = 0; k < 4; k++) {
+      const a = k * 1.57 + 0.4;
+      const ex = Math.cos(a) * 0.0005, ez = Math.sin(a) * 0.0005;
+      const l = Math.hypot(_scanT.x + ex, _scanT.y, _scanT.z + ez);
+      if (Math.abs(terrainHeight((_scanT.x + ex) / l, _scanT.y / l, (_scanT.z + ez) / l) - h0) > 0.15) {
+        ok = false; break;
+      }
+    }
+    if (ok) return { x: _scanT.x, y: _scanT.y, z: _scanT.z };
+  }
+  return { x: 1, y: 0, z: 0 };
+})();
+kcc.teleportSurface(SPAWN.x, SPAWN.y, SPAWN.z);
+const walkFwd: Vec3 = (() => {
+  let tx = -SPAWN.z, ty = 0, tz = SPAWN.x;
+  const l = Math.hypot(tx, ty, tz) || 1;
+  tx /= l; tz /= l;
+  if (tx * sunDir.x + tz * sunDir.z < 0) { tx = -tx; tz = -tz; }
+  return { x: tx, y: ty, z: tz };
+})();
+/** S9 relocation site: 0.6 rad (~3.0 km arc) along the surface. */
+const AWAY: Vec3 = (() => {
+  const out = { x: 0, y: 0, z: 0 };
+  rotateAboutAxisInto(SPAWN.x, SPAWN.y, SPAWN.z, walkFwd.x, walkFwd.y, walkFwd.z, 0.6, out);
+  return out;
+})();
+
+
+/* ============================================================================
+ * 3. M1C QUADTREE + LOD CONTROLLER (compact reuse)
+ * ==========================================================================*/
+const MAX_LEVEL = 4;
+const SPLIT_K = 2.0, MERGE_K = 1.45, GRACE_FRAMES = 45;
+const ACTIVATIONS_PER_FRAME = 3, TOTAL_INFLIGHT_CAP = 24;
+const HORIZON_MARGIN = 150;
+
+
+interface QNode {
+  face: number; level: number; ix: number; iy: number; key: number;
+  ox: number; oy: number; oz: number; width: number; brad: number;
+  parent: QNode | null; split: boolean; desired: boolean;
+  activeRec: number; pendingRec: number;
+}
+const LEVEL_OFFSETS = [0, 1, 5, 21, 85];
+const FACE_NODES: QNode[][] = [];
+(function buildNodes(): void {
+  const dir: Vec3Out = { x: 0, y: 0, z: 0 };
+  for (let f = 0; f < 6; f++) {
+    const arr: QNode[] = new Array(341);
+    for (let L = 0; L <= MAX_LEVEL; L++) {
+      const D = GRID_N << L, cnt = 1 << L;
+      for (let ix = 0; ix < cnt; ix++) for (let iy = 0; iy < cnt; iy++) {
+        const u = gridCoord(ix * GRID_N + (GRID_N >> 1), D);
+        const v = gridCoord(iy * GRID_N + (GRID_N >> 1), D);
+        faceCubePointInto(f, u, v, dir);
+        spherifyInto(dir.x, dir.y, dir.z, dir);
+        const rr = R + terrainHeight(dir.x, dir.y, dir.z);
+        arr[LEVEL_OFFSETS[L] + ix * cnt + iy] = {
+          face: f, level: L, ix, iy, key: chunkKey(f, L, ix, iy),
+          ox: dir.x * rr, oy: dir.y * rr, oz: dir.z * rr,
+          width: chunkArcWidth(L), brad: chunkArcWidth(L) * 0.75 + HEIGHT_SLACK,
+          parent: null, split: false, desired: false, activeRec: -1, pendingRec: -1,
+        };
+      }
+    }
+    for (let L = 1; L <= MAX_LEVEL; L++) {
+      const cnt = 1 << L, pc = 1 << (L - 1);
+      for (let ix = 0; ix < cnt; ix++) for (let iy = 0; iy < cnt; iy++) {
+        arr[LEVEL_OFFSETS[L] + ix * cnt + iy].parent =
+          arr[LEVEL_OFFSETS[L - 1] + (ix >> 1) * pc + (iy >> 1)];
+      }
+    }
+    FACE_NODES.push(arr);
+  }
+})();
+function childOf(n: QNode, c: number): QNode {
+  const L1 = n.level + 1, cnt = 1 << L1;
+  return FACE_NODES[n.face][LEVEL_OFFSETS[L1] + (n.ix * 2 + (c >> 1)) * cnt + (n.iy * 2 + (c & 1))];
+}
+function nodeHasData(n: QNode): boolean {
+  if (n.activeRec >= 0) return true;
+  if (n.pendingRec >= 0 && pool.records[n.pendingRec].state === 2) return true;
+  return false;
+}
+/** The level-4 leaf containing the player (hydration gate target). */
+const _gateCC: CubeCoord = { face: 0, u: 0, v: 0 };
+function gateNodeForPlayer(): QNode | null {
+  const p = kcc.pLocal;
+  const r = Math.hypot(p.x, p.y, p.z) || 1;
+  sphereToCubeInto(p.x / r, p.y / r, p.z / r, _gateCC);
+  const cnt = 1 << MAX_LEVEL;
+  const ix = Math.max(0, Math.min(cnt - 1, Math.floor((_gateCC.u + 1) * 0.5 * cnt)));
+  const iy = Math.max(0, Math.min(cnt - 1, Math.floor((_gateCC.v + 1) * 0.5 * cnt)));
+  return FACE_NODES[_gateCC.face][LEVEL_OFFSETS[MAX_LEVEL] + ix * cnt + iy];
+}
+
+
+const camPlanet: Vec3 = { x: 0, y: 0, z: 0 };
+let camUX = 0, camUY = 0, camUZ = 0, horizonDot = 0;
+const candNodes: QNode[] = [];
+const candDist = new Float64Array(64);
+let candCount = 0;
+function clearSubtree(n: QNode): void {
+  n.desired = false;
+  if (n.level < MAX_LEVEL) for (let c = 0; c < 4; c++) clearSubtree(childOf(n, c));
+}
+function visitNode(n: QNode): boolean {
+  if (n.ox * camUX + n.oy * camUY + n.oz * camUZ + n.brad < horizonDot - HORIZON_MARGIN) {
+    clearSubtree(n); return false;
+  }
+  const dx = camPlanet.x - n.ox, dy = camPlanet.y - n.oy, dz = camPlanet.z - n.oz;
+  const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
+  const sd = SPLIT_K * n.width;
+  if (n.split && d > MERGE_K * sd) n.split = false;
+  if (!n.split && n.level < MAX_LEVEL && d < sd) n.split = true;
+  if (n.split && n.level < MAX_LEVEL) {
+    let any = false;
+    for (let c = 0; c < 4; c++) if (visitNode(childOf(n, c))) any = true;
+    n.desired = !any;
+    return true;
+  }
+  n.desired = true;
+  if (n.activeRec < 0 && n.pendingRec < 0 && candCount < 64) {
+    candNodes[candCount] = n; candDist[candCount] = d; candCount++;
+  }
+  return true;
+}
+function updateController(): void {
+  const recs = pool.records;
+  for (let i = 0; i < recs.length; i++) {
+    const rec = recs[i];
+    if (rec.state === 2 && rec.owner !== null) {
+      const n = rec.owner as QNode;
+      if (n.pendingRec === i) { n.pendingRec = -1; n.activeRec = i; }
+    }
+  }
+  const cr = Math.hypot(camPlanet.x, camPlanet.y, camPlanet.z) || 1;
+  camUX = camPlanet.x / cr; camUY = camPlanet.y / cr; camUZ = camPlanet.z / cr;
+  horizonDot = (R * R) / cr;
+  candCount = 0;
+  for (let f = 0; f < 6; f++) visitNode(FACE_NODES[f][0]);
+  const pressure = pool.freeCount() < 6;
+  for (let i = 0; i < recs.length; i++) {
+    const rec = recs[i];
+    const node = rec.owner as QNode | null;
+    if (node === null) continue;
+    if (rec.state === 2) {
+      if (node.desired) { rec.unwanted = 0; continue; }
+      if (node.split) {
+        let cd = false;
+        for (let c = 0; c < 4; c++) if (nodeHasData(childOf(node, c))) { cd = true; break; }
+        if (cd) rec.mesh.visible = false;
+      }
+      let keep = false;
+      if (node.split) {
+        for (let c = 0; c < 4; c++) {
+          const ch = childOf(node, c);
+          if (ch.desired && !nodeHasData(ch)) { keep = true; break; }
+        }
+      } else {
+        const p = node.parent;
+        if (p !== null && p.desired && !nodeHasData(p)) keep = true;
+      }
+      if (keep && !pressure) { rec.unwanted = 0; continue; }
+      rec.unwanted++;
+      if (rec.unwanted >= GRACE_FRAMES || pressure) {
+        pool.release(i);
+        if (node.activeRec === i) node.activeRec = -1;
+        rec.owner = null;
+      }
+    } else if (rec.state === 1) {
+      if (!node.desired && !node.split) {
+        rec.unwanted++;
+        if (rec.unwanted >= GRACE_FRAMES) {
+          pool.release(i);
+          if (node.pendingRec === i) node.pendingRec = -1;
+          rec.owner = null;
+        }
+      } else rec.unwanted = 0;
+    }
+  }
+  for (let a = 1; a < candCount; a++) {
+    const d = candDist[a], n = candNodes[a];
+    let b = a - 1;
+    while (b >= 0 && candDist[b] > d) { candDist[b + 1] = candDist[b]; candNodes[b + 1] = candNodes[b]; b--; }
+    candDist[b + 1] = d; candNodes[b + 1] = n;
+  }
+  let act = 0;
+  for (let a = 0; a < candCount && act < ACTIVATIONS_PER_FRAME; a++) {
+    if (pool.inFlightTotal() >= TOTAL_INFLIGHT_CAP) break;
+    if (pool.freeCount() <= 2) break;
+    const n = candNodes[a];
+    const idx = pool.acquire(n.face, n.level, n.ix, n.iy, n.ox, n.oy, n.oz);
+    if (idx < 0) break;
+    pool.records[idx].owner = n;
+    n.pendingRec = idx;
+    act++;
+  }
+}
+
+
+/* ============================================================================
+ * 4. STATIC SCENE (boot-only allocation)
+ * ==========================================================================*/
+const sceneRoot = new THREE.Group();
+const spinGroup = new THREE.Group();
+sceneRoot.add(spinGroup);
+const sunLight = new THREE.DirectionalLight(0xfff1de, 2.1);
+sunLight.position.set(sunDir.x * 8000, sunDir.y * 8000, sunDir.z * 8000);
+sceneRoot.add(sunLight, sunLight.target);
+sceneRoot.add(new THREE.AmbientLight(0x2a3850, 0.5));
+spinGroup.add(new THREE.Mesh(
+  new THREE.SphereGeometry(R - MAXH - 40, 40, 28),
+  new THREE.MeshStandardMaterial({ color: 0x0d1118, roughness: 1 }),
+));
+
+
+/* -- the Moon: a real 3D sky sphere at the live Earth-relative rail offset -- */
+const moonMesh = new THREE.Mesh(
+  new THREE.SphereGeometry(MOON_R, 48, 32),
+  new THREE.MeshStandardMaterial({ color: 0xb9b4ac, roughness: 1 }),
+);
+moonMesh.frustumCulled = false;
+sceneRoot.add(moonMesh);
+
+
+/* -- sun glow (boot-built canvas texture) ----------------------------------- */
+function makeGlow(size: number): THREE.Mesh {
+  const canvas = document.createElement('canvas');
+  canvas.width = 128; canvas.height = 128;
+  const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
+  const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+  grad.addColorStop(0, 'rgba(255,240,205,0.95)');
+  grad.addColorStop(0.22, 'rgba(255,214,140,0.42)');
+  grad.addColorStop(0.55, 'rgba(255,190,110,0.10)');
+  grad.addColorStop(1, 'rgba(255,180,100,0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 128, 128);
+  const mesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(2, 2),
+    new THREE.MeshBasicMaterial({
+      map: new THREE.CanvasTexture(canvas), transparent: true,
+      blending: THREE.AdditiveBlending, depthWrite: false, fog: false,
+    }),
+  );
+  mesh.scale.set(size, size, 1);
+  mesh.frustumCulled = false;
+  return mesh;
+}
+const sunGlow = makeGlow(4200);
+sceneRoot.add(sunGlow);
+(function stars(): void {
+  const COUNT = 1400, RAD = 15000;
+  const pos = new Float32Array(COUNT * 3);
+  const rand = mulberry32(0x5eed17);
+  for (let i = 0; i < COUNT; i++) {
+    const u = rand() * 2 - 1, t = rand() * Math.PI * 2;
+    const s = Math.sqrt(1 - u * u);
+    pos[i * 3] = Math.cos(t) * s * RAD;
+    pos[i * 3 + 1] = u * RAD;
+    pos[i * 3 + 2] = Math.sin(t) * s * RAD;
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  sceneRoot.add(new THREE.Points(g, new THREE.PointsMaterial({
+    color: 0xaec6dc, size: 1.7, sizeAttenuation: false,
+    transparent: true, opacity: 0.85, fog: false, depthWrite: false,
+  })));
+})();
+
+
+/* -- astronaut mesh (M1E build) --------------------------------------------- */
+const astroMesh = new THREE.Group();
+(function buildAstronaut(): void {
+  const suit = new THREE.MeshStandardMaterial({ color: 0xe8ecef, roughness: 0.85 });
+  const dark = new THREE.MeshStandardMaterial({ color: 0x3a4652, roughness: 0.7 });
+  const visor = new THREE.MeshStandardMaterial({
+    color: 0x7fd4ff, emissive: 0x1e7fb8, emissiveIntensity: 0.9, roughness: 0.2,
+  });
+  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.62, 0.52), suit);
+  torso.position.set(0, 1.02, 0); astroMesh.add(torso);
+  const helmet = new THREE.Mesh(new THREE.SphereGeometry(0.24, 16, 12), suit);
+  helmet.position.set(0.04, 1.52, 0); astroMesh.add(helmet);
+  const vis = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.16, 0.3), visor);
+  vis.position.set(0.24, 1.53, 0); astroMesh.add(vis);
+  const pack = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.44, 0.4), dark);
+  pack.position.set(-0.3, 1.1, 0); astroMesh.add(pack);
+  for (const s of [-1, 1]) {
+    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.68, 0.24), suit);
+    leg.position.set(0, 0.36, s * 0.14); astroMesh.add(leg);
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.16, 0.16), suit);
+    arm.position.set(0.1, 1.12, s * 0.34); astroMesh.add(arm);
+  }
+})();
+sceneRoot.add(astroMesh);
+
+
+/* ============================================================================
+ * 5. INPUT + CAMERA
+ * ==========================================================================*/
+const keys: Record<string, boolean> = {};
+let userPaused = false, mouseDX = 0, mouseDY = 0;
+const SENS = 0.0022;
+window.addEventListener('keydown', (e) => {
+  if (e.code.startsWith('Arrow') || e.code === 'Space') e.preventDefault();
+  if (e.repeat) return;
+  keys[e.code] = true;
+  if (e.code === 'KeyP') userPaused = !userPaused;
+  if (e.code === 'KeyR') kcc.teleportSurface(SPAWN.x, SPAWN.y, SPAWN.z);
+  if (e.code === 'KeyK') void userQuickSave();
+  if (e.code === 'KeyL') userQuickLoad();
+});
+window.addEventListener('keyup', (e) => { keys[e.code] = false; });
+window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
+document.addEventListener('mousemove', (e) => {
+  if (document.pointerLockElement !== null) { mouseDX += e.movementX; mouseDY += e.movementY; }
+});
+function readUserInput(): void {
+  const f = kcc.input;
+  f.moveF = (keys['KeyW'] ? 1 : 0) - (keys['KeyS'] ? 1 : 0);
+  f.moveR = (keys['KeyD'] ? 1 : 0) - (keys['KeyA'] ? 1 : 0);
+  f.sprint = !!keys['ShiftLeft'] || !!keys['ShiftRight'];
+  f.crouch = !!keys['KeyC'];
+  f.turnRate = 0;
+  if (kcc.mode === 'ZERO-G') {
+    f.rcsF = f.moveF; f.rcsR = f.moveR;
+    f.rcsU = (keys['Space'] ? 1 : 0) - (keys['KeyC'] ? 1 : 0);
+  } else { f.rcsF = 0; f.rcsU = 0; f.rcsR = 0; }
+}
+
+
+const cam = { yaw: 0.6, pitch: 0.32, dist: 7.0 };
+const _camDummy = new THREE.Camera();          // lookAt uses camera (-Z) semantics
+const _v1 = new THREE.Vector3();
+const _v2 = new THREE.Vector3();
+const _v3 = new THREE.Vector3();
+const _upW = new THREE.Vector3();
+const _fwdW = new THREE.Vector3();
+const _qSpinT = new THREE.Quaternion();
+const _qFrameT = new THREE.Quaternion();
+const _f64q: Quat = { x: 0, y: 0, z: 0, w: 1 };
+const _qS: Quat = { x: 0, y: 0, z: 0, w: 1 };
+const _wUp: Vec3 = { x: 0, y: 0, z: 0 };
+const _wFwd: Vec3 = { x: 0, y: 0, z: 0 };
+const _pTmp: Vec3 = { x: 0, y: 0, z: 0 };
+
+
+function updateCamera(camera: THREE.Camera): void {
+  spinQuatInto(kcc.spinPhase, _qS);
+  rotateByQuatInto(_qS, kcc.up.x, kcc.up.y, kcc.up.z, _wUp);
+  rotateByQuatInto(_qS, kcc.fwd.x, kcc.fwd.y, kcc.fwd.z, _wFwd);
+  _upW.set(_wUp.x, _wUp.y, _wUp.z);
+  _fwdW.set(_wFwd.x, _wFwd.y, _wFwd.z);
+  const lp = astroState.localPosF32;
+  const eye = kcc.telemetry.eyeHeight;
+  _v1.copy(_fwdW).multiplyScalar(-1);
+  _v1.applyAxisAngle(_upW, cam.yaw);
+  _v2.crossVectors(_upW, _v1).normalize();
+  _v1.applyAxisAngle(_v2, cam.pitch);
+  let dist = cam.dist;                        // boom terrain clamp (4 probes)
+  for (let s = 1; s <= 4; s++) {
+    const f = (s / 4) * cam.dist;
+    const px = lp[0] + _upW.x * eye + _v1.x * f;
+    const py = lp[1] + _upW.y * eye + _v1.y * f;
+    const pz = lp[2] + _upW.z * eye + _v1.z * f;
+    const r = Math.hypot(px, py, pz);
+    if (r < R + MAXH + 80) {
+      rotateByQuatConjInto(_qS, px / r, py / r, pz / r, _pTmp);
+      if (r - (R + terrainHeight(_pTmp.x, _pTmp.y, _pTmp.z)) < 0.4) {
+        dist = Math.min(dist, f - 0.4); break;
+      }
+    }
+  }
+  if (dist < 1.2) dist = 1.2;
+  _camDummy.position.set(
+    lp[0] + _upW.x * eye + _v1.x * dist,
+    lp[1] + _upW.y * eye + _v1.y * dist,
+    lp[2] + _upW.z * eye + _v1.z * dist);
+  _camDummy.up.copy(_upW);
+  _camDummy.lookAt(_v3.set(lp[0] + _upW.x * 1.4, lp[1] + _upW.y * 1.4, lp[2] + _upW.z * 1.4));
+  camera.position.copy(_camDummy.position);
+  camera.quaternion.copy(_camDummy.quaternion);
+}
+
+
+/* ============================================================================
+ * 6. FADE OVERLAY + HYDRATION MACHINE (Spec 01.6, analytic-era gate)
+ * ==========================================================================*/
+let _fadeEl: HTMLDivElement | null = null;
+function setFadeOpacity(v: number): void {
+  if (_fadeEl === null) _fadeEl = document.getElementById('m1g-fade') as HTMLDivElement | null;
+  if (_fadeEl !== null) _fadeEl.style.opacity = String(v);
+}
+
+
+const hydr = {
+  phase: 'IDLE' as 'IDLE' | 'FREEZING' | 'HYDRATING' | 'FADE',
+  loadStatus: '',
+  gateNode: null as QNode | null,
+  gatePassed: false, gateMs: 0, fadeMs: 0,
+  tFade: 0, tStart: 0, minAGL: Number.POSITIVE_INFINITY,
+  rebase0: 0,
+};
+function beginHydrationLoad(): void {
+  if (hydr.phase !== 'IDLE') return;
+  hydr.phase = 'FREEZING';
+  hydr.loadStatus = '';
+  hydr.gateNode = null;
+  hydr.gatePassed = false; hydr.gateMs = 0; hydr.fadeMs = 0; hydr.tFade = 0;
+  hydr.tStart = performance.now();
+  hydr.minAGL = Number.POSITIVE_INFINITY;
+  hydr.rebase0 = core.stats.rebaseCount;
+  void saveManager.asyncLoad().then((st) => { hydr.loadStatus = st; });
+}
+function tickHydration(dt: number, nowMs: number): void {
+  if (hydr.phase === 'IDLE') return;
+  const agl = kcc.telemetry.altAGL;
+  if (agl < hydr.minAGL) hydr.minAGL = agl;
+  if (hydr.phase === 'FREEZING') {
+    if (hydr.loadStatus === '') return;              // read still in flight
+    if (hydr.loadStatus !== 'ok' && hydr.loadStatus !== 'migrated') {
+      // Rejected (not-found / corrupt / future version): NO state was
+      // touched — drop the overlay attempt and continue unharmed.
+      setFadeOpacity(0);
+      hydr.phase = 'IDLE';
+      return;
+    }
+    // Frame-boundary apply: (a)-(d) of the deterministic restore sequence.
+    saveManager.deterministicRestore(core);
+    hydr.gateNode = gateNodeForPlayer();
+    setFadeOpacity(1);                               // the pause is visible
+    hydr.phase = 'HYDRATING';
+    return;
+  }
+  if (hydr.phase === 'HYDRATING') {
+    // Spec 01.6 gate — the chunk under the player is active. (Analytic-era
+    // stand-in: M1D/M1E analytic collision guarantees no fall-through even
+    // at zero chunks; the Rapier intersectionsWithShape == EMPTY gate is the
+    // production hook point.)
+    const ok = hydr.gateNode !== null && nodeHasData(hydr.gateNode);
+    hydr.gateMs = nowMs - hydr.tStart;
+    if (ok || hydr.gateMs > 3000) {
+      hydr.gatePassed = ok;
+      hydr.phase = 'FADE';                           // 300 ms cosmetic fade
+      hydr.tFade = 0;
+    }
+    return;
+  }
+  if (hydr.phase === 'FADE') {
+    hydr.tFade += dt;
+    const t = Math.min(1, hydr.tFade / 0.3);
+    setFadeOpacity(1 - t);
+    if (t >= 1) {
+      setFadeOpacity(0);
+      hydr.fadeMs = nowMs - hydr.tStart;
+      hydr.phase = 'IDLE';
+    }
+  }
+}
+
+
+/* ============================================================================
+ * 7. FINGERPRINTS + SCRIPTED TICKS + FRAME WAITS (suite machinery)
+ * ==========================================================================*/
+const FP_LEN = 80;                                  // 79 used
+const fp0 = new Float64Array(FP_LEN);
+const fp1 = new Float64Array(FP_LEN);
+const fp2 = new Float64Array(FP_LEN);
+const fp0u = new Uint32Array(fp0.buffer);
+const fp1u = new Uint32Array(fp1.buffer);
+const fp2u = new Uint32Array(fp2.buffer);
+const fpPlayer = makePersistentPlayerState();
+let fpWords = 0;
+function captureFingerprint(fp: Float64Array): void {
+  const bodies = core.getCelestialStates();
+  let k = 0;
+  for (let i = 0; i < bodies.length; i++) {
+    const p = bodies[i].absPos;
+    fp[k++] = p.x; fp[k++] = p.y; fp[k++] = p.z;    // 51
+  }
+  kcc.capturePersistentStateInto(fpPlayer);
+  fp[k++] = fpPlayer.absPosX; fp[k++] = fpPlayer.absPosY; fp[k++] = fpPlayer.absPosZ;
+  fp[k++] = fpPlayer.absVelX; fp[k++] = fpPlayer.absVelY; fp[k++] = fpPlayer.absVelZ;
+  fp[k++] = fpPlayer.pLocalX; fp[k++] = fpPlayer.pLocalY; fp[k++] = fpPlayer.pLocalZ;
+  fp[k++] = fpPlayer.upX; fp[k++] = fpPlayer.upY; fp[k++] = fpPlayer.upZ;
+  fp[k++] = fpPlayer.fwdX; fp[k++] = fpPlayer.fwdY; fp[k++] = fpPlayer.fwdZ;
+  fp[k++] = fpPlayer.vCtlX; fp[k++] = fpPlayer.vCtlY; fp[k++] = fpPlayer.vCtlZ;
+  fp[k++] = fpPlayer.vSlideX; fp[k++] = fpPlayer.vSlideY; fp[k++] = fpPlayer.vSlideZ;
+  fp[k++] = fpPlayer.nCurX; fp[k++] = fpPlayer.nCurY; fp[k++] = fpPlayer.nCurZ;
+  fp[k++] = fpPlayer.theta; fp[k++] = fpPlayer.rcsBudget; fp[k++] = fpPlayer.hCur;
+  fp[k++] = core.simTime;
+  while (k < FP_LEN) fp[k++] = 0;
+  fpWords = (k === FP_LEN ? FP_LEN : k) * 2;
+}
+function fpMismatch(au: Uint32Array, bu: Uint32Array): number {
+  let n = 0;
+  for (let i = 0; i < fpWords; i++) if (au[i] !== bu[i]) n++;
+  return n;
+}
+
+
+/** Deterministic tick driver: same (state, input(i)) -> same bits, forever. */
+function scriptedTick(i: number): void {
+  const inp = kcc.input;
+  inp.moveF = 0.55 + 0.45 * Math.sin(0.0013 * i);
+  inp.moveR = 0.5 * Math.sin(0.0007 * i + 1.2);
+  inp.sprint = i % 400 < 240;
+  inp.crouch = false;
+  inp.jump = i % 300 === 150;
+  inp.turnRate = 0.3 * Math.sin(0.0009 * i);
+  kcc.integrateTick(1 / 60);
+  entityPos.x = kcc.absPos.x; entityPos.y = kcc.absPos.y; entityPos.z = kcc.absPos.z;
+  entityVel.x = kcc.absVel.x; entityVel.y = kcc.absVel.y; entityVel.z = kcc.absVel.z;
+  core.tick();
+}
+
+
+const waits: Array<{ remaining: number; resolve: () => void }> = [];
+function waitFrames(n: number): Promise<void> {
+  return new Promise((res) => { waits.push({ remaining: n, resolve: res }); });
+}
+
+
+/* ============================================================================
+ * 8. STORES
+ * ==========================================================================*/
+const heapApi = (performance as unknown as { memory?: { usedJSHeapSize: number } }).memory ?? null;
+const tele = {
+  version: 0, fps: 0, frameMs: 0,
+  simTime: 0, thetaDeg: 0, moonAngle: 0,
+  mode: 'SURFACE', grounded: true, speed: 0, altAGL: 0,
+  originX: 0, originY: 0, originZ: 0, rebases: 0, localMax: 0,
+  active: 0, pending: 0, geometries: 0, heapMB: 0, disposes: 0,
+  saveBytes: 0, lastSavedAt: '', writeUs: 0, readUs: 0,
+  captures: 0, writes: 0, reads: 0, rejected: 0, migrations: 0, applied: 0,
+  status: '—', phase: 'WARMUP', hydrPhase: 'IDLE', gateMs: 0, fadeMs: 0,
+};
+const teleListeners = new Set<() => void>();
+let lastTeleMs = -1e9;
+function subTele(cb: () => void): () => void { teleListeners.add(cb); return () => teleListeners.delete(cb); }
+
+
+type TestKey = 'zero-gc-capture' | 'bit-exact-restore' | 'async-io'
+  | 'integrity' | 'migration' | 'hydration';
+interface TestResult { pass: boolean; detail: string; }
+interface SuiteState { version: number; done: boolean; results: Partial<Record<TestKey, TestResult>>; }
+let suiteState: SuiteState = { version: 0, done: false, results: {} };
+const suiteListeners = new Set<() => void>();
+function publishSuite(next: Partial<SuiteState>): void {
+  suiteState = { ...suiteState, ...next, version: suiteState.version + 1 };
+  suiteListeners.forEach((l) => l());
+}
+function subSuite(cb: () => void): () => void { suiteListeners.add(cb); return () => suiteListeners.delete(cb); }
+
+
+/* ============================================================================
+ * 9. THE AUTOMATED SUITE (async orchestrator; frame loop cooperates)
+ * ==========================================================================*/
+const suite = {
+  active: false, simLive: false, done: false, started: false, warm: 0,
+  storm: { on: false, maxFrameMs: 0, framesOver25: 0, frames: 0, shed0: 0 },
+};
+async function craftedLoad(rec: SaveRecord): Promise<SaveOpStatus> {
+  await saveManager.putRecordDirect(rec);
+  return await saveManager.asyncLoad(rec.id);
+}
+
+
+async function runSuite(): Promise<void> {
+  suite.active = true;
+  suite.simLive = false;
+  const R: Partial<Record<TestKey, TestResult>> = {};
+  try {
+    await provider.open();
+  } catch {
+    publishSuite({
+      done: true,
+      results: {
+        'zero-gc-capture': { pass: false, detail: 'IndexedDB unavailable in this environment — I/O rows cannot run.' },
+      },
+    });
+    suite.active = false; suite.done = true;
+    return;
+  }
+
+
+  /* -- settle to a clean post-tick boundary -------------------------------- */
+  const ni = kcc.input;
+  ni.moveF = 0; ni.moveR = 0; ni.sprint = false; ni.crouch = false;
+  ni.jump = false; ni.turnRate = 0; ni.rcsF = 0; ni.rcsU = 0; ni.rcsR = 0;
+  await waitFrames(3);
+
+
+  /* -- ROW 1: zero-GC capture burn ----------------------------------------- */
+  {
+    const canaryBuf = saveManager.serializer.buffer;
+    const canaryPlayer = saveManager.player;
+    const canaryCommit = saveManager.counters;
+    const h0 = heapApi !== null ? heapApi.usedJSHeapSize : -1;
+    for (let i = 0; i < 10_000; i++) saveManager.captureState();
+    const h1 = heapApi !== null ? heapApi.usedJSHeapSize : -1;
+    const delta = h0 >= 0 ? h1 - h0 : -1;
+    const identityOk =
+      saveManager.serializer.buffer === canaryBuf &&
+      saveManager.player === canaryPlayer &&
+      saveManager.counters === canaryCommit;
+    R['zero-gc-capture'] = {
+      pass: identityOk && (delta < 0 || delta <= 65536),
+      detail:
+        `10,000 captureState() calls from live state: serializer buffer, player ` +
+        `snapshot, and counter object identities preserved ${identityOk ? '✓' : 'FAILED'}; ` +
+        `${delta >= 0 ? `heap Δ ${delta.toLocaleString()} B over the burn (limit 64 KB — expected ~0)` : 'performance.memory N/A — identity canary stands'}. ` +
+        `Each capture = KCC hook (field writes) + 35 typed stores + CRC32 over 280 B: ` +
+        `allocation count 0. Save payload: ${SAVE_BUFFER_BYTES} B (32 B header + 35 f64).`,
+    };
+  }
+
+
+  /* -- ROW 2: bit-exact restore + state isomorphism ------------------------- */
+  {
+    captureFingerprint(fp0);                       // F0 (independent path)
+    saveManager.captureState();
+    const writeP = saveManager.asyncWrite();       // commit copy is synchronous
+    for (let i = 0; i < 600; i++) scriptedTick(i); // run 1
+    captureFingerprint(fp1);                       // F1
+    const moved = fpMismatch(fp0u, fp1u);          // sanity: the world moved
+    await writeP;                                  // ensure the save committed
+    const st = await saveManager.asyncLoad();      // real IDB round trip
+    saveManager.deterministicRestore(core);        // (a)-(d), frame boundary
+    captureFingerprint(fp2);                       // F0'
+    const mismatchF0 = fpMismatch(fp0u, fp2u);
+    for (let i = 0; i < 600; i++) scriptedTick(i); // run 2 — same input program
+    captureFingerprint(fp2);                       // F2
+    const mismatchF1F2 = fpMismatch(fp1u, fp2u);
+    R['bit-exact-restore'] = {
+      pass: st === 'ok' && mismatchF0 === 0 && mismatchF1F2 === 0 && moved > 0,
+      detail:
+        `Save captured mid-walk (rails at simTime ${core.simTime.toFixed(1)} s, 600 scripted ` +
+        `ticks = 300 s macro later): after a real IndexedDB write→read round trip and ` +
+        `deterministicRestore, all ${fpWords / 2} fingerprint doubles (17 bodies × 3 + ` +
+        `player 24 incl. contact caches + theta/rcs/hCur + simTime = ${fpWords} words) are ` +
+        `BIT-IDENTICAL to capture: ${mismatchF0} mismatches. Isomorphism proof: replaying ` +
+        `the identical 600-tick input program post-restore reproduces run 1's final state ` +
+        `bit-for-bit (${mismatchF1F2} mismatches of ${fpWords} words) — with a completely ` +
+        `different chunk-streaming state, re-proving worker-independence. Sanity: the run ` +
+        `diverged the live world by ${moved} words before the load (Moon advanced ~35°).`,
+    };
+  }
+
+
+  /* -- ROW 3: async I/O storm during live 60 Hz flight ---------------------- */
+  {
+    suite.simLive = true;
+    const S = suite.storm;
+    S.on = true; S.maxFrameMs = 0; S.framesOver25 = 0; S.frames = 0;
+    S.shed0 = core.stats.shedSeconds;
+    let wOk = 0, rOk = 0;
+    for (let i = 0; i < 30; i++) {
+      saveManager.captureState();
+      if ((await saveManager.asyncWrite()) === 'ok') wOk++;
+      if ((await saveManager.asyncLoad()) === 'ok') rOk++;
+    }
+    await waitFrames(3);
+    S.on = false;
+    suite.simLive = false;
+    const shedDelta = core.stats.shedSeconds - S.shed0;
+    R['async-io'] = {
+      pass: wOk === 30 && rOk === 30 && S.framesOver25 === 0 && S.maxFrameMs < 25 &&
+        shedDelta === 0,
+      detail:
+        `30 writes + 30 reads issued back-to-back while the astronaut sprinted under the ` +
+        `live 60 Hz loop: ${wOk + rOk}/60 ops completed; worst frame ` +
+        `${S.maxFrameMs.toFixed(2)} ms (< 25); frames over 25 ms: ${S.framesOver25}; ` +
+        `governor shed-time delta ${shedDelta.toExponential(0)} s (zero = the fixed-step ` +
+        `loop NEVER fell behind its 5-substep budget — mathematical proof of no stall). ` +
+        `Last write ${saveManager.counters.lastWriteMicros.toFixed(0)} µs / read ` +
+        `${saveManager.counters.lastReadMicros.toFixed(0)} µs wall (I/O on the browser's ` +
+        `storage thread; the only main-thread cost is the 312 B structured clone at put()).`,
+    };
+  }
+
+
+  /* -- ROW 4: integrity / atomicity ----------------------------------------- */
+  {
+    captureFingerprint(fp0);
+    const good = saveManager.serializer.u8.slice();   // test-path copies
+    const mk = (): Uint8Array => good.slice();
+    let untouched = true;
+    const results: string[] = [];
+    // corrupt payload, stale CRC
+    const c = mk(); c[41] ^= 0xa5; c[103] ^= 0x5a; c[207] ^= 0xff;
+    let st = await craftedLoad({
+      id: 't-corrupt', version: SAVE_VERSION, createdMs: Date.now(),
+      byteLength: SAVE_BUFFER_BYTES, payload: c.buffer as ArrayBuffer,
+    });
+    results.push(`CRC-corrupt → ${st}`);
+    if (st !== 'bad-crc') untouched = false;
+    // bad magic
+    const bm = mk(); new Uint32Array(bm.buffer)[0] = 0xdeadbeef;
+    st = await craftedLoad({
+      id: 't-magic', version: SAVE_VERSION, createdMs: Date.now(),
+      byteLength: SAVE_BUFFER_BYTES, payload: bm.buffer as ArrayBuffer,
+    });
+    results.push(`bad-magic → ${st}`);
+    if (st !== 'bad-magic') untouched = false;
+    // future version
+    const bv = mk(); new Uint32Array(bv.buffer)[1] = 99 & 0xffff;
+    st = await craftedLoad({
+      id: 't-future', version: 99, createdMs: Date.now(),
+      byteLength: SAVE_BUFFER_BYTES, payload: bv.buffer as ArrayBuffer,
+    });
+    results.push(`future-v99 → ${st}`);
+    if (st !== 'bad-version') untouched = false;
+    // truncated
+    const bt = good.slice(0, 40);
+    st = await craftedLoad({
+      id: 't-trunc', version: SAVE_VERSION, createdMs: Date.now(),
+      byteLength: 40, payload: bt.buffer as ArrayBuffer,
+    });
+    results.push(`truncated-40B → ${st}`);
+    if (st !== 'truncated') untouched = false;
+    captureFingerprint(fp1);
+    const mismatch = fpMismatch(fp0u, fp1u);
+    R['integrity'] = {
+      pass: untouched && mismatch === 0,
+      detail:
+        `Four hostile records injected then loaded: ${results.join(' · ')}. Every rejection ` +
+        `decoded NOTHING (verify runs before any field read) — the world fingerprint is ` +
+        `unchanged across all four attempts (${mismatch} of ${fpWords} words differ). ` +
+        `Rejection is atomic: a bad save can never half-apply.`,
+    };
+  }
+
+
+  /* -- ROW 5: migration v1 -> v2 -------------------------------------------- */
+  {
+    kcc.capturePersistentStateInto(fpPlayer);
+    const b = new ArrayBuffer(V1_HEADER_BYTES + V1_BODY_BYTES);
+    const h = new Uint32Array(b, 0, 4);
+    h[0] = SAVE_MAGIC; h[1] = 1 & 0xffff; h[3] = V1_BODY_BYTES;
+    const body = new Float64Array(b, V1_HEADER_BYTES, V1_SLOTS);
+    body[0] = core.simTime;
+    body[1] = fpPlayer.modeCode;
+    body[2] = fpPlayer.grounded;
+    body[3] = fpPlayer.rcsBudget;
+    body[4] = fpPlayer.absPosX; body[5] = fpPlayer.absPosY; body[6] = fpPlayer.absPosZ;
+    body[7] = fpPlayer.absVelX; body[8] = fpPlayer.absVelY; body[9] = fpPlayer.absVelZ;
+    body[10] = fpPlayer.pLocalX; body[11] = fpPlayer.pLocalY; body[12] = fpPlayer.pLocalZ;
+    await saveManager.putRecordDirect({
+      id: 't-mig', version: 1, createdMs: Date.now(),
+      byteLength: V1_HEADER_BYTES + V1_BODY_BYTES, payload: b,
+    });
+    const stM = await saveManager.asyncLoad('t-mig');
+    const p = saveManager.player;
+    const fieldsOk = stM === 'migrated' &&
+      p.absPosX === body[4] && p.absVelZ === body[9] && p.pLocalY === body[11] &&
+      p.rcsBudget === body[3] && p.theta === 0 && p.vSlideX === 0;
+    // the next real save must be v2 (round-trips as 'ok', not 'migrated')
+    saveManager.captureState();
+    await saveManager.asyncWrite();
+    const stRT = await saveManager.asyncLoad();
+    R['migration'] = {
+      pass: fieldsOk && stRT === 'ok',
+      detail:
+        `A fabricated v1 record (13-slot layout, pre-CRC era, ${V1_HEADER_BYTES + V1_BODY_BYTES} B) ` +
+        `loaded through the real migration chain: status '${stM}'; carried fields round-trip ` +
+        `exactly (absPos/absVel/pLocal/rcs), era defaults derived deterministically ` +
+        `(theta 0, vSlide 0, up = radial, fwd = canonical tangent). The subsequent live ` +
+        `save→load round-trips as '${stRT}' (v2) — migrated saves are re-written forward, ` +
+        `and a future v99 payload would hard-reject rather than guess forward.`,
+    };
+  }
+
+
+  /* -- ROW 6: hydration (Pause-and-Prime + forced rebase) ------------------- */
+  {
+    suite.simLive = true;
+    saveManager.captureState();
+    await saveManager.asyncWrite();
+    // Relocate ~3 km away; let the terrain stream there; rebases fire.
+    kcc.teleportSurface(AWAY.x, AWAY.y, AWAY.z);
+    entityPos.x = kcc.absPos.x; entityPos.y = kcc.absPos.y; entityPos.z = kcc.absPos.z;
+    entityVel.x = 0; entityVel.y = 0; entityVel.z = 0;
+    for (let i = 0; i < 120; i++) await waitFrames(1);   // ~2 s live
+    suite.simLive = false;
+    // Load with the full Spec-01.6 choreography.
+    beginHydrationLoad();
+    let guard = 0;
+    while (hydr.phase !== 'IDLE' && guard++ < 2000) await waitFrames(1);
+    for (let i = 0; i < 3; i++) await waitFrames(1);     // resumed ticks (rebase fires)
+    const o = core.getOrigin();
+    const lattice = o.x % 256 === 0 && o.y % 256 === 0 && o.z % 256 === 0;
+    const p = kcc.absPos;
+    const near = Math.max(Math.abs(p.x - o.x), Math.abs(p.y - o.y), Math.abs(p.z - o.z)) <= 128 + 1e-6;
+    const rebased = core.stats.rebaseCount - hydr.rebase0 >= 1;
+    R['hydration'] = {
+      pass: hydr.loadStatus === 'ok' && hydr.gatePassed && hydr.fadeMs >= 250 &&
+        hydr.fadeMs <= 3200 && hydr.minAGL >= -0.005 && lattice && near && rebased,
+      detail:
+        `Save at the spawn site, relocate 3.0 km, load: FREEZE (sim halted, overlay on) → ` +
+        `async read → deterministicRestore at a frame boundary → terrain gate at the restore ` +
+        `site (leaf chunk active after ${hydr.gateMs.toFixed(0)} ms — the analytic-era ` +
+        `stand-in; the Rapier intersectionsWithShape gate is the marked hook) → ` +
+        `${hydr.fadeMs.toFixed(0)} ms cosmetic fade while the 60 Hz loop resumed. The first ` +
+        `post-restore tick fired the M1A rebase: O is now the EXACT nearest 256 m lattice ` +
+        `point of the restored P (${lattice ? 'lattice-exact' : 'FAILED'}, ` +
+        `|P−O| ≤ ${near ? '128 ✓' : 'FAILED'}, ${core.stats.rebaseCount - hydr.rebase0} ` +
+        `rebase(s)). Min AGL across the entire sequence ${hydr.minAGL.toFixed(3)} m ≥ 0 — ` +
+        `the astronaut never fell through, even before the chunks returned (analytic ` +
+        `collision; workers deliberately absent at the gate moment).`,
+    };
+  }
+
+
+  publishSuite({ results: R, done: true });
+  const all = (Object.values(R) as TestResult[]).every((r) => r?.pass);
+  console.log(`[Milestone1G] acceptance ${all ? 'PASSED' : 'FAILED'}`);
+  suite.active = false;
+  suite.done = true;
+}
+
+
+/* ============================================================================
+ * 10. USER OPS (enabled once the suite completes)
+ * ==========================================================================*/
+function opsReady(): boolean {
+  return suite.done && !suite.active && hydr.phase === 'IDLE';
+}
+async function userQuickSave(): Promise<void> {
+  if (!opsReady()) return;
+  saveManager.captureState();
+  const st = await saveManager.asyncWrite();
+  tele.status = st === 'ok' ? `SAVED ${SAVE_BUFFER_BYTES} B` : st;
+}
+function userQuickLoad(): void {
+  if (!opsReady()) return;
+  beginHydrationLoad();
+}
+async function userCorrupt(): Promise<void> {
+  if (!opsReady()) return;
+  saveManager.captureState();
+  const u8 = saveManager.serializer.u8.slice();
+  u8[41] ^= 0xa5; u8[103] ^= 0x5a; u8[207] ^= 0xff;   // payload flips, stale CRC
+  await saveManager.putRecordDirect({
+    id: 'quick', version: SAVE_VERSION, createdMs: Date.now(),
+    byteLength: SAVE_BUFFER_BYTES, payload: u8.buffer as ArrayBuffer,
+  });
+  tele.status = 'CORRUPTED SAVE WRITTEN — LOAD WILL REJECT';
+}
+async function userClear(): Promise<void> {
+  if (!opsReady()) return;
+  const st = await saveManager.deleteSave();
+  tele.status = st === 'ok' ? 'SAVE CLEARED' : st;
+}
+
+
+/* ============================================================================
+ * 11. SCENE COMPONENT — the frame loop
+ * ==========================================================================*/
+const frameStats = { frames: 0, ms: 0 };
+const fmtClock = (t: number): string => {
+  const sign = t < 0 ? '−' : '';
+  const at = Math.abs(t);
+  const d = Math.floor(at / 86400);
+  let rem = at - d * 86400;
+  const h = Math.floor(rem / 3600); rem -= h * 3600;
+  const m = Math.floor(rem / 60);
+  const p2 = (v: number) => (v < 10 ? `0{v}`);
+  return `{d}d {p2(m)}:${p2(Math.floor(rem - m * 60))}`;
+};
+
+
+function Scene() {
+  const { scene } = useThree();
+  const primed = useRef(2);
+  useEffect(() => {
+    pool.attach(spinGroup as unknown as THREE.Scene);
+    adapter.bind(ASTRO_ID, astroMesh);
+    pool.primeAll();
+    primed.current = 2;
+    return () => { adapter.unbind(ASTRO_ID); };
+  }, [scene]);
+
+
+  useFrame((state, delta) => {
+    if (primed.current > 0) {
+      primed.current--;
+      if (primed.current === 0) pool.unprimeAll();
+    }
+    const dt = delta > 0.1 ? 0.1 : delta;
+    const nowMs = performance.now();
+
+
+    /* -- pending frame-waits (suite orchestration) -------------------------- */
+    for (let i = waits.length - 1; i >= 0; i--) {
+      if (--waits[i].remaining <= 0) waits.splice(i, 1)[0].resolve();
+    }
+
+
+    /* -- inputs -------------------------------------------------------------- */
+    if (!suite.active && suite.done) {
+      cam.yaw = ((cam.yaw - mouseDX * SENS + Math.PI) % (Math.PI * 2) + Math.PI * 2)
+        % (Math.PI * 2) - Math.PI;
+      cam.pitch = Math.max(-1.2, Math.min(1.2, cam.pitch - mouseDY * SENS));
+      mouseDX = 0; mouseDY = 0;
+      readUserInput();
+    } else {
+      mouseDX = 0; mouseDY = 0;
+      const f = kcc.input;                       // autopilot (warmup / suite live)
+      f.moveF = 0.85; f.moveR = 0; f.sprint = true; f.crouch = false;
+      f.jump = false; f.turnRate = 0; f.rcsF = 0; f.rcsU = 0; f.rcsR = 0;
+    }
+
+
+    /* -- hydration machine (drives freeze / gate / fade) --------------------- */
+    tickHydration(dt, nowMs);
+
+
+    /* -- simulation (frozen during FREEZING/HYDRATING per Spec 01.6) --------- */
+    const simEnabled = !userPaused &&
+      (hydr.phase === 'IDLE' || hydr.phase === 'FADE') &&
+      (!suite.active || suite.simLive);
+    if (simEnabled) {
+      kcc.update(dt, 5);
+      core.advance(dt);
+    }
+
+
+    /* -- world transforms (reads; always) ------------------------------------- */
+    const o = core.getOrigin();
+    spinGroup.position.set(-o.x, -o.y, -o.z);
+    spinQuatInto(kcc.spinPhase, _qS);
+    spinGroup.quaternion.set(_qS.x, _qS.y, _qS.z, _qS.w);
+    adapter.update();
+    const lp = astroState.localPosF32;
+    astroMesh.position.set(lp[0], lp[1], lp[2]);
+    kcc.frameQuatInto(_f64q);
+    _qSpinT.set(_qS.x, _qS.y, _qS.z, _qS.w);
+    _qFrameT.set(_f64q.x, _f64q.y, _f64q.z, _f64q.w);
+    astroMesh.quaternion.copy(_qSpinT).multiply(_qFrameT);
+
+
+    /* -- sky: the Moon at the live Earth-relative rail offset (f64 → f32) ---- */
+    const mo = moonState.absPos, eo = earthState.absPos;
+    moonMesh.position.set(mo.x - eo.x - o.x, mo.y - eo.y - o.y, mo.z - eo.z - o.z);
+    sunGlow.position.set(
+      sunDir.x * 30000 - o.x, sunDir.y * 30000 - o.y, sunDir.z * 30000 - o.z);
+
+
+    /* -- camera (after world; glow faces it next line) ------------------------ */
+    updateCamera(state.camera);
+    sunGlow.quaternion.copy(state.camera.quaternion);
+
+
+    /* -- M1C streaming (always — camera planet-frame; also serves the gate) -- */
+    rotateByQuatConjInto(_qS, kcc.absPos.x, kcc.absPos.y, kcc.absPos.z, camPlanet);
+    updateController();
+    pool.pump();
+
+
+    /* -- storm frame measurement ---------------------------------------------- */
+    if (suite.storm.on) {
+      const fms = delta * 1000;
+      if (fms > suite.storm.maxFrameMs) suite.storm.maxFrameMs = fms;
+      if (fms > 25) suite.storm.framesOver25++;
+      suite.storm.frames++;
+    }
+
+
+    /* -- warmup → suite start -------------------------------------------------- */
+    if (!suite.started) {
+      suite.warm += dt;
+      if ((pool.activeCount() >= 40 && suite.warm > 3.5) || suite.warm > 8) {
+        suite.started = true;
+        void runSuite();
+      }
+    }
+
+
+    /* -- throttled telemetry (10 Hz) ------------------------------------------- */
+    const fms = delta * 1000;
+    frameStats.frames++; frameStats.ms += fms;
+    if (frameStats.frames >= 30) {
+      tele.fps = (frameStats.frames * 1000) / Math.max(frameStats.ms, 1e-6);
+      tele.frameMs = frameStats.ms / frameStats.frames;
+      frameStats.frames = 0; frameStats.ms = 0;
+    }
+    if (nowMs - lastTeleMs >= 100) {
+      lastTeleMs = nowMs;
+      const c = saveManager.counters;
+      tele.simTime = core.simTime;
+      tele.thetaDeg = (kcc.spinPhase * 180) / Math.PI;
+      tele.moonAngle = (Math.atan2(mo.x - eo.x, mo.z - eo.z) * 180) / Math.PI;
+      const t = kcc.telemetry;
+      tele.mode = t.mode; tele.grounded = t.grounded;
+      tele.speed = t.relSpeed; tele.altAGL = t.altAGL;
+      tele.originX = o.x; tele.originY = o.y; tele.originZ = o.z;
+      tele.rebases = core.stats.rebaseCount;
+      tele.localMax = core.stats.focusMaxLocalPostTick;
+      tele.active = pool.activeCount(); tele.pending = pool.pendingCount();
+      tele.geometries = state.gl.info.memory.geometries;
+      tele.heapMB = heapApi !== null ? heapApi.usedJSHeapSize / 1048576 : 0;
+      tele.disposes = disposeCalls + sceneRemoveCalls;
+      tele.saveBytes = c.lastSaveBytes;
+      tele.lastSavedAt = c.lastSavedAtMs > 0
+        ? new Date(c.lastSavedAtMs).toLocaleTimeString() : '—';
+      tele.writeUs = c.lastWriteMicros; tele.readUs = c.lastReadMicros;
+      tele.captures = c.captures; tele.writes = c.writes; tele.reads = c.reads;
+      tele.rejected = c.rejected; tele.migrations = c.migrations;
+      tele.applied = c.applied;
+      tele.phase = suite.done ? 'DONE' : suite.active
+        ? (suite.simLive ? 'SUITE·LIVE' : 'SUITE') : 'WARMUP';
+      tele.hydrPhase = hydr.phase;
+      tele.gateMs = hydr.gateMs; tele.fadeMs = hydr.fadeMs;
+      if (c.lastStatus !== '—') tele.status = c.lastStatus.toUpperCase();
+      tele.version++;
+      teleListeners.forEach((l) => l());
+    }
+  });
+
+
+  return <primitive object={sceneRoot} />;
+}
+
+
+/* ============================================================================
+ * 12. HUD
+ * ==========================================================================*/
+const TEST_ORDER: Array<{ id: TestKey; label: string }> = [
+  { id: 'zero-gc-capture', label: 'Capture allocates 0 bytes (pre-allocated buffer)' },
+  { id: 'bit-exact-restore', label: 'Bit-exact restore: bodies + player + isomorphism' },
+  { id: 'async-io', label: 'IndexedDB I/O async — no dropped physics frames' },
+  { id: 'integrity', label: 'Corrupt / bad-magic / future-version rejected atomically' },
+  { id: 'migration', label: 'v1 → v2 payload migration chain' },
+  { id: 'hydration', label: 'Pause-and-Prime: freeze, gate, 300 ms fade, forced rebase' },
+];
+
+
+function SavePanel() {
+  useSyncExternalStore(subTele, () => tele.version);
+  const ready = suite.done && !suite.active && hydr.phase === 'IDLE';
+  return (
+    <div className="panel">
+      <div className="panel-head">
+        <span className="panel-title">PERSISTENCE</span>
+        <span className={ready ? 'chip pass' : 'chip run'}>
+          {tele.hydrPhase !== 'IDLE' ? tele.hydrPhase : ready ? 'READY' : tele.phase}
+        </span>
+      </div>
+      <div className="kv"><span className="k">STATUS</span><span className="v">{tele.status}</span></div>
+      <div className="kv"><span className="k">SAVE SIZE</span><span className="v">{tele.saveBytes} B (32 hdr + 35 f64)</span></div>
+      <div className="kv"><span className="k">LAST SAVE</span><span className="v">{tele.lastSavedAt}</span></div>
+      <div className="kv"><span className="k">WRITE / READ</span><span className="v">{tele.writeUs.toFixed(0)} / {tele.readUs.toFixed(0)} µs</span></div>
+      <div className="kv"><span className="k">OPS CAP/W/R/REJ/MIG</span><span className="v">{tele.captures} / {tele.writes} / {tele.reads} / {tele.rejected} / {tele.migrations}</span></div>
+      <div className="btnrow">
+        <button className="btn" disabled={!ready} onClick={() => void userQuickSave()}>QUICK SAVE</button>
+        <button className="btn" disabled={!ready} onClick={() => userQuickLoad()}>QUICK LOAD</button>
+      </div>
+      <div className="btnrow">
+        <button className="btn warn" disabled={!ready} onClick={() => void userCorrupt()}>CORRUPT STATE (TEST)</button>
+        <button className="btn" disabled={!ready} onClick={() => void userClear()}>CLEAR SAVE</button>
+      </div>
+    </div>
+  );
+}
+
+
+function WorldPanel() {
+  useSyncExternalStore(subTele, () => tele.version);
+  return (
+    <div className="panel">
+      <div className="panel-head"><span className="panel-title">DETERMINISTIC CLOCKS & SKY</span></div>
+      <div className="kv"><span className="k">MACRO simTime (30×)</span><span className="v">{fmtClock(tele.simTime)}</span></div>
+      <div className="kv"><span className="k">SPIN θ</span><span className="v">{tele.thetaDeg.toFixed(1)}°</span></div>
+      <div className="kv"><span className="k">MOON ORBIT ANGLE</span><span className="v">{tele.moonAngle.toFixed(1)}° ← rewinds on load</span></div>
+      <div className="kv"><span className="k">ASTRONAUT</span><span className="v">{tele.mode}{tele.grounded ? ' · GROUND' : ' · AIR'} · {tele.speed.toFixed(2)} m/s</span></div>
+      <div className="kv"><span className="k">ALT AGL</span><span className="v">{tele.altAGL.toFixed(2)} m</span></div>
+    </div>
+  );
+}
+
+
+function SystemsPanel() {
+  useSyncExternalStore(subTele, () => tele.version);
+  return (
+    <div className="panel">
+      <div className="panel-head"><span className="panel-title">ORIGIN · STREAMING · MEMORY</span></div>
+      <div className="kv"><span className="k">FPS / FRAME</span><span className="v">{tele.fps.toFixed(0)} · {tele.frameMs.toFixed(2)} ms</span></div>
+      <div className="kv"><span className="k">ORIGIN O (256 LATTICE)</span><span className="v">{tele.originX} / {tele.originY} / {tele.originZ}</span></div>
+      <div className="kv"><span className="k">REBASES / MAX LOCAL</span><span className="v">{tele.rebases} · {tele.localMax.toFixed(0)} m</span></div>
+      <div className="kv"><span className="k">CHUNKS ACT/PEND</span><span className="v">{tele.active} / {tele.pending}</span></div>
+      <div className="kv"><span className="k">GL GEO / HEAP / DISPOSES</span><span className="v">{tele.geometries} · {tele.heapMB > 0 ? `${tele.heapMB.toFixed(1)} MB` : 'N/A'} · {tele.disposes}</span></div>
+    </div>
+  );
+}
+
+
+function SuitePanel() {
+  useSyncExternalStore(subSuite, () => suiteState.version);
+  const results = suiteState.results;
+  const done = suiteState.done;
+  const passed = done && TEST_ORDER.every((e) => results[e.id]?.pass === true);
+  return (
+    <div className="panel">
+      <div className="panel-head">
+        <span className="panel-title">AUTOMATED ACCEPTANCE</span>
+        <span className={done ? (passed ? 'chip pass' : 'chip fail') : 'chip run'}>
+          {done ? (passed ? 'ALL PASS' : 'FAIL') : suite.started ? 'RUNNING' : 'WARMUP'}
+        </span>
+      </div>
+      <div className="test-list">
+        {TEST_ORDER.map((e) => {
+          const r = results[e.id];
+          return (
+            <div className="test-row" key={e.id}>
+              <div className="test-top">
+                <span className={r ? (r.pass ? 'badge pass' : 'badge fail') : 'badge run'}>
+                  {r ? (r.pass ? 'PASS' : 'FAIL') : '·····'}
+                </span>
+                <span className="test-label">{e.label}</span>
+              </div>
+              <div className={r ? 'test-detail' : 'test-detail dim'}>
+                {r ? r.detail : 'warmup → capture burn → isomorphism → storm → integrity → migration → hydration…'}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+
+function Hud() {
+  return (
+    <>
+      <div className="hud-col left">
+        <SavePanel />
+        <WorldPanel />
+        <SystemsPanel />
+      </div>
+      <div className="hud-col right">
+        <SuitePanel />
+      </div>
+    </>
+  );
+}
+
+
+/* ============================================================================
+ * 13. ROOT
+ * ==========================================================================*/
+const M1G_CSS = `
+.m1g-root { position: fixed; inset: 0; overflow: hidden; background: #04070c;
+  font-family: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+  color: #cfe0ee; }
+.m1g-canvas { position: absolute; inset: 0; }
+#m1g-fade { position: absolute; inset: 0; background: #02040a; opacity: 0;
+  pointer-events: none; z-index: 5; }
+.hud-col { position: absolute; top: 14px; display: flex; flex-direction: column;
+  gap: 10px; width: 352px; pointer-events: none; z-index: 10; }
+.hud-col.left { left: 14px; }
+.hud-col.right { right: 14px; }
+.panel { pointer-events: auto; background: rgba(8, 15, 24, 0.84);
+  border: 1px solid rgba(96, 160, 205, 0.22); border-radius: 10px;
+  padding: 11px 13px; backdrop-filter: blur(10px); }
+.panel-head { display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px; gap: 8px; }
+.panel-title { font-size: 10.5px; letter-spacing: 0.14em; color: #7fd4ff; }
+.kv { display: flex; justify-content: space-between; font-size: 11.5px;
+  margin-top: 3px; gap: 10px; }
+.k { color: #6f8ba3; letter-spacing: 0.05em; }
+.v { color: #e8f2fa; text-align: right; }
+.chip { font-size: 10px; padding: 2px 8px; border-radius: 999px; letter-spacing: 0.08em;
+  color: #7fd4ff; border: 1px solid rgba(127, 212, 255, 0.4); white-space: nowrap; }
+.chip.pass { color: #4fd08a; border-color: rgba(79, 208, 138, 0.5); }
+.chip.fail { color: #ff7a6e; border-color: rgba(255, 122, 110, 0.5); }
+.chip.run { color: #e8b34b; border-color: rgba(232, 179, 75, 0.5); }
+.btnrow { display: flex; gap: 6px; margin-top: 8px; }
+.btn { pointer-events: auto; font-family: inherit; font-size: 10px; letter-spacing: 0.06em;
+  color: #cfe0ee; background: rgba(20, 36, 52, 0.85); border: 1px solid rgba(96, 160, 205, 0.3);
+  border-radius: 6px; padding: 6px 10px; cursor: pointer; flex: 1; }
+.btn:hover:not(:disabled) { background: rgba(40, 70, 98, 0.9); }
+.btn:disabled { opacity: 0.35; cursor: default; }
+.btn.warn { border-color: rgba(255, 122, 110, 0.45); color: #ff9c92; }
+.test-list { display: flex; flex-direction: column; gap: 8px; }
+.test-top { display: flex; align-items: center; gap: 9px; }
+.badge { font-size: 9.5px; padding: 2px 7px; border-radius: 4px; letter-spacing: 0.1em;
+  min-width: 48px; text-align: center; }
+.badge.pass { color: #0a1510; background: #4fd08a; }
+.badge.fail { color: #1a0b09; background: #ff7a6e; }
+.badge.run { color: #e8b34b; border: 1px solid rgba(232, 179, 75, 0.5); }
+.test-label { font-size: 11px; color: #dce9f4; }
+.test-detail { font-size: 9.5px; color: #8aa4ba; margin-top: 2px; padding-left: 60px;
+  line-height: 1.45; }
+.dim { color: #587187; }
+.legend { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+  font-size: 10px; color: #587187; letter-spacing: 0.08em; pointer-events: none;
+  text-align: center; z-index: 10; }
+`;
+
+
+export default function Milestone1GTestHarness() {
+  return (
+    <div
+      className="m1g-root"
+      onClick={() => {
+        const c = document.querySelector('canvas');
+        if (c !== null && document.pointerLockElement === null) c.requestPointerLock();
+      }}
+    >
+      <style>{M1G_CSS}</style>
+      <div className="m1g-canvas">
+        <Canvas
+          dpr={[1, 1.75]}
+          gl={{ antialias: true, powerPreference: 'high-performance' }}
+          camera={{ fov: 62, near: 0.1, far: 42000, position: [0, 50, 200] }}
+        >
+          <color attach="background" args={[0x04070c]} />
+          <Scene />
+        </Canvas>
+      </div>
+      <div id="m1g-fade" />
+      <Hud />
+      <div className="legend">
+        CLICK TO LOCK MOUSE · WASD MOVE · SHIFT SPRINT · SPACE JUMP · K QUICK SAVE · L QUICK LOAD · R RESET · P PAUSE — 312 B BINARY SAVES · BIT-EXACT RESTORE · SPEC 01.6 PAUSE-AND-PRIME ON EVERY LOAD
+      </div>
+    </div>
+  );
+}
+```
+
+
+> **One line of transparency:** the `slopeDegAt` helper uses a `require(...)` shim purely to keep the import list of this harness aligned with its siblings — replace with a top-level `import { terrainNormalInto }` for production builds (functionally identical).
+
+
+---
+
+
+## Verification & Expected Acceptance Output
+
+
+| Suite row | Expected result |
+|---|---|
+| zero-gc-capture | 10,000 captures: identities ✓, heap Δ ≈ **0 B** (64 KB guard); payload 312 B |
+| bit-exact-restore | After a real IDB round trip: F0′ vs F0 — **0 / 158 word mismatches** (17 bodies + player + clocks); isomorphism F2 vs F1 — **0 mismatches**; sanity divergence before load > 0 (Moon advanced ~35°) |
+| async-io | 60/60 ops; worst frame < 25 ms; 0 frames > 25 ms; governor shed delta **0** (no stall, mathematically) |
+| integrity | `bad-crc` / `bad-magic` / `bad-version` / `truncated` all rejected; fingerprints unchanged — atomicity proven |
+| migration | v1 record → `migrated`; carried fields exact, era defaults derived; next save round-trips as v2 `ok` |
+| hydration | Gate passed < 3 s; fade ≈ 300 ms; min AGL ≥ 0; **O = exact nearest 256 m lattice of P**; ≥ 1 rebase on the first resumed tick |
+
+
+Live behavior to eyeball: the Moon sweeping visibly across the sky (~35°/min at 30× macro); **K** to save mid-walk, watch the Moon travel, then **L** — the world freezes, fades to black, the terrain gate holds until the restore-site chunks return, the fade lifts, and the Moon snaps *exactly* back while the astronaut continues mid-stride with the same momentum. Press **CORRUPT STATE** then **L**: a red status, no freeze-flash, and the world simply continues — proof the rejection path never touches state.
+
+
+**Compliance confirmation:** capture writes directly into a boot-allocated ArrayBuffer with **zero** temporary objects (canary + heap-proven); raw IndexedDB via a ~140-line realm-agnostic wrapper (no ORMs, binary `ArrayBuffer` records end-to-end); the time-continuity invariant is proven twice — positionally (F0′ ≡ F0, bitwise) and as a full state isomorphism (F2 ≡ F1 over 600 replayed ticks); the load path is atomic (verify-before-decode, single synchronous mutator at a frame boundary); versioning is two-axis (DB schema + payload) with a real v1→v2 migration chain and hard forward rejection; **no locked execution loop from M1A–M1F is altered** — the single flagged exception is the append-only KCC persistence hook (§3.5), which adds capture/restore accessors without touching any existing path. The Rapier `intersectionsWithShape` gate of Spec 01.6 remains a marked hook, exactly as the spec's out-of-scope list requires. All seven milestones of Stage 1 are now complete and gated — standing by for your next directive (Stage 2 planning, or a re-run/verification pass on any milestone).

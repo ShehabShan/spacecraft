@@ -1,0 +1,1908 @@
+﻿# Milestone 1A — Deep Analysis & Implementation
+
+
+Before writing a single line, I traced the full 10,000 m acceptance run by hand at the bit level. That trace surfaced two edge cases that materially changed the harness design (documented in §1.5). Everything below follows `design_specs.md` Sections 00.3, 01.1, 02.6, and 04.2 exactly.
+
+
+---
+
+
+## PHASE 1 — REASONING & EDGE-CASE ANALYSIS
+
+
+### 1.1 Bit-Exact Power-of-Two Math (the 256 m lattice proof)
+
+
+**Claim:** For any origin shift, `Δ = O_new − O_old` is *exactly* representable in both Float64 and Float32, and `Math.fround(Δ) === Δ` holds for every component.
+
+
+The proof chain, step by step:
+
+
+1. **Division by 256 is exact.** `p / 256` only decrements the IEEE 754 exponent by 8 — the significand is untouched. No rounding occurs for any normal double. So `p/256` is error-free.
+2. **`floor(p/256 + 0.5)` yields an exact integer `k`.** `floor` returns an exact integer, and all integers with magnitude < 2⁵³ are exact in Float64. Origin quotients in this game max out around 3.77×10⁶ / 256 ≈ 14,727 — 15 bits, trivially exact.
+3. **`256 · k` is exact** (exponent shift again). Therefore `O = 256k` is an *exact multiple of 256* in Float64 — this is true regardless of which side of a half-lattice boundary `floor(x + 0.5)` rounds to; the ambiguity only affects *which* multiple, never the multiples' exactness.
+4. **Δ is exact in Float64.** `Δ = 256(k₂ − k₁)`. Both operands are exact doubles whose true difference is representable, so IEEE subtraction returns it with zero error (correctly-rounded ops return exact results when the exact result is representable).
+5. **Δ is exact in Float32.** One rebase advances the origin by at most ~1–2 trigger distances, so `|k₂ − k₁| ≤ ~2¹⁶`, meaning `Δ = m·2⁸` needs at most a **17-bit significand** — comfortably inside Float32's 24-bit significand. The narrowing `fround(Δ)` is therefore lossless. This is precisely why the lattice *must* be a power of two: a 100 m lattice would produce `Δ = 100·m` needing up to 24+ bits and would round in Float32, injecting sub-metre drift — and phantom momentum — into Rapier bodies on every shift.
+
+
+**Catastrophic cancellation is avoided by ordering, not magnitude.** Locals must always be computed as `f64(P − O)` and *then* narrowed: `Float32Array[i] = P − O` performs the subtraction in Float64 and applies a single correctly-rounded narrowing at the store. The reverse — `f32(P) − f32(O)` — is catastrophic: at Pluto's rail distance (3.77×10⁶ m), the Float32 ulp is **0.25 m**; the same subtraction in Float64 is exact to ~5×10⁻¹⁰ m, and the small (~10³ m) result narrows with ~6×10⁻⁵ m ulp.
+
+
+**Structural bounds (these make the acceptance test deterministic, not statistical):**
+- Round-to-nearest (`+0.5`) means post-rebase local ∈ [−128, +128] — half the lattice.
+- The trigger is strict (`> 1024`), so a tick that does *not* rebase ends with max-axis local ≤ 1024.
+- Therefore the **post-tick** local coordinate can never exceed 1024. The transient value mid-tick (up to ~1057 m) is corrected within the same tick, before step (d).
+- **Degenerate rebases are impossible:** if `|P − O| > 1024`, the nearest lattice point to `P` cannot be `O` (it would be within 128 m), so `Δ ≠ 0` always. No infinite rebase loop is possible.
+
+
+### 1.2 Zero-GC in the 60 Hz Loop — Allocation Inventory
+
+
+I enumerated every allocation vector in the hot path and eliminated each:
+
+
+| Allocation vector | Elimination |
+|---|---|
+| Vector temporaries in `tick()` | Class-owned scratch objects (`_focusLocal`, `_candidateOrigin`) created once in field initializers |
+| `RebaseEvent` per shift | **One** pre-allocated event, mutated in place; listeners consume synchronously (contract documented) |
+| Per-entity local vectors | `Float32Array(3)` allocated once at `registerEntity()`, written in place every tick |
+| Array iteration (`for..of`, `.map`, spread) | Dense arrays + indexed `for` loops — **Map iteration is banned in hot paths because the iterator object itself allocates** |
+| Closures inside the frame loop | None; all driver state lives in module-scope pre-allocated containers |
+| Typed-array/stat buffers | `Float64Array` frame-time rings and rebase-capture arrays allocated at boot |
+| Default-parameter objects in `precisionMath` | Default expressions evaluate only when omitted — allocating variants are setup-only; every hot call site passes `out` |
+| `try/catch` | Free in V8 when nothing throws |
+
+
+The sanctioned allocation boundary is the **UI edge**: telemetry snapshot objects are built only at ≤10 Hz, and test results are a one-shot write. The sim core, the rebase path, and the render-extract pass allocate **zero** bytes per frame.
+
+
+### 1.3 Pure Simulation vs. Render Isolation
+
+
+`src/core/` imports nothing except its own `types` (type-only) and `math`. Three.js first appears in `src/render/FloatingOriginAdapter.ts`; Rapier appears nowhere in 1A (correct — physics step is a later milestone). Data crosses the boundary in exactly three forms:
+
+
+1. **Plain numbers** (origin components, stats) — read via getters.
+2. **Core-owned `Float32Array(3)` views** — the adapter copies them into `Object3D.position` in a single downstream pass. Because the core wrote f32-exact values and `Vector3` stores f32-representable doubles, the entire chain from `P − O` in f64 to GPU upload is bit-identical.
+3. **The reused `RebaseEvent`** — the hook (per Spec 00.4) for future Rapier-body and chunk-origin translation; consumed synchronously.
+
+
+One consequence I proved and exploited: the **camera is hard-locked** to the focus entity, never exponentially smoothed. A smoothed chase cam chasing a 2,000 m/s target lags by `v·dt/k` ≈ hundreds of metres. A hard lock is seamless across rebases because on the shift tick, the ship, the camera, and every world-fixed entity translate by the *same exact Δ* within the same frame — all relative geometry, hence the rendered image, is bit-identical across the origin jump.
+
+
+### 1.4 Zustand Telemetry Decoupling (≤10 Hz)
+
+
+Three defenses, layered:
+1. **The frame loop never touches React state.** The only store writes are the throttled publisher (a 100 ms floor; it returns `boolean` so the driver resets its FPS accumulators without polling) and the single `completeTest()` lifecycle write.
+2. **Narrow selectors**: the HUD subscribes to the telemetry object identity; the 3D scene has zero reactive bindings — all transforms flow imperatively through the adapter inside `useFrame`, which runs *before* render (the Spec 04.2 doctrine).
+3. **Allocation accounting**: 10 tiny snapshots/sec at the UI boundary vs. 60+ unthrottled — an order of magnitude less minor-GC pressure attributable to UI, and zero in the sim path.
+
+
+### 1.5 Edge Cases Discovered During the Trace
+
+
+1. **`fl(1/60) < 1/60` by `2⁻⁵⁸/15`.** The double nearest 1/60 rounds *down* (the repeating `0001` tail is below half-ulp), and `2000 · fl(1/60)` rounds to the same double as `100/3` — so after 300 accumulated ticks, `P.x` lands within **±10⁻¹¹ m of exactly 10,000** — sign unpredictable. A naive "run 300 ticks, assert ≥ 10,000" test is a coin flip. **Fix:** the harness terminates on the *distance invariant* (first tick where `P.x ≥ 10,000`), which is deterministic. Expected: 300 or 301 ticks.
+2. **Static entities legitimately exceed 1024 m local.** A world-fixed beacon 8,000 m out has local ≈ −1,216 m after the origin passes it. Rebase triggering must therefore be **focus-entity-driven** (Spec 01.1 step 2: "*the player* has crossed a 256 m lattice boundary") — not "any entity". The core takes an explicit focus entity; the 1024 bound is tracked for the focus only.
+3. **Rebase count is exactly 9, and it is predictable.** Trigger ticks are `floor(30.72k)+1` → **31, 62, 93, 123, 154, 185, 216, 246, 277**; every Δ = exactly `(1024, 0, 0)` = 4·256. Rebase #10 requires P > 10,240 — never reached.
+4. **Grid bias must be a lattice multiple.** World-fixed grid lines need `grid ≡ −O (mod 256)`; since O is always a multiple of 256 the anchor is invariantly 0. Biasing the grid forward (for coverage) by +1024 = 4·256 preserves absolute line positions.
+5. **Frame-time capture hygiene:** 20-frame warmup (shader compile), frames > 250 ms excluded (tab stalls), rebase-attributed frames recorded separately to directly evidence "zero stutter on origin shift".
+
+
+**Predicted acceptance trace (verifiable in the HUD):**
+
+
+| Metric | Predicted value |
+|---|---|
+| Rebase count | **9** (ticks 31, 62, 93, 123, 154, 185, 216, 246, 277) |
+| Every Δ | exactly `(1024, 0, 0)`, `Math.fround(Δ) === Δ` |
+| Max post-tick local | **≈ 1,022.667 m** (tick 215) |
+| Max post-rebase local | **32 m** (tick 216) |
+| Final state | tick 300–301, `P.x ≈ 10,000.0–10,033.3 m`, simTime ≈ 5.000–5.017 s |
+
+
+---
+
+
+## PHASE 2 — ARCHITECTURAL COMPLIANCE MAP
+
+
+| Rule | Implementation |
+|---|---|
+| Core is pure Float64 | `absPos`/`velocity`/`origin` are plain-object doubles; no Three/Rapier types in `src/core/` |
+| `O_new = 256·floor(P/256 + 0.5)` | `precisionMath.calculateOrigin`, exactness proof in-file |
+| Trigger: `max(|local|) > 1024` | `shouldRebase` (strict `>`), tested on the focus entity |
+| Tick order (a)→(d) | `SimulationCore.tick()`, each step labelled and mapped to Spec 01.1 (dormant steps 1/3/6/7 documented, **not** stubbed — they belong to M1B/M1D/M1E) |
+| Max 5 substeps, shed don't dilate (Spec 02.6) | `advance()` governor with `shedSeconds` telemetry |
+
+
+---
+
+
+## PHASE 3 — DELIVERABLES
+
+
+### 1. `src/core/types.ts`
+
+
+```typescript
+/**
+ * ============================================================================
+ *  CORE TYPES — PURE FLOAT64 SIMULATION DOMAIN
+ *  Milestone 1A · Spec 00.3 / 01.1
+ * ============================================================================
+ *  HARD BOUNDARY (Spec 01.1): nothing under src/core/ may import from
+ *  'three', 'react', '@react-three/fiber', '@react-three/rapier' or any other
+ *  renderer/physics library. The simulation core is pure TypeScript running
+ *  on 64-bit doubles.
+ *
+ *  Data leaves this domain in exactly three forms:
+ *    (a) plain numbers (origin components, stats),
+ *    (b) core-owned Float32Array(3) render-extract buffers (written by the
+ *        core each tick at canonical step 8, read-only for consumers),
+ *    (c) the reused RebaseEvent (consumed synchronously).
+ */
+
+
+/** Entity handle. Opaque string key, stable for the entity's lifetime. */
+export type EntityId = string;
+
+
+/**
+ * Minimal 3-component double-precision vector. Deliberately a plain object:
+ * monomorphic shapes, hidden-class friendly, and free of any library type.
+ */
+export interface Vec3f64 {
+  x: number;
+  y: number;
+  z: number;
+}
+
+
+/**
+ * Per-entity simulation state. Every field is OWNED and mutated in place by
+ * the SimulationCore — the Zero-GC mandate means these objects are allocated
+ * once at registration and never replaced.
+ */
+export interface EntityState {
+  id: EntityId;
+
+
+  /** Absolute position in the Sun frame, metres, Float64. Core-written. */
+  absPos: Vec3f64;
+
+
+  /** Absolute velocity, m/s, Float64. Core-written when dynamic. */
+  velocity: Vec3f64;
+
+
+  /**
+   * LOCAL Float32 render coordinates relative to the floating origin
+   * (canonical tick step 8 / Phase-2 step (d)):
+   *     localPosF32[i] = Float32(absPos[i] - origin[i])
+   * The subtraction happens in Float64; the typed-array store performs the
+   * single, lattice-lossless narrowing to Float32. NEVER the reverse order.
+   *
+   * Allocated exactly once at registration. Written for EVERY entity on
+   * EVERY tick — static entities included — so consumers never need to
+   * apply per-object delta translation after a rebase: locals are simply
+   * recomputed against the new origin.
+   */
+  localPosF32: Float32Array;
+
+
+  /**
+   * Dynamic entities integrate P += V·dt each tick. Static entities only
+   * get their local coordinates refreshed (their locals still change when
+   * the origin shifts — that is correct and expected).
+   */
+  dynamic: boolean;
+}
+
+
+/**
+ * Emitted after every origin shift.
+ *
+ * ZERO-GC CONTRACT: the SimulationCore reuses ONE pre-allocated event object
+ * for the entire session. Listeners must consume it synchronously and copy
+ * any field they intend to retain past the callback.
+ *
+ * FUTURE HOOK (Spec 00.4): `delta` is the exact translation that later
+ * milestones will apply to Rapier bodies and procedural chunk origins
+ * (Spec 01.1 step 4) — bit-exact in f32 by the power-of-two lattice proof.
+ */
+export interface RebaseEvent {
+  oldOrigin: Vec3f64;
+  newOrigin: Vec3f64;
+  /** newOrigin − oldOrigin. Always an exact multiple of 256 m per axis. */
+  delta: Vec3f64;
+  /** 1-based ordinal of this rebase since core construction. */
+  count: number;
+}
+
+
+export type RebaseListener = (event: RebaseEvent) => void;
+
+
+/**
+ * Live counters. Mutated in place by the core every tick — read-only for
+ * consumers. Kept as a plain object so reads are allocation-free.
+ */
+export interface SimulationStats {
+  /** Fixed ticks executed (1 tick = 1/60 s). */
+  tickCount: number;
+  /** Total origin shifts since construction. */
+  rebaseCount: number;
+  /** Accumulated simulated seconds (sum of the fixed dt). Float64. */
+  simTime: number;
+  /**
+   * Running maximum, over all ticks so far, of the FOCUS entity's largest
+   * local-axis magnitude — sampled from the Float32 buffer AFTER step (d).
+   * Structurally bounded by the 1,024 m trigger:
+   *   no rebase this tick  -> max-axis local <= 1024 (strict trigger),
+   *   rebase this tick     -> max-axis local <= 128 (half the 256 m lattice).
+   */
+  focusMaxLocalPostTick: number;
+  /**
+   * Simulated seconds deliberately discarded by the fixed-step governor once
+   * the 5-substep budget is exhausted (Spec 02.6: shed load, never dilate).
+   */
+  shedSeconds: number;
+}
+```
+
+
+### 2. `src/core/math/precisionMath.ts`
+
+
+```typescript
+/**
+ * ============================================================================
+ *  PRECISION MATH — FLOAT64 VECTOR UTILITIES & ORIGIN LATTICE
+ *  Milestone 1A · Spec 00.3 (Origin Rebasing), Phase-2 rules 2 & 3
+ * ============================================================================
+ *  This module is part of the pure core: no renderer or physics imports.
+ *
+ *  ALLOCATION CONTRACT: every function that can produce a vector accepts an
+ *  optional `out` parameter. When `out` is omitted the default-parameter
+ *  expression allocates — that path is for SETUP code only. Every hot-path
+ *  call site (inside SimulationCore.tick / the frame loop) passes `out`.
+ */
+
+
+import type { Vec3f64 } from '../types';
+
+
+/**
+ * Origin lattice quantum: 2^8 = 256 m (Spec 00.3).
+ * Powers of two make origin shifts bit-exact across the f64 -> f32 boundary.
+ */
+export const ORIGIN_LATTICE = 256;
+
+
+/**
+ * Rebase trigger: fire when the focus entity's largest local-axis magnitude
+ * exceeds this value (strict inequality). 1024 = 2^10 = exactly 4 lattice
+ * cells, which is why axis-aligned flight produces clean Δ = 1024 shifts.
+ */
+export const REBASE_THRESHOLD = 1024;
+
+
+/** Setup-path allocator for the optional-`out` convenience variants. */
+function fresh(): Vec3f64 {
+  return { x: 0, y: 0, z: 0 };
+}
+
+
+/* ---------------------------------------------------------------------------
+ * Float64 vector utilities
+ * ------------------------------------------------------------------------- */
+
+
+export function add(a: Vec3f64, b: Vec3f64, out: Vec3f64 = fresh()): Vec3f64 {
+  out.x = a.x + b.x;
+  out.y = a.y + b.y;
+  out.z = a.z + b.z;
+  return out;
+}
+
+
+export function sub(a: Vec3f64, b: Vec3f64, out: Vec3f64 = fresh()): Vec3f64 {
+  out.x = a.x - b.x;
+  out.y = a.y - b.y;
+  out.z = a.z - b.z;
+  return out;
+}
+
+
+export function scale(a: Vec3f64, s: number, out: Vec3f64 = fresh()): Vec3f64 {
+  out.x = a.x * s;
+  out.y = a.y * s;
+  out.z = a.z * s;
+  return out;
+}
+
+
+export function dot(a: Vec3f64, b: Vec3f64): number {
+  return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+
+
+export function cross(a: Vec3f64, b: Vec3f64, out: Vec3f64 = fresh()): Vec3f64 {
+  const ax = a.x, ay = a.y, az = a.z;
+  const bx = b.x, by = b.y, bz = b.z;
+  out.x = ay * bz - az * by;
+  out.y = az * bx - ax * bz;
+  out.z = ax * by - ay * bx;
+  return out;
+}
+
+
+export function lengthSq(a: Vec3f64): number {
+  return a.x * a.x + a.y * a.y + a.z * a.z;
+}
+
+
+export function length(a: Vec3f64): number {
+  return Math.sqrt(lengthSq(a));
+}
+
+
+export function clone(a: Vec3f64): Vec3f64 {
+  return { x: a.x, y: a.y, z: a.z };
+}
+
+
+/** memcpy-style field copy: dst <- src. Hot-path safe when dst is reused. */
+export function copy(dst: Vec3f64, src: Vec3f64): Vec3f64 {
+  dst.x = src.x;
+  dst.y = src.y;
+  dst.z = src.z;
+  return dst;
+}
+
+
+export function set(dst: Vec3f64, x: number, y: number, z: number): Vec3f64 {
+  dst.x = x;
+  dst.y = y;
+  dst.z = z;
+  return dst;
+}
+
+
+/** Largest absolute component — the trigger metric. */
+export function maxAxisAbs(v: Vec3f64): number {
+  return Math.max(Math.abs(v.x), Math.abs(v.y), Math.abs(v.z));
+}
+
+
+/* ---------------------------------------------------------------------------
+ * THE ORIGIN LATTICE
+ *
+ * WHY 256 = 2^8 GUARANTEES LOSSLESS f64 -> f32 ORIGIN SHIFTS
+ *
+ * 1. Dividing by 256 shifts the exponent only: p/256 is EXACT in IEEE 754
+ *    for any normal double (no significand rounding).
+ * 2. floor(p/256 + 0.5) returns an exact integer k (all |k| < 2^53 are
+ *    exact in f64), and multiplying by 256 is an exponent shift — so
+ *    O = 256·k is an EXACT multiple of 256 in Float64, regardless of which
+ *    side of a half-lattice boundary the rounding lands on.
+ * 3. Δ = O_new − O_old = 256·(k_new − k_old). Both operands are exact, the
+ *    true difference is representable, so IEEE subtraction returns it with
+ *    ZERO error (catastrophic cancellation cannot occur when the exact
+ *    result fits).
+ * 4. Within one rebase |Δ| spans at most a few trigger distances, so
+ *    |k_new − k_old| < 2^16 and Δ = m·2^8 needs at most a 17-bit
+ *    significand — inside Float32's 24-bit significand. Hence
+ *    Math.fround(Δ) === Δ: translating 32-bit physics/render state by Δ
+ *    injects no rounding error and therefore no phantom momentum (Spec 00.3).
+ * 5. Cancellation is avoided by ORDER, not magnitude: locals are computed
+ *    as f64(P − O) and only THEN narrowed to f32. At Pluto's rail distance
+ *    (~3.77e6 m) the f32 ulp is 0.25 m — subtracting in f32 would jitter by
+ *    metres; in f64 the same subtraction is exact to ~5e-10 m.
+ *
+ * Round-to-nearest (+0.5) keeps the focus local coordinate symmetric in
+ * [−128, +128] after every shift.
+ * ------------------------------------------------------------------------- */
+
+
+/**
+ * Snap a world position to the nearest 256 m lattice point, per axis.
+ * Phase-2 rule 2: O = 256 * floor(P / 256 + 0.5).
+ */
+export function calculateOrigin(p: Vec3f64, out: Vec3f64 = fresh()): Vec3f64 {
+  out.x = ORIGIN_LATTICE * Math.floor(p.x / ORIGIN_LATTICE + 0.5);
+  out.y = ORIGIN_LATTICE * Math.floor(p.y / ORIGIN_LATTICE + 0.5);
+  out.z = ORIGIN_LATTICE * Math.floor(p.z / ORIGIN_LATTICE + 0.5);
+  return out;
+}
+
+
+/**
+ * Phase-2 rule 3 — rebase trigger. STRICT inequality: a tick that does not
+ * fire ends with max-axis local <= 1024, which is exactly the structural
+ * bound the acceptance test observes post-tick.
+ */
+export function shouldRebase(pLocal: Vec3f64): boolean {
+  return maxAxisAbs(pLocal) > REBASE_THRESHOLD;
+}
+```
+
+
+### 3. `src/core/simulation/SimulationCore.ts`
+
+
+```typescript
+/**
+ * ============================================================================
+ *  SIMULATION CORE — PURE TYPESCRIPT, FLOAT64, ZERO-GC FIXED TICK
+ *  Milestone 1A · Spec 00.3, 01.1 (canonical tick order), 02.6 (substeps)
+ * ============================================================================
+ *  Pure core: this file must never import three / react / rapier.
+ *
+ *  CANONICAL TICK ORDER (Spec 01.1) — M1A-implemented subset, per Phase 2:
+ *    step (a)  Integrate: P += V·dt in Float64        [01.1 step 5 stand-in]
+ *    step (b)  Bubble refresh test (focus vs 1,024 m) [01.1 step 2]
+ *    step (c)  Conditional rebase (exact 256 m Δ)     [01.1 step 4]
+ *    step (d)  Render extract: f32 locals, all entities [01.1 step 8]
+ *
+ *  DORMANT BY DESIGN — no stubs written (Spec 05 pacing):
+ *    [01.1 step 1] Macro Kepler rails ........ M1B
+ *    [01.1 step 3] Parented state compose .... M1E
+ *    [01.1 step 6] Rapier physics step ....... M1D+
+ *    [01.1 step 7] f32 -> f64 write-back ..... M1D+
+ *
+ *  ZERO-GC AUDIT of tick(): field writes on owned objects, writes into
+ *  boot-allocated scratch vectors, one pre-allocated (reused) RebaseEvent,
+ *  stores into boot-allocated Float32Array buffers, indexed for-loops over
+ *  dense arrays (no iterators, no closures, no spreads). Allocation count
+ *  per tick: 0. The only allocations this class ever performs happen inside
+ *  registerEntity / onRebase (setup paths).
+ */
+
+
+import type {
+  EntityId,
+  EntityState,
+  RebaseEvent,
+  RebaseListener,
+  SimulationStats,
+  Vec3f64,
+} from '../types';
+import { calculateOrigin, copy, shouldRebase, sub } from '../math/precisionMath';
+
+
+/** Fixed logic timestep (Spec 02.6): 1 tick = 1/60 game-seconds. */
+export const FIXED_DT = 1 / 60;
+/** Max fixed ticks per rendered frame (Spec 02.6): shed load, never dilate. */
+export const MAX_SUBSTEPS = 5;
+/** Wall-clock clamp per advance() call — tab-switch / stall guard. */
+export const MAX_ADVANCE_DT = 0.25;
+
+
+export interface RegisterEntityOptions {
+  /** Absolute spawn position, Sun frame, metres. Cloned into core storage. */
+  absPos: Vec3f64;
+  /** Initial absolute velocity, m/s. Defaults to (0,0,0). */
+  velocity?: Vec3f64;
+  /** Dynamic entities integrate; static entities only refresh locals. Default true. */
+  dynamic?: boolean;
+}
+
+
+export class SimulationCore {
+  /* -------------------------------------------------------------------------
+   * Entity storage — dense array + index map. Grown only by registerEntity
+   * (setup path). The tick iterates by index: Map iteration allocates an
+   * iterator object per call and is therefore banned in the hot loop.
+   * ---------------------------------------------------------------------- */
+  private _entities: EntityState[] = [];
+  private _entityIndex = new Map<EntityId, number>();
+
+
+  /**
+   * The entity whose local coordinates drive the rebase trigger (Spec 01.1
+   * step 2: "the PLAYER has crossed a 256 m lattice boundary"). Static
+   * world entities may legitimately carry locals far beyond 1,024 m — only
+   * the focus entity's bound is guaranteed.
+   */
+  private _focusId: EntityId | null = null;
+
+
+  /** Current floating origin, Sun frame, Float64. Exact multiple of 256 m. */
+  private _origin: Vec3f64 = { x: 0, y: 0, z: 0 };
+
+
+  /* -------------------------------------------------------------------------
+   * Pre-allocated scratch — created once at construction, reused every tick.
+   * ---------------------------------------------------------------------- */
+  /** focus.absPos − origin, recomputed each tick (Float64 only). */
+  private _focusLocal: Vec3f64 = { x: 0, y: 0, z: 0 };
+  /** Candidate origin during step (c). */
+  private _candidateOrigin: Vec3f64 = { x: 0, y: 0, z: 0 };
+
+
+  /** THE single reused event (Zero-GC). See types.ts contract. */
+  private readonly _rebaseEvent: RebaseEvent = {
+    oldOrigin: { x: 0, y: 0, z: 0 },
+    newOrigin: { x: 0, y: 0, z: 0 },
+    delta: { x: 0, y: 0, z: 0 },
+    count: 0,
+  };
+
+
+  /** Listener registry. Mutated only via onRebase (setup/teardown path). */
+  private _listeners: RebaseListener[] = [];
+
+
+  /** Fixed-step governor accumulator (wall-clock seconds). */
+  private _accumulator = 0;
+
+
+  /** Live telemetry. Mutated in place; treat as read-only. */
+  public readonly stats: SimulationStats = {
+    tickCount: 0,
+    rebaseCount: 0,
+    simTime: 0,
+    focusMaxLocalPostTick: 0,
+    shedSeconds: 0,
+  };
+
+
+  /* -------------------------------------------------------------------------
+   * Entity registry — registering / updating / removing (setup paths)
+   * ---------------------------------------------------------------------- */
+
+
+  registerEntity(id: EntityId, options: RegisterEntityOptions): EntityState {
+    if (this._entityIndex.has(id)) {
+      throw new Error(`[SimulationCore] entity '${id}' is already registered`);
+    }
+    const absPos: Vec3f64 = {
+      x: options.absPos.x,
+      y: options.absPos.y,
+      z: options.absPos.z,
+    };
+    const v = options.velocity;
+    const velocity: Vec3f64 = {
+      x: v !== undefined ? v.x : 0,
+      y: v !== undefined ? v.y : 0,
+      z: v !== undefined ? v.z : 0,
+    };
+    const state: EntityState = {
+      id,
+      absPos,
+      velocity,
+      // The ONE per-entity allocation of the entire session (Zero-GC mandate).
+      localPosF32: new Float32Array(3),
+      dynamic: options.dynamic !== false,
+    };
+    // Seed locals immediately so the render side has valid data before the
+    // first tick (f64 subtraction, then the store narrows to f32).
+    state.localPosF32[0] = absPos.x - this._origin.x;
+    state.localPosF32[1] = absPos.y - this._origin.y;
+    state.localPosF32[2] = absPos.z - this._origin.z;
+
+
+    this._entityIndex.set(id, this._entities.length);
+    this._entities.push(state);
+    if (this._focusId === null) {
+      this._focusId = id;
+    }
+    return state;
+  }
+
+
+  /** Swap-remove keeps the dense array compact with no per-tick cost. */
+  unregisterEntity(id: EntityId): boolean {
+    const idx = this._entityIndex.get(id);
+    if (idx === undefined) {
+      return false;
+    }
+    const last = this._entities.length - 1;
+    if (idx !== last) {
+      const moved = this._entities[last];
+      this._entities[idx] = moved;
+      this._entityIndex.set(moved.id, idx);
+    }
+    this._entities.pop();
+    this._entityIndex.delete(id);
+    if (this._focusId === id) {
+      this._focusId = this._entities.length > 0 ? this._entities[0].id : null;
+    }
+    return true;
+  }
+
+
+  /** Update an entity's velocity in place (writes into owned storage). */
+  setVelocity(id: EntityId, vx: number, vy: number, vz: number): boolean {
+    const state = this.getEntityState(id);
+    if (state === null) {
+      return false;
+    }
+    state.velocity.x = vx;
+    state.velocity.y = vy;
+    state.velocity.z = vz;
+    return true;
+  }
+
+
+  setFocusEntity(id: EntityId): void {
+    if (!this._entityIndex.has(id)) {
+      throw new Error(`[SimulationCore] cannot focus unknown entity '${id}'`);
+    }
+    this._focusId = id;
+  }
+
+
+  getFocusEntityId(): EntityId | null {
+    return this._focusId;
+  }
+
+
+  /* -------------------------------------------------------------------------
+   * Zero-allocation getters.
+   * READ-ONLY CONTRACT: these return internal live references so that hot
+   * consumers never allocate. Callers must treat the returned objects and
+   * typed arrays as frozen; the core is the sole writer.
+   * ---------------------------------------------------------------------- */
+
+
+  getEntityState(id: EntityId): EntityState | null {
+    const i = this._entityIndex.get(id);
+    return i === undefined ? null : this._entities[i];
+  }
+
+
+  getOrigin(): Vec3f64 {
+    return this._origin;
+  }
+
+
+  getAbsPosition(id: EntityId): Vec3f64 | null {
+    const e = this.getEntityState(id);
+    return e === null ? null : e.absPos;
+  }
+
+
+  getLocalPositionF32(id: EntityId): Float32Array | null {
+    const e = this.getEntityState(id);
+    return e === null ? null : e.localPosF32;
+  }
+
+
+  getEntityCount(): number {
+    return this._entities.length;
+  }
+
+
+  /* -------------------------------------------------------------------------
+   * Rebase event system
+   * ---------------------------------------------------------------------- */
+
+
+  /** Subscribe; returns an unsubscribe function. Setup/teardown path only. */
+  onRebase(listener: RebaseListener): () => void {
+    this._listeners.push(listener);
+    return () => {
+      const i = this._listeners.indexOf(listener);
+      if (i >= 0) {
+        this._listeners.splice(i, 1);
+      }
+    };
+  }
+
+
+  private _emitRebase(): void {
+    const listeners = this._listeners;
+    for (let i = 0; i < listeners.length; i++) {
+      // try/catch is free in V8 when nothing throws; it protects later
+      // listeners from a broken one.
+      try {
+        listeners[i](this._rebaseEvent);
+      } catch (err) {
+        console.error('[SimulationCore] rebase listener threw', err);
+      }
+    }
+  }
+
+
+  /* -------------------------------------------------------------------------
+   * FIXED-STEP GOVERNOR (Spec 02.6)
+   * Accumulates wall-clock time, runs whole 1/60 s ticks, hard-caps at 5
+   * substeps per frame. If still behind after the budget, the backlog is
+   * SHED (counted in stats.shedSeconds) — the timestep is never dilated and
+   * the loop can never death-spiral.
+   * ---------------------------------------------------------------------- */
+
+
+  advance(dtRealSeconds: number): void {
+    if (!Number.isFinite(dtRealSeconds) || dtRealSeconds <= 0) {
+      return;
+    }
+    const dt = dtRealSeconds > MAX_ADVANCE_DT ? MAX_ADVANCE_DT : dtRealSeconds;
+    this._accumulator += dt;
+    let steps = 0;
+    while (this._accumulator >= FIXED_DT && steps < MAX_SUBSTEPS) {
+      this.tick();
+      this._accumulator -= FIXED_DT;
+      steps++;
+    }
+    if (this._accumulator >= FIXED_DT) {
+      // Over budget: discard the pending backlog rather than dilating time.
+      this.stats.shedSeconds += this._accumulator;
+      this._accumulator = 0;
+    }
+  }
+
+
+  /* -------------------------------------------------------------------------
+   * THE CANONICAL FIXED TICK — dt = 1/60 s, allocation-free.
+   * ---------------------------------------------------------------------- */
+
+
+  tick(): void {
+    const entities = this._entities;
+    const count = entities.length;
+    const origin = this._origin;
+
+
+    // -- (a) INTEGRATE — Float64: P <- P + V·dt ----------------------------
+    // M1A stand-in for the dynamics stages; forces & the Rapier step arrive
+    // in later milestones and are intentionally absent here.
+    for (let i = 0; i < count; i++) {
+      const e = entities[i];
+      if (e.dynamic) {
+        e.absPos.x += e.velocity.x * FIXED_DT;
+        e.absPos.y += e.velocity.y * FIXED_DT;
+        e.absPos.z += e.velocity.z * FIXED_DT;
+      }
+    }
+
+
+    // -- (b) BUBBLE REFRESH TEST — focus entity vs the 1,024 m trigger ----
+    // Local coordinates are computed AND tested in Float64. Never narrow
+    // before the subtraction — that is where precision dies (see the proof
+    // in precisionMath.ts).
+    const focus = this._focus();
+    if (focus !== null) {
+      sub(focus.absPos, origin, this._focusLocal);
+      if (shouldRebase(this._focusLocal)) {
+        // -- (c) CONDITIONAL REBASE — exact 256 m lattice Δ ---------------
+        // Degenerate rebases are impossible: |P − O| > 1024 implies the
+        // nearest lattice point to P is NOT O, so Δ ≠ 0 always.
+        calculateOrigin(focus.absPos, this._candidateOrigin);
+        const ev = this._rebaseEvent;
+        copy(ev.oldOrigin, origin);
+        // Δ = O_new − O_old: exact in f64 AND bit-exact after fround (proof
+        // in precisionMath.ts). This is the value future milestones will use
+        // to translate Rapier bodies and chunk origins.
+        ev.delta.x = this._candidateOrigin.x - origin.x;
+        ev.delta.y = this._candidateOrigin.y - origin.y;
+        ev.delta.z = this._candidateOrigin.z - origin.z;
+        copy(ev.newOrigin, this._candidateOrigin);
+        copy(origin, this._candidateOrigin);
+        this.stats.rebaseCount++;
+        ev.count = this.stats.rebaseCount;
+        this._emitRebase();
+      }
+    }
+
+
+    // -- (d) RENDER EXTRACT — p_local_f32 = Float32(P_abs − O) ------------
+    // Recomputed for EVERY entity (statics included) on EVERY tick, so the
+    // render side never has to apply per-object delta translation after a
+    // rebase — it just reads fresh, already-correct locals.
+    for (let i = 0; i < count; i++) {
+      const e = entities[i];
+      // Float64 subtraction first; the typed-array store performs the single
+      // correctly-rounded narrowing to Float32.
+      e.localPosF32[0] = e.absPos.x - origin.x;
+      e.localPosF32[1] = e.absPos.y - origin.y;
+      e.localPosF32[2] = e.absPos.z - origin.z;
+    }
+
+
+    // Track the focus bound from the f32 buffer (post-tick sample — the
+    // value the acceptance invariant governs).
+    if (focus !== null) {
+      const lp = focus.localPosF32;
+      const m = Math.max(Math.abs(lp[0]), Math.abs(lp[1]), Math.abs(lp[2]));
+      if (m > this.stats.focusMaxLocalPostTick) {
+        this.stats.focusMaxLocalPostTick = m;
+      }
+    }
+
+
+    this.stats.tickCount++;
+    this.stats.simTime += FIXED_DT;
+  }
+
+
+  /** Resolve the focus entity (null when the registry is empty). */
+  private _focus(): EntityState | null {
+    if (this._focusId === null) {
+      return null;
+    }
+    const i = this._entityIndex.get(this._focusId);
+    return i === undefined ? null : this._entities[i];
+  }
+}
+```
+
+
+### 4. `src/store/useGameStore.ts`
+
+
+```typescript
+/**
+ * ============================================================================
+ *  GAME STORE — UI TELEMETRY & TEST LIFECYCLE (ZUSTAND)
+ *  Milestone 1A
+ * ============================================================================
+ *  DECOUPLING CONTRACT (protects the 60 Hz loop from React):
+ *
+ *  1. The simulation/frame loop NEVER reads from or writes to React state on
+ *     a per-frame basis. The only store writes in existence are:
+ *       (a) the throttled telemetry publisher — hard-capped at 10 Hz,
+ *       (b) the one-shot completeTest() lifecycle write.
+ *  2. The HUD subscribes with narrow selectors (object identity for the
+ *     telemetry snapshot), so it re-renders at most 10x per second. The 3D
+ *     scene has ZERO reactive bindings — every transform flows imperatively
+ *     through FloatingOriginAdapter inside useFrame, which runs before
+ *     renderer.render (Spec 04.2 doctrine).
+ *  3. Allocation accounting: ~10 small snapshot objects per second at the
+ *     sanctioned UI boundary (versus 60+ if unthrottled). The sim core, the
+ *     rebase path, and the render-extract pass allocate zero bytes per frame.
+ */
+
+
+import { create } from 'zustand';
+import type { Vec3f64 } from '../core/types';
+
+
+/** Snapshot published at most 10x per second. Values copied, refs never shared. */
+export interface TelemetrySnapshot {
+  fps: number;
+  frameMsAvg: number;
+  frameMsMax: number;
+  absPos: Vec3f64;
+  localPos: Vec3f64;
+  origin: Vec3f64;
+  rebaseCount: number;
+  speed: number;
+  simTime: number;
+  tickCount: number;
+}
+
+
+export type TestId =
+  | 'abs-distance'
+  | 'local-bound'
+  | 'rebase-count'
+  | 'delta-lattice'
+  | 'frame-stability';
+
+
+export interface TestResult {
+  pass: boolean;
+  detail: string;
+}
+
+
+export type TestPhase = 'RUNNING' | 'COMPLETE';
+
+
+interface GameStore {
+  telemetry: TelemetrySnapshot;
+  testPhase: TestPhase;
+  testResults: Partial<Record<TestId, TestResult>>;
+  setTelemetry: (snapshot: TelemetrySnapshot) => void;
+  completeTest: (results: Record<TestId, TestResult>) => void;
+}
+
+
+const INITIAL_TELEMETRY: TelemetrySnapshot = {
+  fps: 0,
+  frameMsAvg: 0,
+  frameMsMax: 0,
+  absPos: { x: 0, y: 0, z: 0 },
+  localPos: { x: 0, y: 0, z: 0 },
+  origin: { x: 0, y: 0, z: 0 },
+  rebaseCount: 0,
+  speed: 0,
+  simTime: 0,
+  tickCount: 0,
+};
+
+
+export const useGameStore = create<GameStore>((set) => ({
+  telemetry: INITIAL_TELEMETRY,
+  testPhase: 'RUNNING',
+  testResults: {},
+  setTelemetry: (telemetry) => set({ telemetry }),
+  completeTest: (testResults) => set({ testResults, testPhase: 'COMPLETE' }),
+}));
+
+
+/* -- Narrow selectors (re-render scope control) --------------------------- */
+
+
+export const selectTelemetry = (s: GameStore) => s.telemetry;
+export const selectTestPhase = (s: GameStore) => s.testPhase;
+export const selectTestResults = (s: GameStore) => s.testResults;
+
+
+/* ---------------------------------------------------------------------------
+ * THROTTLED TELEMETRY PUBLISHER — <= 10 Hz hard ceiling.
+ *
+ * The publish() signature is deliberately all-scalars: the caller (frame
+ * loop) passes raw numbers read from the core's zero-allocation getters, so
+ * the call itself allocates nothing. A snapshot object is built ONLY when
+ * the 100 ms floor is met. Returns true when the snapshot was published so
+ * the caller can reset its windowed FPS accumulators without polling.
+ * ------------------------------------------------------------------------- */
+
+
+export interface TelemetryPublisher {
+  publish(
+    fps: number,
+    frameMsAvg: number,
+    frameMsMax: number,
+    absX: number, absY: number, absZ: number,
+    localX: number, localY: number, localZ: number,
+    originX: number, originY: number, originZ: number,
+    rebaseCount: number,
+    speed: number,
+    simTime: number,
+    tickCount: number,
+  ): boolean;
+}
+
+
+export function createTelemetryPublisher(minIntervalMs = 100): TelemetryPublisher {
+  let lastPublishMs = Number.NEGATIVE_INFINITY;
+  return {
+    publish(
+      fps, frameMsAvg, frameMsMax,
+      absX, absY, absZ,
+      localX, localY, localZ,
+      originX, originY, originZ,
+      rebaseCount, speed, simTime, tickCount,
+    ): boolean {
+      const now = performance.now();
+      if (now - lastPublishMs < minIntervalMs) {
+        return false;
+      }
+      lastPublishMs = now;
+      useGameStore.getState().setTelemetry({
+        fps,
+        frameMsAvg,
+        frameMsMax,
+        absPos: { x: absX, y: absY, z: absZ },
+        localPos: { x: localX, y: localY, z: localZ },
+        origin: { x: originX, y: originY, z: originZ },
+        rebaseCount,
+        speed,
+        simTime,
+        tickCount,
+      });
+      return true;
+    },
+  };
+}
+```
+
+
+### 5. `src/render/FloatingOriginAdapter.ts`
+
+
+```typescript
+/**
+ * ============================================================================
+ *  FLOATING ORIGIN ADAPTER — THREE.JS BRIDGE (RENDER EXTRACT)
+ *  Milestone 1A · Spec 01.1 step 8, Spec 04.2 / 04.3 discipline
+ * ============================================================================
+ *  This is the FIRST place three.js appears in the data path. It is the only
+ *  module permitted to translate core state into scene-graph state.
+ *
+ *  DESIGN RULES:
+ *  - Bindings are created at boot (setup path). update() is called ONCE per
+ *    frame, imperatively, inside the rAF/useFrame loop BEFORE
+ *    renderer.render — never from React effects (Spec 04.2: effects lag one
+ *    frame and cause pops).
+ *  - update() allocates NOTHING: index loops over dense parallel arrays
+ *    (Map iteration allocates an iterator per call — banned in hot paths).
+ *  - The f32 values written by the core flow untouched into Object3D
+ *    positions: the entire chain from (P − O) in f64 to the GPU stays
+ *    bit-identical.
+ *  - No dispose(), no scene.remove() mid-flight (Spec 04.3): an entity that
+ *    is unregistered simply has its object hidden, never destroyed.
+ */
+
+
+import * as THREE from 'three';
+import type { EntityId, Vec3f64 } from '../core/types';
+import type { SimulationCore } from '../core/simulation/SimulationCore';
+
+
+export class FloatingOriginAdapter {
+  private readonly _core: SimulationCore;
+
+
+  /** Dense parallel arrays — the zero-iteration-allocation binding table. */
+  private readonly _ids: EntityId[] = [];
+  private readonly _objects: THREE.Object3D[] = [];
+  private readonly _index = new Map<EntityId, number>();
+
+
+  constructor(core: SimulationCore) {
+    this._core = core;
+  }
+
+
+  /**
+   * Bind an entity id to a scene object. Setup path (allocation allowed).
+   * Idempotent: re-binding replaces the object in place (React StrictMode
+   * double-mount safe) instead of growing the table.
+   */
+  bind(id: EntityId, object: THREE.Object3D): void {
+    const existing = this._index.get(id);
+    if (existing !== undefined) {
+      this._objects[existing] = object;
+      return;
+    }
+    this._index.set(id, this._ids.length);
+    this._ids.push(id);
+    this._objects.push(object);
+  }
+
+
+  /** Unbind (swap-remove). Setup/teardown path. */
+  unbind(id: EntityId): boolean {
+    const idx = this._index.get(id);
+    if (idx === undefined) {
+      return false;
+    }
+    const last = this._ids.length - 1;
+    if (idx !== last) {
+      this._ids[idx] = this._ids[last];
+      this._objects[idx] = this._objects[last];
+      this._index.set(this._ids[idx], idx);
+    }
+    this._ids.pop();
+    this._objects.pop();
+    this._index.delete(id);
+    return true;
+  }
+
+
+  /**
+   * SINGLE DOWNSTREAM PASS — call once per frame after SimulationCore.advance().
+   * Copies the core-owned f32 locals into Object3D positions. Zero allocation.
+   */
+  update(): void {
+    const ids = this._ids;
+    const objects = this._objects;
+    for (let i = 0; i < ids.length; i++) {
+      const local = this._core.getLocalPositionF32(ids[i]);
+      const obj = objects[i];
+      if (local === null) {
+        // Entity was unregistered: hide, never dispose (Zero-GC mandate).
+        obj.visible = false;
+        continue;
+      }
+      // f32-exact values assigned untouched — no transform math here.
+      obj.position.set(local[0], local[1], local[2]);
+    }
+  }
+
+
+  /** Current origin copied into a caller-owned Vector3 (no allocation). */
+  copyOriginInto(out: THREE.Vector3): THREE.Vector3 {
+    const o = this._core.getOrigin();
+    out.set(o.x, o.y, o.z);
+    return out;
+  }
+
+
+  /** Read-only origin passthrough (plain f64 numbers). */
+  getOriginReadonly(): Vec3f64 {
+    return this._core.getOrigin();
+  }
+
+
+  get boundCount(): number {
+    return this._ids.length;
+  }
+}
+```
+
+
+### 6. `src/test/Milestone1A_TestHarness.tsx`
+
+
+```tsx
+/**
+ * ============================================================================
+ *  MILESTONE 1A — AUTOMATED ACCEPTANCE HARNESS (R3F TEST PAGE)
+ * ============================================================================
+ *  SCENARIO (Spec 05 / Milestone 1A):
+ *    A dummy ship spawns at (0,0,0) and flies a straight line at
+ *    V = (2000, 0, 0) m/s — the absolute hard cap — for 10,000 m.
+ *
+ *  SCENE:
+ *    - 256 m reference grid, lattice-anchored: lines stay fixed in ABSOLUTE
+ *      space across every origin shift (the signature visual proof — the
+ *      grid streams past at 2,000 m/s yet never slides when O jumps).
+ *    - Three STATIC world beacons at absolute X = 2,000 / 5,000 / 8,000 m:
+ *      registered as static entities, their f32 locals shift by −Δ on every
+ *      rebase while their absolute positions never move.
+ *    - Distant starfield following the camera (parallax ~ 0 at infinity).
+ *
+ *  AUTOMATED ACCEPTANCE (auto-arms on mount, ~5 s):
+ *    [T1] Absolute P.x reaches >= 10,000 m in Float64.
+ *    [T2] Local f32 p.x never exceeds 1,024 m.
+ *    [T3] Rebase count is between 9 and 10.
+ *    [T4] Every Δ is an exact multiple of 256 m (and Math.fround(Δ) === Δ).
+ *    [T5] Frame time stays stable at the 60 FPS baseline (no rebase stutter).
+ *
+ *  ZERO-GC DISCIPLINE: all per-frame state lives in boot-allocated module
+ *  containers (frame-time rings, rebase capture, live counters). The frame
+ *  loop allocates nothing except the <= 10 Hz telemetry snapshot and the
+ *  one-shot test-results object.
+ *
+ *  StrictMode-safe: module singletons + idempotent adapter binding.
+ */
+
+
+import { createRef, useEffect, useMemo, useRef, useState } from 'react';
+import * as THREE from 'three';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { SimulationCore } from '../core/simulation/SimulationCore';
+import { FloatingOriginAdapter } from '../render/FloatingOriginAdapter';
+import { ORIGIN_LATTICE, REBASE_THRESHOLD } from '../core/math/precisionMath';
+import {
+  createTelemetryPublisher,
+  selectTelemetry,
+  selectTestPhase,
+  selectTestResults,
+  useGameStore,
+} from '../store/useGameStore';
+import type { TestId } from '../store/useGameStore';
+import type { Vec3f64 } from '../core/types';
+
+
+/* ---------------------------------------------------------------------------
+ * BOOT-TIME SINGLETONS — allocation is sanctioned HERE, never in the loop.
+ * ------------------------------------------------------------------------- */
+
+
+const core = new SimulationCore();
+const adapter = new FloatingOriginAdapter(core);
+
+
+const SHIP_ID = 'ship';
+const SHIP_VELOCITY = 2000; // m/s along +x (absolute hard cap, Spec 00.3)
+const TEST_DISTANCE_M = 10_000;
+
+
+interface BeaconSpec {
+  id: string;
+  abs: Vec3f64;
+  color: string;
+}
+
+
+const BEACONS: BeaconSpec[] = [
+  { id: 'beacon-a', abs: { x: 2000, y: 80, z: 220 }, color: '#ffb454' },
+  { id: 'beacon-b', abs: { x: 5000, y: 80, z: -220 }, color: '#7fd4ff' },
+  { id: 'beacon-c', abs: { x: 8000, y: 80, z: 220 }, color: '#c9a0ff' },
+];
+
+
+const shipState = core.registerEntity(SHIP_ID, {
+  absPos: { x: 0, y: 0, z: 0 },
+  velocity: { x: SHIP_VELOCITY, y: 0, z: 0 },
+  dynamic: true,
+});
+core.setFocusEntity(SHIP_ID);
+
+
+for (const b of BEACONS) {
+  core.registerEntity(b.id, { absPos: b.abs, dynamic: false });
+}
+
+
+/** Camera offset from the ship, in LOCAL space. Hard-locked, not smoothed. */
+const CAMERA_OFFSET = { x: -26, y: 10, z: 17 };
+/**
+ * Grid forward bias. MUST remain a multiple of 256 so that grid lines stay
+ * on absolute multiples of 256 after every origin shift.
+ */
+const GRID_BIAS_X = 1024;
+
+
+/* ---------------------------------------------------------------------------
+ * AUTOMATED ACCEPTANCE CONTROLLER (module scope — survives re-mounts)
+ * ------------------------------------------------------------------------- */
+
+
+const TEST = {
+  DISTANCE_M: TEST_DISTANCE_M,
+  LOCAL_BOUND_M: REBASE_THRESHOLD, // 1,024
+  LOCAL_EPS: 1e-9,
+  REBASE_MIN: 9,
+  REBASE_MAX: 10,
+  LATTICE_M: ORIGIN_LATTICE, // 256
+  FRAME_AVG_BUDGET_MS: 20, // >= 50 FPS sustained average
+  FRAME_MAX_MS: 48, // no single stutter frame (> ~3x budget)
+  WARMUP_FRAMES: 20, // shader-compile warmup, excluded from the record
+  SIM_TIMEOUT_S: 8, // hard safety net (sim time, not wall time)
+  FRAME_CAP: 4096,
+  REBASE_FRAME_CAP: 128,
+} as const;
+
+
+const test = {
+  finished: false,
+  // Boot-allocated capture buffers — never grown at runtime.
+  frameTimes: new Float64Array(TEST.FRAME_CAP),
+  frameCount: 0,
+  warmup: TEST.WARMUP_FRAMES,
+  rebaseFrameTimes: new Float64Array(TEST.REBASE_FRAME_CAP),
+  rebaseFrameCount: 0,
+  // Rebase verification, written synchronously by the listener below.
+  deltaLatticeOk: true,
+  deltaF32Exact: true,
+  deltaVerified: 0,
+  lastDeltaX: 0,
+  lastDeltaY: 0,
+  lastDeltaZ: 0,
+};
+
+
+/**
+ * Rebase verification listener — registered ONCE at boot.
+ * Consumes the REUSED event synchronously (Zero-GC contract): we only read
+ * numbers and write into pre-allocated containers; nothing is retained.
+ */
+core.onRebase((event) => {
+  if (test.finished) {
+    return;
+  }
+  const { x, y, z } = event.delta;
+  // Exact doubles: the modulo is exact, so this proves N*256 per axis.
+  const onLattice =
+    x % TEST.LATTICE_M === 0 &&
+    y % TEST.LATTICE_M === 0 &&
+    z % TEST.LATTICE_M === 0;
+  // The actual bit-exactness claim of the power-of-two lattice design:
+  // every shift is representable in Float32 without rounding.
+  const f32Exact =
+    Math.fround(x) === x && Math.fround(y) === y && Math.fround(z) === z;
+  if (!onLattice) {
+    test.deltaLatticeOk = false;
+  }
+  if (!f32Exact) {
+    test.deltaF32Exact = false;
+  }
+  test.deltaVerified++;
+  test.lastDeltaX = x;
+  test.lastDeltaY = y;
+  test.lastDeltaZ = z;
+});
+
+
+/** One-shot evaluation and publication of all five acceptance criteria. */
+function finalizeTest(): void {
+  if (test.finished) {
+    return;
+  }
+  test.finished = true;
+
+
+  const absX = shipState.absPos.x;
+  const ticks = core.stats.tickCount;
+  const simTime = core.stats.simTime;
+  const rebaseCount = core.stats.rebaseCount;
+  const maxLocal = core.stats.focusMaxLocalPostTick;
+
+
+  // [T1] Float64 absolute distance invariant.
+  const t1 = absX >= TEST.DISTANCE_M;
+
+
+  // [T2] f32 local bound — structural: <= 1024 on no-rebase ticks,
+  //      <= 128 immediately after a rebase (half the 256 m lattice).
+  const t2 = maxLocal <= TEST.LOCAL_BOUND_M + TEST.LOCAL_EPS;
+
+
+  // [T3] Rebase count window. Predicted exactly 9 (one per 1,024 m of
+  //      travel at 2,000 m/s; the 10th would need P > 10,240 m).
+  const t3 = rebaseCount >= TEST.REBASE_MIN && rebaseCount <= TEST.REBASE_MAX;
+
+
+  // [T4] Every delta an exact multiple of 256 AND bit-exact in Float32.
+  const t4 =
+    test.deltaLatticeOk &&
+    test.deltaF32Exact &&
+    test.deltaVerified === rebaseCount &&
+    rebaseCount > 0;
+
+
+  // [T5] Frame stability — average budget + no single stutter frame.
+  let frames = 0;
+  let sum = 0;
+  let worst = 0;
+  const from = Math.min(TEST.WARMUP_FRAMES, test.frameCount);
+  for (let i = from; i < test.frameCount; i++) {
+    const v = test.frameTimes[i];
+    sum += v;
+    frames++;
+    if (v > worst) {
+      worst = v;
+    }
+  }
+  let rebaseWorst = 0;
+  for (let i = 0; i < test.rebaseFrameCount; i++) {
+    if (test.rebaseFrameTimes[i] > rebaseWorst) {
+      rebaseWorst = test.rebaseFrameTimes[i];
+    }
+  }
+  const avg = frames > 0 ? sum / frames : Number.POSITIVE_INFINITY;
+  const t5 =
+    frames > 0 && avg <= TEST.FRAME_AVG_BUDGET_MS && worst <= TEST.FRAME_MAX_MS;
+
+
+  const f2 = (v: number): string => v.toFixed(2);
+
+
+  useGameStore.getState().completeTest({
+    'abs-distance': {
+      pass: t1,
+      detail:
+        `P.x = ${absX.toFixed(3)} m @ tick {simTime.toFixed(3)} s of 60 Hz sim) — ` +
+        `requirement P.x >= ${TEST.DISTANCE_M.toLocaleString()} m, Float64 absolute (Sun frame).`,
+    },
+    'local-bound': {
+      pass: t2,
+      detail:
+        `max |p_local| over ${ticks} ticks = ${maxLocal.toFixed(3)} m — bound ${TEST.LOCAL_BOUND_M} m ` +
+        `(structural: <= 1,024 on no-rebase ticks, <= 128 immediately after a shift).`,
+    },
+    'rebase-count': {
+      pass: t3,
+      detail:
+        `${rebaseCount} origin shifts over ${absX.toFixed(0)} m of travel — expected ` +
+        `{TEST.REBASE_MAX} (one per 1,024 m at 2,000 m/s).`,
+    },
+    'delta-lattice': {
+      pass: t4,
+      detail:
+        `{rebaseCount} shifts verified: Δ = N*256 m on every axis and ` +
+        `Math.fround(Δ) === Δ (bit-exact f64 -> f32). Last Δ = ` +
+        `(${test.lastDeltaX}, ${test.lastDeltaY}, ${test.lastDeltaZ}) m.`,
+    },
+    'frame-stability': {
+      pass: t5,
+      detail:
+        `avg {avg > 0 ? Math.round(1000 / avg) : 0} FPS), worst ${f2(worst)} ms ` +
+        `across ${frames} measured frames; worst rebase-frame ${f2(rebaseWorst)} ms — ` +
+        `origin shifts cost no stutter frame.`,
+    },
+  });
+
+
+  const allPass = t1 && t2 && t3 && t4 && t5;
+  console.log(
+    `[Milestone1A] acceptance ${allPass ? 'PASSED' : 'FAILED'} — ` +
+      `P.x={ticks} rebases=${rebaseCount} ` +
+      `maxLocal={f2(avg)}ms`,
+  );
+}
+
+
+/* ---------------------------------------------------------------------------
+ * LIVE FRAME STATISTICS + THROTTLED PUBLISHER (boot-allocated containers)
+ * ------------------------------------------------------------------------- */
+
+
+const telemetryPublisher = createTelemetryPublisher(100); // <= 10 Hz ceiling
+
+
+const live = {
+  frames: 0, // windowed FPS counters, reset on each publish
+  ms: 0,
+  ring: new Float64Array(90), // ~1.5 s rolling frame-time window
+  ringIdx: 0,
+  ringCount: 0,
+};
+
+
+/* ---------------------------------------------------------------------------
+ * HELPERS
+ * ------------------------------------------------------------------------- */
+
+
+/** Deterministic PRNG (mulberry32) — identical starfield on every load. */
+function mulberry32(seed: number): () => number {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+
+function makeStarLayer(
+  rand: () => number,
+  count: number,
+  radius: number,
+  size: number,
+  color: number,
+  opacity: number,
+): THREE.Points {
+  const positions = new Float32Array(count * 3);
+  for (let i = 0; i < count; i++) {
+    // Uniform distribution on a sphere (no pole bunching).
+    const u = rand() * 2 - 1;
+    const theta = rand() * Math.PI * 2;
+    const r = Math.sqrt(1 - u * u);
+    positions[i * 3] = Math.cos(theta) * r * radius;
+    positions[i * 3 + 1] = u * radius;
+    positions[i * 3 + 2] = Math.sin(theta) * r * radius;
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  const material = new THREE.PointsMaterial({
+    color,
+    size,
+    sizeAttenuation: false,
+    transparent: true,
+    opacity,
+    fog: false,
+    depthWrite: false,
+  });
+  return new THREE.Points(geometry, material);
+}
+
+
+/**
+ * Lattice anchor for periodic world-fixed content.
+ * Content at local offset g occupies absolute O + g (mod lattice), so lines
+ * stay absolute-fixed iff g === -O (mod lattice). Because O is ALWAYS a
+ * multiple of 256, this is provably 0 — computed defensively anyway so the
+ * logic stays correct even if the lattice constant ever changes.
+ */
+function latticeAnchor(originComponent: number, lattice: number): number {
+  const m = ((originComponent % lattice) + lattice) % lattice; // Euclidean mod
+  return (lattice - m) % lattice;
+}
+
+
+/* ---------------------------------------------------------------------------
+ * SCENE — imperative content; NO reactive bindings on any transform.
+ * ------------------------------------------------------------------------- */
+
+
+function Scene() {
+  const shipRef = useRef<THREE.Group>(null);
+  const beaconRefs = useMemo(() => BEACONS.map(() => createRef<THREE.Mesh>()), []);
+  const gridFineRef = useRef<THREE.GridHelper>(null);
+  const gridMajorRef = useRef<THREE.GridHelper>(null);
+  const starsRef = useRef<THREE.Group>(null);
+
+
+  // Boot-time bindings — allocation happens here (setup), never per frame.
+  useEffect(() => {
+    adapter.bind(SHIP_ID, shipRef.current!);
+    BEACONS.forEach((b, i) => adapter.bind(b.id, beaconRefs[i].current!));
+    return () => {
+      adapter.unbind(SHIP_ID);
+      BEACONS.forEach((b) => adapter.unbind(b.id));
+    };
+  }, [beaconRefs]);
+
+
+  // Deterministic starfield, built once.
+  const stars = useMemo(() => {
+    const rand = mulberry32(0x5eed1a71);
+    const group = new THREE.Group();
+    group.add(makeStarLayer(rand, 1300, 6200, 1.5, 0xaec6dc, 0.75));
+    group.add(makeStarLayer(rand, 170, 6200, 2.8, 0xe6f0fa, 0.95));
+    return group;
+  }, []);
+
+
+  /* -----------------------------------------------------------------------
+   * THE FRAME LOOP — canonical order: simulate -> extract -> camera -> stats
+   * -> throttled telemetry. Runs imperatively BEFORE renderer.render.
+   * -------------------------------------------------------------------- */
+  useFrame((state, delta) => {
+    // (1) FIXED-STEP SIMULATION — accumulate, tick at exactly 1/60 s,
+    //     max 5 substeps, shed any backlog beyond (Spec 02.6).
+    const rebaseBefore = core.stats.rebaseCount;
+    core.advance(delta);
+    const rebasedThisFrame = core.stats.rebaseCount !== rebaseBefore;
+
+
+    // (2) RENDER EXTRACT — the single downstream pass (Spec 01.1 step 8).
+    //     Ship and beacons are positioned exclusively by the adapter.
+    adapter.update();
+
+
+    const origin = core.getOrigin();
+    const lp = shipState.localPosF32;
+    const sx = lp[0];
+    const sy = lp[1];
+    const sz = lp[2];
+
+
+    // Lattice-anchored grid: lines remain fixed in ABSOLUTE space across
+    // every rebase (O only ever moves in whole 256 m cells). The forward
+    // bias is a multiple of 256 so line positions are preserved.
+    if (gridFineRef.current !== null && gridMajorRef.current !== null) {
+      const ax = latticeAnchor(origin.x, ORIGIN_LATTICE) + GRID_BIAS_X;
+      const az = latticeAnchor(origin.z, ORIGIN_LATTICE);
+      gridFineRef.current.position.set(ax, -0.7, az);
+      gridMajorRef.current.position.set(ax, -0.5, az);
+    }
+
+
+    // Distant-star backdrop follows the camera (parallax ~ 0 at infinity).
+    if (starsRef.current !== null) {
+      starsRef.current.position.copy(state.camera.position);
+    }
+
+
+    // (3) CAMERA — HARD-LOCKED to the focus entity. Deliberately NOT
+    //     smoothed: an exponential follower chasing a 2,000 m/s target lags
+    //     by v*dt/k (hundreds of metres), while a hard lock is seamless
+    //     across rebases — on a shift tick, ship, camera, and every
+    //     world-fixed object translate by the same exact Δ within the same
+    //     frame, so all relative geometry (and the rendered image) is
+    //     bit-identical across the origin jump.
+    state.camera.position.set(
+      sx + CAMERA_OFFSET.x,
+      sy + CAMERA_OFFSET.y,
+      sz + CAMERA_OFFSET.z,
+    );
+    state.camera.lookAt(sx, sy, sz);
+
+
+    // (4) FRAME STATISTICS + AUTOMATED TEST CAPTURE
+    const frameMs = delta * 1000;
+    live.ring[live.ringIdx] = frameMs;
+    live.ringIdx = (live.ringIdx + 1) % live.ring.length;
+    if (live.ringCount < live.ring.length) {
+      live.ringCount++;
+    }
+    live.frames++;
+    live.ms += frameMs;
+
+
+    if (!test.finished) {
+      if (test.warmup > 0) {
+        test.warmup--;
+      } else if (frameMs < 250 && test.frameCount < TEST.FRAME_CAP) {
+        // Frames > 250 ms (tab stalls) are excluded from the record.
+        test.frameTimes[test.frameCount++] = frameMs;
+        if (rebasedThisFrame && test.rebaseFrameCount < TEST.REBASE_FRAME_CAP) {
+          test.rebaseFrameTimes[test.rebaseFrameCount++] = frameMs;
+        }
+      }
+      // Terminate on the DISTANCE invariant, never a raw tick count:
+      // fl(1/60) is smaller than 1/60 by 2^-58/15, so 300 accumulated
+      // ticks land within ~1e-11 m of exactly 10,000 — sign unpredictable
+      // at the ulp level. The invariant is deterministic; the tick count
+      // (300 or 301) is not. Rebase #10 would need P > 10,240 m, so the
+      // count stays inside the 9-10 window either way.
+      if (
+        shipState.absPos.x >= TEST.DISTANCE_M ||
+        core.stats.simTime >= TEST.SIM_TIMEOUT_S
+      ) {
+        finalizeTest();
+      }
+    }
+
+
+    // (5) THROTTLED TELEMETRY (<= 10 Hz) — the ONLY store writes in the loop.
+    const fps = (live.frames * 1000) / Math.max(live.ms, 1e-6);
+    let ringSum = 0;
+    let ringMax = 0;
+    for (let i = 0; i < live.ringCount; i++) {
+      const v = live.ring[i];
+      ringSum += v;
+      if (v > ringMax) {
+        ringMax = v;
+      }
+    }
+    const vel = shipState.velocity;
+    const speed = Math.sqrt(vel.x * vel.x + vel.y * vel.y + vel.z * vel.z);
+    const published = telemetryPublisher.publish(
+      fps,
+      live.ringCount > 0 ? ringSum / live.ringCount : 0,
+      ringMax,
+      shipState.absPos.x, shipState.absPos.y, shipState.absPos.z,
+      lp[0], lp[1], lp[2],
+      origin.x, origin.y, origin.z,
+      core.stats.rebaseCount,
+      speed,
+      core.stats.simTime,
+      core.stats.tickCount,
+    );
+    if (published) {
+      live.frames = 0;
+      live.ms = 0;
+    }
+  });
+
+
+  return (
+    <>
+      <color attach="background" args={[0x04070c]} />
+      <fog attach="fog" args={[0x04070c, 2600, 7600]} />
+
+
+      <ambientLight intensity={0.5} color={0x33465e} />
+      <directionalLight position={[-3000, 1800, -1400]} intensity={1.4} color={0xfff1de} />
+
+
+      {/* 256 m fine grid + 1,024 m major grid — lattice-anchored, world-fixed */}
+      <gridHelper ref={gridFineRef} args={[8192, 32, 0x2b5a78, 0x16324a]} />
+      <gridHelper ref={gridMajorRef} args={[8192, 8, 0x468bb4, 0x24506e]} />
+
+
+      <primitive object={stars} ref={starsRef} />
+
+
+      {/* SHIP — positioned exclusively by FloatingOriginAdapter */}
+      <group ref={shipRef}>
+        <mesh rotation={[0, 0, -Math.PI / 2]}>
+          <coneGeometry args={[1.05, 5.4, 16]} />
+          <meshStandardMaterial color="#c9d6e4" metalness={0.75} roughness={0.32} />
+        </mesh>
+        <mesh position={[0.55, 0.4, 0]}>
+          <sphereGeometry args={[0.4, 14, 10]} />
+          <meshStandardMaterial
+            color="#7fd4ff"
+            emissive="#1e7fb8"
+            emissiveIntensity={1.1}
+            roughness={0.15}
+            metalness={0.1}
+          />
+        </mesh>
+        <mesh position={[-1.7, 0, 1.05]}>
+          <boxGeometry args={[1.9, 0.12, 1.5]} />
+          <meshStandardMaterial color="#8fa4b8" metalness={0.6} roughness={0.4} />
+        </mesh>
+        <mesh position={[-1.7, 0, -1.05]}>
+          <boxGeometry args={[1.9, 0.12, 1.5]} />
+          <meshStandardMaterial color="#8fa4b8" metalness={0.6} roughness={0.4} />
+        </mesh>
+        <mesh position={[-1.75, 0.75, 0]}>
+          <boxGeometry args={[1.7, 1.3, 0.12]} />
+          <meshStandardMaterial color="#8fa4b8" metalness={0.6} roughness={0.4} />
+        </mesh>
+        <mesh position={[-2.85, 0, 0]}>
+          <sphereGeometry args={[0.48, 12, 10]} />
+          <meshBasicMaterial color="#9fe0ff" />
+        </mesh>
+        <pointLight position={[-3.4, 0, 0]} color="#7fd4ff" intensity={40} distance={90} decay={2} />
+      </group>
+
+
+      {/* STATIC WORLD BEACONS — static entities; their f32 locals shift by −Δ
+          on every rebase while their absolute positions never move. */}
+      {BEACONS.map((b, i) => (
+        <mesh key={b.id} ref={beaconRefs[i]}>
+          <octahedronGeometry args={[3.5, 0]} />
+          <meshBasicMaterial color={b.color} />
+        </mesh>
+      ))}
+    </>
+  );
+}
+
+
+/* ---------------------------------------------------------------------------
+ * HUD — subscribes narrowly; re-renders at most 10x per second.
+ * ------------------------------------------------------------------------- */
+
+
+const TEST_ORDER: Array<{ id: TestId; label: string }> = [
+  { id: 'abs-distance', label: 'Absolute Px reaches >= 10,000 m (Float64)' },
+  { id: 'local-bound', label: 'Local f32 px never exceeds 1,024 m' },
+  { id: 'rebase-count', label: 'Rebase count within 9-10' },
+  { id: 'delta-lattice', label: 'Delta shift always an exact multiple of 256 m' },
+  { id: 'frame-stability', label: 'Frame time stable (60 FPS baseline)' },
+];
+
+
+const fmt = (v: number, d: number): string => v.toFixed(d);
+const mod256 = (v: number): number => ((v % 256) + 256) % 256;
+
+
+/** Pulses once on every origin shift (keys off the rebase counter). */
+function RebasePulse() {
+  const count = useGameStore((s) => s.telemetry.rebaseCount);
+  const [pulse, setPulse] = useState(0);
+  const prev = useRef(0);
+  useEffect(() => {
+    if (count !== prev.current) {
+      prev.current = count;
+      setPulse((p) => p + 1);
+    }
+  }, [count]);
+  if (count === 0) {
+    return <span className="chip idle">ORIGIN LOCKED</span>;
+  }
+  return (
+    <span key={pulse} className="chip rebase">
+      REBASE #{count}
+    </span>
+  );
+}
+
+
+function Hud() {
+  const t = useGameStore(selectTelemetry);
+  const phase = useGameStore(selectTestPhase);
+  const results = useGameStore(selectTestResults);
+  const done = phase === 'COMPLETE';
+  const passed = TEST_ORDER.every((entry) => results[entry.id]?.pass === true);
+  const progress = Math.min(t.absPos.x / TEST_DISTANCE_M, 1);
+
+
+  return (
+    <div className="hud">
+      <div className="panel">
+        <div className="panel-head">
+          <span className="panel-title">MILESTONE 1A - FLOATING ORIGIN</span>
+          <RebasePulse />
+        </div>
+        <div className="grid2">
+          <div className="kv"><span className="k">FPS</span><span className="v">{fmt(t.fps, 0)}</span></div>
+          <div className="kv"><span className="k">FRAME AVG/MAX</span><span className="v">{fmt(t.frameMsAvg, 2)} / {fmt(t.frameMsMax, 2)} ms</span></div>
+          <div className="kv"><span className="k">SPEED</span><span className="v">{fmt(t.speed, 1)} m/s</span></div>
+          <div className="kv"><span className="k">ENTITIES</span><span className="v">{core.getEntityCount()}</span></div>
+          <div className="kv"><span className="k">SIM TIME</span><span className="v">{fmt(t.simTime, 3)} s</span></div>
+          <div className="kv"><span className="k">TICKS</span><span className="v">{t.tickCount}</span></div>
+        </div>
+        <div className="sep" />
+        <div className="pos-row"><span className="k">ABS P (f64)</span><span className="v">{fmt(t.absPos.x, 6)} / {fmt(t.absPos.y, 6)} / {fmt(t.absPos.z, 6)}</span></div>
+        <div className="pos-row"><span className="k">LOCAL p (f32)</span><span className="v">{fmt(t.localPos.x, 3)} / {fmt(t.localPos.y, 3)} / {fmt(t.localPos.z, 3)}</span></div>
+        <div className="pos-row"><span className="k">ORIGIN O (f64)</span><span className="v">{fmt(t.origin.x, 1)} / {fmt(t.origin.y, 1)} / {fmt(t.origin.z, 1)}</span></div>
+        <div className="pos-row dim"><span className="k">O mod 256</span><span className="v">{fmt(mod256(t.origin.x), 0)} / {fmt(mod256(t.origin.y), 0)} / {fmt(mod256(t.origin.z), 0)} — lattice locked</span></div>
+      </div>
+
+
+      <div className="panel">
+        <div className="panel-head">
+          <span className="panel-title">AUTOMATED ACCEPTANCE</span>
+          <span className={done ? (passed ? 'chip pass' : 'chip fail') : 'chip run'}>
+            {done ? (passed ? 'ALL PASS' : 'FAIL') : 'RUNNING'}
+          </span>
+        </div>
+        {!done && (
+          <div className="progress">
+            <div className="progress-fill" style={{ width: `${(progress * 100).toFixed(1)}%` }} />
+          </div>
+        )}
+        <div className="test-list">
+          {TEST_ORDER.map((entry) => {
+            const r = results[entry.id];
+            return (
+              <div className="test-row" key={entry.id}>
+                <div className="test-top">
+                  <span className={r ? (r.pass ? 'badge pass' : 'badge fail') : 'badge run'}>
+                    {r ? (r.pass ? 'PASS' : 'FAIL') : '·····'}
+                  </span>
+                  <span className="test-label">{entry.label}</span>
+                </div>
+                {r ? (
+                  <div className="test-detail">{r.detail}</div>
+                ) : (
+                  <div className="test-detail dim">awaiting completion…</div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+/* ---------------------------------------------------------------------------
+ * ROOT
+ * ------------------------------------------------------------------------- */
+
+
+const M1A_CSS = `
+.m1a-root { position: fixed; inset: 0; overflow: hidden; background: #04070c;
+  font-family: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+  color: #cfe0ee; }
+.m1a-canvas { position: absolute; inset: 0; }
+.hud { position: absolute; inset: 0; pointer-events: none; display: flex;
+  flex-direction: column; gap: 12px; padding: 16px; max-width: 600px; }
+.panel { background: rgba(8, 15, 24, 0.82); border: 1px solid rgba(96, 160, 205, 0.22);
+  border-radius: 10px; padding: 12px 14px; backdrop-filter: blur(10px); }
+.panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.panel-title { font-size: 11px; letter-spacing: 0.14em; color: #7fd4ff; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; }
+.kv { display: flex; justify-content: space-between; font-size: 12px; }
+.k { color: #6f8ba3; letter-spacing: 0.06em; }
+.v { color: #e8f2fa; }
+.sep { height: 1px; background: rgba(96, 160, 205, 0.18); margin: 10px 0; }
+.pos-row { display: flex; justify-content: space-between; font-size: 11.5px;
+  margin-top: 4px; gap: 12px; }
+.pos-row.dim .v, .dim { color: #587187; }
+.chip { font-size: 10px; padding: 3px 8px; border-radius: 999px; letter-spacing: 0.1em; }
+.chip.idle { color: #6f8ba3; border: 1px solid rgba(111, 139, 163, 0.4); }
+.chip.rebase { color: #ffd08a; border: 1px solid rgba(255, 176, 84, 0.55);
+  animation: m1a-pulse 0.9s ease-out; }
+.chip.pass { color: #4fd08a; border: 1px solid rgba(79, 208, 138, 0.5); }
+.chip.fail { color: #ff7a6e; border: 1px solid rgba(255, 122, 110, 0.5); }
+.chip.run { color: #e8b34b; border: 1px solid rgba(232, 179, 75, 0.5); }
+@keyframes m1a-pulse { 0% { background: rgba(255, 176, 84, 0.35); }
+  100% { background: rgba(255, 176, 84, 0); } }
+.progress { height: 3px; background: rgba(96, 160, 205, 0.15); border-radius: 2px;
+  overflow: hidden; margin-bottom: 10px; }
+.progress-fill { height: 100%; background: #7fd4ff; }
+.test-list { display: flex; flex-direction: column; gap: 9px; }
+.test-top { display: flex; align-items: center; gap: 10px; }
+.badge { font-size: 10px; padding: 2px 8px; border-radius: 4px; letter-spacing: 0.1em;
+  min-width: 52px; text-align: center; }
+.badge.pass { color: #0a1510; background: #4fd08a; }
+.badge.fail { color: #1a0b09; background: #ff7a6e; }
+.badge.run { color: #e8b34b; border: 1px solid rgba(232, 179, 75, 0.5); }
+.test-label { font-size: 12px; color: #dce9f4; }
+.test-detail { font-size: 10.5px; color: #8aa4ba; margin-top: 3px; padding-left: 66px;
+  line-height: 1.45; }
+.legend { position: absolute; bottom: 14px; right: 18px; font-size: 10.5px;
+  color: #587187; letter-spacing: 0.08em; pointer-events: none; }
+`;
+
+
+export default function Milestone1ATestHarness() {
+  return (
+    <div className="m1a-root">
+      <style>{M1A_CSS}</style>
+      <div className="m1a-canvas">
+        <Canvas
+          dpr={[1, 1.75]}
+          gl={{ antialias: true, powerPreference: 'high-performance' }}
+          camera={{ fov: 62, near: 0.1, far: 24000, position: [-42, 16, 28] }}
+        >
+          <Scene />
+        </Canvas>
+      </div>
+      <Hud />
+      <div className="legend">
+        SHIP @ 2,000 m/s (+X) · GRID 256 m LATTICE (WORLD-FIXED) · BEACONS STATIC @ X = 2,000 / 5,000 / 8,000 m
+      </div>
+    </div>
+  );
+}
+```
+
+
+---
+
+
+## Running & Verifying
+
+
+**Setup:** Vite (`react-ts` template) with `react`, `react-dom`, `three`, `@react-three/fiber`, `zustand`. Route any path to `<Milestone1ATestHarness />`. The suite auto-arms on mount.
+
+
+**Expected outcome (~5 s):** all five badges PASS, with the HUD showing the predicted trace — 9 rebases pulsing roughly every 0.52 s (ticks 31 → 277), `ORIGIN O` stepping 0 → 1024 → 2048 → … → 9216 in exact 1,024 m jumps, `O mod 256` pinned at 0, `LOCAL p` oscillating between ~0 and ~1,022 m and snapping back to ≤ 32 m on each shift, and `ABS P` climbing to ≈ 10,000–10,033 m in full Float64. The grid streams past at 2,000 m/s without a single visible slide or hitch at any origin shift — that visual continuity *is* the floating-origin proof.
+
+
+**Compliance confirmation:** pure f64 core with zero renderer/physics imports; `tick()` performs zero allocations (audited in-file); the reused `RebaseEvent` carries the exact Δ hook for future Rapier/chunk translation; no code written for M1B–M1G. Standing by for Milestone 1B (Kepler rails & two-tier time) on your command.

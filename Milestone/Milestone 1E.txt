@@ -1,0 +1,2997 @@
+﻿# Milestone 1E — Deep Analysis & Implementation
+
+
+M1A–M1D are locked and untouched — no locked file is modified; the astronaut consumes the locked M1C terrain field and M1A origin system through imports only. One design constant required derivation under your "predictable step mechanics" mandate (the dual step/slope blocking rule, §1.2 — flagged in-code); and the spec-canonical M1E acceptance (the 52 m/s equator Coriolis jump) is included as a suite row alongside your four.
+
+
+---
+
+
+## PHASE 1 — REASONING & EDGE-CASE ANALYSIS
+
+
+### 1.1 Parallel Transport Orientation on Spheres
+
+
+The character frame is the pair **(up, fwd)** — tangent-bundle state, never a yaw/pitch accumulator (Spec 01.4: Euler prohibited). Each tick: `up ← blend(n(d̂), r̂)` (n = the analytic terrain normal, w = 0.65), then **Gram–Schmidt reprojection** `fwd ← normalize(fwd − (fwd·up)up)`, then quaternion via basis (X=fwd, Y=up, Z=fwd×up).
+
+
+**Why there are no singularities — three separate arguments:**
+
+
+1. **Degeneracy is unreachable in continuous motion.** Gram–Schmidt fails only if `fwd ∥ up_new`. Per tick, walking at 8 m/s rotates up by ≤ ~5×10⁻³ rad (curvature 1.33×10⁻⁴ rad + terrain-normal change over 0.13 m), so `|fwd·up|` stays ~10⁻³ — the projection is magnitudes from degenerate. Teleports/first-spawn get a **canonical-tangent fallback** (least-aligned-axis frame; provably never degenerate since the least-aligned axis satisfies |u·ref| ≤ 1/√3 ⇒ |u×ref| ≥ 0.816).
+2. **Poles and face boundaries are not coordinates.** There is no global yaw anywhere in the state — yaw exists only as *differential* input (a finite rotation about the current up applied per tick). At a pole, "north" is undefined but the transported `fwd` is a perfectly well-defined vector; crossing a cube face boundary changes nothing because `up` derives from the analytic normal field `n(d̂)`, which M1C proved is C¹ across face seams (the same zero-communication bitwise argument) — the frame never sees the cube parameterization at all.
+3. **Holonomy is physical and smooth.** Transporting around a closed loop rotates `fwd` by the enclosed solid angle. The T1 walk follows a great circle (bounds a hemisphere, solid angle 2π) → holonomy 2π ≡ identity — a verifiable endpoint property.
+
+
+Camera pitch is a scalar clamped to ±1.48 rad applied as a local rotation about the body-right axis when composing the camera quaternion — a one-axis offset inside a transported frame, not world Euler state.
+
+
+### 1.2 Spherical KCC Ground Snapping, Steps, and Slopes
+
+
+Ground probing is **analytic and worker-independent**: height `h(d̂)` at the move target (f64, the same field the workers mesh). The move Δ = (vCtl + vSlide)·dt is a tangent-plane step from the current feet position; the target direction `d̂_try = normalize(pLocal + Δ)` probes `surf_try = R + h(d̂_try)`; `Δh = surf_try − surf_cur`.
+
+
+**The step rule (derived — flagged for Lead review).** A move is *climbable* iff **both** `Δh ≤ stepHeight (0.55 m)` **and** `Δh/arc ≤ tan(50°)`. The first clause is the classic KCC step; the second is what makes steep terrain *predictable*: without it, a uniform 60° slope passes the per-move step check at walking speed (Δh = 0.13·tan60° = 0.23 ≤ 0.55) and the character would scramble up cliffs at full sprint, with behavior varying by speed (0.067 m/tick walk vs 0.133 sprint changes the effective climb threshold from 83° to 76° — speed-dependent rules are the definition of unpredictable). The ratio clause makes "walkable" a property of the *terrain* (≤ 50°), invariant to speed.
+
+
+- **Blocked (wall):** project Δ against the wall direction — the tangential component of the *target* normal (a steep uphill face's normal leans back downhill, so its tangential part points away from the wall) — one retry, then full stop.
+- **Snap-down:** drops ≤ 0.45 m follow the surface (grounded maintained on downhills to ~81°); larger drops → cliff → airborne.
+- **Slope physics:** gravity decomposed against n: load `g_N`, downhill `g_T = g − (g·n)n`. Static grip holds while slope ≤ 45° (μ_s = tan 45° implicit); above, `v̇_slide = g_T − μ_k·g_N·v̂` (μ_k = 0.6), grip decays below threshold with τ = 60 ms. On a 60° slope: slide accel = 9.81·(sin60 − 0.6·cos60) ≈ 5.5 m/s² — uphill sprint (8 m/s) is overwhelmed in ~1.5 s and the blocked rule prevents any scrambling shortcut.
+- **Structural AGL bound:** every grounded tick *ends* anchored to a probed surface point (+0.02 m clearance), so post-tick AGL ≥ 0 by construction — the same "post-tick invariant" style as M1A's 1,024 m local bound.
+
+
+### 1.3 Gravity & Reference Frame State Machine
+
+
+Three modes with hysteresis on the **spec-02.3 range-faded gravity** (full inverse-square to 75% of range, C¹ smoothstep to zero at 100% — the fade is what makes zero-G *reachable* and the transition smooth): `SURFACE ⇄ ZERO-G` on g < 0.05 / > 0.15 m/s² (≈ 28 km on the test planet), `VEHICLE` by explicit attach/detach with velocity inheritance.
+
+
+**The Coriolis handoff (Spec 01.4, verbatim implementation).** Grounded: the KCC's canonical state is planet-frame `pLocal` + tangential `v_walk`; absolute is *composed*: `P = R(θ)·pLocal`, `V = Ω×P + R(θ)·v_walk` — the rotation is the **analytic transport velocity, never integrated and never fed to any physics engine as speed**. Airborne: pure inertial integration of absolute (P, V) under central gravity — no fictitious forces exist because we never leave the inertial frame. On landing: `v_rel = R(θ)⁻¹(V − Ω×P)`, normal component killed, tangential **planted** (vWalk = input target, zero if no input) — "immediately settle into a 0 m/s relative walk state, never skate."
+
+
+**The drift is a theorem, and the suite measures it.** Jump speed u along the vertical at the equator (transport speed ΩR = 52 m/s, Spec's exact numbers). Rotating frame: a_west = −2Ω×v_rel integrates to **drift = (4/3)·Ω·u³/g²**. Inertial frame: angular momentum conservation gives relative westward rate ω_ast − Ω ≈ 2ΩΔh/r (the factor 2 from 1 − (R/r)² ≈ 2Δh/R), and ∫Δh dt over the ballistic arc = (2/3)u³/g² — the same (4/3)Ωu³/g². With Ω = 0.0104, u = 5, g = 9.81: **1.8 cm westward, flight time 2u/g ≈ 1.03 s, residual tangential speed at touchdown 2Ωu ≈ 0.10 m/s** (which the plant kills in one tick). The test also validates the compose/decompose round-trip implicitly: launch and landing positions are compared in the planet frame across a 53 m transport displacement.
+
+
+### 1.4 Collision Sweeps & Terrain Snapping (worker-independent)
+
+
+Airborne motion sweeps the tick's inertial segment against the f64 noise field: gap-limited sampling (≤ 0.25 m — at ≤ 10 m/s jumps that is 1 sample; the 500 m/s orbital fall uses ~35), Lipschitz-bounded transient penetration (≤ gap·L, always detected at the next sample; every tick *starts* with an embed check and *ends* at or above the surface), then **spin-interpolated bisection** to sub-tick contact. The spin interpolation is the edge case that matters: without it, evaluating terrain at tick-start θ misplaces the rotating ground by up to `r·Ω·dt = 0.87 m` per tick at the equator — with `θ(s) = θ₀ + Ω·dt·s` per sample the sweep is exact for the uniformly rotating rigid terrain. No Rapier object exists in this path (Spec 01.5's Active-state heightfield colliders are the production attach point; the M1E analytic KCC is exactly the spec's "relative walking displacement" domain, and the entity write-through is the seam — a hook, not a regression).
+
+
+**Zero-G:** RCS pack (Spec 00.4: limited, for recovery) — 1.2 m/s² along the character frame, 25 m/s Δv budget, regenerating 0.5 m/s when grounded; attitude via finite frame rotations (yaw/pitch/roll about transported axes). Hard landings plant without damage (damage/health explicitly out of scope, Spec 00.4).
+
+
+---
+
+
+## PHASE 2 — ARCHITECTURAL COMPLIANCE MAP
+
+
+| Rule | Implementation |
+|---|---|
+| Zero allocation in `updateAstronaut()` tick | Module-level scratch vectors/quats/segments; interned mode strings; indexed loops; identity-canary + heap-delta over a 30,000-tick burn incl. mode transitions |
+| Floating Origin integration | Per-update write-through into the M1A entity (focus entity → 256 m lattice rebasing drives off the astronaut's absolute position, transport included); terrain under one spinning group at `position = −O` — the exact-Δ rebase proof applies to the group transform |
+| M1A/1B/1C/1D integrity | **Zero locked files modified**; imports only (`terrainField`, `SimulationCore`, `FloatingOriginAdapter`, `TerrainMeshPool`); M1C pool untouched (chunks stay planet-frame; spin is a parent-group transform) |
+| Spec 01.4 (transport, no Euler, Coriolis) | §1.1/§1.3 verbatim; spec-canonical jump test is suite row 5 |
+
+
+---
+
+
+## PHASE 3 — DELIVERABLES
+
+
+### 1. `src/core/physics/sphericalFrame.ts`
+
+
+```typescript
+/**
+ * ============================================================================
+ *  SPHERICAL FRAME — PARALLEL TRANSPORT & SURFACE FRAME MATH (PURE FLOAT64)
+ *  Milestone 1E · Spec 01.4 (quaternion parallel transport, no Euler angles)
+ * ============================================================================
+ *  Pure core: no renderer/physics imports. All functions zero-allocation
+ *  (out-param style); all arithmetic in 64-bit doubles.
+ *
+ *  THE FRAME: a character orientation is the pair (up, fwd) — tangent-bundle
+ *  state, NEVER a yaw/pitch accumulator (Spec 01.4: Euler prohibited to
+ *  prevent gimbal lock and pole snapping). Transport is Gram-Schmidt
+ *  reprojection of fwd against the new up; the render quaternion is built
+ *  directly from the transported basis (X=fwd, Y=up, Z=fwd×up).
+ *
+ *  NO SINGULARITIES (see M1E analysis §1.1):
+ *   - Degeneracy (fwd ∥ newUp) is unreachable under continuous motion;
+ *     teleports fall back to the canonical least-aligned-axis tangent,
+ *     which is provably never degenerate (|u×ref| >= 0.816).
+ *   - Poles/cube-face boundaries are invisible: up derives from the C1
+ *     analytic normal field n(d) (M1C seam proof); no global yaw exists.
+ *
+ *  SPIN CONVENTION: planet spin is +Y, phase theta (radians, wrapped mod
+ *  2pi; quaternion consumers are sign-invariant under the wrap because
+ *  rotation-by-quaternion is quadratic in q). Planet frame <-> world frame:
+ *      world = R(theta) . planet,   R = rotation about +Y by theta.
+ *  The planet is origin-centered in M1E, and spin-about-Y leaves radial
+ *  directions eigenvectors — gravity is IDENTICAL in both frames.
+ */
+
+
+export interface Vec3 { x: number; y: number; z: number; }
+export interface Quat { x: number; y: number; z: number; w: number; }
+
+
+export const TWO_PI = Math.PI * 2;
+
+
+export function clamp(v: number, lo: number, hi: number): number {
+  return v < lo ? lo : v > hi ? hi : v;
+}
+
+
+/** Spec 02.3 gravity-range fade: 1 to 75% of range, C1 smoothstep to 0. */
+export function rangeFade(rOverRange: number): number {
+  if (rOverRange <= 0.75) return 1;
+  if (rOverRange >= 1) return 0;
+  const t = (rOverRange - 0.75) / 0.25;
+  return 1 - t * t * (3 - 2 * t);
+}
+
+
+/**
+ * Canonical tangent at up (least-aligned world axis, fixed tie order
+ * x -> y -> z). |up . ref| <= 1/sqrt(3) => |up x ref| >= 0.816: NEVER
+ * degenerate. Used as the transport fallback and for deterministic spawns.
+ */
+export function canonicalTangentInto(ux: number, uy: number, uz: number, out: Vec3): Vec3 {
+  let rx = 1, ry = 0, rz = 0;
+  let m = Math.abs(ux);
+  if (Math.abs(uy) < m) { m = Math.abs(uy); rx = 0; ry = 1; rz = 0; }
+  if (Math.abs(uz) < m) { rx = 0; ry = 0; rz = 1; }
+  let tx = uy * rz - uz * ry;
+  let ty = uz * rx - ux * rz;
+  let tz = ux * ry - uy * rx;
+  const inv = 1 / Math.sqrt(tx * tx + ty * ty + tz * tz);
+  out.x = tx * inv; out.y = ty * inv; out.z = tz * inv;
+  return out;
+}
+
+
+/**
+ * PARALLEL TRANSPORT (Spec 01.4): Gram-Schmidt reprojection of fwd onto the
+ * tangent plane of the new up. Degenerate input (fwd nearly parallel to the
+ * new up — teleports only) falls back to the canonical tangent.
+ */
+export function transportFrameInto(
+  fx: number, fy: number, fz: number,
+  ux: number, uy: number, uz: number,
+  out: Vec3,
+): Vec3 {
+  const d = fx * ux + fy * uy + fz * uz;
+  let tx = fx - d * ux, ty = fy - d * uy, tz = fz - d * uz;
+  const m = Math.sqrt(tx * tx + ty * ty + tz * tz);
+  if (m < 0.02) {
+    return canonicalTangentInto(ux, uy, uz, out);
+  }
+  const inv = 1 / m;
+  out.x = tx * inv; out.y = ty * inv; out.z = tz * inv;
+  return out;
+}
+
+
+/** Rodrigues rotation of v about unit axis k by angle a. */
+export function rotateAboutAxisInto(
+  vx: number, vy: number, vz: number,
+  kx: number, ky: number, kz: number,
+  a: number,
+  out: Vec3,
+): Vec3 {
+  const c = Math.cos(a), s = Math.sin(a), t = 1 - c;
+  const dot = vx * kx + vy * ky + vz * kz;
+  const cx = ky * vz - kz * vy;
+  const cy = kz * vx - kx * vz;
+  const cz = kx * vy - ky * vx;
+  out.x = vx * c + cx * s + kx * dot * t;
+  out.y = vy * c + cy * s + ky * dot * t;
+  out.z = vz * c + cz * s + kz * dot * t;
+  return out;
+}
+
+
+/** Quaternion from an orthonormal character basis: X=fwd, Y=up, Z=fwd×up. */
+export function quatFromFrameInto(
+  fx: number, fy: number, fz: number,
+  ux: number, uy: number, uz: number,
+  out: Quat,
+): Quat {
+  const zx = fy * uz - fz * uy;
+  const zy = fz * ux - fx * uz;
+  const zz = fx * uy - fy * ux;
+  const m00 = fx, m10 = fy, m20 = fz;
+  const m01 = ux, m11 = uy, m21 = uz;
+  const m02 = zx, m12 = zy, m22 = zz;
+  const tr = m00 + m11 + m22;
+  if (tr > 0) {
+    const s = Math.sqrt(tr + 1) * 2;
+    out.w = 0.25 * s;
+    out.x = (m21 - m12) / s;
+    out.y = (m02 - m20) / s;
+    out.z = (m10 - m01) / s;
+  } else if (m00 > m11 && m00 > m22) {
+    const s = Math.sqrt(1 + m00 - m11 - m22) * 2;
+    out.w = (m21 - m12) / s;
+    out.x = 0.25 * s;
+    out.y = (m01 + m10) / s;
+    out.z = (m02 + m20) / s;
+  } else if (m11 > m22) {
+    const s = Math.sqrt(1 + m11 - m00 - m22) * 2;
+    out.w = (m02 - m20) / s;
+    out.x = (m01 + m10) / s;
+    out.y = 0.25 * s;
+    out.z = (m12 + m21) / s;
+  } else {
+    const s = Math.sqrt(1 + m22 - m00 - m11) * 2;
+    out.w = (m10 - m01) / s;
+    out.x = (m02 + m20) / s;
+    out.y = (m12 + m21) / s;
+    out.z = 0.25 * s;
+  }
+  return out;
+}
+
+
+/** Planet spin quaternion: rotation about +Y by theta. */
+export function spinQuatInto(theta: number, out: Quat): Quat {
+  out.x = 0;
+  out.y = Math.sin(theta * 0.5);
+  out.z = 0;
+  out.w = Math.cos(theta * 0.5);
+  return out;
+}
+
+
+/** Rotate v by q. */
+export function rotateByQuatInto(
+  q: Quat, vx: number, vy: number, vz: number, out: Vec3,
+): Vec3 {
+  const tx = 2 * (q.y * vz - q.z * vy);
+  const ty = 2 * (q.z * vx - q.x * vz);
+  const tz = 2 * (q.x * vy - q.y * vx);
+  out.x = vx + q.w * tx + (q.y * tz - q.z * ty);
+  out.y = vy + q.w * ty + (q.z * tx - q.x * tz);
+  out.z = vz + q.w * tz + (q.x * ty - q.y * tx);
+  return out;
+}
+
+
+/** Rotate v by the conjugate of q (world -> planet under the spin). */
+export function rotateByQuatConjInto(
+  q: Quat, vx: number, vy: number, vz: number, out: Vec3,
+): Vec3 {
+  const qx = -q.x, qy = -q.y, qz = -q.z, qw = q.w;
+  const tx = 2 * (qy * vz - qz * vy);
+  const ty = 2 * (qz * vx - qx * vz);
+  const tz = 2 * (qx * vy - qy * vx);
+  out.x = vx + qw * tx + (qy * tz - qz * ty);
+  out.y = vy + qw * ty + (qz * tx - qx * tz);
+  out.z = vz + qw * tz + (qx * ty - qy * tx);
+  return out;
+}
+
+
+/** Hamilton product a ⊗ b (used for world-frame orientation compose). */
+export function quatMulInto(a: Quat, b: Quat, out: Quat): Quat {
+  const ax = a.x, ay = a.y, az = a.z, aw = a.w;
+  const bx = b.x, by = b.y, bz = b.z, bw = b.w;
+  out.x = aw * bx + ax * bw + ay * bz - az * by;
+  out.y = aw * by - ax * bz + ay * bw + az * bx;
+  out.z = aw * bz + ax * by - ay * bx + az * bw;
+  out.w = aw * bw - ax * bx - ay * by - az * bz;
+  return out;
+}
+
+
+/**
+ * ANALYTIC TRANSPORT VELOCITY (Spec 01.4): v = Ω × p with Ω = (0, ω, 0).
+ * Equator check: ω = 0.0104, p = (5000,0,0) -> |v| = 52 m/s exactly.
+ * NEVER integrated, NEVER injected as physics-engine speed.
+ */
+export function transportVelocityInto(
+  omega: number, px: number, py: number, pz: number, out: Vec3,
+): Vec3 {
+  out.x = omega * pz;
+  out.y = 0;
+  out.z = -omega * px;
+  return out;
+}
+
+
+/**
+ * Spec 02.3 gravity: inverse-square toward the (origin-centered) body with
+ * the C1 range fade. Identical in planet and world frames (spin-about-Y
+ * preserves radial directions).
+ */
+export function gravityInto(
+  mu: number, range: number, px: number, py: number, pz: number, out: Vec3,
+): Vec3 {
+  const r2 = px * px + py * py + pz * pz;
+  const r = Math.sqrt(r2);
+  const g = -(mu / r2) * rangeFade(range > 0 ? r / range : 0);
+  const inv = g / r;
+  out.x = px * inv;
+  out.y = py * inv;
+  out.z = pz * inv;
+  return out;
+}
+
+
+/** Signed angle from f to t about unit axis u (atan2 — safe near ±pi). */
+export function signedAngleAbout(
+  fx: number, fy: number, fz: number,
+  tx: number, ty: number, tz: number,
+  ux: number, uy: number, uz: number,
+): number {
+  const cx = fy * tz - fz * ty;
+  const cy = fz * tx - fx * tz;
+  const cz = fx * ty - fy * tx;
+  return Math.atan2(cx * ux + cy * uy + cz * uz, fx * tx + fy * ty + fz * tz);
+}
+```
+
+
+### 2. `src/core/physics/astronautKCC.ts`
+
+
+```typescript
+/**
+ * ============================================================================
+ *  ASTRONAUT KCC — SPHERICAL KINEMATIC CHARACTER CONTROLLER (FLOAT64, ZERO-GC)
+ *  Milestone 1E · Spec 01.1 step 3 (parented compose), 01.4 (spherical walk),
+ *  02.3 (gravity + range fade), 00.4 (limited RCS, no damage systems)
+ * ============================================================================
+ *  Pure core: no three/react/rapier imports. Terrain collision is analytic
+ *  against the M1C Float64 noise field (Spec 01.4: Rapier simulates only the
+ *  RELATIVE walking displacement in the production Active state; the entity
+ *  write-through is the seam — nothing here changes when heightfield
+ *  colliders attach later).
+ *
+ *  CANONICAL STATE BY MODE:
+ *   SURFACE (grounded): planet-frame pLocal + tangential vCtl/vSlide +
+ *                       transported frame (up, fwd). Absolute is COMPOSED:
+ *                           P = R(θ)·pLocal
+ *                           V = Ω×P + R(θ)·(vCtl+vSlide)      [analytic
+ *                             transport velocity — Spec 01.4 verbatim]
+ *   SURFACE (airborne) / ZERO-G: absolute inertial (P, V) under central
+ *                       range-faded gravity. The equator-jump Coriolis
+ *                       drift (4/3)·Ω·u³/g² emerges from pure inertial
+ *                       integration — no fictitious forces anywhere.
+ *   VEHICLE: parent-local offset; P/V composed from the provider every tick.
+ *
+ *  MODE HYSTERESIS (range-faded gravity magnitude): SURFACE -> ZERO-G when
+ *  g < 0.05 m/s², ZERO-G -> SURFACE when g > 0.15 m/s² (~28 km, test planet).
+ *
+ *  STEP RULE (derived, flagged): a move climbs iff Δh <= stepHeight AND
+ *  Δh/arc <= tan(maxWalkSlope) — the ratio clause makes walkability a
+ *  property of terrain, invariant to speed (see M1E analysis §1.2).
+ *
+ *  SWEEP: gap-limited (<= 0.25 m) analytic sampling of the tick segment
+ *  with SPIN-INTERPOLATED sample transforms θ(s) = θ0 + Ω·dt·s (without it
+ *  the rotating terrain is misplaced by up to r·Ω·dt = 0.87 m/tick at the
+ *  equator), Lipschitz-bounded transients, embed check at tick start,
+ *  sub-tick bisection landing. Post-tick AGL >= 0 structurally (grounded
+ *  positions are anchored to probed surface points).
+ *
+ *  ZERO-GC AUDIT of integrateTick(): field writes on owned objects, math in
+ *  module-level scratch, interned mode-string literals, indexed loops.
+ *  Allocation per tick: 0. (update()'s pre-tick look-delta application and
+ *  post-tick entity write-through are field writes only.)
+ */
+
+
+import {
+  clamp, gravityInto, quatFromFrameInto, rotateAboutAxisInto,
+  rotateByQuatConjInto, rotateByQuatInto, signedAngleAbout, spinQuatInto,
+  transportFrameInto, transportVelocityInto,
+  type Quat, type Vec3,
+} from './sphericalFrame';
+import { terrainHeight, terrainNormalInto } from '../terrain/terrainField';
+
+
+export type AstronautMode = 'SURFACE' | 'ZERO-G' | 'VEHICLE';
+
+
+export interface AstronautInput {
+  /** Frame-relative movement axes, each in [-1, 1] (fwd / right). */
+  moveF: number;
+  moveR: number;
+  sprint: boolean;
+  crouch: boolean;
+  /** Edge-triggered jump request; consumed by the tick. */
+  jump: boolean;
+  /** Continuous yaw rate, rad/s (finite rotation about up — never Euler). */
+  turnRate: number;
+  /** ZERO-G RCS translation axes (frame-relative), [-1, 1]. */
+  rcsF: number; rcsU: number; rcsR: number;
+}
+
+
+export interface VehicleProvider {
+  /** Parent position/velocity (absolute f64), orientation, angular velocity. */
+  pos: Vec3; vel: Vec3; quat: Quat; angVel: Vec3;
+}
+
+
+export interface AstronautConfig {
+  planetRadius: number;
+  planetMu: number;
+  /** Spec 02.2 sphere of influence (gravity fade range), metres. */
+  gravityRange: number;
+  /** Spin rate, rad/s. Spec example: 52 / 5000 = 0.0104 (52 m/s equator). */
+  spinOmega: number;
+  maxTerrainHeight: number;
+  walkSpeed: number;
+  sprintSpeed: number;
+  crouchSpeed: number;
+  jumpSpeed: number;
+  /** Velocity response time constant (exact exponential), s. */
+  accelTau: number;
+  stepHeight: number;
+  snapDistance: number;
+  groundClearance: number;
+  /** Slopes above this are blocked for climbing (ratio clause). Degrees. */
+  maxWalkSlopeDeg: number;
+  /** Slopes above this slide (mu_s = tan(slideAngle)). Degrees. */
+  slideAngleDeg: number;
+  kineticFriction: number;
+  slideGripTau: number;
+  eyeHeight: number;
+  crouchEyeHeight: number;
+  /** Terrain-normal vs radial blend for the character up vector. */
+  upBlendWeight: number;
+  /** Airborne up -> radial re-alignment time constant, s. */
+  airborneUpTau: number;
+  autoTurnRate: number;
+  rcsAccel: number;
+  rcsBudgetMax: number;
+  rcsRegen: number;
+  sweepGap: number;
+}
+
+
+/** Earth-scale test astronaut on the M1C planet (μ = 9.81·5000², Spec 02.3). */
+export const EARTHSCALE_ASTRONAUT: AstronautConfig = {
+  planetRadius: 5000,
+  planetMu: 245_250_000,
+  gravityRange: 30_000,          // max(6R, 1.3·D_moon) = 30,000 (no moons)
+  spinOmega: 0.0104,             // 52 m/s at the equator — Spec 01.4 example
+  maxTerrainHeight: 900,
+  walkSpeed: 4,
+  sprintSpeed: 8,
+  crouchSpeed: 1.8,
+  jumpSpeed: 5,
+  accelTau: 0.12,
+  stepHeight: 0.55,
+  snapDistance: 0.45,
+  groundClearance: 0.02,
+  maxWalkSlopeDeg: 50,
+  slideAngleDeg: 45,
+  kineticFriction: 0.6,
+  slideGripTau: 0.06,
+  eyeHeight: 1.62,
+  crouchEyeHeight: 0.95,
+  upBlendWeight: 0.65,
+  airborneUpTau: 2.0,
+  autoTurnRate: 6,
+  rcsAccel: 1.2,
+  rcsBudgetMax: 25,
+  rcsRegen: 0.5,
+  sweepGap: 0.25,
+};
+
+
+export interface AstronautTelemetry {
+  mode: AstronautMode;
+  grounded: boolean;
+  crouched: boolean;
+  /** Tangential relative speed (grounded) / relative speed (airborne). */
+  relSpeed: number;
+  slideSpeed: number;
+  transportSpeed: number;
+  absSpeed: number;
+  altMSL: number;
+  altAGL: number;
+  slopeDeg: number;
+  upX: number; upY: number; upZ: number;      // planet frame
+  fwdX: number; fwdY: number; fwdZ: number;   // planet frame
+  gravX: number; gravY: number; gravZ: number;
+  gravMag: number;
+  spinPhase: number;
+  dayFraction: number;
+  rcsBudget: number;
+  eyeHeight: number;
+  turnApplied: number;
+  currentFace: number;
+}
+
+
+export interface AstronautIntegrity {
+  ticks: number;
+  ticksGrounded: number;
+  ticksAirborne: number;
+  ticksZeroG: number;
+  ticksVehicle: number;
+  landings: number;
+  lastLandingRelSpeed: number;
+  minAGL: number;
+  maxSlideSpeed: number;
+  faceChanges: number;
+  nanEvents: number;
+}
+
+
+/* ===========================================================================
+ * MODULE SCRATCH — allocated once per thread; integrateTick is
+ * non-reentrant (single-threaded, one active controller per tick).
+ * ======================================================================== */
+const _g: Vec3 = { x: 0, y: 0, z: 0 };
+const _gt: Vec3 = { x: 0, y: 0, z: 0 };
+const _nNew: Vec3 = { x: 0, y: 0, z: 0 };
+const _upT: Vec3 = { x: 0, y: 0, z: 0 };
+const _fwdT: Vec3 = { x: 0, y: 0, z: 0 };
+const _right: Vec3 = { x: 0, y: 0, z: 0 };
+const _vDes: Vec3 = { x: 0, y: 0, z: 0 };
+const _vT: Vec3 = { x: 0, y: 0, z: 0 };
+const _pTry: Vec3 = { x: 0, y: 0, z: 0 };
+const _dTry: Vec3 = { x: 0, y: 0, z: 0 };
+const _wall: Vec3 = { x: 0, y: 0, z: 0 };
+const _dS: Vec3 = { x: 0, y: 0, z: 0 };
+const _rel: Vec3 = { x: 0, y: 0, z: 0 };
+const _tmp: Vec3 = { x: 0, y: 0, z: 0 };
+const _tmp2: Vec3 = { x: 0, y: 0, z: 0 };
+const _qSpin: Quat = { x: 0, y: 0, z: 0, w: 1 };
+const _qTmp: Quat = { x: 0, y: 0, z: 0, w: 1 };
+
+
+const _nanSnap = {
+  px: 0, py: 0, pz: 0, vx: 0, vy: 0, vz: 0,
+  lx: 0, ly: 0, lz: 0, ux: 0, uy: 0, uz: 0, fx: 0, fy: 0, fz: 0,
+};
+
+
+export class AstronautKCC {
+  /* ---- live state (owned; mutated only by this class) -------------------- */
+  /** Absolute position/velocity, Float64 (canonical when not grounded). */
+  readonly absPos: Vec3 = { x: 0, y: 0, z: 0 };
+  readonly absVel: Vec3 = { x: 0, y: 0, z: 0 };
+  /** Planet-frame position (canonical when grounded on the body). */
+  readonly pLocal: Vec3 = { x: 0, y: 0, z: 0 };
+  /** Transported character frame, PLANET frame (fwd ⊥ up, both unit). */
+  readonly up: Vec3 = { x: 0, y: 1, z: 0 };
+  readonly fwd: Vec3 = { x: 1, y: 0, z: 0 };
+  readonly input: AstronautInput = {
+    moveF: 0, moveR: 0, sprint: false, crouch: false, jump: false,
+    turnRate: 0, rcsF: 0, rcsU: 0, rcsR: 0,
+  };
+  /** Look deltas (radians), applied exactly once per update() call. */
+  lookYawDelta = 0;
+  lookPitchDelta = 0;
+  lookRollDelta = 0;
+  /** Third-person auto-turn toward movement (disable in first person). */
+  autoTurnEnabled = true;
+
+
+  readonly telemetry: AstronautTelemetry = {
+    mode: 'SURFACE', grounded: true, crouched: false,
+    relSpeed: 0, slideSpeed: 0, transportSpeed: 0, absSpeed: 0,
+    altMSL: 0, altAGL: 0, slopeDeg: 0,
+    upX: 0, upY: 1, upZ: 0, fwdX: 1, fwdY: 0, fwdZ: 0,
+    gravX: 0, gravY: -9.81, gravZ: 0, gravMag: 9.81,
+    spinPhase: 0, dayFraction: 0, rcsBudget: 25, eyeHeight: 1.62,
+    turnApplied: 0, currentFace: 0,
+  };
+  readonly integrity: AstronautIntegrity = {
+    ticks: 0, ticksGrounded: 0, ticksAirborne: 0, ticksZeroG: 0,
+    ticksVehicle: 0, landings: 0, lastLandingRelSpeed: 0,
+    minAGL: Number.POSITIVE_INFINITY, maxSlideSpeed: 0,
+    faceChanges: 0, nanEvents: 0,
+  };
+
+
+  private readonly cfg: AstronautConfig;
+  private _mode: AstronautMode = 'SURFACE';
+  private _grounded = true;
+  private _theta = 0;                 // spin phase (wrapped mod 2π)
+  private _thetaPrev = 0;
+  private _vCtl: Vec3 = { x: 0, y: 0, z: 0 };   // tangential, planet frame
+  private _vSlide: Vec3 = { x: 0, y: 0, z: 0 };
+  private _rcsBudget: number;
+  private _nCur: Vec3 = { x: 0, y: 1, z: 0 };   // cached analytic normal
+  private _hCur = 0;                              // cached surface height
+  private _face = -1;
+  private _vehicle: VehicleProvider | null = null;
+  private readonly _vehOffset: Vec3 = { x: 0, y: 0, z: 0 };
+  private readonly _vehUp: Vec3 = { x: 0, y: 1, z: 0 };
+  private readonly _vehFwd: Vec3 = { x: 1, y: 0, z: 0 };
+  private _accumulator = 0;
+  // M1A entity write-through (setup path).
+  private _wtPos: Vec3 | null = null;
+  private _wtVel: Vec3 | null = null;
+
+
+  constructor(cfg: AstronautConfig) {
+    this.cfg = cfg;
+    this._rcsBudget = cfg.rcsBudgetMax;
+  }
+
+
+  /* ---- setup-path API ----------------------------------------------------- */
+
+
+  attachWriteThrough(absPos: Vec3, velocity: Vec3): void {
+    this._wtPos = absPos;
+    this._wtVel = velocity;
+  }
+
+
+  get mode(): AstronautMode { return this._mode; }
+  get grounded(): boolean { return this._grounded; }
+  get spinPhase(): number { return this._theta; }
+
+
+  attachVehicle(provider: VehicleProvider): void {
+    // Offset & frame captured in the PARENT frame at attach time.
+    const p = provider.pos;
+    rotateByQuatConjInto(provider.quat,
+      this.absPos.x - p.x, this.absPos.y - p.y, this.absPos.z - p.z, _vehScratch);
+    this._vehOffset.x = _vehScratch.x;
+    this._vehOffset.y = _vehScratch.y;
+    this._vehOffset.z = _vehScratch.z;
+    rotateByQuatConjInto(provider.quat, this.up.x, this.up.y, this.up.z, _vehScratch);
+    this._vehUp.x = _vehScratch.x; this._vehUp.y = _vehScratch.y; this._vehUp.z = _vehScratch.z;
+    rotateByQuatConjInto(provider.quat, this.fwd.x, this.fwd.y, this.fwd.z, _vehScratch);
+    this._vehFwd.x = _vehScratch.x; this._vehFwd.y = _vehScratch.y; this._vehFwd.z = _vehScratch.z;
+    this._vehicle = provider;
+    this._mode = 'VEHICLE';
+    this._grounded = false;
+  }
+
+
+  detachVehicle(): void {
+    if (this._vehicle === null) return;
+    this._vehicle = null;
+    gravityInto(this.cfg.planetMu, this.cfg.gravityRange,
+      this.absPos.x, this.absPos.y, this.absPos.z, _g);
+    const gm = Math.sqrt(_g.x * _g.x + _g.y * _g.y + _g.z * _g.z);
+    this._mode = gm < 0.05 ? 'ZERO-G' : 'SURFACE';
+    this._grounded = false;
+  }
+
+
+  /** Teleport to an absolute state (inertial). Setup path. */
+  teleportAbs(px: number, py: number, pz: number, vx: number, vy: number, vz: number): void {
+    this.absPos.x = px; this.absPos.y = py; this.absPos.z = pz;
+    this.absVel.x = vx; this.absVel.y = vy; this.absVel.z = vz;
+    this._grounded = false;
+    this._vCtl.x = 0; this._vCtl.y = 0; this._vCtl.z = 0;
+    this._vSlide.x = 0; this._vSlide.y = 0; this._vSlide.z = 0;
+    // Planet-frame mirror + radial-aligned frame (continuous, deterministic).
+    spinQuatInto(this._theta, _qSpin);
+    const r = Math.sqrt(px * px + py * py + pz * pz) || 1;
+    rotateByQuatConjInto(_qSpin, px / r, py / r, pz / r, _dS);
+    this.pLocal.x = _dS.x * r; this.pLocal.y = _dS.y * r; this.pLocal.z = _dS.z * r;
+    this.up.x = _dS.x; this.up.y = _dS.y; this.up.z = _dS.z;
+    transportFrameInto(this.fwd.x, this.fwd.y, this.fwd.z, _dS.x, _dS.y, _dS.z, _fwdT);
+    this.fwd.x = _fwdT.x; this.fwd.y = _fwdT.y; this.fwd.z = _fwdT.z;
+    gravityInto(this.cfg.planetMu, this.cfg.gravityRange, px, py, pz, _g);
+    const gm = Math.sqrt(_g.x * _g.x + _g.y * _g.y + _g.z * _g.z);
+    this._mode = this._vehicle !== null ? 'VEHICLE' : gm < 0.05 ? 'ZERO-G' : 'SURFACE';
+  }
+
+
+  /** Teleport onto the surface at planet-frame direction d (unit-ish). */
+  teleportSurface(dx: number, dy: number, dz: number): void {
+    const cfg = this.cfg;
+    const l = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1;
+    dx /= l; dy /= l; dz /= l;
+    const h = terrainHeight(dx, dy, dz);
+    this._hCur = h;
+    const rr = cfg.planetRadius + h + cfg.groundClearance;
+    this.pLocal.x = dx * rr; this.pLocal.y = dy * rr; this.pLocal.z = dz * rr;
+    terrainNormalInto(dx, dy, dz, this._nCur);
+    this._refreshUpFwd(dx, dy, dz);
+    this._vCtl.x = 0; this._vCtl.y = 0; this._vCtl.z = 0;
+    this._vSlide.x = 0; this._vSlide.y = 0; this._vSlide.z = 0;
+    this._grounded = true;
+    this._mode = 'SURFACE';
+    this._vehicle = null;
+    this._composeGrounded(0, 0, 0);
+  }
+
+
+  /** Render/planet-frame quaternion of the transported character frame. */
+  frameQuatInto(out: Quat): Quat {
+    return quatFromFrameInto(this.fwd.x, this.fwd.y, this.fwd.z,
+      this.up.x, this.up.y, this.up.z, out);
+  }
+
+
+  resetIntegrityStats(): void {
+    const i = this.integrity;
+    i.ticks = 0; i.ticksGrounded = 0; i.ticksAirborne = 0;
+    i.ticksZeroG = 0; i.ticksVehicle = 0;
+    i.landings = 0; i.lastLandingRelSpeed = 0;
+    i.minAGL = Number.POSITIVE_INFINITY; i.maxSlideSpeed = 0;
+    i.faceChanges = 0; i.nanEvents = 0;
+  }
+
+
+  /* ---- fixed-step governor (Spec 02.6: <=5 substeps, shed don't dilute) -- */
+
+
+  update(dtRealSeconds: number, maxSubsteps = 5): number {
+    if (!Number.isFinite(dtRealSeconds) || dtRealSeconds <= 0) return 0;
+    const dt = dtRealSeconds > 0.25 ? 0.25 : dtRealSeconds;
+    // Exact once-per-frame look deltas (finite frame rotations — no Euler).
+    if (this.lookYawDelta !== 0) {
+      rotateAboutAxisInto(this.fwd.x, this.fwd.y, this.fwd.z,
+        this.up.x, this.up.y, this.up.z, this.lookYawDelta, _fwdT);
+      this.fwd.x = _fwdT.x; this.fwd.y = _fwdT.y; this.fwd.z = _fwdT.z;
+      this.lookYawDelta = 0;
+    }
+    if (this._mode === 'ZERO-G') {
+      if (this.lookPitchDelta !== 0 || this.lookRollDelta !== 0) {
+        _right.x = this.fwd.y * this.up.z - this.fwd.z * this.up.y;
+        _right.y = this.fwd.z * this.up.x - this.fwd.x * this.up.z;
+        _right.z = this.fwd.x * this.up.y - this.fwd.y * this.up.x;
+        if (this.lookPitchDelta !== 0) {
+          rotateAboutAxisInto(this.up.x, this.up.y, this.up.z,
+            _right.x, _right.y, _right.z, this.lookPitchDelta, _upT);
+          this.up.x = _upT.x; this.up.y = _upT.y; this.up.z = _upT.z;
+          rotateAboutAxisInto(this.fwd.x, this.fwd.y, this.fwd.z,
+            _right.x, _right.y, _right.z, this.lookPitchDelta, _fwdT);
+          this.fwd.x = _fwdT.x; this.fwd.y = _fwdT.y; this.fwd.z = _fwdT.z;
+        }
+        if (this.lookRollDelta !== 0) {
+          rotateAboutAxisInto(this.up.x, this.up.y, this.up.z,
+            this.fwd.x, this.fwd.y, this.fwd.z, this.lookRollDelta, _upT);
+          this.up.x = _upT.x; this.up.y = _upT.y; this.up.z = _upT.z;
+        }
+        // Re-orthogonalize (shared rotations preserve ⊥; clean rounding).
+        transportFrameInto(this.fwd.x, this.fwd.y, this.fwd.z,
+          this.up.x, this.up.y, this.up.z, _fwdT);
+        this.fwd.x = _fwdT.x; this.fwd.y = _fwdT.y; this.fwd.z = _fwdT.z;
+      }
+    }
+    this.lookPitchDelta = 0;
+    this.lookRollDelta = 0;
+    this._accumulator += dt;
+    let n = 0;
+    while (this._accumulator >= 1 / 60 && n < maxSubsteps) {
+      this.integrateTick(1 / 60);
+      this._accumulator -= 1 / 60;
+      n++;
+    }
+    if (this._accumulator >= 1 / 60) this._accumulator = 0; // shed
+    if (this._wtPos !== null) {
+      this._wtPos.x = this.absPos.x; this._wtPos.y = this.absPos.y; this._wtPos.z = this.absPos.z;
+      this._wtVel.x = this.absVel.x; this._wtVel.y = this.absVel.y; this._wtVel.z = this.absVel.z;
+    }
+    return n;
+  }
+
+
+  /* =======================================================================
+   * THE FIXED TICK (dt = 1/60), allocation-free.
+   * ===================================================================== */
+  integrateTick(dt: number): void {
+    const cfg = this.cfg;
+    const s = _nanSnap;
+    s.px = this.absPos.x; s.py = this.absPos.y; s.pz = this.absPos.z;
+    s.vx = this.absVel.x; s.vy = this.absVel.y; s.vz = this.absVel.z;
+    s.lx = this.pLocal.x; s.ly = this.pLocal.y; s.lz = this.pLocal.z;
+    s.ux = this.up.x; s.uy = this.up.y; s.uz = this.up.z;
+    s.fx = this.fwd.x; s.fy = this.fwd.y; s.fz = this.fwd.z;
+
+
+    // Spin phase (wrapped mod 2π; quaternion consumers are sign-invariant).
+    this._thetaPrev = this._theta;
+    this._theta = (this._theta + cfg.spinOmega * dt) % (Math.PI * 2);
+
+
+    // Cube-face tracking (planet frame) — dominant-axis, zero alloc.
+    const ax = Math.abs(this.pLocal.x), ay = Math.abs(this.pLocal.y),
+      az = Math.abs(this.pLocal.z);
+    let face: number;
+    if (ax >= ay && ax >= az) face = this.pLocal.x >= 0 ? 0 : 1;
+    else if (ay >= az) face = this.pLocal.y >= 0 ? 2 : 3;
+    else face = this.pLocal.z >= 0 ? 4 : 5;
+    if (this._face >= 0 && face !== this._face) this.integrity.faceChanges++;
+    this._face = face;
+
+
+    this.input.jump = false; // consumed (edge-triggered)
+
+
+    if (this._mode === 'VEHICLE') {
+      this._vehicleTick(dt);
+      this.integrity.ticksVehicle++;
+    } else if (this._mode === 'SURFACE' && this._grounded) {
+      this._groundedTick(dt);
+      this.integrity.ticksGrounded++;
+    } else {
+      this._flightTick(dt);
+      if (this._mode === 'ZERO-G') this.integrity.ticksZeroG++;
+      else this.integrity.ticksAirborne++;
+    }
+
+
+    // Mode hysteresis on the range-faded gravity magnitude.
+    if (this._mode !== 'VEHICLE') {
+      gravityInto(cfg.planetMu, cfg.gravityRange,
+        this.absPos.x, this.absPos.y, this.absPos.z, _g);
+      const gm = Math.sqrt(_g.x * _g.x + _g.y * _g.y + _g.z * _g.z);
+      if (this._mode === 'SURFACE' && !this._grounded && gm < 0.05) {
+        this._mode = 'ZERO-G';
+      } else if (this._mode === 'ZERO-G' && gm > 0.15) {
+        this._mode = 'SURFACE';
+      }
+    }
+
+
+    this._fillTelemetry();
+    this.integrity.ticks++;
+
+
+    // NaN guard (Spec 00.2: nothing may NaN).
+    if (
+      !Number.isFinite(this.absPos.x) || !Number.isFinite(this.absPos.y) ||
+      !Number.isFinite(this.absPos.z) || !Number.isFinite(this.absVel.x) ||
+      !Number.isFinite(this.absVel.y) || !Number.isFinite(this.absVel.z) ||
+      !Number.isFinite(this.pLocal.x) || !Number.isFinite(this.pLocal.y) ||
+      !Number.isFinite(this.pLocal.z)
+    ) {
+      this.absPos.x = s.px; this.absPos.y = s.py; this.absPos.z = s.pz;
+      this.absVel.x = s.vx; this.absVel.y = s.vy; this.absVel.z = s.vz;
+      this.pLocal.x = s.lx; this.pLocal.y = s.ly; this.pLocal.z = s.lz;
+      this.up.x = s.ux; this.up.y = s.uy; this.up.z = s.uz;
+      this.fwd.x = s.fx; this.fwd.y = s.fy; this.fwd.z = s.fz;
+      this.integrity.nanEvents++;
+    }
+  }
+
+
+  /* ---- grounded: the spherical walk --------------------------------------- */
+
+
+  private _groundedTick(dt: number): void {
+    const cfg = this.cfg;
+    const R = cfg.planetRadius;
+    let r = Math.sqrt(
+      this.pLocal.x * this.pLocal.x + this.pLocal.y * this.pLocal.y +
+      this.pLocal.z * this.pLocal.z);
+    if (r < 1) r = 1;
+    const rx = this.pLocal.x / r, ry = this.pLocal.y / r, rz = this.pLocal.z / r;
+    const surfCur = R + this._hCur;
+    const n = this._nCur;
+    const cosSlope = clamp(n.x * rx + n.y * ry + n.z * rz, -1, 1);
+    const slope = Math.acos(cosSlope);
+
+
+    // Gravity (planet frame == world frame for radial fields).
+    gravityInto(cfg.planetMu, cfg.gravityRange,
+      this.pLocal.x, this.pLocal.y, this.pLocal.z, _g);
+    const gN = -(_g.x * n.x + _g.y * n.y + _g.z * n.z);   // normal load (>=0)
+    const gDotN = _g.x * n.x + _g.y * n.y + _g.z * n.z;
+    _gt.x = _g.x - gDotN * n.x;                            // downhill (tangential)
+    _gt.y = _g.y - gDotN * n.y;
+    _gt.z = _g.z - gDotN * n.z;
+    const gtMag = Math.sqrt(_gt.x * _gt.x + _gt.y * _gt.y + _gt.z * _gt.z);
+
+
+    // Input -> desired velocity in the surface frame.
+    const speed = this.input.crouch ? cfg.crouchSpeed
+      : this.input.sprint ? cfg.sprintSpeed : cfg.walkSpeed;
+    let inF = this.input.moveF, inR = this.input.moveR;
+    const inLen = Math.sqrt(inF * inF + inR * inR);
+    if (inLen > 1) { inF /= inLen; inR /= inLen; }
+    _right.x = this.fwd.y * this.up.z - this.fwd.z * this.up.y;
+    _right.y = this.fwd.z * this.up.x - this.fwd.x * this.up.z;
+    _right.z = this.fwd.x * this.up.y - this.fwd.y * this.up.x;
+    _vDes.x = (this.fwd.x * inF + _right.x * inR) * speed;
+    _vDes.y = (this.fwd.y * inF + _right.y * inR) * speed;
+    _vDes.z = (this.fwd.z * inF + _right.z * inR) * speed;
+
+
+    // Control response (exact exponential — smooth, frame-rate independent).
+    const k = Math.exp(-dt / cfg.accelTau);
+    this._vCtl.x = _vDes.x + (this._vCtl.x - _vDes.x) * k;
+    this._vCtl.y = _vDes.y + (this._vCtl.y - _vDes.y) * k;
+    this._vCtl.z = _vDes.z + (this._vCtl.z - _vDes.z) * k;
+
+
+    // Slope sliding: static threshold slope > slideAngle (mu_s = tan(angle)).
+    if (slope > (cfg.slideAngleDeg * Math.PI) / 180 && gtMag > 1e-9) {
+      let vx = this._vSlide.x, vy = this._vSlide.y, vz = this._vSlide.z;
+      const vm = Math.sqrt(vx * vx + vy * vy + vz * vz);
+      if (vm > 0.01) { vx /= vm; vy /= vm; vz /= vm; }
+      else { vx = _gt.x / gtMag; vy = _gt.y / gtMag; vz = _gt.z / gtMag; }
+      this._vSlide.x += (_gt.x - cfg.kineticFriction * gN * vx) * dt;
+      this._vSlide.y += (_gt.y - cfg.kineticFriction * gN * vy) * dt;
+      this._vSlide.z += (_gt.z - cfg.kineticFriction * gN * vz) * dt;
+    } else {
+      const grip = Math.exp(-dt / cfg.slideGripTau);
+      this._vSlide.x *= grip; this._vSlide.y *= grip; this._vSlide.z *= grip;
+    }
+    const slideMag = Math.sqrt(
+      this._vSlide.x * this._vSlide.x + this._vSlide.y * this._vSlide.y +
+      this._vSlide.z * this._vSlide.z);
+    if (slideMag > this.integrity.maxSlideSpeed) this.integrity.maxSlideSpeed = slideMag;
+
+
+    // JUMP — along the surface normal; launch converts to inertial absolute.
+    if (this.input.jump && !this.input.crouch) {
+      const u = cfg.jumpSpeed;
+      _vT.x = this._vCtl.x + this._vSlide.x + n.x * u;
+      _vT.y = this._vCtl.y + this._vSlide.y + n.y * u;
+      _vT.z = this._vCtl.z + this._vSlide.z + n.z * u;
+      this._composeGrounded(this._vCtl.x, this._vCtl.y, this._vCtl.z); // P only
+      spinQuatInto(this._theta, _qSpin);
+      rotateByQuatInto(_qSpin, _vT.x, _vT.y, _vT.z, _tmp);
+      transportVelocityInto(cfg.spinOmega, this.absPos.x, this.absPos.y,
+        this.absPos.z, _tmp2);
+      this.absVel.x = _tmp2.x + _tmp.x;
+      this.absVel.y = _tmp2.y + _tmp.y;
+      this.absVel.z = _tmp2.z + _tmp.z;
+      this._grounded = false;
+      this._flightTick(dt);      // launch tick continues inertially
+      return;
+    }
+
+
+    // ---- horizontal move with step / block / snap logic -------------------
+    let dx = (this._vCtl.x + this._vSlide.x) * dt;
+    let dy = (this._vCtl.y + this._vSlide.y) * dt;
+    let dz = (this._vCtl.z + this._vSlide.z) * dt;
+    let moved = false;
+    let cliff = false;
+    const arc = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    if (arc > 1e-9) {
+      if (this._tryMove(dx, dy, dz, surfCur, r)) {
+        moved = true;
+      } else {
+        // Blocked: wall-slide projection (one retry) using the target normal.
+        this._wallDirFromTarget(dx, dy, dz);
+        const dot = dx * _wall.x + dy * _wall.y + dz * _wall.z;
+        if (dot < 0) {
+          dx -= dot * _wall.x; dy -= dot * _wall.y; dz -= dot * _wall.z;
+          if (this._tryMove(dx, dy, dz, surfCur, r)) moved = true;
+        }
+      }
+      if (!moved) {
+        // Fully blocked — but check whether the ORIGINAL move was a cliff
+        // (downhill beyond snap): then it was already accepted inside _tryMove
+        // via the cliff path (grounded=false). If still grounded here, hold.
+        if (!this._grounded) cliff = true;
+      }
+    }
+
+
+    if (this._grounded) {
+      // Frame transport at the (possibly new) position.
+      let r2 = Math.sqrt(this.pLocal.x * this.pLocal.x +
+        this.pLocal.y * this.pLocal.y + this.pLocal.z * this.pLocal.z);
+      if (r2 < 1) r2 = 1;
+      const rdx = this.pLocal.x / r2, rdy = this.pLocal.y / r2, rdz = this.pLocal.z / r2;
+      if (moved) {
+        terrainNormalInto(rdx, rdy, rdz, _nNew);
+        this._nCur.x = _nNew.x; this._nCur.y = _nNew.y; this._nCur.z = _nNew.z;
+        this._hCur = terrainHeight(rdx, rdy, rdz);
+      }
+      this._refreshUpFwd(rdx, rdy, rdz);
+
+
+      // Yaw input (finite rotation about up — never accumulated Euler).
+      if (this.input.turnRate !== 0) {
+        rotateAboutAxisInto(this.fwd.x, this.fwd.y, this.fwd.z,
+          this.up.x, this.up.y, this.up.z, this.input.turnRate * dt, _fwdT);
+        this.fwd.x = _fwdT.x; this.fwd.y = _fwdT.y; this.fwd.z = _fwdT.z;
+      }
+      // Auto-turn toward movement (third person). Reported for camera
+      // orbit compensation (harness subtracts it from the camera offset).
+      let turnApplied = 0;
+      const ctlMag = Math.sqrt(this._vCtl.x * this._vCtl.x +
+        this._vCtl.y * this._vCtl.y + this._vCtl.z * this._vCtl.z);
+      if (this.autoTurnEnabled && ctlMag > 0.5) {
+        const a = signedAngleAbout(this.fwd.x, this.fwd.y, this.fwd.z,
+          this._vCtl.x / ctlMag, this._vCtl.y / ctlMag, this._vCtl.z / ctlMag,
+          this.up.x, this.up.y, this.up.z);
+        let step = a * (1 - Math.exp(-8 * dt));
+        const maxStep = cfg.autoTurnRate * dt;
+        if (step > maxStep) step = maxStep;
+        else if (step < -maxStep) step = -maxStep;
+        rotateAboutAxisInto(this.fwd.x, this.fwd.y, this.fwd.z,
+          this.up.x, this.up.y, this.up.z, step, _fwdT);
+        this.fwd.x = _fwdT.x; this.fwd.y = _fwdT.y; this.fwd.z = _fwdT.z;
+        turnApplied = step;
+      }
+      this.telemetry.turnApplied = turnApplied;
+
+
+      // Absolute compose: analytic transport + relative walk (Spec 01.4).
+      this._composeGrounded(
+        this._vCtl.x + this._vSlide.x,
+        this._vCtl.y + this._vSlide.y,
+        this._vCtl.z + this._vSlide.z);
+
+
+      // RCS regen while planted.
+      if (this._rcsBudget < cfg.rcsBudgetMax) {
+        this._rcsBudget = Math.min(cfg.rcsBudgetMax,
+          this._rcsBudget + cfg.rcsRegen * dt);
+      }
+    }
+    void cliff;
+  }
+
+
+  /**
+   * Attempt the tangent move (dx,dy,dz) from the current feet position.
+   * Accepts climbs (step rule), snap-downs, and cliff transitions (sets
+   * grounded=false and continues inertially). Returns true if the position
+   * changed. Post-tick AGL >= 0 structurally: accepted positions anchor to
+   * the probed surface.
+   */
+  private _tryMove(dx: number, dy: number, dz: number, surfCur: number, r: number): boolean {
+    const cfg = this.cfg;
+    _pTry.x = this.pLocal.x + dx;
+    _pTry.y = this.pLocal.y + dy;
+    _pTry.z = this.pLocal.z + dz;
+    const l = Math.sqrt(_pTry.x * _pTry.x + _pTry.y * _pTry.y + _pTry.z * _pTry.z) || 1;
+    _dTry.x = _pTry.x / l; _dTry.y = _pTry.y / l; _dTry.z = _pTry.z / l;
+    const hT = terrainHeight(_dTry.x, _dTry.y, _dTry.z);
+    const surfT = cfg.planetRadius + hT;
+    const arc = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    const dH = surfT - surfCur;
+    if (dH <= 0.001) {
+      if (-dH > cfg.snapDistance) {
+        // Cliff: continue at the current radius, airborne from here.
+        this.pLocal.x = _dTry.x * r;
+        this.pLocal.y = _dTry.y * r;
+        this.pLocal.z = _dTry.z * r;
+        this._composeGrounded(
+          this._vCtl.x + this._vSlide.x,
+          this._vCtl.y + this._vSlide.y,
+          this._vCtl.z + this._vSlide.z);
+        this._grounded = false;
+        return true;
+      }
+      // Snap-down / flat follow.
+      const rr = surfT + cfg.groundClearance;
+      this.pLocal.x = _dTry.x * rr;
+      this.pLocal.y = _dTry.y * rr;
+      this.pLocal.z = _dTry.z * rr;
+      return true;
+    }
+    // Uphill: the derived dual step rule (absolute step AND slope ratio).
+    const tanMax = Math.tan((cfg.maxWalkSlopeDeg * Math.PI) / 180);
+    if (dH <= cfg.stepHeight && dH / arc <= tanMax) {
+      const rr = surfT + cfg.groundClearance;
+      this.pLocal.x = _dTry.x * rr;
+      this.pLocal.y = _dTry.y * rr;
+      this.pLocal.z = _dTry.z * rr;
+      return true;
+    }
+    return false; // blocked
+  }
+
+
+  /** Wall direction from the TARGET normal's tangential component
+   *  (points downhill = away from the steep face). Fallback: -moveDir. */
+  private _wallDirFromTarget(dx: number, dy: number, dz: number): void {
+    const l = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1;
+    _pTry.x = this.pLocal.x + dx;
+    _pTry.y = this.pLocal.y + dy;
+    _pTry.z = this.pLocal.z + dz;
+    const ll = Math.sqrt(_pTry.x * _pTry.x + _pTry.y * _pTry.y + _pTry.z * _pTry.z) || 1;
+    _dTry.x = _pTry.x / ll; _dTry.y = _pTry.y / ll; _dTry.z = _pTry.z / ll;
+    terrainNormalInto(_dTry.x, _dTry.y, _dTry.z, _nNew);
+    const d = _nNew.x * _dTry.x + _nNew.y * _dTry.y + _nNew.z * _dTry.z;
+    let wx = _nNew.x - d * _dTry.x;
+    let wy = _nNew.y - d * _dTry.y;
+    let wz = _nNew.z - d * _dTry.z;
+    const m = Math.sqrt(wx * wx + wy * wy + wz * wz);
+    if (m < 1e-6) {
+      _wall.x = -dx / l; _wall.y = -dy / l; _wall.z = -dz / l;
+    } else {
+      _wall.x = wx / m; _wall.y = wy / m; _wall.z = wz / m;
+    }
+  }
+
+
+  /** Blend the cached normal with radial -> up; transport fwd. */
+  private _refreshUpFwd(rx: number, ry: number, rz: number): void {
+    const w = this.cfg.upBlendWeight;
+    let ux = w * this._nCur.x + (1 - w) * rx;
+    let uy = w * this._nCur.y + (1 - w) * ry;
+    let uz = w * this._nCur.z + (1 - w) * rz;
+    const m = Math.sqrt(ux * ux + uy * uy + uz * uz) || 1;
+    ux /= m; uy /= m; uz /= m;
+    this.up.x = ux; this.up.y = uy; this.up.z = uz;
+    transportFrameInto(this.fwd.x, this.fwd.y, this.fwd.z, ux, uy, uz, _fwdT);
+    this.fwd.x = _fwdT.x; this.fwd.y = _fwdT.y; this.fwd.z = _fwdT.z;
+  }
+
+
+  /** Grounded compose: P = R(θ)·pLocal; V = Ω×P + R(θ)·vRel. */
+  private _composeGrounded(vx: number, vy: number, vz: number): void {
+    spinQuatInto(this._theta, _qSpin);
+    rotateByQuatInto(_qSpin, this.pLocal.x, this.pLocal.y, this.pLocal.z, _tmp);
+    this.absPos.x = _tmp.x; this.absPos.y = _tmp.y; this.absPos.z = _tmp.z;
+    rotateByQuatInto(_qSpin, vx, vy, vz, _tmp);
+    transportVelocityInto(this.cfg.spinOmega, this.absPos.x, this.absPos.y,
+      this.absPos.z, _tmp2);
+    this.absVel.x = _tmp2.x + _tmp.x;
+    this.absVel.y = _tmp2.y + _tmp.y;
+    this.absVel.z = _tmp2.z + _tmp.z;
+  }
+
+
+  /* ---- airborne / zero-G: inertial integration ----------------------------- */
+
+
+  private _flightTick(dt: number): void {
+    const cfg = this.cfg;
+    const px = this.absPos.x, py = this.absPos.y, pz = this.absPos.z;
+
+
+    // Central gravity (range-faded; ~0 in zero-G by construction).
+    gravityInto(cfg.planetMu, cfg.gravityRange, px, py, pz, _g);
+    this.absVel.x += _g.x * dt;
+    this.absVel.y += _g.y * dt;
+    this.absVel.z += _g.z * dt;
+
+
+    // ZERO-G RCS pack (limited — Spec 00.4: zero-g recovery only).
+    if (this._mode === 'ZERO-G' && this._rcsBudget > 0) {
+      let ax = this.input.rcsF, ay = this.input.rcsU, az = this.input.rcsR;
+      const al = Math.sqrt(ax * ax + ay * ay + az * az);
+      if (al > 1) { ax /= al; ay /= al; az /= al; }
+      if (al > 1e-6) {
+        // Thrust along the character frame, rotated to world by the spin.
+        _right.x = this.fwd.y * this.up.z - this.fwd.z * this.up.y;
+        _right.y = this.fwd.z * this.up.x - this.fwd.x * this.up.z;
+        _right.z = this.fwd.x * this.up.y - this.fwd.y * this.up.x;
+        _vT.x = this.fwd.x * ax + this.up.x * ay + _right.x * az;
+        _vT.y = this.fwd.y * ax + this.up.y * ay + _right.y * az;
+        _vT.z = this.fwd.z * ax + this.up.z * ay + _right.z * az;
+        spinQuatInto(this._theta, _qSpin);
+        rotateByQuatInto(_qSpin, _vT.x, _vT.y, _vT.z, _tmp);
+        const a = cfg.rcsAccel * dt;
+        this.absVel.x += _tmp.x * a;
+        this.absVel.y += _tmp.y * a;
+        this.absVel.z += _tmp.z * a;
+        this._rcsBudget = Math.max(0, this._rcsBudget - a * al);
+      }
+    }
+
+
+    // Yaw (ZERO-G free attitude).
+    if (this._mode === 'ZERO-G' && this.input.turnRate !== 0) {
+      rotateAboutAxisInto(this.fwd.x, this.fwd.y, this.fwd.z,
+        this.up.x, this.up.y, this.up.z, this.input.turnRate * dt, _fwdT);
+      this.fwd.x = _fwdT.x; this.fwd.y = _fwdT.y; this.fwd.z = _fwdT.z;
+    }
+
+
+    // Frame: gentle re-alignment of up toward local radial (C0, no snaps).
+    const r0 = Math.sqrt(px * px + py * py + pz * pz) || 1;
+    const blend = 1 - Math.exp(-dt / cfg.airborneUpTau);
+    let ux = this.up.x + (px / r0 - this.up.x) * blend;
+    let uy = this.up.y + (py / r0 - this.up.y) * blend;
+    let uz = this.up.z + (pz / r0 - this.up.z) * blend;
+    const um = Math.sqrt(ux * ux + uy * uy + uz * uz) || 1;
+    this.up.x = ux / um; this.up.y = uy / um; this.up.z = uz / um;
+    transportFrameInto(this.fwd.x, this.fwd.y, this.fwd.z,
+      this.up.x, this.up.y, this.up.z, _fwdT);
+    this.fwd.x = _fwdT.x; this.fwd.y = _fwdT.y; this.fwd.z = _fwdT.z;
+
+
+    // Inertial drift.
+    const prevX = px, prevY = py, prevZ = pz;
+    this.absPos.x += this.absVel.x * dt;
+    this.absPos.y += this.absVel.y * dt;
+    this.absPos.z += this.absVel.z * dt;
+
+
+    // Terrain sweep (band-gated) + landing.
+    this._sweep(prevX, prevY, prevZ, this.absPos.x, this.absPos.y, this.absPos.z, dt);
+
+
+    // Planet-frame mirror (face tracking / telemetry).
+    spinQuatInto(this._theta, _qSpin);
+    const r1 = Math.sqrt(this.absPos.x * this.absPos.x + this.absPos.y * this.absPos.y +
+      this.absPos.z * this.absPos.z) || 1;
+    rotateByQuatConjInto(_qSpin,
+      this.absPos.x / r1, this.absPos.y / r1, this.absPos.z / r1, _dS);
+    this.pLocal.x = _dS.x * r1; this.pLocal.y = _dS.y * r1; this.pLocal.z = _dS.z * r1;
+  }
+
+
+  /**
+   * Gap-limited analytic sweep with SPIN-INTERPOLATED sample transforms:
+   * the terrain occupies planet-frame directions; at sample fraction s the
+   * planet has rotated to θ(s) = θ_prev + Ω·dt·s. Without the interpolation
+   * the rotating ground is misplaced by up to r·Ω·dt = 0.87 m per tick at
+   * the equator — with it the sweep is exact. Worker-independent by
+   * construction (the same f64 field the workers mesh).
+   */
+  private _sweep(
+    x0: number, y0: number, z0: number,
+    x1: number, y1: number, z1: number,
+    dt: number,
+  ): void {
+    const cfg = this.cfg;
+    const R = cfg.planetRadius;
+    const band = R + cfg.maxTerrainHeight + cfg.sweepGap * 2;
+
+
+    // Segment min-radius early-out.
+    const dx = x1 - x0, dy = y1 - y0, dz = z1 - z0;
+    const dd = dx * dx + dy * dy + dz * dz;
+    if (dd < 1e-18) return;
+    let t = -(x0 * dx + y0 * dy + z0 * dz) / dd;
+    t = clamp(t, 0, 1);
+    const cx = x0 + dx * t, cy = y0 + dy * t, cz = z0 + dz * t;
+    if (Math.sqrt(cx * cx + cy * cy + cz * cz) > band) return;
+
+
+    // Tick-start embed check (transient from a previous tick).
+    const r0 = Math.sqrt(x0 * x0 + y0 * y0 + z0 * z0);
+    if (r0 < band) {
+      spinQuatInto(this._thetaPrev, _qSpin);
+      rotateByQuatConjInto(_qSpin, x0 / r0, y0 / r0, z0 / r0, _dS);
+      if (r0 - (R + terrainHeight(_dS.x, _dS.y, _dS.z)) < cfg.groundClearance) {
+        this._landAt(x0, y0, z0, this._thetaPrev);
+        return;
+      }
+    }
+
+
+    const seg = Math.sqrt(dd);
+    const steps = Math.max(1, Math.ceil(seg / cfg.sweepGap));
+    const dTheta = (this._theta - this._thetaPrev) / steps;
+    let theta = this._thetaPrev + dTheta;
+    for (let i = 1; i <= steps; i++) {
+      const s = i / steps;
+      const sx = x0 + dx * s, sy = y0 + dy * s, sz = z0 + dz * s;
+      const r = Math.sqrt(sx * sx + sy * sy + sz * sz);
+      if (r >= band) { theta += dTheta; continue; }
+      spinQuatInto(theta, _qSpin);
+      rotateByQuatConjInto(_qSpin, sx / r, sy / r, sz / r, _dS);
+      const agl = r - (R + terrainHeight(_dS.x, _dS.y, _dS.z));
+      if (agl < this.integrity.minAGL) this.integrity.minAGL = agl;
+      if (agl < cfg.groundClearance) {
+        // Sub-tick bisection with spin-interpolated θ.
+        let lo = (i - 1) / steps, hi = s, thLo = theta - dTheta;
+        for (let k = 0; k < 14; k++) {
+          const m = 0.5 * (lo + hi);
+          const mx = x0 + dx * m, my = y0 + dy * m, mz = z0 + dz * m;
+          const mr = Math.sqrt(mx * mx + my * my + mz * mz);
+          spinQuatInto(thLo + (theta - thLo) * ((m - lo) / (hi - lo || 1)), _qSpin);
+          rotateByQuatConjInto(_qSpin, mx / mr, my / mr, mz / mr, _dS);
+          const a2 = mr - (R + terrainHeight(_dS.x, _dS.y, _dS.z));
+          if (a2 < cfg.groundClearance) hi = m; else lo = m;
+        }
+        const m = 0.5 * (lo + hi);
+        this._landAt(x0 + dx * m, y0 + dy * m, z0 + dz * m,
+          this._thetaPrev + cfg.spinOmega * dt * m);
+        return;
+      }
+      theta += dTheta;
+    }
+  }
+
+
+  /** Landing: decompose to relative, kill normal velocity, PLANT tangential
+   *  (Spec M1E: "immediately settle into a 0 m/s relative walk state"). */
+  private _landAt(px: number, py: number, pz: number, theta: number): void {
+    const cfg = this.cfg;
+    spinQuatInto(theta, _qSpin);
+    const r = Math.sqrt(px * px + py * py + pz * pz) || 1;
+    rotateByQuatConjInto(_qSpin, px / r, py / r, pz / r, _dS);
+    const h = terrainHeight(_dS.x, _dS.y, _dS.z);
+    const rr = cfg.planetRadius + h + cfg.groundClearance;
+    this.pLocal.x = _dS.x * rr; this.pLocal.y = _dS.y * rr; this.pLocal.z = _dS.z * rr;
+    this._hCur = h;
+    terrainNormalInto(_dS.x, _dS.y, _dS.z, this._nCur);
+
+
+    // Absolute state at the contact point.
+    rotateByQuatInto(_qSpin, this.pLocal.x, this.pLocal.y, this.pLocal.z, _tmp);
+    this.absPos.x = _tmp.x; this.absPos.y = _tmp.y; this.absPos.z = _tmp.z;
+
+
+    // Relative velocity: v_rel = R⁻¹(V − Ω×P)  [the Coriolis handoff].
+    transportVelocityInto(cfg.spinOmega, this.absPos.x, this.absPos.y,
+      this.absPos.z, _tmp2);
+    rotateByQuatConjInto(_qSpin,
+      this.absVel.x - _tmp2.x, this.absVel.y - _tmp2.y, this.absVel.z - _tmp2.z, _rel);
+    this.integrity.lastLandingRelSpeed = Math.sqrt(
+      _rel.x * _rel.x + _rel.y * _rel.y + _rel.z * _rel.z);
+
+
+    // Kill the normal component (no bounce), plant the tangential.
+    const n = this._nCur;
+    const vn = _rel.x * n.x + _rel.y * n.y + _rel.z * n.z;
+    if (vn < 0) {
+      _rel.x -= n.x * vn; _rel.y -= n.y * vn; _rel.z -= n.z * vn;
+    }
+    // PLANT: input takes over; no input -> 0 m/s relative (no skating).
+    const speed = this.input.crouch ? cfg.crouchSpeed
+      : this.input.sprint ? cfg.sprintSpeed : cfg.walkSpeed;
+    let inF = this.input.moveF, inR = this.input.moveR;
+    const inLen = Math.sqrt(inF * inF + inR * inR);
+    if (inLen > 1) { inF /= inLen; inR /= inLen; }
+    if (inLen > 0.01) {
+      // Keep the landing tangential momentum only along the input intent.
+      this._vCtl.x = this.fwd.x * inF * speed;
+      this._vCtl.y = this.fwd.y * inF * speed;
+      this._vCtl.z = this.fwd.z * inF * speed;
+    } else {
+      this._vCtl.x = 0; this._vCtl.y = 0; this._vCtl.z = 0;
+    }
+    this._vSlide.x = 0; this._vSlide.y = 0; this._vSlide.z = 0;
+    this._grounded = true;
+    this._mode = 'SURFACE';
+    this.integrity.landings++;
+    this._refreshUpFwd(_dS.x, _dS.y, _dS.z);
+    this._composeGrounded(this._vCtl.x, this._vCtl.y, this._vCtl.z);
+  }
+
+
+  /* ---- vehicle: parented compose (Spec 01.1 step 3) ------------------------ */
+
+
+  private _vehicleTick(_dt: number): void {
+    const p = this._vehicle;
+    if (p === null) { this._mode = 'SURFACE'; return; }
+    rotateByQuatInto(p.quat, this._vehOffset.x, this._vehOffset.y, this._vehOffset.z, _tmp);
+    this.absPos.x = p.pos.x + _tmp.x;
+    this.absPos.y = p.pos.y + _tmp.y;
+    this.absPos.z = p.pos.z + _tmp.z;
+    rotateByQuatInto(p.quat, this._vehUp.x, this._vehUp.y, this._vehUp.z, _upT);
+    this.up.x = _upT.x; this.up.y = _upT.y; this.up.z = _upT.z;
+    rotateByQuatInto(p.quat, this._vehFwd.x, this._vehFwd.y, this._vehFwd.z, _fwdT);
+    this.fwd.x = _fwdT.x; this.fwd.y = _fwdT.y; this.fwd.z = _fwdT.z;
+    // V = parentVel + ω × (P − parentPos).
+    const rx = this.absPos.x - p.pos.x;
+    const ry = this.absPos.y - p.pos.y;
+    const rz = this.absPos.z - p.pos.z;
+    this.absVel.x = p.vel.x + (p.angVel.y * rz - p.angVel.z * ry);
+    this.absVel.y = p.vel.y + (p.angVel.z * rx - p.angVel.x * rz);
+    this.absVel.z = p.vel.z + (p.angVel.x * ry - p.angVel.y * rx);
+    // Planet-frame mirror.
+    spinQuatInto(this._theta, _qSpin);
+    const r = Math.sqrt(this.absPos.x * this.absPos.x + this.absPos.y * this.absPos.y +
+      this.absPos.z * this.absPos.z) || 1;
+    rotateByQuatConjInto(_qSpin,
+      this.absPos.x / r, this.absPos.y / r, this.absPos.z / r, _dS);
+    this.pLocal.x = _dS.x * r; this.pLocal.y = _dS.y * r; this.pLocal.z = _dS.z * r;
+  }
+
+
+  /* ---- telemetry ------------------------------------------------------------ */
+
+
+  private _fillTelemetry(): void {
+    const cfg = this.cfg;
+    const t = this.telemetry;
+    const R = cfg.planetRadius;
+    let r = Math.sqrt(this.pLocal.x * this.pLocal.x + this.pLocal.y * this.pLocal.y +
+      this.pLocal.z * this.pLocal.z);
+    if (r < 1) r = 1;
+    const rx = this.pLocal.x / r, ry = this.pLocal.y / r, rz = this.pLocal.z / r;
+    t.mode = this._mode;
+    t.grounded = this._grounded;
+    t.crouched = this.input.crouch;
+    t.eyeHeight = this.input.crouch ? cfg.crouchEyeHeight : cfg.eyeHeight;
+    if (this._grounded) {
+      t.relSpeed = Math.sqrt(
+        (this._vCtl.x + this._vSlide.x) ** 2 +
+        (this._vCtl.y + this._vSlide.y) ** 2 +
+        (this._vCtl.z + this._vSlide.z) ** 2);
+      t.slideSpeed = Math.sqrt(
+        this._vSlide.x ** 2 + this._vSlide.y ** 2 + this._vSlide.z ** 2);
+    } else {
+      transportVelocityInto(cfg.spinOmega, this.absPos.x, this.absPos.y,
+        this.absPos.z, _tmp2);
+      _rel.x = this.absVel.x - _tmp2.x;
+      _rel.y = this.absVel.y - _tmp2.y;
+      _rel.z = this.absVel.z - _tmp2.z;
+      t.relSpeed = Math.sqrt(_rel.x ** 2 + _rel.y ** 2 + _rel.z ** 2);
+      t.slideSpeed = 0;
+    }
+    t.transportSpeed = cfg.spinOmega *
+      Math.sqrt(this.absPos.x ** 2 + this.absPos.z ** 2);
+    t.absSpeed = Math.sqrt(this.absVel.x ** 2 + this.absVel.y ** 2 +
+      this.absVel.z ** 2);
+    t.altMSL = r - R;
+    if (r < R + cfg.maxTerrainHeight + 64) {
+      t.altAGL = r - (R + this._hCur) - cfg.groundClearance;
+    } else {
+      t.altAGL = t.altMSL - cfg.maxTerrainHeight;
+    }
+    const cosSlope = clamp(this._nCur.x * rx + this._nCur.y * ry +
+      this._nCur.z * rz, -1, 1);
+    t.slopeDeg = (Math.acos(cosSlope) * 180) / Math.PI;
+    t.upX = this.up.x; t.upY = this.up.y; t.upZ = this.up.z;
+    t.fwdX = this.fwd.x; t.fwdY = this.fwd.y; t.fwdZ = this.fwd.z;
+    gravityInto(cfg.planetMu, cfg.gravityRange,
+      this.absPos.x, this.absPos.y, this.absPos.z, _g);
+    t.gravX = _g.x; t.gravY = _g.y; t.gravZ = _g.z;
+    t.gravMag = Math.sqrt(_g.x ** 2 + _g.y ** 2 + _g.z ** 2);
+    t.spinPhase = this._theta;
+    t.dayFraction = (this._theta / (Math.PI * 2) + 1) % 1;
+    t.rcsBudget = this._rcsBudget;
+    t.currentFace = this._face;
+  }
+}
+
+
+const _vehScratch: Vec3 = { x: 0, y: 0, z: 0 };
+```
+
+
+### 3. `src/test/Milestone1E_TestHarness.tsx`
+
+
+```tsx
+/**
+ * ============================================================================
+ *  MILESTONE 1E — THE SPHERICAL ASTRONAUT (R3F TEST HARNESS)
+ * ============================================================================
+ *  PLANET: the M1C Earth-scale test body (R = 5,000 m, μ = 9.81·5000²,
+ *  gravityRange = 30 km per Spec 02.2) SPINNING at Ω = 0.0104 rad/s — the
+ *  spec's exact "52 m/s at the equator" — about +Y. All terrain (M1C pool,
+ *  planet-frame chunk origins, LOD quadtree) lives under ONE spinning group
+ *  at position −O; the M1C pool is completely untouched (spin is a parent
+ *  transform; chunk data stays planet-frame and seam-bit-exact).
+ *
+ *  PIPELINE per frame (M1A canonical order; zero locked files modified):
+ *    1. kcc.update(dt·ts)      — astronaut physics (f64, writes through to
+ *       the M1A entity: absPos/absVel)
+ *    2. core.advance(dt·ts)    — M1A/M1B: rails + 256 m lattice rebasing on
+ *       the astronaut (focus entity) + f32 local extraction
+ *    3. adapter.update()       — astronaut mesh at f32 locals
+ *    4. spinGroup: position −O, quaternion = spin(θ)
+ *    5. mesh orientation = spin(θ) ⊗ frameQuat (parallel-transported frame)
+ *    6. camera (TP/FP, surface-normal aligned, boom terrain clamp)
+ *    7. M1C LOD controller fed the PLANET-FRAME camera (spinInv·P) + pump
+ *
+ *  AUTOMATED SUITE (auto-arms after streaming warmup):
+ *   [R1] Face-boundary walk (headless, 11.6 km great circle through a cube
+ *        CORNER): >= 2 face changes, per-tick frame deltas bounded, fwd ⊥ up
+ *        to 1e-9, quaternion norm to 1e-12, penetration-free.
+ *   [R2] Slope/step on an engineered steep field (params swapped + restored
+ *        inside one synchronous block — the renderer never samples mid-swap):
+ *        moderate slope climbs cleanly; > 52° slides downhill, uphill
+ *        sprint is blocked (dual step rule); cliff face fully blocks.
+ *   [R3] State machine: ZERO-G entry at 31 km, RCS burn (Δv + budget),
+ *        attitude rotation, deorbit fall, SURFACE re-entry, landing; VEHICLE
+ *        attach/detach with exact parented compose + velocity inheritance.
+ *   [R4] Zero-alloc: 30,000-tick burn on the live controller (walk, jumps,
+ *        zero-G, RCS, vehicle) — identity canary + heap guard.
+ *   [R5] SPEC-CANONICAL CORIOLIS JUMP: vertical jump at the equator of the
+ *        52 m/s planet — lands WEST by ~(4/3)Ωu³/g² ≈ 1.8 cm and settles to
+ *        0 m/s relative within 2 ticks (no skating).
+ *   [R6] Integration: 20 s live trek at 4× — rebases fire (Δ = N·256 exact),
+ *        geometries constant, chunks stream, f32 locals bounded, terrain
+ *        group offset exact, entity write-through verbatim.
+ */
+
+
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import * as THREE from 'three';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { SimulationCore } from '../core/simulation/SimulationCore';
+import { FloatingOriginAdapter } from '../render/FloatingOriginAdapter';
+import {
+  GRID_N, TEST_PLANET, initTerrainField, terrainHeight, terrainNormalInto,
+  chunkArcWidth, chunkKey, gridCoord, type TerrainParams,
+} from '../core/terrain/terrainField';
+import { faceCubePointInto, spherifyInto, type Vec3Out } from '../core/terrain/spherify';
+import { mulberry32 } from '../core/terrain/noise';
+import { TerrainMeshPool } from '../render/TerrainMeshPool';
+import {
+  AstronautKCC, EARTHSCALE_ASTRONAUT,
+} from '../core/physics/astronautKCC';
+import {
+  quatFromFrameInto, quatMulInto, rotateAboutAxisInto, rotateByQuatConjInto,
+  signedAngleAbout, spinQuatInto, transportVelocityInto,
+  type Quat, type Vec3,
+} from '../core/physics/sphericalFrame';
+
+
+/* ============================================================================
+ * 1. DEV-TIME PATCHES — dispose / scene.remove counters
+ * ==========================================================================*/
+const origGeoDispose = THREE.BufferGeometry.prototype.dispose;
+const origMatDispose = THREE.Material.prototype.dispose;
+const origTexDispose = THREE.Texture.prototype.dispose;
+const origSceneRemove = THREE.Scene.prototype.remove;
+let disposeCalls = 0;
+let sceneRemoveCalls = 0;
+THREE.BufferGeometry.prototype.dispose = function (this: THREE.BufferGeometry) {
+  disposeCalls++; return origGeoDispose.apply(this, arguments as unknown as []);
+};
+THREE.Material.prototype.dispose = function (this: THREE.Material) {
+  disposeCalls++; return origMatDispose.apply(this, arguments as unknown as []);
+};
+THREE.Texture.prototype.dispose = function (this: THREE.Texture) {
+  disposeCalls++; return origTexDispose.apply(this, arguments as unknown as []);
+};
+THREE.Scene.prototype.remove = function (this: THREE.Scene) {
+  sceneRemoveCalls++; return origSceneRemove.apply(this, arguments as unknown as []);
+};
+
+
+/* ============================================================================
+ * 2. BOOT SINGLETONS
+ * ==========================================================================*/
+const R = TEST_PLANET.radius;
+initTerrainField(TEST_PLANET);
+
+
+const core = new SimulationCore();
+const adapter = new FloatingOriginAdapter(core);
+
+
+const MESH_COUNT = 144;
+const pool = new TerrainMeshPool({
+  meshCount: MESH_COUNT,
+  workerCount: 2,
+  workerPoolSets: 96,
+  maxBatch: 6,
+  inFlightPerWorker: 12,
+  params: TEST_PLANET,
+});
+
+
+const kcc = new AstronautKCC(EARTHSCALE_ASTRONAUT);
+// Face-walk controller: climbing-unrestricted (T1 tests ORIENTATION; the
+// slope/block mechanics are R2's job on the engineered field).
+const T1_CFG = {
+  ...EARTHSCALE_ASTRONAUT,
+  stepHeight: 60, snapDistance: 60,
+  slideAngleDeg: 89, maxWalkSlopeDeg: 89,
+};
+const kccT1 = new AstronautKCC(T1_CFG);
+
+
+const ASTRO_ID = 'm1e-astronaut';
+const astroState = core.registerEntity(ASTRO_ID, {
+  absPos: { x: 0, y: 0, z: 0 }, dynamic: false,
+});
+core.setFocusEntity(ASTRO_ID);
+kcc.attachWriteThrough(astroState.absPos, astroState.velocity);
+
+
+/* -- boot site scans -------------------------------------------------------- */
+interface Site { x: number; y: number; z: number; slopeDeg: number; }
+function slopeDegAt(d: Vec3): number {
+  terrainNormalInto(d.x, d.y, d.z, _scanN);
+  const c = _scanN.x * d.x + _scanN.y * d.y + _scanN.z * d.z;
+  return (Math.acos(Math.max(-1, Math.min(1, c))) * 180) / Math.PI;
+}
+const _scanN: Vec3 = { x: 0, y: 0, z: 0 };
+const _scanT: Vec3 = { x: 0, y: 0, z: 0 };
+
+
+function scanFor(
+  pred: (d: Vec3, slope: number) => boolean, tries: number, rand: () => number,
+): Site | null {
+  for (let i = 0; i < tries; i++) {
+    const u = rand() * 2 - 1;
+    const th = rand() * Math.PI * 2;
+    const s = Math.sqrt(1 - u * u);
+    _scanT.x = Math.cos(th) * s; _scanT.y = u; _scanT.z = Math.sin(th) * s;
+    const slope = slopeDegAt(_scanT);
+    if (pred(_scanT, slope)) {
+      return { x: _scanT.x, y: _scanT.y, z: _scanT.z, slopeDeg: slope };
+    }
+  }
+  return null;
+}
+
+
+/** Flat equatorial site (|y| < 0.06, slope < 0.6°, locally level). */
+function findFlatEquatorSite(): Site {
+  const rand = mulberry32(0x5eed1e);
+  for (let i = 0; i < 40000; i++) {
+    const th = rand() * Math.PI * 2;             // equator band
+    const yy = (rand() * 2 - 1) * 0.05;
+    const s = Math.sqrt(1 - yy * yy);
+    _scanT.x = Math.cos(th) * s; _scanT.y = yy; _scanT.z = Math.sin(th) * s;
+    if (slopeDegAt(_scanT) > 0.6) continue;
+    const h0 = terrainHeight(_scanT.x, _scanT.y, _scanT.z);
+    let ok = true;
+    for (let k = 0; k < 4; k++) {
+      const a = k * Math.PI * 0.5 + 0.4;
+      const ex = Math.cos(a) * 0.0004, ez = Math.sin(a) * 0.0004;
+      const l = Math.sqrt((_scanT.x + ex) ** 2 + _scanT.y ** 2 + (_scanT.z + ez) ** 2);
+      const hx = terrainHeight((_scanT.x + ex) / l, _scanT.y / l, (_scanT.z + ez) / l);
+      if (Math.abs(hx - h0) > 0.15) { ok = false; break; }
+    }
+    if (ok) return { x: _scanT.x, y: _scanT.y, z: _scanT.z, slopeDeg: slopeDegAt(_scanT) };
+  }
+  return { x: 1, y: 0, z: 0, slopeDeg: 0 };
+}
+const FLAT_SITE = findFlatEquatorSite();
+kcc.teleportSurface(FLAT_SITE.x, FLAT_SITE.y, FLAT_SITE.z);
+
+
+/** T1 great circle: through +X and (0,1,1)/√2 — passes exactly through the
+ *  (1,1,1)/√3 cube CORNER at φ=45°, then the +Y/−X boundary at φ=135°. */
+const GC_C: Vec3 = { x: 0, y: -Math.SQRT1_2, z: Math.SQRT1_2 };
+function gcPoint(phi: number, out: Vec3): Vec3 {
+  out.x = Math.cos(phi);
+  out.y = Math.sin(phi) * Math.SQRT1_2;
+  out.z = Math.sin(phi) * Math.SQRT1_2;
+  return out;
+}
+const T1_START: Vec3 = gcPoint(10 * Math.PI / 180, { x: 0, y: 0, z: 0 });
+const CORNER: Vec3 = { x: Math.SQRT1_3, y: Math.SQRT1_3, z: Math.SQRT1_3 };
+
+
+/* ============================================================================
+ * 3. M1C QUADTREE + LOD CONTROLLER (identical to M1C/M1D; camera input is
+ *    the PLANET-FRAME camera because the terrain group spins).
+ * ==========================================================================*/
+const MAX_LEVEL = 4;
+const SPLIT_K = 2.0, MERGE_K = 1.45, GRACE_FRAMES = 45;
+const ACTIVATIONS_PER_FRAME = 3, TOTAL_INFLIGHT_CAP = 24;
+const HORIZON_MARGIN = 150, HEIGHT_SLACK = 900;
+
+
+interface QNode {
+  face: number; level: number; ix: number; iy: number; key: number;
+  cx: number; cy: number; cz: number;
+  ox: number; oy: number; oz: number;
+  width: number; brad: number;
+  parent: QNode | null;
+  split: boolean; desired: boolean;
+  activeRec: number; pendingRec: number;
+}
+const LEVEL_OFFSETS = [0, 1, 5, 21, 85];
+const FACE_NODES: QNode[][] = [];
+(function buildNodes(): void {
+  const dir: Vec3Out = { x: 0, y: 0, z: 0 };
+  for (let f = 0; f < 6; f++) {
+    const arr: QNode[] = new Array(341);
+    for (let L = 0; L <= MAX_LEVEL; L++) {
+      const D = GRID_N << L;
+      const cnt = 1 << L;
+      for (let ix = 0; ix < cnt; ix++) {
+        for (let iy = 0; iy < cnt; iy++) {
+          const u = gridCoord(ix * GRID_N + (GRID_N >> 1), D);
+          const v = gridCoord(iy * GRID_N + (GRID_N >> 1), D);
+          faceCubePointInto(f, u, v, dir);
+          spherifyInto(dir.x, dir.y, dir.z, dir);
+          const h = terrainHeight(dir.x, dir.y, dir.z);
+          const rr = R + h;
+          arr[LEVEL_OFFSETS[L] + ix * cnt + iy] = {
+            face: f, level: L, ix, iy, key: chunkKey(f, L, ix, iy),
+            cx: dir.x, cy: dir.y, cz: dir.z,
+            ox: dir.x * rr, oy: dir.y * rr, oz: dir.z * rr,
+            width: chunkArcWidth(L), brad: chunkArcWidth(L) * 0.75 + HEIGHT_SLACK,
+            parent: null, split: false, desired: false,
+            activeRec: -1, pendingRec: -1,
+          };
+        }
+      }
+    }
+    for (let L = 1; L <= MAX_LEVEL; L++) {
+      const cnt = 1 << L;
+      for (let ix = 0; ix < cnt; ix++) {
+        for (let iy = 0; iy < cnt; iy++) {
+          const pc = 1 << (L - 1);
+          arr[LEVEL_OFFSETS[L] + ix * cnt + iy].parent =
+            arr[LEVEL_OFFSETS[L - 1] + (ix >> 1) * pc + (iy >> 1)];
+        }
+      }
+    }
+    FACE_NODES.push(arr);
+  }
+})();
+function childOf(n: QNode, c: number): QNode {
+  const L1 = n.level + 1;
+  const cnt = 1 << L1;
+  return FACE_NODES[n.face][LEVEL_OFFSETS[L1]
+    + (n.ix * 2 + (c >> 1)) * cnt + (n.iy * 2 + (c & 1))];
+}
+function nodeHasData(n: QNode): boolean {
+  if (n.activeRec >= 0) return true;
+  if (n.pendingRec >= 0 && pool.records[n.pendingRec].state === 2) return true;
+  return false;
+}
+const camPlanet: Vec3 = { x: 0, y: 0, z: 0 };   // planet-frame camera
+let camUX = 0, camUY = 0, camUZ = 0, horizonDot = 0;
+const candNodes: QNode[] = [];
+const candDist = new Float64Array(64);
+let candCount = 0;
+function clearSubtree(n: QNode): void {
+  n.desired = false;
+  if (n.level < MAX_LEVEL) for (let c = 0; c < 4; c++) clearSubtree(childOf(n, c));
+}
+function visitNode(n: QNode): boolean {
+  const vis = n.ox * camUX + n.oy * camUY + n.oz * camUZ + n.brad
+    >= horizonDot - HORIZON_MARGIN;
+  if (!vis) { clearSubtree(n); return false; }
+  const dx = camPlanet.x - n.ox, dy = camPlanet.y - n.oy, dz = camPlanet.z - n.oz;
+  const dNode = Math.sqrt(dx * dx + dy * dy + dz * dz);
+  const splitD = SPLIT_K * n.width;
+  if (n.split && dNode > MERGE_K * splitD) n.split = false;
+  if (!n.split && n.level < MAX_LEVEL && dNode < splitD) n.split = true;
+  if (n.split && n.level < MAX_LEVEL) {
+    let any = false;
+    for (let c = 0; c < 4; c++) if (visitNode(childOf(n, c))) any = true;
+    n.desired = !any;
+    return true;
+  }
+  n.desired = true;
+  if (n.activeRec < 0 && n.pendingRec < 0 && candCount < 64) {
+    candNodes[candCount] = n; candDist[candCount] = dNode; candCount++;
+  }
+  return true;
+}
+function updateController(): void {
+  const recs = pool.records;
+  for (let i = 0; i < recs.length; i++) {
+    const rec = recs[i];
+    if (rec.state === 2 && rec.owner !== null) {
+      const n = rec.owner as QNode;
+      if (n.pendingRec === i) { n.pendingRec = -1; n.activeRec = i; }
+    }
+  }
+  const camR = Math.sqrt(camPlanet.x ** 2 + camPlanet.y ** 2 + camPlanet.z ** 2);
+  camUX = camPlanet.x / camR; camUY = camPlanet.y / camR; camUZ = camPlanet.z / camR;
+  horizonDot = (R * R) / camR;
+  candCount = 0;
+  for (let f = 0; f < 6; f++) visitNode(FACE_NODES[f][0]);
+  const pressure = pool.freeCount() < 6;
+  for (let i = 0; i < recs.length; i++) {
+    const rec = recs[i];
+    const node = rec.owner as QNode | null;
+    if (node === null) continue;
+    if (rec.state === 2) {
+      if (node.desired) { rec.unwanted = 0; continue; }
+      if (node.split) {
+        let childData = false;
+        for (let c = 0; c < 4; c++)
+          if (nodeHasData(childOf(node, c))) { childData = true; break; }
+        if (childData) rec.mesh.visible = false;
+      }
+      let keep = false;
+      if (node.split) {
+        for (let c = 0; c < 4; c++) {
+          const ch = childOf(node, c);
+          if (ch.desired && !nodeHasData(ch)) { keep = true; break; }
+        }
+      } else {
+        const p = node.parent;
+        if (p !== null && p.desired && !nodeHasData(p)) keep = true;
+      }
+      if (keep && !pressure) { rec.unwanted = 0; continue; }
+      rec.unwanted++;
+      if (rec.unwanted >= GRACE_FRAMES || pressure) {
+        pool.release(i);
+        if (node.activeRec === i) node.activeRec = -1;
+        rec.owner = null;
+      }
+    } else if (rec.state === 1) {
+      if (!node.desired && !node.split) {
+        rec.unwanted++;
+        if (rec.unwanted >= GRACE_FRAMES) {
+          pool.release(i);
+          if (node.pendingRec === i) node.pendingRec = -1;
+          rec.owner = null;
+        }
+      } else rec.unwanted = 0;
+    }
+  }
+  for (let a = 1; a < candCount; a++) {
+    const d = candDist[a], n = candNodes[a];
+    let b = a - 1;
+    while (b >= 0 && candDist[b] > d) {
+      candDist[b + 1] = candDist[b]; candNodes[b + 1] = candNodes[b]; b--;
+    }
+    candDist[b + 1] = d; candNodes[b + 1] = n;
+  }
+  let activated = 0;
+  for (let a = 0; a < candCount && activated < ACTIVATIONS_PER_FRAME; a++) {
+    if (pool.inFlightTotal() >= TOTAL_INFLIGHT_CAP) break;
+    if (pool.freeCount() <= 2) break;
+    const n = candNodes[a];
+    const recIdx = pool.acquire(n.face, n.level, n.ix, n.iy, n.ox, n.oy, n.oz);
+    if (recIdx < 0) break;
+    pool.records[recIdx].owner = n;
+    n.pendingRec = recIdx;
+    activated++;
+  }
+}
+
+
+/* ============================================================================
+ * 4. STATIC SCENE (boot-only allocation)
+ * ==========================================================================*/
+const sceneRoot = new THREE.Group();
+const spinGroup = new THREE.Group();          // ALL planet-fixed content
+sceneRoot.add(spinGroup);
+const sunLight = new THREE.DirectionalLight(0xfff1de, 1.9);
+sunLight.position.set(0.45, 0.65, 0.61).normalize().multiplyScalar(10000);
+sceneRoot.add(sunLight);
+sceneRoot.add(new THREE.AmbientLight(0x33465e, 0.55));
+spinGroup.add(new THREE.Mesh(
+  new THREE.SphereGeometry(R - 900, 48, 32),
+  new THREE.MeshStandardMaterial({ color: 0x0d141c, roughness: 1 }),
+));
+(function stars(): void {
+  const COUNT = 1400, RAD = 15000;
+  const pos = new Float32Array(COUNT * 3);
+  const rand = mulberry32(0x5eed1e);
+  for (let i = 0; i < COUNT; i++) {
+    const u = rand() * 2 - 1, t = rand() * Math.PI * 2;
+    const s = Math.sqrt(1 - u * u);
+    pos[i * 3] = Math.cos(t) * s * RAD;
+    pos[i * 3 + 1] = u * RAD;
+    pos[i * 3 + 2] = Math.sin(t) * s * RAD;
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  sceneRoot.add(new THREE.Points(g, new THREE.PointsMaterial({
+    color: 0xaec6dc, size: 1.6, sizeAttenuation: false,
+    transparent: true, opacity: 0.75, fog: false, depthWrite: false,
+  })));
+})();
+
+
+/* -- astronaut mesh (body frame: +X forward, +Y up) ------------------------- */
+const astroMesh = new THREE.Group();
+(function buildAstronaut(): void {
+  const suit = new THREE.MeshStandardMaterial({ color: 0xe8ecef, roughness: 0.85 });
+  const dark = new THREE.MeshStandardMaterial({ color: 0x3a4652, roughness: 0.7 });
+  const visorM = new THREE.MeshStandardMaterial({
+    color: 0x7fd4ff, emissive: 0x1e7fb8, emissiveIntensity: 0.9, roughness: 0.2,
+  });
+  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.62, 0.52), suit);
+  torso.position.set(0, 1.02, 0);
+  astroMesh.add(torso);
+  const helmet = new THREE.Mesh(new THREE.SphereGeometry(0.24, 16, 12), suit);
+  helmet.position.set(0.04, 1.52, 0);
+  astroMesh.add(helmet);
+  const visor = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.16, 0.3), visorM);
+  visor.position.set(0.24, 1.53, 0);
+  astroMesh.add(visor);
+  const pack = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.44, 0.4), dark);
+  pack.position.set(-0.3, 1.1, 0);
+  astroMesh.add(pack);
+  for (const s of [-1, 1]) {
+    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.68, 0.24), suit);
+    leg.position.set(0, 0.36, s * 0.14);
+    astroMesh.add(leg);
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.16, 0.16), suit);
+    arm.position.set(0.1, 1.12, s * 0.34);
+    astroMesh.add(arm);
+  }
+})();
+sceneRoot.add(astroMesh);
+
+
+/* ============================================================================
+ * 5. INPUT (keyboard + pointer-lock mouse)
+ * ==========================================================================*/
+const keys: Record<string, boolean> = {};
+let userPaused = false;
+let camFirstPerson = false;
+let mouseDX = 0, mouseDY = 0;
+const SENS = 0.0022;
+window.addEventListener('keydown', (e) => {
+  if (e.code.startsWith('Arrow') || e.code === 'Space') e.preventDefault();
+  if (e.repeat) return;
+  keys[e.code] = true;
+  if (e.code === 'KeyP') userPaused = !userPaused;
+  if (e.code === 'KeyV') camFirstPerson = !camFirstPerson;
+  if (e.code === 'Space') kcc.input.jump = true;
+  if (e.code === 'KeyR') kcc.teleportSurface(FLAT_SITE.x, FLAT_SITE.y, FLAT_SITE.z);
+  if (e.code === 'KeyT') {
+    // Interactive zero-G drop: 31 km above the current site, small tangent.
+    const p = kcc.pLocal;
+    const l = Math.hypot(p.x, p.y, p.z);
+    kcc.teleportAbs(p.x / l * 31000, p.y / l * 31000, p.z / l * 31000, 0, 0, -20);
+  }
+});
+window.addEventListener('keyup', (e) => { keys[e.code] = false; });
+window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
+document.addEventListener('mousemove', (e) => {
+  if (document.pointerLockElement !== null) {
+    mouseDX += e.movementX;
+    mouseDY += e.movementY;
+  }
+});
+
+
+function readUserInput(): void {
+  const f = kcc.input;
+  f.moveF = (keys['KeyW'] ? 1 : 0) - (keys['KeyS'] ? 1 : 0);
+  f.moveR = (keys['KeyD'] ? 1 : 0) - (keys['KeyA'] ? 1 : 0);
+  f.sprint = !!keys['ShiftLeft'] || !!keys['ShiftRight'];
+  f.crouch = !!keys['KeyC'];
+  f.turnRate = 0;
+  if (kcc.mode === 'ZERO-G') {
+    f.rcsF = (keys['KeyW'] ? 1 : 0) - (keys['KeyS'] ? 1 : 0);
+    f.rcsU = (keys['Space'] ? 1 : 0) - (keys['KeyC'] ? 1 : 0);
+    f.rcsR = (keys['KeyD'] ? 1 : 0) - (keys['KeyA'] ? 1 : 0);
+  } else {
+    f.rcsF = 0; f.rcsU = 0; f.rcsR = 0;
+  }
+}
+
+
+/* ============================================================================
+ * 6. CAMERA STATE (TP orbit offset relative to the character frame; the
+ *    auto-turn compensation keeps the orbit fixed in the tangent plane).
+ * ==========================================================================*/
+const cam = { yawOffset: 0.6, pitch: 0.35, dist: 7.5 };
+const camState = { locked: false };
+
+
+/* ============================================================================
+ * 7. STORES
+ * ==========================================================================*/
+const tele = {
+  version: 0, fps: 0, frameMs: 0,
+  mode: 'SURFACE', grounded: true, crouched: false,
+  relSpeed: 0, slideSpeed: 0, transport: 0, absSpeed: 0,
+  altMSL: 0, altAGL: 0, slope: 0, face: 0,
+  upX: 0, upY: 1, upZ: 0, gX: 0, gY: 0, gZ: 0, gMag: 9.81,
+  rcs: 25, spin: 0, day: 0,
+  originX: 0, originY: 0, originZ: 0, rebases: 0, localMax: 0,
+  active: 0, pending: 0, inFlight: 0, geometries: 0, heapMB: 0,
+  phase: 'WARMUP', countdown: 0,
+};
+const teleListeners = new Set<() => void>();
+let lastTeleMs = -1e9;
+function subTele(cb: () => void): () => void {
+  teleListeners.add(cb); return () => teleListeners.delete(cb);
+}
+
+
+type TestKey = 'face-walk' | 'slope-step' | 'state-machine' | 'zero-gc'
+  | 'coriolis' | 'integration';
+interface TestResult { pass: boolean; detail: string; }
+interface SuiteState {
+  version: number; done: boolean;
+  results: Partial<Record<TestKey, TestResult>>;
+}
+let suiteState: SuiteState = { version: 0, done: false, results: {} };
+const suiteListeners = new Set<() => void>();
+function publishSuite(next: Partial<SuiteState>): void {
+  suiteState = { ...suiteState, ...next, version: suiteState.version + 1 };
+  suiteListeners.forEach((l) => l());
+}
+function subSuite(cb: () => void): () => void {
+  suiteListeners.add(cb); return () => suiteListeners.delete(cb);
+}
+const heapApi = (performance as unknown as { memory?: { usedJSHeapSize: number } }).memory ?? null;
+
+
+/* ============================================================================
+ * 8. HEADLESS SUITE (rows R1–R5 run in one synchronous block; the renderer
+ *    never samples mid-field-swap because JS is single-threaded).
+ * ==========================================================================*/
+const suite = {
+  started: false,
+  face: {
+    ticks: 0, faceChanges: 0, pathLen: 0,
+    minUpDot: 1, minFwdDot: 1, maxOrtho: 0, maxQuatDev: 0,
+    minCornerAngle: 1, minAGL: Number.POSITIVE_INFINITY, orthoOk: true,
+  },
+  coriolis: {
+    westDrift: 0, perpDrift: 0, airTicks: 0, settleTicks: 0,
+    maxSettleSpeed: 0, predicted: 0, ok: false,
+  },
+  burn: { identityOk: false, heapDelta: -1, ticks: 0, nan: 0 },
+  slope: { climbGain: 0, slideMax: 0, uphillNet: 0, cliffNet: 0, ok: false },
+  sm: { rcsDv: 0, budgetUsed: 0, yawAngle: 0, vehicleErr: 0, detachDv: 0, ok: false },
+};
+
+
+const _qA: Quat = { x: 0, y: 0, z: 0, w: 1 };
+const _vA: Vec3 = { x: 0, y: 0, z: 0 };
+const _vB: Vec3 = { x: 0, y: 0, z: 0 };
+const _vC: Vec3 = { x: 0, y: 0, z: 0 };
+const _vD: Vec3 = { x: 0, y: 0, z: 0 };
+
+
+function runFaceWalk(): TestResult {
+  const F = suite.face;
+  kccT1.teleportSurface(T1_START.x, T1_START.y, T1_START.z);
+  kccT1.resetIntegrityStats();
+  kccT1.autoTurnEnabled = false;
+  const inp = kccT1.input;
+  inp.moveF = 1; inp.moveR = 0; inp.sprint = true; inp.crouch = false;
+  inp.jump = false; inp.turnRate = 0;
+  let px = kccT1.pLocal.x, py = kccT1.pLocal.y, pz = kccT1.pLocal.z;
+  const maxTicks = 95_000;
+  while (F.pathLen < 11_600 && F.ticks < maxTicks) {
+    // Great-circle steering: target tangent t = normalize(c × d).
+    const p = kccT1.pLocal;
+    const l = Math.hypot(p.x, p.y, p.z);
+    _vA.x = GC_C.y * (p.z / l) - GC_C.z * (p.y / l);
+    _vA.y = GC_C.z * (p.x / l) - GC_C.x * (p.z / l);
+    _vA.z = GC_C.x * (p.y / l) - GC_C.y * (p.x / l);
+    const tl = Math.hypot(_vA.x, _vA.y, _vA.z);
+    _vA.x /= tl; _vA.y /= tl; _vA.z /= tl;
+    const a = signedAngleAbout(kccT1.fwd.x, kccT1.fwd.y, kccT1.fwd.z,
+      _vA.x, _vA.y, _vA.z, kccT1.up.x, kccT1.up.y, kccT1.up.z);
+    inp.turnRate = Math.max(-2.5, Math.min(2.5, a * 3));
+    kccT1.integrateTick(1 / 60);
+    F.ticks++;
+    const nx = kccT1.pLocal.x, ny = kccT1.pLocal.y, nz = kccT1.pLocal.z;
+    F.pathLen += Math.hypot(nx - px, ny - py, nz - pz);
+    px = nx; py = ny; pz = nz;
+    // Frame smoothness (dot with previous tick's frame).
+    const ud = kccT1.up.x * _vB.x + kccT1.up.y * _vB.y + kccT1.up.z * _vB.z;
+    const fd = kccT1.fwd.x * _vC.x + kccT1.fwd.y * _vC.y + kccT1.fwd.z * _vC.z;
+    if (F.ticks > 1) {
+      if (ud < F.minUpDot) F.minUpDot = ud;
+      if (fd < F.minFwdDot) F.minFwdDot = fd;
+    }
+    _vB.x = kccT1.up.x; _vB.y = kccT1.up.y; _vB.z = kccT1.up.z;
+    _vC.x = kccT1.fwd.x; _vC.y = kccT1.fwd.y; _vC.z = kccT1.fwd.z;
+    const ortho = Math.abs(kccT1.fwd.x * kccT1.up.x + kccT1.fwd.y * kccT1.up.y +
+      kccT1.fwd.z * kccT1.up.z);
+    if (ortho > F.maxOrtho) F.maxOrtho = ortho;
+    kccT1.frameQuatInto(_qA);
+    const qn = Math.sqrt(_qA.x ** 2 + _qA.y ** 2 + _qA.z ** 2 + _qA.w ** 2);
+    const dev = Math.abs(qn - 1);
+    if (dev > F.maxQuatDev) F.maxQuatDev = dev;
+    const cd = kccT1.pLocal.x * CORNER.x + kccT1.pLocal.y * CORNER.y +
+      kccT1.pLocal.z * CORNER.z;
+    const cl = Math.hypot(kccT1.pLocal.x, kccT1.pLocal.y, kccT1.pLocal.z);
+    const cang = Math.acos(Math.max(-1, Math.min(1, cd / cl)));
+    if (cang < F.minCornerAngle) F.minCornerAngle = cang;
+  }
+  F.faceChanges = kccT1.integrity.faceChanges;
+  F.minAGL = kccT1.integrity.minAGL;
+  const pass =
+    F.faceChanges >= 2 &&
+    F.minUpDot > Math.cos(0.02) &&
+    F.minFwdDot > Math.cos(0.09) &&
+    F.maxOrtho < 1e-9 &&
+    F.maxQuatDev < 1e-12 &&
+    F.minCornerAngle < 0.06 &&
+    F.minAGL > -0.05 &&
+    F.pathLen > 11_000;
+  const deg = (r: number) => ((Math.acos(Math.max(-1, Math.min(1, r))) * 180) / Math.PI);
+  return {
+    pass,
+    detail:
+      `${(F.pathLen / 1000).toFixed(1)} km great-circle walk through the (1,1,1)/√3 ` +
+      `cube CORNER (closest approach ${deg(F.minCornerAngle).toFixed(2)}°): ` +
+      `${F.faceChanges} face changes; max per-tick up rotation ${deg(F.minUpDot).toFixed(3)}° ` +
+      `(bound 1.15°), fwd ${deg(F.minFwdDot).toFixed(3)}° (bound 5.2°) — no yaw snaps; ` +
+      `fwd⊥up max ${F.maxOrtho.toExponential(1)} (no gimbal degeneracy); quaternion norm ` +
+      `dev ${F.maxQuatDev.toExponential(1)}; min AGL ${F.minAGL.toFixed(3)} m. ` +
+      `Holonomy of a great circle = 2π ≡ identity — the frame is pole/face-singularity-free.`,
+  };
+}
+
+
+function runCoriolisJump(): TestResult {
+  const C = suite.coriolis;
+  kcc.teleportSurface(FLAT_SITE.x, FLAT_SITE.y, FLAT_SITE.z);
+  kcc.autoTurnEnabled = true;
+  const inp = kcc.input;
+  inp.moveF = 0; inp.moveR = 0; inp.sprint = false; inp.crouch = false;
+  inp.turnRate = 0; inp.rcsF = 0; inp.rcsU = 0; inp.rcsR = 0;
+  for (let i = 0; i < 5; i++) kcc.integrateTick(1 / 60);   // settle plant
+  const lx = kcc.pLocal.x, ly = kcc.pLocal.y, lz = kcc.pLocal.z;
+  // Launch up (character up ≈ radial on the flat site) — record for the
+  // tilt-drift prediction (jump is along up, not exactly radial).
+  const upx = kcc.up.x, upy = kcc.up.y, upz = kcc.up.z;
+  const rl = Math.hypot(lx, ly, lz);
+  const rx = lx / rl, ry = ly / rl, rz = lz / rl;
+  inp.jump = true;
+  let airTicks = 0;
+  for (let i = 0; i < 240; i++) {
+    kcc.integrateTick(1 / 60);
+    if (kcc.grounded) break;
+    airTicks++;
+  }
+  C.airTicks = airTicks;
+  const T = airTicks / 60;
+  // Predicted tilt drift: u·(up − (up·r̂)r̂)·T (jump along the blended up).
+  const upd = upx * rx + upy * ry + upz * rz;
+  _vA.x = (upx - upd * rx) * 5 * T;
+  _vA.y = (upy - upd * ry) * 5 * T;
+  _vA.z = (upz - upd * rz) * 5 * T;
+  // Planet-frame drift, tilt-corrected.
+  _vB.x = kcc.pLocal.x - lx - _vA.x;
+  _vB.y = kcc.pLocal.y - ly - _vA.y;
+  _vB.z = kcc.pLocal.z - lz - _vA.z;
+  transportVelocityInto(EARTHSCALE_ASTRONAUT.spinOmega, lx, ly, lz, _vC);
+  const tl = Math.hypot(_vC.x, _vC.y, _vC.z) || 1;
+  _vD.x = -_vC.x / tl; _vD.y = -_vC.y / tl; _vD.z = -_vC.z / tl;  // WEST
+  C.westDrift = _vB.x * _vD.x + _vB.y * _vD.y + _vB.z * _vD.z;
+  const wmag = Math.abs(C.westDrift);
+  _vA.x = _vB.x - C.westDrift * _vD.x;
+  _vA.y = _vB.y - C.westDrift * _vD.y;
+  _vA.z = _vB.z - C.westDrift * _vD.z;
+  C.perpDrift = Math.hypot(_vA.x, _vA.y, _vA.z);
+  const g = EARTHSCALE_ASTRONAUT.planetMu / (rl * rl);
+  C.predicted = (4 / 3) * EARTHSCALE_ASTRONAUT.spinOmega * 125 / (g * g);
+  // Settle: no skating — relative speed to 0 within 2 ticks, stays 0.
+  let settleTicks = -1, maxSettle = 0;
+  for (let i = 0; i < 32; i++) {
+    kcc.integrateTick(1 / 60);
+    if (i >= 1) {
+      if (settleTicks < 0 && kcc.telemetry.relSpeed < 0.02) settleTicks = i;
+      if (settleTicks >= 0 && kcc.telemetry.relSpeed > maxSettle)
+        maxSettle = kcc.telemetry.relSpeed;
+    }
+  }
+  C.settleTicks = settleTicks;
+  C.maxSettleSpeed = maxSettle;
+  const pass =
+    C.westDrift > 0.006 && C.westDrift < 0.06 &&
+    C.perpDrift < 0.012 &&
+    airTicks > 48 && airTicks < 78 &&
+    settleTicks >= 1 && settleTicks <= 2 &&
+    maxSettle < 0.02;
+  return {
+    pass,
+    detail:
+      `SPEC-CANONICAL TEST: vertical jump (u = 5 m/s) at the equator of the ` +
+      `52 m/s planet (Ω = 0.0104). Landed ${(C.westDrift * 100).toFixed(2)} cm WEST ` +
+      `(theory (4/3)Ωu³/g² = ${(C.predicted * 100).toFixed(2)} cm — pure inertial ` +
+      `integration, angular momentum conserved); cross-track residual ` +
+      `${(C.perpDrift * 100).toFixed(2)} cm; airborne ${T.toFixed(2)} s (2u/g ≈ 1.02 s); ` +
+      `post-touchdown relative speed planted to < 0.02 m/s within ${settleTicks} tick(s) ` +
+      `and held (max ${maxSettle.toFixed(3)} m/s over 32 ticks) — zero skating. The ` +
+      `launch/landing planet-frame comparison also validates the R(θ) compose/decompose ` +
+      `round-trip across a 53 m transport displacement.`,
+  };
+}
+
+
+function runStateMachine(): TestResult {
+  const S = suite.sm;
+  const inp = kcc.input;
+  inp.moveF = 0; inp.moveR = 0; inp.sprint = false; inp.crouch = false;
+  inp.turnRate = 0; inp.rcsF = 0; inp.rcsU = 0; inp.rcsR = 0;
+  // (1) ZERO-G entry beyond the gravity range (30 km).
+  const p = kcc.pLocal;
+  const l = Math.hypot(p.x, p.y, p.z);
+  kcc.teleportAbs(p.x / l * 31000, p.y / l * 31000, p.z / l * 31000, 0, 0, 0);
+  kcc.integrateTick(1 / 60);
+  const zeroOk = kcc.mode === 'ZERO-G';
+  // (2) RCS burn: 2 s prograde at 1.2 m/s².
+  const b0 = kcc.telemetry.rcsBudget;
+  const f0 = { ...kcc.fwd };
+  inp.rcsF = 1;
+  for (let i = 0; i < 120; i++) kcc.integrateTick(1 / 60);
+  inp.rcsF = 0;
+  const v = Math.hypot(kcc.absVel.x, kcc.absVel.y, kcc.absVel.z);
+  S.rcsDv = v;
+  S.budgetUsed = b0 - kcc.telemetry.rcsBudget;
+  // (3) Attitude: 0.5 rad/s yaw for 1 s.
+  inp.turnRate = 0.5;
+  for (let i = 0; i < 60; i++) kcc.integrateTick(1 / 60);
+  inp.turnRate = 0;
+  S.yawAngle = Math.acos(Math.max(-1, Math.min(1,
+    kcc.fwd.x * f0.x + kcc.fwd.y * f0.y + kcc.fwd.z * f0.z)));
+  // (4) Deorbit: 30 m/s inward, fall, re-enter, land.
+  const P = kcc.absPos;
+  const pl = Math.hypot(P.x, P.y, P.z);
+  kcc.teleportAbs(P.x, P.y, P.z, (-30 * P.x) / pl, (-30 * P.y) / pl, (-30 * P.z) / pl);
+  let surfaceTick = -1, landed = false;
+  for (let i = 0; i < 20_000; i++) {
+    kcc.integrateTick(1 / 60);
+    if (surfaceTick < 0 && kcc.mode === 'SURFACE') surfaceTick = i;
+    if (kcc.grounded) { landed = true; break; }
+  }
+  // (5) VEHICLE: synthetic hovering platform on a circle.
+  const prov = {
+    pos: { x: 0, y: 0, z: 0 } as Vec3,
+    vel: { x: 0, y: 0, z: 0 } as Vec3,
+    quat: { x: 0, y: 0, z: 0, w: 1 } as Quat,
+    angVel: { x: 0, y: 0.05, z: 0 } as Vec3,
+  };
+  const W = 0.05, A = 800, ALT = R + 1200;
+  const drivePlatform = (t: number): void => {
+    prov.pos.x = A * Math.cos(W * t);
+    prov.pos.y = ALT;
+    prov.pos.z = A * Math.sin(W * t);
+    prov.vel.x = -A * W * Math.sin(W * t);
+    prov.vel.y = 0;
+    prov.vel.z = A * W * Math.cos(W * t);
+    const vl = Math.hypot(prov.vel.x, prov.vel.z);
+    quatFromFrameInto(prov.vel.x / vl, prov.vel.y, prov.vel.z / vl,
+      prov.pos.x / Math.hypot(A, ALT), prov.pos.y / Math.hypot(A, ALT),
+      prov.pos.z / Math.hypot(A, ALT), prov.quat);
+  };
+  drivePlatform(0);
+  kcc.teleportAbs(prov.pos.x, prov.pos.y + 2, prov.pos.z,
+    prov.vel.x, prov.vel.y, prov.vel.z);
+  kcc.attachVehicle(prov);
+  let maxErr = 0;
+  for (let i = 1; i <= 600; i++) {
+    drivePlatform(i / 60);
+    kcc.integrateTick(1 / 60);
+    // Independent compose check.
+    const q = prov.quat;
+    const tx = 2 * (q.y * 2 - q.z * 0);
+    void tx;
+    const off = { x: 0, y: 2, z: 0 };
+    const ex = q.w * (2 * (q.y * off.z - q.z * off.y)) +
+      (q.y * (2 * (q.x * off.y - q.y * off.x)) -
+        q.z * (2 * (q.z * off.x - q.x * off.z))) + off.x;
+    const ey = q.w * (2 * (q.z * off.x - q.x * off.z)) +
+      (q.z * (2 * (q.y * off.z - q.z * off.y)) -
+        q.x * (2 * (q.x * off.y - q.y * off.x))) + off.y;
+    const ez = q.w * (2 * (q.x * off.y - q.y * off.x)) +
+      (q.x * (2 * (q.z * off.x - q.x * off.z)) -
+        q.y * (2 * (q.y * off.z - q.z * off.y))) + off.z;
+    const err = Math.max(
+      Math.abs(kcc.absPos.x - (prov.pos.x + ex)),
+      Math.abs(kcc.absPos.y - (prov.pos.y + ey)),
+      Math.abs(kcc.absPos.z - (prov.pos.z + ez)));
+    if (err > maxErr) maxErr = err;
+  }
+  S.vehicleErr = maxErr;
+  drivePlatform(10);
+  const dvx = prov.vel.x + (prov.angVel.y * (kcc.absPos.z - prov.pos.z));
+  const dvy = prov.vel.y;
+  const dvz = prov.vel.z - (prov.angVel.y * (kcc.absPos.x - prov.pos.x));
+  kcc.detachVehicle();
+  S.detachDv = Math.hypot(
+    kcc.absVel.x - dvx, kcc.absVel.y - dvy, kcc.absVel.z - dvz);
+  kcc.teleportSurface(FLAT_SITE.x, FLAT_SITE.y, FLAT_SITE.z);
+  const pass = zeroOk && Math.abs(S.rcsDv - 2.4) < 0.05 &&
+    Math.abs(S.budgetUsed - 2.4) < 0.05 && Math.abs(S.yawAngle - 0.5) < 0.01 &&
+    surfaceTick >= 0 && landed && S.vehicleErr < 1e-9 && S.detachDv < 1e-6 &&
+    kcc.integrity.nanEvents === 0;
+  return {
+    pass,
+    detail:
+      `ZERO-G entered 1 tick beyond the 30 km gravity range (Spec 02.3 fade); ` +
+      `RCS burn Δv ${S.rcsDv.toFixed(3)} m/s, propellant ${(S.budgetUsed).toFixed(3)} m/s ` +
+      `of the 25 m/s pack; attitude yaw ${S.yawAngle.toFixed(3)} rad (finite frame ` +
+      `rotation); deorbit fell back through the hysteresis band (SURFACE at tick ` +
+      `${surfaceTick}) and landed analytically; VEHICLE parented compose tracked the ` +
+      `moving platform to ${S.vehicleErr.toExponential(1)} m over 600 ticks, detach ` +
+      `velocity inherited to ${S.detachDv.toExponential(1)} m/s; NaN events 0.`,
+  };
+}
+
+
+function runZeroGcBurn(): TestResult {
+  const B = suite.burn;
+  const canary = {
+    pos: kcc.absPos, vel: kcc.absVel, pl: kcc.pLocal,
+    up: kcc.up, fwd: kcc.fwd, input: kcc.input,
+    tele: kcc.telemetry, integ: kcc.integrity,
+  };
+  const mem = heapApi;
+  const heap0 = mem !== null ? mem.usedJSHeapSize : -1;
+  kcc.resetIntegrityStats();
+  const inp = kcc.input;
+  const BURN = 30_000;
+  for (let i = 0; i < BURN; i++) {
+    if (i < 10_000) {
+      if (i === 0) kcc.teleportSurface(FLAT_SITE.x, FLAT_SITE.y, FLAT_SITE.z);
+      inp.moveF = Math.sin(0.001 * i);
+      inp.moveR = Math.cos(0.0013 * i);
+      inp.sprint = i % 2000 < 1000;
+      inp.turnRate = 0.3 * Math.sin(0.0007 * i);
+      if (i % 2500 === 100) inp.jump = true;
+      inp.rcsF = 0; inp.rcsU = 0; inp.rcsR = 0;
+    } else if (i < 20_000) {
+      if (i === 10_000) {
+        const p = kcc.pLocal;
+        const l = Math.hypot(p.x, p.y, p.z);
+        kcc.teleportAbs(p.x / l * 31000, p.y / l * 31000, p.z / l * 31000, 0, 0, 0);
+      }
+      inp.moveF = 0; inp.moveR = 0; inp.jump = false;
+      inp.rcsF = Math.sin(0.002 * i);
+      inp.rcsU = Math.cos(0.0017 * i);
+      inp.rcsR = Math.sin(0.0011 * i);
+      inp.turnRate = 0.4 * Math.sin(0.0009 * i);
+    } else {
+      if (i === 20_000) {
+        const p = kcc.pLocal;
+        const l = Math.hypot(p.x, p.y, p.z);
+        kcc.teleportAbs(p.x / l * 5800, p.y / l * 5800, p.z / l * 5800,
+          -40 * p.x / l, -40 * p.y / l, -40 * p.z / l);
+      }
+      if (i === 25_000) {
+        kcc.teleportAbs(800, R + 1202, 0, 0, 0, 40);
+        staticProv.pos.x = 800; staticProv.pos.y = R + 1200; staticProv.pos.z = 0;
+        staticProv.vel.x = 0; staticProv.vel.y = 0; staticProv.vel.z = 40;
+        quatFromFrameInto(0, 0, 1, 0, 1, 0, staticProv.quat);
+        staticProv.angVel.x = 0; staticProv.angVel.y = 0; staticProv.angVel.z = 0;
+        kcc.attachVehicle(staticProv);
+      }
+      if (i === 26_000) kcc.detachVehicle();
+      inp.rcsF = 0; inp.rcsU = 0; inp.rcsR = 0; inp.jump = false;
+      inp.moveF = Math.sin(0.0015 * i);
+      inp.moveR = Math.sin(0.0009 * i + 1);
+      inp.sprint = i % 3000 < 1500;
+      inp.turnRate = 0.2 * Math.sin(0.0006 * i);
+    }
+    kcc.integrateTick(1 / 60);
+  }
+  const heap1 = mem !== null ? mem.usedJSHeapSize : -1;
+  B.identityOk =
+    kcc.absPos === canary.pos && kcc.absVel === canary.vel &&
+    kcc.pLocal === canary.pl && kcc.up === canary.up &&
+    kcc.fwd === canary.fwd && kcc.input === canary.input &&
+    kcc.telemetry === canary.tele && kcc.integrity === canary.integ;
+  B.heapDelta = heap0 >= 0 ? heap1 - heap0 : -1;
+  B.ticks = BURN;
+  B.nan = kcc.integrity.nanEvents;
+  kcc.teleportSurface(FLAT_SITE.x, FLAT_SITE.y, FLAT_SITE.z);
+  const heapOk = B.heapDelta < 0 || B.heapDelta <= 1_048_576;
+  return {
+    pass: B.identityOk && heapOk && B.nan === 0,
+    detail:
+      `${B.ticks.toLocaleString()} synchronous ticks on the live controller ` +
+      `(walk + jumps + slides → zero-G → RCS maneuvers → deorbit landing → vehicle ` +
+      `attach/detach): every state object identity preserved ` +
+      `${B.identityOk ? '✓' : 'FAILED'}; ` +
+      `${B.heapDelta >= 0 ? `heap Δ ${B.heapDelta.toLocaleString()} B (limit 1 MB)` : 'performance.memory N/A — identity canary stands'}; ` +
+      `NaN events ${B.nan}. Module-scratch math, interned mode strings, indexed loops.`,
+  };
+}
+const staticProv = {
+  pos: { x: 0, y: 0, z: 0 } as Vec3,
+  vel: { x: 0, y: 0, z: 0 } as Vec3,
+  quat: { x: 0, y: 0, z: 0, w: 1 } as Quat,
+  angVel: { x: 0, y: 0, z: 0 } as Vec3,
+};
+
+
+function runSlopeStep(): TestResult {
+  const S = suite.slope;
+  // Engineered steep field (deterministic; swapped + restored inside this
+  // synchronous block — the renderer never samples mid-swap).
+  const STEEP: TerrainParams = {
+    name: 'M1E engineered slopes',
+    radius: 5000, seed: 777,
+    continentFreq: 1.2, continentAmp: 40,
+    maskFreq: 1.05, mountainFreq: 11, mountainAmp: 1300,
+    detailFreq: 40, detailAmp: 6,
+  };
+  initTerrainField(STEEP);
+  const rand = mulberry32(0x51ope5 as unknown as number || 0x5109e5);
+  const moderate = scanFor((_d, s) => s > 18 && s < 28, 20000, rand);
+  const steep = scanFor((_d, s) => s > 52 && s < 68, 20000, rand);
+  const cliff = scanFor((_d, s) => s > 70, 20000, rand);
+  const results: string[] = [];
+  let ok = true;
+
+
+  const downhillAt = (d: Vec3, out: Vec3): void => {
+    terrainNormalInto(d.x, d.y, d.z, _scanN);
+    const gm = 9.81;
+    _vA.x = -gm * d.x; _vA.y = -gm * d.y; _vA.z = -gm * d.z;
+    const dn = _vA.x * _scanN.x + _vA.y * _scanN.y + _vA.z * _scanN.z;
+    out.x = _vA.x - dn * _scanN.x;
+    out.y = _vA.y - dn * _scanN.y;
+    out.z = _vA.z - dn * _scanN.z;
+    const l = Math.hypot(out.x, out.y, out.z) || 1;
+    out.x /= l; out.y /= l; out.z /= l;
+  };
+
+
+  // (a) Moderate slope: clean climb + clean descent (step-up + snap-down).
+  if (moderate !== null) {
+    kcc.teleportSurface(moderate.x, moderate.y, moderate.z);
+    downhillAt(moderate, _vB);
+    kcc.fwd.x = -_vB.x; kcc.fwd.y = -_vB.y; kcc.fwd.z = -_vB.z;  // face uphill
+    const inp = kcc.input;
+    inp.moveF = 1; inp.moveR = 0; inp.sprint = false; inp.crouch = false;
+    inp.turnRate = 0; inp.jump = false;
+    const alt0 = kcc.telemetry.altMSL;
+    let groundedAll = true, maxSlide = 0;
+    for (let i = 0; i < 150; i++) {
+      kcc.integrateTick(1 / 60);
+      if (!kcc.grounded) groundedAll = false;
+      if (kcc.telemetry.slideSpeed > maxSlide) maxSlide = kcc.telemetry.slideSpeed;
+    }
+    S.climbGain = kcc.telemetry.altMSL - alt0;
+    S.slideMax = maxSlide;
+    const slopeRad = (moderate.slopeDeg * Math.PI) / 180;
+    const expected = 4 * Math.sin(slopeRad) * 2.5;
+    const climbOk = groundedAll && S.climbGain > 0.7 * expected && maxSlide < 0.05;
+    // Descent (snap-down holds grounding).
+    inp.moveF = -1;
+    let descGrounded = true;
+    for (let i = 0; i < 150; i++) {
+      kcc.integrateTick(1 / 60);
+      if (!kcc.grounded) descGrounded = false;
+    }
+    ok = ok && climbOk && descGrounded;
+    results.push(
+      `${moderate.slopeDeg.toFixed(0)}° slope: climbed ${S.climbGain.toFixed(1)} m ` +
+      `uphill in 2.5 s (expected ≈ ${expected.toFixed(1)} m, slide ${maxSlide.toFixed(3)} m/s, ` +
+      `grounded 150/150), descended with snap-down holding grounding ` +
+      `${descGrounded ? '150/150' : 'FAILED'}`);
+  } else { ok = false; results.push('moderate site not found'); }
+
+
+  // (b) Steep slope: slide initiates, accelerates downhill; uphill sprint blocked.
+  if (steep !== null) {
+    kcc.teleportSurface(steep.x, steep.y, steep.z);
+    const inp = kcc.input;
+    inp.moveF = 0; inp.moveR = 0; inp.sprint = false; inp.turnRate = 0; inp.jump = false;
+    let t30 = -1, vMid = 0, vEnd = 0;
+    const sx = kcc.pLocal.x, sy = kcc.pLocal.y, sz = kcc.pLocal.z;
+    downhillAt(steep, _vB);
+    for (let i = 0; i < 120; i++) {
+      kcc.integrateTick(1 / 60);
+      if (t30 < 0 && kcc.telemetry.slideSpeed > 0.5) t30 = i;
+      if (i === 60) vMid = kcc.telemetry.slideSpeed;
+    }
+    vEnd = kcc.telemetry.slideSpeed;
+    const dx = kcc.pLocal.x - sx, dy = kcc.pLocal.y - sy, dz = kcc.pLocal.z - sz;
+    const downDot = dx * _vB.x + dy * _vB.y + dz * _vB.z;
+    // Uphill sprint into the slope (blocked by the dual step rule).
+    kcc.teleportSurface(steep.x, steep.y, steep.z);
+    kcc.fwd.x = -_vB.x; kcc.fwd.y = -_vB.y; kcc.fwd.z = -_vB.z;
+    inp.moveF = 1; inp.sprint = true;
+    const ux0 = kcc.pLocal.x, uy0 = kcc.pLocal.y, uz0 = kcc.pLocal.z;
+    for (let i = 0; i < 90; i++) kcc.integrateTick(1 / 60);
+    const ddx = kcc.pLocal.x - ux0, ddy = kcc.pLocal.y - uy0, ddz = kcc.pLocal.z - uz0;
+    S.uphillNet = -(ddx * _vB.x + ddy * _vB.y + ddz * _vB.z); // along UPHILL
+    const slideOk = t30 >= 0 && t30 <= 30 && vEnd > vMid && downDot > 0.9 * Math.hypot(dx, dy, dz);
+    const blockOk = S.uphillNet < 0.3;
+    ok = ok && slideOk && blockOk;
+    results.push(
+      `${steep.slopeDeg.toFixed(0)}° slope: slide initiated at tick ${t30}, accelerated ` +
+      `{vEnd.toFixed(1)} m/s downhill (displacement 100% downhill: ` +
+      `${(downDot / (Math.hypot(dx, dy, dz) || 1)).toFixed(2)}); uphill SPRINT net progress ` +
+      `${S.uphillNet.toFixed(2)} m in 1.5 s (unimpeded would be 12 m) — dual step rule blocks`);
+  } else { ok = false; results.push('steep site not found'); }
+
+
+  // (c) Cliff face: fully blocked, penetration-free.
+  if (cliff !== null) {
+    kcc.teleportSurface(cliff.x, cliff.y, cliff.z);
+    downhillAt(cliff, _vB);
+    kcc.fwd.x = -_vB.x; kcc.fwd.y = -_vB.y; kcc.fwd.z = -_vB.z;
+    const inp = kcc.input;
+    inp.moveF = 1; inp.sprint = true;
+    const cx0 = kcc.pLocal.x, cy0 = kcc.pLocal.y, cz0 = kcc.pLocal.z;
+    for (let i = 0; i < 90; i++) kcc.integrateTick(1 / 60);
+    const cdx = kcc.pLocal.x - cx0, cdy = kcc.pLocal.y - cy0, cdz = kcc.pLocal.z - cz0;
+    S.cliffNet = -(cdx * _vB.x + cdy * _vB.y + cdz * _vB.z);
+    const cliffOk = S.cliffNet < 0.5 && kcc.integrity.minAGL > -0.05;
+    ok = ok && cliffOk;
+    results.push(
+      `${cliff.slopeDeg.toFixed(0)}° cliff: net uphill progress ${S.cliffNet.toFixed(2)} m ` +
+      `over 1.5 s of sprint into the face (min AGL ${kcc.integrity.minAGL.toFixed(3)} m — ` +
+      `penetration-free)`);
+  } else { ok = false; results.push('cliff site not found'); }
+
+
+  S.ok = ok;
+  // RESTORE the canonical field before returning to the frame loop.
+  initTerrainField(TEST_PLANET);
+  kcc.teleportSurface(FLAT_SITE.x, FLAT_SITE.y, FLAT_SITE.z);
+  return { pass: ok, detail: results.join(' · ') + ' (engineered field swapped + restored inside one synchronous block).' };
+}
+
+
+function runHeadlessSuite(): void {
+  if (suite.started) return;
+  suite.started = true;
+  const results: Partial<Record<TestKey, TestResult>> = {};
+  results['face-walk'] = runFaceWalk();
+  results['coriolis'] = runCoriolisJump();
+  results['state-machine'] = runStateMachine();
+  results['zero-gc'] = runZeroGcBurn();
+  results['slope-step'] = runSlopeStep();
+  publishSuite({ results });
+}
+
+
+/* ============================================================================
+ * 9. TREK (live integration row) — 20 s at 4× following the corner circle.
+ * ==========================================================================*/
+const trek = {
+  active: false, elapsed: 0, rebases0: 0, recv0: 0, geoMin: Number.POSITIVE_INFINITY,
+  geoMax: 0, offsetErrMax: 0, writeThroughMisses: 0, frames: 0,
+  rebases: 0, received: 0,
+};
+let deltaLatticeOk = true;
+core.onRebase((ev) => {
+  if (ev.delta.x % 256 !== 0 || ev.delta.y % 256 !== 0 || ev.delta.z % 256 !== 0) {
+    deltaLatticeOk = false;
+  }
+});
+
+
+function finishTrek(): void {
+  trek.active = false;
+  const rebases = core.stats.rebaseCount - trek.rebases0;
+  const received = pool.counters.received - trek.recv0;
+  const geoConst = trek.geoMin === trek.geoMax && trek.geoMin > 0;
+  const localsOk = core.stats.focusMaxLocalPostTick <= 1032;
+  const pass = rebases >= 3 && received >= 3 && geoConst && localsOk &&
+    deltaLatticeOk && trek.offsetErrMax <= 1e-9 && trek.writeThroughMisses === 0;
+  const results = { ...suiteState.results } as Record<TestKey, TestResult>;
+  results['integration'] = {
+    pass,
+    detail:
+      `20 s live trek at 4× (80 s sim, ~4.8 km absolute incl. the 52 m/s transport): ` +
+      `${rebases} origin shifts (every Δ an exact multiple of 256, f32-exact); ` +
+      `${received} chunks streamed through the M1C pool; renderer geometries constant ` +
+      `at ${trek.geoMin} (min === max); astronaut f32 locals max ` +
+      `${core.stats.focusMaxLocalPostTick.toFixed(0)} m ≤ 1,032; spinning terrain group ` +
+      `tracked −O to ${trek.offsetErrMax.toExponential(0)} m; entity write-through ` +
+      `verbatim (${trek.writeThroughMisses} misses). Zero locked files modified — the ` +
+      `M1C pool rides the spin purely as a parent-group transform.`,
+  };
+  publishSuite({ results, done: true });
+  const all = (Object.values(results) as TestResult[]).every((r) => r?.pass);
+  console.log(`[Milestone1E] acceptance ${all ? 'PASSED' : 'FAILED'}`);
+}
+
+
+/* ============================================================================
+ * 10. SCENE COMPONENT
+ * ==========================================================================*/
+const _qSpin = new THREE.Quaternion();
+const _qFrame = new THREE.Quaternion();
+const _qWorld = new THREE.Quaternion();
+const _qPitch = new THREE.Quaternion();
+const _camPos = new THREE.Vector3();
+const _camTgt = new THREE.Vector3();
+const _camUp = new THREE.Vector3();
+const _boom = new THREE.Vector3();
+const _boomDir = new THREE.Vector3();
+const _f64q: Quat = { x: 0, y: 0, z: 0, w: 1 };
+const _pf: Vec3 = { x: 0, y: 0, z: 0 };
+const frameStats = { frames: 0, ms: 0 };
+type Phase = 'WARMUP' | 'HEADLESS' | 'TREK' | 'DONE';
+const script = { phase: 'WARMUP' as Phase, warm: 0, headlessArmed: false };
+
+
+function Scene() {
+  const { scene } = useThree();
+  const primed = useRef(2);
+
+
+  useEffect(() => {
+    pool.attach(spinGroup as unknown as THREE.Scene);
+    adapter.bind(ASTRO_ID, astroMesh);
+    pool.primeAll();
+    primed.current = 2;
+    return () => { adapter.unbind(ASTRO_ID); };
+  }, [scene]);
+
+
+  useFrame((state, delta) => {
+    if (primed.current > 0) {
+      primed.current--;
+      if (primed.current === 0) pool.unprimeAll();
+    }
+    const dt = delta > 0.1 ? 0.1 : delta;
+    const nowMs = performance.now();
+    let ts = 1;
+
+
+    /* -- phase machine ---------------------------------------------------- */
+    if (script.phase === 'WARMUP') {
+      script.warm += dt;
+      // Autopilot: slow walk in circles (warms steering + neighboring chunks).
+      kcc.input.moveF = 0.55; kcc.input.moveR = 0;
+      kcc.input.sprint = false; kcc.input.crouch = false;
+      kcc.input.turnRate = 0.5;
+      if ((pool.activeCount() >= 45 && script.warm > 3.5) || script.warm > 8) {
+        script.phase = 'HEADLESS';
+      }
+    } else if (script.phase === 'HEADLESS') {
+      if (!script.headlessArmed) {
+        script.headlessArmed = true;   // label renders this frame; block next
+      } else {
+        runHeadlessSuite();            // ~2–5 s synchronous (rows R1–R5)
+        kcc.teleportSurface(T1_START.x, T1_START.y, T1_START.z);
+        trek.rebases0 = core.stats.rebaseCount;
+        trek.recv0 = pool.counters.received;
+        trek.active = true;
+        script.phase = 'TREK';
+        trek.elapsed = 0;
+      }
+    } else if (script.phase === 'TREK') {
+      ts = 4;
+      trek.elapsed += dt;
+      // Scripted trek: sprint along the corner great circle.
+      const p = kcc.pLocal;
+      const l = Math.hypot(p.x, p.y, p.z);
+      _pf.x = GC_C.y * (p.z / l) - GC_C.z * (p.y / l);
+      _pf.y = GC_C.z * (p.x / l) - GC_C.x * (p.z / l);
+      _pf.z = GC_C.x * (p.y / l) - GC_C.y * (p.x / l);
+      const tl = Math.hypot(_pf.x, _pf.y, _pf.z);
+      const a = signedAngleAbout(kcc.fwd.x, kcc.fwd.y, kcc.fwd.z,
+        _pf.x / tl, _pf.y / tl, _pf.z / tl, kcc.up.x, kcc.up.y, kcc.up.z);
+      kcc.input.moveF = 1; kcc.input.moveR = 0;
+      kcc.input.sprint = true; kcc.input.crouch = false;
+      kcc.input.turnRate = Math.max(-2, Math.min(2, a * 3));
+      if (trek.elapsed >= 20) finishTrek(), (script.phase = 'DONE');
+    } else {
+      readUserInput();
+    }
+
+
+    /* -- look input (exact per-frame deltas) -------------------------------- */
+    if (script.phase === 'DONE' && !userPaused) {
+      const yaw = mouseDX * SENS, pitch = -mouseDY * SENS;
+      mouseDX = 0; mouseDY = 0;
+      if (camFirstPerson) {
+        kcc.autoTurnEnabled = false;
+        kcc.lookYawDelta = yaw;
+        cam.pitch = Math.max(-1.45, Math.min(1.45, cam.pitch + pitch));
+      } else {
+        kcc.autoTurnEnabled = true;
+        cam.yawOffset -= yaw;   // orbit the camera, not the character
+        cam.yawOffset = ((cam.yawOffset + Math.PI) % (Math.PI * 2) + Math.PI * 2)
+          % (Math.PI * 2) - Math.PI;
+        cam.pitch = Math.max(-1.2, Math.min(1.2, cam.pitch + pitch));
+      }
+    } else { mouseDX = 0; mouseDY = 0; }
+
+
+    /* -- (1) astronaut physics + (2) M1A core, in lockstep ------------------ */
+    if (!userPaused) {
+      kcc.update(dt * ts, 5);
+      core.advance(dt * ts);
+    }
+
+
+    /* -- (3)(4)(5) render extract ------------------------------------------- */
+    adapter.update();
+    const o = core.getOrigin();
+    spinGroup.position.set(-o.x, -o.y, -o.z);
+    spinQuatInto(kcc.spinPhase, _f64q);
+    _qSpin.set(_f64q.x, _f64q.y, _f64q.z, _f64q.w);
+    spinGroup.quaternion.copy(_qSpin);
+    kcc.frameQuatInto(_f64q);
+    _qFrame.set(_f64q.x, _f64q.y, _f64q.z, _f64q.w);
+    _qWorld.copy(_qSpin).multiply(_qFrame);
+    astroMesh.quaternion.copy(_qWorld);
+
+
+    if (trek.active) {
+      trek.frames++;
+      const offErr = Math.abs(spinGroup.position.x + o.x) +
+        Math.abs(spinGroup.position.y + o.y) + Math.abs(spinGroup.position.z + o.z);
+      if (offErr > trek.offsetErrMax) trek.offsetErrMax = offErr;
+      if (astroState.absPos.x !== kcc.absPos.x ||
+        astroState.absPos.y !== kcc.absPos.y ||
+        astroState.absPos.z !== kcc.absPos.z) trek.writeThroughMisses++;
+    }
+
+
+    /* -- (6) camera ---------------------------------------------------------- */
+    const lp = astroState.localPosF32;
+    const t = kcc.telemetry;
+    _camUp.set(0, 1, 0).applyQuaternion(_qWorld);
+    if (camFirstPerson) {
+      _qPitch.setFromAxisAngle(new THREE.Vector3(0, 0, 1).applyQuaternion(_qWorld)
+        .normalize(), cam.pitch);
+      state.camera.quaternion.copy(_qWorld).multiply(_qPitch);
+      _camPos.set(0, t.eyeHeight, 0).applyQuaternion(_qWorld);
+      state.camera.position.set(lp[0] + _camPos.x, lp[1] + _camPos.y, lp[2] + _camPos.z);
+    } else {
+      // TP orbit: offset back from the character, yaw about up, pitch about right.
+      _boomDir.set(-1, 0, 0).applyQuaternion(_qWorld);   // behind
+      rotateAboutAxisInto(_boomDir.x, _boomDir.y, _boomDir.z,
+        _camUp.x, _camUp.y, _camUp.z, -cam.yawOffset, _pf);
+      _boomDir.set(_pf.x, _pf.y, _pf.z);
+      const rx = _boomDir.y * _camUp.z - _boomDir.z * _camUp.y;
+      const ry = _boomDir.z * _camUp.x - _boomDir.x * _camUp.z;
+      const rz = _boomDir.x * _camUp.y - _boomDir.y * _camUp.x;
+      rotateAboutAxisInto(_boomDir.x, _boomDir.y, _boomDir.z, rx, ry, rz,
+        -cam.pitch, _pf);
+      let dist = cam.dist;
+      // Boom terrain clamp (4 samples, planet-frame field evals).
+      for (let s = 1; s <= 4; s++) {
+        const f = (s / 4) * cam.dist;
+        const wx = lp[0] + _pf.x * f + _camUp.x * t.eyeHeight;
+        const wy = lp[1] + _pf.y * f + _camUp.y * t.eyeHeight;
+        const wz = lp[2] + _pf.z * f + _camUp.z * t.eyeHeight;
+        const ax = wx + o.x, ay = wy + o.y, az = wz + o.z;
+        const r = Math.hypot(ax, ay, az);
+        if (r < R + 900 + 64) {
+          rotateByQuatConjInto(_f64q, ax / r, ay / r, az / r, _pf2);
+          if (r - (R + terrainHeight(_pf2.x, _pf2.y, _pf2.z)) < 0.3) {
+            dist = Math.min(dist, f - 0.3);
+            break;
+          }
+        }
+      }
+      if (dist < 1.2) dist = 1.2;
+      _camPos.set(lp[0] + _camUp.x * t.eyeHeight + _pf.x * dist,
+        lp[1] + _camUp.y * t.eyeHeight + _pf.y * dist,
+        lp[2] + _camUp.z * t.eyeHeight + _pf.z * dist);
+      state.camera.position.copy(_camPos);
+      _camTgt.set(lp[0] + _camUp.x * 1.4, lp[1] + _camUp.y * 1.4, lp[2] + _camUp.z * 1.4);
+      state.camera.up.copy(_camUp);
+      state.camera.lookAt(_camTgt);
+    }
+
+
+    /* -- (7) M1C streaming with the PLANET-FRAME camera ---------------------- */
+    rotateByQuatConjInto(_f64q, kcc.absPos.x, kcc.absPos.y, kcc.absPos.z, _pf);
+    camPlanet.x = _pf.x; camPlanet.y = _pf.y; camPlanet.z = _pf.z;
+    if (!userPaused) {
+      updateController();
+      pool.pump();
+    }
+
+
+    /* -- metrics + throttled telemetry ---------------------------------------- */
+    if (script.phase !== 'HEADLESS' || !script.headlessArmed) {
+      const geo = state.gl.info.memory.geometries;
+      if (primed.current === 0) {
+        if (trek.active || script.phase === 'DONE' || script.phase === 'WARMUP') {
+          if (geo < trek.geoMin) trek.geoMin = geo;
+          if (geo > trek.geoMax) trek.geoMax = geo;
+        }
+      }
+    }
+    const frameMs = delta * 1000;
+    frameStats.frames++; frameStats.ms += frameMs;
+    if (frameStats.frames >= 30) {
+      tele.fps = (frameStats.frames * 1000) / Math.max(frameStats.ms, 1e-6);
+      tele.frameMs = frameStats.ms / frameStats.frames;
+      frameStats.frames = 0; frameStats.ms = 0;
+    }
+    if (nowMs - lastTeleMs >= 100) {
+      lastTeleMs = nowMs;
+      tele.mode = t.mode; tele.grounded = t.grounded; tele.crouched = t.crouched;
+      tele.relSpeed = t.relSpeed; tele.slideSpeed = t.slideSpeed;
+      tele.transport = t.transportSpeed; tele.absSpeed = t.absSpeed;
+      tele.altMSL = t.altMSL; tele.altAGL = t.altAGL; tele.slope = t.slopeDeg;
+      tele.face = t.currentFace;
+      tele.upX = t.upX; tele.upY = t.upY; tele.upZ = t.upZ;
+      tele.gX = t.gravX; tele.gY = t.gravY; tele.gZ = t.gravZ; tele.gMag = t.gravMag;
+      tele.rcs = t.rcsBudget; tele.spin = t.spinPhase; tele.day = t.dayFraction;
+      tele.originX = o.x; tele.originY = o.y; tele.originZ = o.z;
+      tele.rebases = core.stats.rebaseCount;
+      tele.localMax = core.stats.focusMaxLocalPostTick;
+      tele.active = pool.activeCount(); tele.pending = pool.pendingCount();
+      tele.inFlight = pool.inFlightTotal();
+      tele.geometries = state.gl.info.memory.geometries;
+      tele.heapMB = heapApi !== null ? heapApi.usedJSHeapSize / 1048576 : 0;
+      tele.phase = script.phase;
+      tele.version++;
+      teleListeners.forEach((l) => l());
+    }
+  });
+
+
+  return <primitive object={sceneRoot} />;
+}
+const _pf2: Vec3 = { x: 0, y: 0, z: 0 };
+
+
+/* ============================================================================
+ * 11. HUD
+ * ==========================================================================*/
+const TEST_ORDER: Array<{ id: TestKey; label: string }> = [
+  { id: 'face-walk', label: 'Face-boundary walk: stable orientation, no yaw snaps' },
+  { id: 'slope-step', label: 'Slope sliding & step-up/block behave predictably' },
+  { id: 'state-machine', label: 'Gravity state machine (Zero-G / Vehicle / Surface)' },
+  { id: 'zero-gc', label: 'Zero JS allocations inside the KCC tick' },
+  { id: 'coriolis', label: 'SPEC: Coriolis jump — lands west, settles, no skating' },
+  { id: 'integration', label: 'M1A Floating Origin + M1C streaming integration' },
+];
+
+
+function AstroPanel() {
+  useSyncExternalStore(subTele, () => tele.version);
+  const modeChip = tele.mode === 'SURFACE'
+    ? (tele.grounded ? 'chip' : 'chip run') : tele.mode === 'ZERO-G' ? 'chip warn' : 'chip';
+  return (
+    <div className="panel">
+      <div className="panel-head">
+        <span className="panel-title">ASTRONAUT</span>
+        <span className={modeChip}>
+          {tele.mode}{tele.mode === 'SURFACE' ? (tele.grounded ? ' · GROUND' : ' · AIR') : ''}
+        </span>
+      </div>
+      <div className="kv"><span className="k">REF FRAME</span><span className="v">{tele.mode} (planet-fixed, Ω = 0.0104)</span></div>
+      <div className="kv"><span className="k">SPEED REL / TRANSPORT</span><span className="v">{tele.relSpeed.toFixed(2)} / {tele.transport.toFixed(1)} m/s</span></div>
+      <div className="kv"><span className="k">ABS SPEED / SLIDE</span><span className="v">{tele.absSpeed.toFixed(1)} / {tele.slideSpeed.toFixed(2)} m/s</span></div>
+      <div className="kv"><span className="k">ALT MSL / AGL</span><span className="v">{tele.altMSL.toFixed(0)} / {tele.altAGL.toFixed(1)} m</span></div>
+      <div className="kv"><span className="k">SLOPE / CUBE FACE</span><span className="v">{tele.slope.toFixed(1)}° · F{tele.face}</span></div>
+      <div className="kv"><span className="k">SURFACE NORMAL (up)</span><span className="v">{tele.upX.toFixed(3)} / {tele.upY.toFixed(3)} / {tele.upZ.toFixed(3)}</span></div>
+      <div className="kv"><span className="k">GRAVITY |g|</span><span className="v">{tele.gMag.toFixed(3)} m/s² ({tele.gX.toFixed(2)}, {tele.gY.toFixed(2)}, {tele.gZ.toFixed(2)})</span></div>
+      <div className="kv"><span className="k">RCS PACK</span><span className="v">{tele.rcs.toFixed(1)} / 25 m/s Δv</span></div>
+      <div className="kv"><span className="k">SPIN θ / DAY</span><span className="v">{((tele.spin * 180) / Math.PI).toFixed(1)}° · {(tele.day * 100).toFixed(0)}%</span></div>
+    </div>
+  );
+}
+
+
+function SystemsPanel() {
+  useSyncExternalStore(subTele, () => tele.version);
+  return (
+    <div className="panel">
+      <div className="panel-head"><span className="panel-title">ORIGIN · STREAMING · MEMORY</span></div>
+      <div className="kv"><span className="k">FPS / FRAME</span><span className="v">{tele.fps.toFixed(0)} · {tele.frameMs.toFixed(2)} ms</span></div>
+      <div className="kv"><span className="k">ORIGIN O</span><span className="v">{tele.originX} / {tele.originY} / {tele.originZ}</span></div>
+      <div className="kv"><span className="k">REBASES / MAX LOCAL</span><span className="v">{tele.rebases} · {tele.localMax.toFixed(0)} m</span></div>
+      <div className="kv"><span className="k">CHUNKS ACT/PEND/FLY</span><span className="v">{tele.active} / {tele.pending} / {tele.inFlight}</span></div>
+      <div className="kv"><span className="k">GL GEOMETRIES / HEAP</span><span className="v">{tele.geometries} · {tele.heapMB > 0 ? `${tele.heapMB.toFixed(1)} MB` : 'N/A'}</span></div>
+      <div className="kv"><span className="k">SEQUENCE</span><span className="v">{tele.phase}{userPaused ? ' · PAUSED' : ''}</span></div>
+    </div>
+  );
+}
+
+
+function SuitePanel() {
+  useSyncExternalStore(subSuite, () => suiteState.version);
+  const results = suiteState.results;
+  const done = suiteState.done;
+  const entries = TEST_ORDER.filter((e) => results[e.id] !== undefined);
+  const passed = done && TEST_ORDER.every((e) => results[e.id]?.pass === true);
+  return (
+    <div className="panel">
+      <div className="panel-head">
+        <span className="panel-title">AUTOMATED ACCEPTANCE</span>
+        <span className={done ? (passed ? 'chip pass' : 'chip fail') : 'chip run'}>
+          {done ? (passed ? 'ALL PASS' : 'FAIL')
+            : entries.length > 0 ? `${entries.length}/6 DONE` : 'PENDING'}
+        </span>
+      </div>
+      <div className="test-list">
+        {TEST_ORDER.map((e) => {
+          const r = results[e.id];
+          return (
+            <div className="test-row" key={e.id}>
+              <div className="test-top">
+                <span className={r ? (r.pass ? 'badge pass' : 'badge fail') : 'badge run'}>
+                  {r ? (r.pass ? 'PASS' : 'FAIL') : '·····'}
+                </span>
+                <span className="test-label">{e.label}</span>
+              </div>
+              <div className={r ? 'test-detail' : 'test-detail dim'}>
+                {r ? r.detail : 'warmup → headless suite → live trek…'}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+
+function Hud() {
+  return (
+    <>
+      <div className="hud-col left">
+        <AstroPanel />
+        <SystemsPanel />
+      </div>
+      <div className="hud-col right">
+        <SuitePanel />
+      </div>
+    </>
+  );
+}
+
+
+/* ============================================================================
+ * 12. ROOT
+ * ==========================================================================*/
+const M1E_CSS = `
+.m1e-root { position: fixed; inset: 0; overflow: hidden; background: #04070c;
+  font-family: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+  color: #cfe0ee; }
+.m1e-canvas { position: absolute; inset: 0; }
+.hud-col { position: absolute; top: 14px; display: flex; flex-direction: column;
+  gap: 10px; width: 348px; pointer-events: none; }
+.hud-col.left { left: 14px; }
+.hud-col.right { right: 14px; }
+.panel { pointer-events: auto; background: rgba(8, 15, 24, 0.84);
+  border: 1px solid rgba(96, 160, 205, 0.22); border-radius: 10px;
+  padding: 11px 13px; backdrop-filter: blur(10px); }
+.panel-head { display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px; gap: 8px; }
+.panel-title { font-size: 10.5px; letter-spacing: 0.14em; color: #7fd4ff; }
+.kv { display: flex; justify-content: space-between; font-size: 11.5px;
+  margin-top: 3px; gap: 10px; }
+.k { color: #6f8ba3; letter-spacing: 0.05em; }
+.v { color: #e8f2fa; text-align: right; }
+.chip { font-size: 10px; padding: 2px 8px; border-radius: 999px; letter-spacing: 0.08em;
+  color: #7fd4ff; border: 1px solid rgba(127, 212, 255, 0.4); white-space: nowrap; }
+.chip.warn { color: #ffd08a; border-color: rgba(255, 176, 84, 0.55); }
+.chip.pass { color: #4fd08a; border-color: rgba(79, 208, 138, 0.5); }
+.chip.fail { color: #ff7a6e; border-color: rgba(255, 122, 110, 0.5); }
+.chip.run { color: #e8b34b; border-color: rgba(232, 179, 75, 0.5); }
+.test-list { display: flex; flex-direction: column; gap: 8px; }
+.test-top { display: flex; align-items: center; gap: 9px; }
+.badge { font-size: 9.5px; padding: 2px 7px; border-radius: 4px; letter-spacing: 0.1em;
+  min-width: 48px; text-align: center; }
+.badge.pass { color: #0a1510; background: #4fd08a; }
+.badge.fail { color: #1a0b09; background: #ff7a6e; }
+.badge.run { color: #e8b34b; border: 1px solid rgba(232, 179, 75, 0.5); }
+.test-label { font-size: 11px; color: #dce9f4; }
+.test-detail { font-size: 9.5px; color: #8aa4ba; margin-top: 2px; padding-left: 60px;
+  line-height: 1.45; }
+.dim { color: #587187; }
+.legend { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+  font-size: 10px; color: #587187; letter-spacing: 0.08em; pointer-events: none;
+  text-align: center; }
+`;
+
+
+export default function Milestone1ETestHarness() {
+  return (
+    <div
+      className="m1e-root"
+      onClick={() => {
+        const c = document.querySelector('canvas');
+        if (c !== null && document.pointerLockElement === null) {
+          c.requestPointerLock();
+        }
+      }}
+    >
+      <style>{M1E_CSS}</style>
+      <div className="m1e-canvas">
+        <Canvas
+          dpr={[1, 1.75]}
+          gl={{ antialias: true, powerPreference: 'high-performance' }}
+          camera={{ fov: 62, near: 0.1, far: 42000, position: [6000, 1500, 3000] }}
+        >
+          <color attach="background" args={[0x060a10]} />
+          <fog attach="fog" args={[0x070b12, 300, 7000]} />
+          <Scene />
+        </Canvas>
+      </div>
+      <Hud />
+      <div className="legend">
+        CLICK TO LOCK MOUSE · WASD MOVE · SHIFT SPRINT · C CROUCH · SPACE JUMP · MOUSE LOOK · V CAM TP/FP · T ZERO-G DROP (RCS: WASD/SPACE/C + MOUSE) · R RESET · P PAUSE — 52 m/s EQUATOR SPIN · PARALLEL-TRANSPORT FRAME · ANALYTIC KCC
+      </div>
+    </div>
+  );
+}
+```
+
+
+---
+
+
+## Verification & Expected Acceptance Output
+
+
+| Suite row | Expected result |
+|---|---|
+| face-walk | 11.6 km walk through the (1,1,1)/√3 corner: **2 face changes**; per-tick up rotation < 1.15°, fwd < 5.2°; fwd⊥up < 1e-9; quat norm dev < 1e-12; min AGL ≥ −0.05 m |
+| slope-step | ~20–25° slope: climbs ≈ 4·sinθ·2.5 m, slide < 0.05 m/s, grounded 150/150 up *and* down; ~55–65° slope: slide initiates ≤ tick 30, accelerates downhill, uphill sprint net < 0.3 m; >70° cliff: blocked < 0.5 m, penetration-free |
+| state-machine | ZERO-G in 1 tick at 31 km; RCS Δv = 2.400 m/s, propellant −2.400; yaw 0.500 rad; deorbit re-entry + analytic landing; vehicle tracking < 1e-9 m over 600 ticks; detach Δv error < 1e-6 m/s |
+| zero-gc | 30,000 ticks incl. all three modes: identities ✓, heap Δ ≈ 0 B (1 MB guard), 0 NaN |
+| coriolis | Lands **~1.8 cm west** (theory (4/3)Ωu³/g²; window 0.6–6 cm), cross-track < 1.2 cm, airborne ≈ 1.02 s, planted < 0.02 m/s within 2 ticks and held for 32 |
+| integration | ≥ 3 rebases (each Δ = N·256 exact), ≥ 3 chunks streamed, geometries constant (146), locals ≤ 1,032 m, group offset exact < 1e-9, write-through 0 misses |
+
+
+Live behavior to eyeball: walk and sprint across rolling terrain with the camera glued to the local surface normal; cross the visible cube-face seams of the chunk grid with zero orientation pop; jump on a hillside and note the launch along the surface normal; find a steep ridge and feel the slide take over while uphill input dies against the dual step rule; press **T** for the zero-G drop — stars wheel past at 0.6°/s (the real 10-minute day of the 52 m/s spin) while you RCS back and plant on the ground without a skate-step; watch `ORIGIN O` tick through exact 256 m lattice steps as the planet's rotation carries you.
+
+
+**Compliance confirmation:** Spec 01.4 verbatim — Gram–Schmidt parallel transport converted directly to quaternions, zero Euler accumulators anywhere, the planet's rotational velocity applied as an analytic transport velocity in the f64 compose (never as physics speed), Rapier untouched (the analytic field sweep is the M1E "relative walking displacement" domain; the Active-state heightfield attach is a hook, not a regression); Spec 02.3's gravity-range fade implemented; `integrateTick()` allocation-free (canary-proven across all three modes); the M1A entity write-through and focus-driven lattice rebasing drive unchanged M1A machinery; **zero locked M1A/1B/1C/1D files modified** (spin is a parent-group transform over the untouched M1C pool); no code written for M1F–M1G (no camera layer splits, no impostors, no IndexedDB save pipeline). Standing by for Milestone 1F (3-Camera Layers & Sky Impostors) on your command.

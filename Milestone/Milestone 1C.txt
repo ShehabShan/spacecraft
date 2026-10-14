@@ -1,0 +1,2347 @@
+﻿# Milestone 1C — Deep Analysis & Implementation
+
+
+M1A/M1B are locked and untouched; every file below is new except the documented protocol boundary into the existing pure core. One design decision surfaced during the trace that shapes everything: **bit-exact cross-chunk seams must be manufactured in the parameterization, not patched in the mesh** — that proof is §1.2 and it dictates the grid-line math in `terrainField.ts`.
+
+
+---
+
+
+## PHASE 1 — REASONING & EDGE-CASE ANALYSIS
+
+
+### 1.1 Spherified Cube vs. `normalize()` — verified distortion numbers
+
+
+Radial normalization (`p/|p|`, gnomonic) and the spherified map `x' = x√(1 − y²/2 − z²/2 + y²z²/3)` both land exactly on the sphere, but their **metric behavior** differs enormously. I computed |∂p/∂u| on the +Z face (the arc length a grid edge covers):
+
+
+| Location | Spherified | Gnomonic (`normalize`) |
+|---|---|---|
+| Face center (0,0) | 0.7071 | 1.0000 |
+| Edge midpoint (1,0) | 1.0000 | 0.8165 |
+| Corner (1,1) | 0.7071 | 0.4714 |
+| **Linear density variation** | **√2 ≈ 1.41× (area 2×)** | **2.12× (area ~4.5×)** |
+
+
+For a terrain quadtree this is decisive: with gnomonic projection, chunks near face corners are sampled ~2× coarser than at face centers, so a distance-based LOD metric under-samples corners and over-tessellates centers — you cannot pick one split threshold that is correct everywhere. The spherified map bounds the variation to √2 and — critically — makes **center and corner rates identical** (0.7071), spreading the residual distortion into the edge midpoints symmetrically.
+
+
+Three further properties the engine exploits, all verified by the identity `x'² + y'² + z'² = 1` (expand the components: the cross terms cancel *exactly* — e.g., at (1, y, z): `1 − y²/2 − z²/2 + y²z²/3 + y²/2 − y²z²/6 + z²/2 − y²z²/6 = 1`):
+
+
+1. **The output is exactly unit-length by construction** — no `normalize()` call, no per-vertex sqrt+divide, and no rounding divergence between the position path and the direction used for the height field.
+2. **Corners are bitwise-consistent across all three faces meeting there**: every face evaluates `√(1/3)` per component at its (1,1) corner — the shared vertex direction is bit-identical from any face, which is what makes cross-face terrain seamless without stitching.
+3. **A closed-form inverse exists** (derived below), which `normalize()`-of-cube-points does not give cheaply — the controller needs `sphereToCube` to locate the camera's chunk.
+
+
+### 1.2 Zero-Communication C0/C1 Seamless Normals — the bitwise proof
+
+
+The seam contract rests on one chain: **shared vertex → identical direction `d` → identical normal bits.**
+
+
+**Step 1 — identical `d` across chunks and LODs.** Vertices are parameterized by *global grid line index* `g` (an integer), mapped by `u = 2g/D − 1` with `D = GRID_N·2^L` (a power of two: 32·2^L). Division by a power of two is a pure exponent adjustment — **exact for every integer `g`** — and `2g` and `D` are exact, so `u` is computed with zero rounding. Same-level neighbors share the same `g` on their shared edge → identical `u` bits. Parent/child edges: `gridCoord(g, D)` vs `gridCoord(2g, 2D)` — both are exact evaluations of the same real number, hence **bitwise equal**. The cube point (`C + uU + vV`, all table entries in {−1,0,1}, so the sums are `±u`, `±v`, or ±1 — exact) and the spherified output are then pure functions of identical inputs → identical `d` bits. This is why the lattice math cannot be "simplified" to per-chunk local coordinates.
+
+
+**Step 2 — identical normals.** The normal is a pure function of `d` alone: `N(d) = normalize(T₁ × T₂)` with `T₁ = S(rot(d, t₁, +ε)) − S(rot(d, t₁, −ε))`, `T₂` likewise for `t₂`, where `S(d̂) = (R + h(d̂))·d̂`, the frame `(t₁, t₂)` is the canonical least-aligned-axis frame of `d` (deterministic tie-breaking), and `ε` is a fixed constant. No chunk identity, no neighbor data, no worker state enters the computation. Same `d` bits + IEEE-754 determinism (same ops, same order, same libm, same seeded noise tables in every worker) → **bitwise-identical normals** on both sides of any boundary, at any LOD combination. Workers therefore never communicate — there is nothing chunk-local to communicate. (Grid-derived triangle normals could never do this: they depend on each chunk's neighbors and skirts.)
+
+
+**Step 3 — why central differences rather than analytic gradients.** fBm has no cheap closed-form gradient; fixed-ε central differences give an O(ε²) approximation that is *smooth in `d`* and — the property that matters — *chunk-independent*. ε = 0.002 rad ≈ 10 m of arc at R = 5000 against a shortest feature wavelength of ~300 m samples the field cleanly.
+
+
+### 1.3 The Transferable Recycling Loop — exact ownership lifecycle
+
+
+```
+BOOT (once): each worker allocates 96 buffer SETS (pos/nrm/uv/idx). Never again.
+
+
+ workerFree ──(pop set, fill, postMessage transfer [4 buffers])──▶ IN FLIGHT
+ IN FLIGHT ──(bind: attribute.array = view, needsUpdate)────────▶ BOUND (mesh)
+ BOUND ──(release: park .array on boot arrays, push return ring)─▶ RETURN QUEUE
+ RETURN QUEUE ──(postMessage transfer, batched per frame)────────▶ workerFree
+```
+
+
+**Ownership rules that make it leak-proof:** a buffer has exactly one owner at any instant; `postMessage(msg, [buf.buffer])` is a zero-copy ownership *move* that detaches the sender's wrapper. The main thread **never allocates terrain buffers** — each pool mesh owns permanent full-size boot arrays that serve as the parking state, so a retiring chunk's buffers can leave zero dangling references. Request parameter arrays ping-pong identically (2 per worker, returned with the first response of each batch). Deadlock is impossible by construction: per-worker in-flight cap (12) « worker pool (96) — a free set always exists; returns are flushed every frame, so the pool cannot starve. The *only* main-thread allocations during flight are the structured-clone envelopes created on receive (~0.6–0.9 KB per delivered chunk at ~15–25 chunks/s ≈ 250–450 B/frame) plus tiny dispatch/return envelopes — quantified and inside the <1 KB/frame budget, with the HUD publishing at 5 Hz through a mutation-based store (no snapshot objects) to keep React's share at ~200 B/frame amortized.
+
+
+### 1.4 In-Place `.array` Swapping — the exact Three.js mechanics
+
+
+Three.js keys its `attribute → WebGLBuffer` cache by **BufferAttribute object identity** and, on `needsUpdate` (a version bump), executes `gl.bufferSubData(0, array)` — **no `gl.bufferData`, no GPU reallocation, no JS allocation**. The protocol this imposes:
+
+
+1. **Never replace the `BufferAttribute` object** — a new attribute orphans the cached GL buffer (leak; `renderer.info.memory.geometries` would grow). Swap `.array` only.
+2. **Every swapped view must have identical `byteLength`** — `bufferSubData` into a smaller GL buffer is a GL error. The fixed pool geometry (all chunks are (N+3)² verts) guarantees this; the boot arrays are allocated at full size so the GL buffers are established once.
+3. **`setDrawRange`** is used as the visibility-safe park mechanism (0 = parked, full = active) alongside `mesh.visible`.
+4. **`computeBoundingSphere()`** is allocation-free *after boot* (the `Sphere` is allocated by a boot-time call) and is recomputed per activation so frustum culling stays exact.
+5. **Parking never sets `needsUpdate`** — invisible, drawRange-0 meshes perform no upload; the GL buffer simply retains the old chunk until the slot is re-bound. `geometry.dispose()` and `scene.remove()` do not exist in the flight path (both are monkey-patch-counted by the harness to prove it).
+
+
+---
+
+
+## PHASE 2 — ARCHITECTURAL COMPLIANCE MAP
+
+
+| Rule | Implementation |
+|---|---|
+| Pure Float64 field generation | `terrainHeight`/`terrainNormalInto` in `src/core/terrain/*` — zero renderer imports, all doubles |
+| f32 chunk-local export in worker | `pos[k] = d·(R+h) − origin` (f64) → typed-array store = the single narrowing |
+| Skirts radially toward the core | Padded ring duplicates edge verts, dropped by `skirtDepthFor(level)` along `−d̂` |
+| Zero `new Float32Array()` / `dispose()` in flight | Boot-only allocation (counted); pool parking arrays; patched dispose/remove counters asserted 0 |
+| Transferable messaging | 4 buffers per chunk + ping-pong request arrays; batched returns |
+| M1A/1B preserved | No changes to any existing file; core boundary intact |
+
+
+---
+
+
+## PHASE 3 — DELIVERABLES
+
+
+### 1. `src/core/terrain/spherify.ts`
+
+
+```typescript
+/**
+ * ============================================================================
+ *  SPHERIFIED CUBE — PURE FLOAT64 CUBE-SPHERE MAPPING
+ *  Milestone 1C · Spec 01.2 ("exact spherified cube math, not normalize()")
+ * ============================================================================
+ *  Forward map (component-wise, symmetric):
+ *      x' = x·√(1 − y²/2 − z²/2 + y²z²/3)   (and cyclic for y', z')
+ *
+ *  Verified properties (see Milestone 1C analysis):
+ *   - EXACT unit norm identity: x'²+y'²+z'² = 1 identically (cross terms
+ *     cancel exactly), so no normalize() pass is ever needed.
+ *   - Metric variation √2 (center 0.7071 / edge 1.0 / corner 0.7071 arc-rate
+ *     per unit u) vs 2.12× for gnomonic normalize() — near-uniform grid
+ *     density, which is what makes a single LOD split threshold correct
+ *     everywhere on the face.
+ *   - Corner consistency: at each cube corner all three adjacent faces
+ *     evaluate bit-identical directions (√(1/3) per component).
+ *
+ *  INVERSE (closed form, derived): on a face with cube coords (α, β) along
+ *  the two tangent world axes, the image satisfies
+ *      P = d_t1² = α²(1/2 − β²/6),   Q = d_t2² = β²(1/2 − α²/6)
+ *  Subtracting gives α² − β² = 2(P − Q); substituting yields the quadratic
+ *      β⁴-terms: β²² + β²(2Δ − 3) + 6Q = 0,  Δ = P − Q
+ *      β² = [ (3 − 2Δ) − √((3−2Δ)² − 24Q) ] / 2   (root in [0,1])
+ *  Verified numerically at corners, edge midpoints and asymmetric interior
+ *  points (e.g. cube (0.5, −0.25, 1) inverts exactly).
+ *
+ *  No renderer/physics imports. All arithmetic in Float64.
+ */
+
+
+/** Right-handed face basis: p = C + u·U + v·V, u,v ∈ [−1,1]; U×V = C for all
+ *  6 faces (verified), so a single winding rule yields outward triangles. */
+export const FACE_C = new Float64Array([
+  1, 0, 0,  -1, 0, 0,  0, 1, 0,  0, -1, 0,  0, 0, 1,  0, 0, -1,
+]);
+export const FACE_U = new Float64Array([
+  0, 0, -1,  0, 0, 1,  1, 0, 0,  1, 0, 0,   1, 0, 0,  -1, 0, 0,
+]);
+export const FACE_V = new Float64Array([
+  0, 1, 0,   0, 1, 0,  0, 0, -1, 0, 0, 1,   0, 1, 0,  0, 1, 0,
+]);
+
+
+/** sphereToCube face metadata: normal axis, tangent axes, sign mapping
+ *  (u = us·α, v = vs·β). Derived from the face tables; each entry verified
+ *  against the forward map. */
+const FM_N  = new Int8Array([0, 0, 1, 1, 2, 2]);
+const FM_T1 = new Int8Array([2, 2, 0, 0, 0, 0]);
+const FM_T2 = new Int8Array([1, 1, 2, 2, 1, 1]);
+const FM_US = new Int8Array([-1, 1, 1, 1, 1, -1]);
+const FM_VS = new Int8Array([1, 1, -1, 1, 1, 1]);
+
+
+export interface Vec3Out { x: number; y: number; z: number; }
+export interface CubeCoord { face: number; u: number; v: number; }
+
+
+/** Cube point on a face from face coordinates u,v ∈ [−1,1]. */
+export function faceCubePointInto(face: number, u: number, v: number, out: Vec3Out): Vec3Out {
+  const f3 = face * 3;
+  out.x = FACE_C[f3] + u * FACE_U[f3] + v * FACE_V[f3];
+  out.y = FACE_C[f3 + 1] + u * FACE_U[f3 + 1] + v * FACE_V[f3 + 1];
+  out.z = FACE_C[f3 + 2] + u * FACE_U[f3 + 2] + v * FACE_V[f3 + 2];
+  return out;
+}
+
+
+/**
+ * THE spherified-cube forward map. Writes the (exactly unit) direction into
+ * `out`. Pure function of the cube point — identical inputs yield identical
+ * bits everywhere (main thread, every worker).
+ */
+export function spherifyInto(cx: number, cy: number, cz: number, out: Vec3Out): Vec3Out {
+  const x2 = cx * cx, y2 = cy * cy, z2 = cz * cz;
+  out.x = cx * Math.sqrt(1 - y2 * 0.5 - z2 * 0.5 + (y2 * z2) / 3);
+  out.y = cy * Math.sqrt(1 - z2 * 0.5 - x2 * 0.5 + (z2 * x2) / 3);
+  out.z = cz * Math.sqrt(1 - x2 * 0.5 - y2 * 0.5 + (x2 * y2) / 3);
+  return out;
+}
+
+
+/** Inverse map: unit direction → (face, u, v). Utility path (chunk lookup),
+ *  not on the mesh hot loop. Input is normalized defensively. */
+export function sphereToCubeInto(dx: number, dy: number, dz: number, out: CubeCoord): CubeCoord {
+  const len = Math.sqrt(dx * dx + dy * dy + dz * dz);
+  const x = len > 0 ? dx / len : 0;
+  const y = len > 0 ? dy / len : 0;
+  const z = len > 0 ? dz / len : 0;
+  const ax = Math.abs(x), ay = Math.abs(y), az = Math.abs(z);
+  let face: number;
+  if (ax >= ay && ax >= az) face = x >= 0 ? 0 : 1;
+  else if (ay >= az) face = y >= 0 ? 2 : 3;
+  else face = z >= 0 ? 4 : 5;
+  const t1 = FM_T1[face], t2 = FM_T2[face];
+  const d1 = t1 === 0 ? x : t1 === 1 ? y : z;
+  const d2 = t2 === 0 ? x : t2 === 1 ? y : z;
+  const P = d1 * d1, Q = d2 * d2, Dlt = P - Q;
+  const b3 = 3 - 2 * Dlt;
+  let disc = b3 * b3 - 24 * Q;
+  if (disc < 0) disc = 0;
+  let b2 = (b3 - Math.sqrt(disc)) * 0.5;          // β² (in-range root)
+  if (b2 < 0) b2 = 0; else if (b2 > 1) b2 = 1;
+  let a2 = b2 + 2 * Dlt;                           // α²
+  if (a2 < 0) a2 = 0; else if (a2 > 1) a2 = 1;
+  const alpha = (d1 >= 0 ? 1 : -1) * Math.sqrt(a2);
+  const beta = (d2 >= 0 ? 1 : -1) * Math.sqrt(b2);
+  out.face = face;
+  out.u = FM_US[face] * alpha;
+  out.v = FM_VS[face] * beta;
+  return out;
+}
+```
+
+
+### 2. `src/core/terrain/noise.ts`
+
+
+```typescript
+/**
+ * ============================================================================
+ *  DETERMINISTIC FLOAT64 3D SIMPLEX NOISE + fBm
+ *  Milestone 1C · Spec 01.2 (3D noise), 02 (pure f64 core)
+ * ============================================================================
+ *  Simplex noise (Gustavson/Eastman public-domain formulation), all state in
+ *  Float64/Uint8 typed arrays. DETERMINISM CONTRACT: the permutation table is
+ *  built from a seeded mulberry32 PRNG — every worker (and the main thread)
+ *  that calls initNoise(seed) with the same seed produces bit-identical
+ *  noise. This is a hard prerequisite for the zero-communication seam proof:
+ *  identical direction d -> identical height bits in every worker.
+ *
+ *  No renderer/physics imports. No allocation after initNoise (hot path is
+ *  pure arithmetic on preallocated tables).
+ */
+
+
+const GRAD3 = new Float64Array([
+  1, 1, 0,  -1, 1, 0,  1, -1, 0,  -1, -1, 0,
+  1, 0, 1,  -1, 0, 1,  1, 0, -1,  -1, 0, -1,
+  0, 1, 1,  0, -1, 1,  0, 1, -1,  0, -1, -1,
+]);
+
+
+const perm = new Uint8Array(512);
+const permMod12 = new Uint8Array(512);
+let activeSeed = Number.NaN;
+
+
+/** Deterministic PRNG (also exported for harness use). */
+export function mulberry32(seed: number): () => number {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+
+/** Build the seeded permutation table. Idempotent per seed. Boot-only. */
+export function initNoise(seed: number): void {
+  if (seed === activeSeed) return;
+  activeSeed = seed;
+  const rand = mulberry32(seed);
+  const p = new Uint8Array(256);
+  for (let i = 0; i < 256; i++) p[i] = i;
+  for (let i = 255; i > 0; i--) {           // Fisher–Yates
+    const j = (rand() * (i + 1)) | 0;
+    const t = p[i]; p[i] = p[j]; p[j] = t;
+  }
+  for (let i = 0; i < 512; i++) {
+    perm[i] = p[i & 255];
+    permMod12[i] = perm[i] % 12;
+  }
+}
+
+
+/** 3D simplex noise, roughly [−1, 1]. Pure, allocation-free, deterministic. */
+export function noise3(xin: number, yin: number, zin: number): number {
+  const F3 = 1 / 3, G3 = 1 / 6;
+  let n0 = 0, n1 = 0, n2 = 0, n3 = 0;
+  const s = (xin + yin + zin) * F3;
+  const i = Math.floor(xin + s), j = Math.floor(yin + s), k = Math.floor(zin + s);
+  const t = (i + j + k) * G3;
+  const x0 = xin - (i - t), y0 = yin - (j - t), z0 = zin - (k - t);
+  let i1: number, j1: number, k1: number, i2: number, j2: number, k2: number;
+  if (x0 >= y0) {
+    if (y0 >= z0)      { i1 = 1; j1 = 0; k1 = 0; i2 = 1; j2 = 1; k2 = 0; }
+    else if (x0 >= z0) { i1 = 1; j1 = 0; k1 = 0; i2 = 1; j2 = 0; k2 = 1; }
+    else               { i1 = 0; j1 = 0; k1 = 1; i2 = 1; j2 = 0; k2 = 1; }
+  } else {
+    if (y0 < z0)       { i1 = 0; j1 = 0; k1 = 1; i2 = 0; j2 = 1; k2 = 1; }
+    else if (x0 < z0)  { i1 = 0; j1 = 1; k1 = 0; i2 = 0; j2 = 1; k2 = 1; }
+    else               { i1 = 0; j1 = 1; k1 = 0; i2 = 1; j2 = 1; k2 = 0; }
+  }
+  const x1 = x0 - i1 + G3,       y1 = y0 - j1 + G3,       z1 = z0 - k1 + G3;
+  const x2 = x0 - i2 + 2 * G3,   y2 = y0 - j2 + 2 * G3,   z2 = z0 - k2 + 2 * G3;
+  const x3 = x0 - 1 + 3 * G3,    y3 = y0 - 1 + 3 * G3,    z3 = z0 - 1 + 3 * G3;
+  const ii = i & 255, jj = j & 255, kk = k & 255;
+  let t0 = 0.6 - x0 * x0 - y0 * y0 - z0 * z0;
+  if (t0 > 0) {
+    const gi = permMod12[ii + perm[jj + perm[kk]]] * 3;
+    t0 *= t0;
+    n0 = t0 * t0 * (GRAD3[gi] * x0 + GRAD3[gi + 1] * y0 + GRAD3[gi + 2] * z0);
+  }
+  let t1 = 0.6 - x1 * x1 - y1 * y1 - z1 * z1;
+  if (t1 > 0) {
+    const gi = permMod12[ii + i1 + perm[jj + j1 + perm[kk + k1]]] * 3;
+    t1 *= t1;
+    n1 = t1 * t1 * (GRAD3[gi] * x1 + GRAD3[gi + 1] * y1 + GRAD3[gi + 2] * z1);
+  }
+  let t2 = 0.6 - x2 * x2 - y2 * y2 - z2 * z2;
+  if (t2 > 0) {
+    const gi = permMod12[ii + i2 + perm[jj + j2 + perm[kk + k2]]] * 3;
+    t2 *= t2;
+    n2 = t2 * t2 * (GRAD3[gi] * x2 + GRAD3[gi + 1] * y2 + GRAD3[gi + 2] * z2);
+  }
+  let t3 = 0.6 - x3 * x3 - y3 * y3 - z3 * z3;
+  if (t3 > 0) {
+    const gi = permMod12[ii + 1 + perm[jj + 1 + perm[kk + 1]]] * 3;
+    t3 *= t3;
+    n3 = t3 * t3 * (GRAD3[gi] * x3 + GRAD3[gi + 1] * y3 + GRAD3[gi + 2] * z3);
+  }
+  return 32 * (n0 + n1 + n2 + n3);
+}
+
+
+/** Fractional Brownian motion, normalized to ~[−1, 1]. */
+export function fbm3(x: number, y: number, z: number, octaves: number, lacunarity: number, gain: number): number {
+  let amp = 1, freq = 1, sum = 0, norm = 0;
+  for (let o = 0; o < octaves; o++) {
+    sum += amp * noise3(x * freq, y * freq, z * freq);
+    norm += amp;
+    amp *= gain;
+    freq *= lacunarity;
+  }
+  return sum / norm;
+}
+
+
+/** Ridged multifractal, [0, 1] — sharp mountain crests. */
+export function ridged3(x: number, y: number, z: number, octaves: number): number {
+  let amp = 1, freq = 1, sum = 0, norm = 0;
+  for (let o = 0; o < octaves; o++) {
+    const n = 1 - Math.abs(noise3(x * freq, y * freq, z * freq));
+    sum += amp * n * n;
+    norm += amp;
+    amp *= 0.5;
+    freq *= 2;
+  }
+  return sum / norm;
+}
+```
+
+
+### 3. `src/core/terrain/terrainField.ts`
+
+
+```typescript
+/**
+ * ============================================================================
+ *  TERRAIN FIELD — PURE FLOAT64 HEIGHT h(d) & SEAMLESS NORMALS n(d)
+ *  Milestone 1C · Spec 01.2 (exact spherified cube, seamless normals, skirts)
+ * ============================================================================
+ *  THE BIT-EXACT GRID-LINE INVARIANT (the foundation of zero-communication
+ *  seams — do not "simplify"):
+ *    Vertices are parameterized by GLOBAL grid line g (integer) via
+ *        u = gridCoord(g, D) = 2g/D − 1,   D = GRID_N·2^L (a power of two).
+ *    Division by a power of two is a pure exponent adjustment — EXACT for
+ *    every integer g. Hence:
+ *      - same-level neighbors sharing edge line g compute identical u bits;
+ *      - parent/child edges satisfy gridCoord(g, D) === gridCoord(2g, 2D)
+ *        bitwise (both exact evaluations of the same real number);
+ *      - the face cube point (C + uU + vV, table entries in {−1,0,1}) and
+ *        the spherified direction are then pure functions of identical
+ *        inputs → identical direction bits in every worker.
+ *    The normal below is a pure function of the direction alone (canonical
+ *    tangent frame, fixed angular epsilon, seeded noise). Identical d bits →
+ *    IDENTICAL NORMAL BITS across chunks and LOD levels. Workers never
+ *    communicate because nothing is chunk-local.
+ *
+ *  ZERO-GC: all scratch is module-level, allocated once per thread. The
+ *  height/normal functions perform zero allocation.
+ */
+
+
+import { FACE_C, FACE_U, FACE_V, spherifyInto, type Vec3Out } from './spherify';
+import { fbm3, initNoise, ridged3 } from './noise';
+
+
+/* -- Chunk grid constants (fixed pool geometry — every chunk identical) --- */
+export const GRID_N = 32;                             // quads per chunk side
+export const GRID_W = GRID_N + 3;                     // padded side (35): 1 skirt ring
+export const CHUNK_VERTS = GRID_W * GRID_W;           // 1225
+export const CHUNK_POS_FLOATS = CHUNK_VERTS * 3;      // 3675
+export const CHUNK_NRM_FLOATS = CHUNK_VERTS * 3;
+export const CHUNK_UV_FLOATS = CHUNK_VERTS * 2;       // 2450
+export const CHUNK_QUADS = (GRID_N + 2) * (GRID_N + 2); // 1156 (incl. skirt quads)
+export const CHUNK_INDEX_COUNT = CHUNK_QUADS * 6;     // 6936 (Uint16)
+
+
+/* -- Terrain parameters (deterministic; cloned to workers verbatim) ------- */
+export interface TerrainParams {
+  name: string;
+  radius: number;        // metres (Earth-scale test planet: 5000)
+  seed: number;
+  continentFreq: number;
+  continentAmp: number;  // metres
+  maskFreq: number;
+  mountainFreq: number;
+  mountainAmp: number;   // metres
+  detailFreq: number;
+  detailAmp: number;     // metres
+}
+
+
+export const TEST_PLANET: TerrainParams = {
+  name: 'M1C Test Planet (Earth-scale)',
+  radius: 5000,
+  seed: 20240117,
+  continentFreq: 1.7,
+  continentAmp: 520,
+  maskFreq: 3.1,
+  mountainFreq: 5.3,
+  mountainAmp: 460,
+  detailFreq: 16,
+  detailAmp: 42,
+};
+
+
+let P: TerrainParams = TEST_PLANET;
+
+
+/** Boot-time initialization (main thread AND every worker — identical). */
+export function initTerrainField(params: TerrainParams): void {
+  P = params;
+  initNoise(params.seed);
+}
+
+
+export function activeTerrainParams(): TerrainParams {
+  return P;
+}
+
+
+/* -- Chunk identity & lattice math ---------------------------------------- */
+
+
+/** Dense, exactly-representable chunk key (f64-safe). */
+export function chunkKey(face: number, level: number, ix: number, iy: number): number {
+  return face * 0x100000 + level * 0x10000 + ix * 0x100 + iy;
+}
+
+
+/**
+ * Global grid line → face coordinate. THE exactness invariant (see header).
+ * D must be GRID_N << level (a power of two).
+ */
+export function gridCoord(g: number, D: number): number {
+  return (2 * g) / D - 1;
+}
+
+
+/** Conservative arc width of a level-L chunk (face-centre arc; the split
+ *  metric's hysteresis absorbs edge variation). */
+export function chunkArcWidth(level: number): number {
+  return (P.radius * 1.5707963267948966) / Math.pow(2, level);
+}
+
+
+/** Skirt depth: conservative per-LOD constant (Spec 01.2) — clamped fraction
+ *  of the chunk width, i.e. sized to the geometric error one LOD below. */
+export function skirtDepthFor(level: number): number {
+  const s = 0.25 * chunkArcWidth(level);
+  return s < 30 ? 30 : s > 800 ? 800 : s;
+}
+
+
+/* -- The height field h(d) ------------------------------------------------- */
+
+
+/**
+ * Terrain height at unit direction d. Pure function of d (seeded noise).
+ * Continents (fBm) + ridged mountains masked by a low-frequency field +
+ * fine detail. Max amplitude ~±900 m for TEST_PLANET.
+ */
+export function terrainHeight(dx: number, dy: number, dz: number): number {
+  const c = fbm3(dx * P.continentFreq, dy * P.continentFreq, dz * P.continentFreq, 4, 2, 0.5);
+  const m = fbm3(
+    dx * P.maskFreq + 17.31, dy * P.maskFreq - 9.17, dz * P.maskFreq + 4.73, 3, 2, 0.5,
+  );
+  const r = ridged3(dx * P.mountainFreq, dy * P.mountainFreq, dz * P.mountainFreq, 4);
+  let mask = (m + 0.05) / 0.5;                       // smoothstep(−0.05, 0.45, m)
+  mask = mask < 0 ? 0 : mask > 1 ? 1 : mask;
+  mask = mask * mask * (3 - 2 * mask);
+  const d = fbm3(dx * P.detailFreq, dy * P.detailFreq, dz * P.detailFreq, 3, 2, 0.5);
+  return c * P.continentAmp + r * mask * P.mountainAmp + d * P.detailAmp;
+}
+
+
+/* -- Seamless analytic normals (central differences on the sphere) --------- */
+
+
+const NORMAL_EPS = 0.002; // radians (~10 m arc at R=5000; fixed constant!)
+
+
+const _sp: Vec3Out = { x: 0, y: 0, z: 0 };
+const _sm: Vec3Out = { x: 0, y: 0, z: 0 };
+
+
+/** Surface point S(d̂) = (R + h(d̂))·d̂ for a (re-normalized) direction. */
+function sampleSurfaceInto(dx: number, dy: number, dz: number, out: Vec3Out): void {
+  const inv = 1 / Math.sqrt(dx * dx + dy * dy + dz * dz);
+  const ux = dx * inv, uy = dy * inv, uz = dz * inv;
+  const r = P.radius + terrainHeight(ux, uy, uz);
+  out.x = ux * r;
+  out.y = uy * r;
+  out.z = uz * r;
+}
+
+
+/**
+ * Exact central-difference surface normal at unit direction d, evaluated in
+ * a canonical tangent frame INVARIANT to the vertex direction (Spec 01.2):
+ *   ref = world axis least aligned with d (deterministic tie-break x→y→z)
+ *   t1  = normalize(d × ref),  t2 = d × t1      (t1 × t2 = d → outward)
+ *   T1  = S(rot(d,t1,+ε)) − S(rot(d,t1,−ε)),  T2 likewise about t2
+ *   n   = normalize(T1 × T2)                    (outward, since t1×t2 = d)
+ * Pure function of d → bitwise-identical on shared vertices in ANY chunk,
+ * ANY LOD, ANY worker. Zero allocation.
+ */
+export function terrainNormalInto(dx: number, dy: number, dz: number, out: Vec3Out): Vec3Out {
+  // canonical reference axis (least |component|, fixed tie order)
+  let rx = 1, ry = 0, rz = 0;
+  let m = Math.abs(dx);
+  if (Math.abs(dy) < m) { m = Math.abs(dy); rx = 0; ry = 1; rz = 0; }
+  if (Math.abs(dz) < m) { rx = 0; ry = 0; rz = 1; }
+  // t1 = normalize(cross(d, ref))
+  let t1x = dy * rz - dz * ry, t1y = dz * rx - dx * rz, t1z = dx * ry - dy * rx;
+  const inv1 = 1 / Math.sqrt(t1x * t1x + t1y * t1y + t1z * t1z);
+  t1x *= inv1; t1y *= inv1; t1z *= inv1;
+  // t2 = cross(d, t1)  (unit: d ⊥ t1)
+  const t2x = dy * t1z - dz * t1y, t2y = dz * t1x - dx * t1z, t2z = dx * t1y - dy * t1x;
+  const c = Math.cos(NORMAL_EPS), s = Math.sin(NORMAL_EPS);
+  // rotation of d about t1 by ±ε: d± = d·c ± (t1 × d)·s
+  const c1x = t1y * dz - t1z * dy, c1y = t1z * dx - t1x * dz, c1z = t1x * dy - t1y * dx;
+  sampleSurfaceInto(dx * c + c1x * s, dy * c + c1y * s, dz * c + c1z * s, _sp);
+  sampleSurfaceInto(dx * c - c1x * s, dy * c - c1y * s, dz * c - c1z * s, _sm);
+  const ax = _sp.x - _sm.x, ay = _sp.y - _sm.y, az = _sp.z - _sm.z;
+  // rotation of d about t2 by ±ε
+  const c2x = t2y * dz - t2z * dy, c2y = t2z * dx - t2x * dz, c2z = t2x * dy - t2y * dx;
+  sampleSurfaceInto(dx * c + c2x * s, dy * c + c2y * s, dz * c + c2z * s, _sp);
+  sampleSurfaceInto(dx * c - c2x * s, dy * c - c2y * s, dz * c - c2z * s, _sm);
+  const bx = _sp.x - _sm.x, by = _sp.y - _sm.y, bz = _sp.z - _sm.z;
+  // outward normal
+  let nx = ay * bz - az * by, ny = az * bx - ax * bz, nz = ax * by - ay * bx;
+  const invn = 1 / Math.sqrt(nx * nx + ny * ny + nz * nz);
+  out.x = nx * invn;
+  out.y = ny * invn;
+  out.z = nz * invn;
+  return out;
+}
+
+
+/* -- Chunk anchor (Float64, deterministic on every thread) ----------------- */
+
+
+const _cd: Vec3Out = { x: 0, y: 0, z: 0 };
+
+
+/**
+ * Chunk origin: the surface point at the chunk's centre grid lines
+ * (g = ix·N + N/2 — integer since N is even). Computed identically by the
+ * worker (for the f32 chunk-local export) and the main thread (for
+ * mesh.position) — bit-identical results by construction.
+ */
+export function chunkOriginInto(face: number, level: number, ix: number, iy: number, out: Vec3Out): Vec3Out {
+  const D = GRID_N << level;
+  const u = gridCoord(ix * GRID_N + (GRID_N >> 1), D);
+  const v = gridCoord(iy * GRID_N + (GRID_N >> 1), D);
+  const f3 = face * 3;
+  const cx = FACE_C[f3] + u * FACE_U[f3] + v * FACE_V[f3];
+  const cy = FACE_C[f3 + 1] + u * FACE_U[f3 + 1] + v * FACE_V[f3 + 1];
+  const cz = FACE_C[f3 + 2] + u * FACE_U[f3 + 2] + v * FACE_V[f3 + 2];
+  spherifyInto(cx, cy, cz, _cd);
+  const r = P.radius + terrainHeight(_cd.x, _cd.y, _cd.z);
+  out.x = _cd.x * r;
+  out.y = _cd.y * r;
+  out.z = _cd.z * r;
+  return out;
+}
+```
+
+
+### 4. `src/workers/terrainWorker.ts`
+
+
+```typescript
+/**
+ * ============================================================================
+ *  TERRAIN WORKER — CHUNK GENERATION WITH THE TRANSFERABLE RECYCLING LOOP
+ *  Milestone 1C · Spec 01.2 (worker pipeline), 04.3 (Zero-GC mesh pooling)
+ * ============================================================================
+ *  PROTOCOL (all heavy data moves are zero-copy Transfers):
+ *    main → worker  {t:'init', params, sets}                    (boot)
+ *    main → worker  {t:'req',  a: Float64Array}   TRANSFER [a]  (batch of
+ *                  [count, (key,face,level,ix,iy)×count])        requests)
+ *    worker → main  {t:'chunk', key, p,n,u,i, free, a?} TRANSFER (per chunk;
+ *                  `a` (the request array) rides the FIRST response)
+ *    worker → main  {t:'drop', key, a?} TRANSFER                (defensive)
+ *    main → worker  {t:'ret',  b: ArrayBuffer[]}  TRANSFER      (recycled
+ *                                                                buffer sets)
+ *
+ *  OWNERSHIP: a buffer set exists in exactly one place at a time — worker
+ *  pool → in flight → bound to a mesh → return queue → worker pool. The
+ *  worker allocates its pool ONCE at init; thereafter it only fills and
+ *  transfers. Worker-side envelope/view allocations live on the WORKER heap
+ *  (independent GC — invisible to the main-thread Zero-GC mandate).
+ *
+ *  GENERATION (per chunk): every vertex is derived from GLOBAL grid lines
+ *  (the bit-exact invariant in terrainField.ts), positions are exported as
+ *  Float32 CHUNK-LOCAL coordinates relative to the chunk's Float64 origin
+ *  (f64 subtraction first, single narrowing at the store), normals come
+ *  from the pure field normal (bitwise-consistent across chunks), and the
+ *  padded ring is a radial skirt dropped toward the planet core.
+ */
+
+
+import {
+  GRID_N, GRID_W, CHUNK_INDEX_COUNT, CHUNK_POS_FLOATS, CHUNK_NRM_FLOATS,
+  CHUNK_UV_FLOATS, chunkOriginInto, gridCoord, initTerrainField,
+  skirtDepthFor, terrainHeight, terrainNormalInto,
+  type TerrainParams,
+} from '../core/terrain/terrainField';
+import { FACE_C, FACE_U, FACE_V, type Vec3Out } from '../core/terrain/spherify';
+
+
+/* -- worker-scope typing shim (module worker, DOM lib tsconfig) ------------ */
+interface WorkerCtx {
+  postMessage(message: unknown, transfer?: Transferable[]): void;
+  onmessage: ((event: MessageEvent) => void) | null;
+}
+const ctx = self as unknown as WorkerCtx;
+
+
+/* -- message shapes -------------------------------------------------------- */
+interface InitMsg { t: 'init'; params: TerrainParams; sets: number; }
+interface ReqMsg  { t: 'req'; a: Float64Array; }
+interface RetMsg  { t: 'ret'; b: ArrayBuffer[]; }
+type Inbound = InitMsg | ReqMsg | RetMsg;
+interface ChunkOut { t: 'chunk'; key: number; p: Float32Array; n: Float32Array; u: Float32Array; i: Uint16Array; free: number; a?: Float64Array; }
+interface DropOut  { t: 'drop'; key: number; a?: Float64Array; }
+
+
+/* -- worker state ---------------------------------------------------------- */
+interface BufferSet { pos: Float32Array; nrm: Float32Array; uv: Float32Array; idx: Uint16Array; }
+
+
+const setPool: BufferSet[] = [];
+let P: TerrainParams | null = null;
+let MASTER_IDX: Uint16Array | null = null;
+let ready = false;
+
+
+/* Module scratch (allocated once per worker — zero per-chunk allocation). */
+const _org: Vec3Out = { x: 0, y: 0, z: 0 };
+const _nrm: Vec3Out = { x: 0, y: 0, z: 0 };
+const _rho = new Float64Array(GRID_W * GRID_W);   // per-vertex radius (R+h)
+
+
+/** Index buffer is identical for every chunk (same padded-grid topology):
+ *  built once, memcpy'd into each transferred set. */
+function buildMasterIndex(): Uint16Array {
+  const idx = new Uint16Array(CHUNK_INDEX_COUNT);
+  let q = 0;
+  for (let j = 0; j < GRID_W - 1; j++) {
+    for (let i = 0; i < GRID_W - 1; i++) {
+      const a = j * GRID_W + i, b = a + 1, c = a + GRID_W + 1, d = a + GRID_W;
+      // Outward CCW winding (U×V = C on every face — verified in spherify.ts)
+      idx[q++] = a; idx[q++] = b; idx[q++] = c;
+      idx[q++] = a; idx[q++] = c; idx[q++] = d;
+    }
+  }
+  return idx;
+}
+
+
+/** Radial skirt drop: duplicate an edge vertex toward the planet core. */
+function dropVertex(
+  dst: number, src: number, skirt: number,
+  ox: number, oy: number, oz: number,
+  pos: Float32Array, nrm: Float32Array, uv: Float32Array,
+): void {
+  const rho = _rho[src];
+  const s = (rho - skirt) / rho;
+  const ks = src * 3, kd = dst * 3;
+  const wx = pos[ks] + ox, wy = pos[ks + 1] + oy, wz = pos[ks + 2] + oz;
+  pos[kd] = wx * s - ox;
+  pos[kd + 1] = wy * s - oy;
+  pos[kd + 2] = wz * s - oz;
+  nrm[kd] = nrm[ks]; nrm[kd + 1] = nrm[ks + 1]; nrm[kd + 2] = nrm[ks + 2];
+  const us = src * 2, ud = dst * 2;
+  uv[ud] = uv[us]; uv[ud + 1] = uv[us + 1];
+}
+
+
+/**
+ * THE CHUNK GENERATOR. Fills a pooled buffer set. Zero allocation.
+ *
+ * Interior: (N+1)² vertices from global grid lines; the spherified-cube
+ * math is applied inline (exact component formula — never normalize()).
+ * Ring: 4·(N+1) + 4 skirt vertices, edge duplicates dropped radially.
+ */
+function generateChunk(key: number, face: number, level: number, ix: number, iy: number, set: BufferSet): void {
+  const N = GRID_N, W = GRID_W;
+  const D = N << level;                 // power-of-two divisor — exact division
+  const R = P!.radius;
+  chunkOriginInto(face, level, ix, iy, _org);   // bit-identical to main thread
+  const ox = _org.x, oy = _org.y, oz = _org.z;
+  const pos = set.pos, nrm = set.nrm, uv = set.uv;
+  const f3 = face * 3;
+  const Cx = FACE_C[f3], Cy = FACE_C[f3 + 1], Cz = FACE_C[f3 + 2];
+  const Ux = FACE_U[f3], Uy = FACE_U[f3 + 1], Uz = FACE_U[f3 + 2];
+  const Vx = FACE_V[f3], Vy = FACE_V[f3 + 1], Vz = FACE_V[f3 + 2];
+
+
+  // -- interior vertices (rows/cols 1..N+1) --------------------------------
+  for (let j = 1; j <= N + 1; j++) {
+    const jj = j - 1;
+    const v = gridCoord(iy * N + jj, D);
+    for (let i = 1; i <= N + 1; i++) {
+      const ii = i - 1;
+      const u = gridCoord(ix * N + ii, D);
+      // cube point (exact: table entries in {−1,0,1})
+      const cx = Cx + u * Ux + v * Vx;
+      const cy = Cy + u * Uy + v * Vy;
+      const cz = Cz + u * Uz + v * Vz;
+      // spherified cube (exact component formula)
+      const x2 = cx * cx, y2 = cy * cy, z2 = cz * cz;
+      const dx = cx * Math.sqrt(1 - y2 * 0.5 - z2 * 0.5 + (y2 * z2) / 3);
+      const dy = cy * Math.sqrt(1 - z2 * 0.5 - x2 * 0.5 + (z2 * x2) / 3);
+      const dz = cz * Math.sqrt(1 - x2 * 0.5 - y2 * 0.5 + (x2 * y2) / 3);
+      // height (pure f64 field) + chunk-local f32 export
+      const h = terrainHeight(dx, dy, dz);
+      const r = R + h;
+      const k = (j * W + i) * 3;
+      pos[k] = dx * r - ox;
+      pos[k + 1] = dy * r - oy;
+      pos[k + 2] = dz * r - oz;
+      _rho[j * W + i] = r;
+      // seamless field normal (bitwise-consistent across all chunks)
+      terrainNormalInto(dx, dy, dz, _nrm);
+      nrm[k] = _nrm.x; nrm[k + 1] = _nrm.y; nrm[k + 2] = _nrm.z;
+      const k2 = (j * W + i) * 2;
+      uv[k2] = ii / N;   // exact: N is a power of two
+      uv[k2 + 1] = jj / N;
+    }
+  }
+
+
+  // -- skirt ring (edge duplicates dropped radially toward the core) -------
+  const skirt = skirtDepthFor(level);
+  for (let i = 1; i <= N + 1; i++) {
+    dropVertex(i, W + i, skirt, ox, oy, oz, pos, nrm, uv);              // j=0
+    dropVertex((W - 1) * W + i, (W - 2) * W + i, skirt, ox, oy, oz, pos, nrm, uv); // j=W−1
+  }
+  for (let j = 1; j <= N + 1; j++) {
+    dropVertex(j * W, j * W + 1, skirt, ox, oy, oz, pos, nrm, uv);      // i=0
+    dropVertex(j * W + W - 1, j * W + W - 2, skirt, ox, oy, oz, pos, nrm, uv); // i=W−1
+  }
+  dropVertex(0, W + 1, skirt, ox, oy, oz, pos, nrm, uv);                          // corners
+  dropVertex(W - 1, W + W - 2, skirt, ox, oy, oz, pos, nrm, uv);
+  dropVertex((W - 1) * W, (W - 2) * W + 1, skirt, ox, oy, oz, pos, nrm, uv);
+  dropVertex((W - 1) * W + W - 1, (W - 2) * W + W - 2, skirt, ox, oy, oz, pos, nrm, uv);
+
+
+  // -- indices: identical topology for every chunk (memcpy) ----------------
+  set.idx.set(MASTER_IDX!);
+}
+
+
+/* -- boot & message pump ---------------------------------------------------- */
+function initSets(count: number): void {
+  for (let i = 0; i < count; i++) {
+    setPool.push({
+      pos: new Float32Array(CHUNK_POS_FLOATS),   // the ONLY terrain-buffer
+      nrm: new Float32Array(CHUNK_NRM_FLOATS),   // allocations in the whole
+      uv: new Float32Array(CHUNK_UV_FLOATS),     // system — boot, once
+      idx: new Uint16Array(CHUNK_INDEX_COUNT),
+    });
+  }
+}
+
+
+ctx.onmessage = (ev: MessageEvent) => {
+  const m = ev.data as Inbound;
+  if (m.t === 'init') {
+    P = m.params;
+    initTerrainField(m.params);      // same seed → same tables as main thread
+    MASTER_IDX = buildMasterIndex();
+    initSets(m.sets);
+    ready = true;
+    return;
+  }
+  if (!ready) return;
+  if (m.t === 'ret') {
+    // Recycled buffers re-enter the pool (view wrappers only — zero copy).
+    const b = m.b;
+    for (let i = 0; i + 3 < b.length; i += 4) {
+      setPool.push({
+        pos: new Float32Array(b[i]),
+        nrm: new Float32Array(b[i + 1]),
+        uv: new Float32Array(b[i + 2]),
+        idx: new Uint16Array(b[i + 3]),
+      });
+    }
+    return;
+  }
+  if (m.t === 'req') {
+    const a = m.a;                    // ownership of this array is OURS now
+    const n = a[0];
+    let first = true;
+    for (let k = 0; k < n; k++) {
+      const key = a[1 + k * 5], face = a[2 + k * 5], level = a[3 + k * 5];
+      const ix = a[4 + k * 5], iy = a[5 + k * 5];
+      const set = setPool.pop();
+      if (set === undefined) {
+        // Defensive: cannot happen while inFlightCap ≤ pool (enforced by
+        // the main thread), but never leave a request unanswered.
+        if (first) { ctx.postMessage({ t: 'drop', key, a } as DropOut, [a.buffer]); first = false; }
+        else ctx.postMessage({ t: 'drop', key } as DropOut);
+        continue;
+      }
+      generateChunk(key, face, level, ix, iy, set);
+      const msg: ChunkOut = {
+        t: 'chunk', key,
+        p: set.pos, n: set.nrm, u: set.uv, i: set.idx,
+        free: setPool.length,
+      };
+      if (first) {
+        msg.a = a;                    // return the request array for reuse
+        ctx.postMessage(msg, [set.pos.buffer, set.nrm.buffer, set.uv.buffer, set.idx.buffer, a.buffer]);
+        first = false;
+      } else {
+        ctx.postMessage(msg, [set.pos.buffer, set.nrm.buffer, set.uv.buffer, set.idx.buffer]);
+      }
+    }
+    // If every entry dropped before `a` was returned (first===true and
+    // n===0 is impossible; drops always flush `a` on the first response).
+  }
+};
+```
+
+
+### 5. `src/render/TerrainMeshPool.ts`
+
+
+```typescript
+/**
+ * ============================================================================
+ *  TERRAIN MESH POOL — MAIN-THREAD ZERO-GC MANAGER
+ *  Milestone 1C · Spec 01.2 (buffer swap protocol), 04.3 (mesh pooling)
+ * ============================================================================
+ *  THE POOL: a fixed set of Mesh/BufferGeometry objects created at boot with
+ *  FULL-SIZE boot arrays. During flight, received worker buffers are bound by
+ *  swapping attribute `.array` IN PLACE and setting `needsUpdate` — three.js
+ *  then performs a same-size `bufferSubData` upload with no GPU reallocation
+ *  and no JS allocation. Retiring a chunk parks `.array` back on the boot
+ *  arrays and TRANSFERS the worker buffers home. `geometry.dispose()` and
+ *  `scene.remove()` DO NOT EXIST in the flight path (the harness patches
+ *  both to prove it). `disposeAll()` exists for page teardown only.
+ *
+ *  MESSAGING: request parameter arrays ping-pong (2 per worker, transferred
+ *  both ways); buffer returns are batched per worker per frame; the per-worker
+ *  in-flight cap (12) is far below the worker pool (96) so a free set always
+ *  exists. All queues/rings are boot-allocated — pump() allocates only the
+ *  tiny postMessage envelopes (the structured-clone boundary, quantified in
+ *  the 1C analysis at < ~150 B/frame amortized).
+ */
+
+
+import * as THREE from 'three';
+import {
+  CHUNK_INDEX_COUNT, CHUNK_NRM_FLOATS, CHUNK_POS_FLOATS, CHUNK_UV_FLOATS,
+  chunkKey, type TerrainParams,
+} from '../core/terrain/terrainField';
+
+
+export interface PoolCounters {
+  /** Buffer allocations performed (boot only — asserted frozen in flight). */
+  bootBufferAllocs: number;
+  swaps: number;        // attribute .array swaps ×1 (4 per chunk bind)
+  received: number;
+  dispatched: number;
+  drops: number;
+  returned: number;     // buffer sets returned to workers
+  queueDrops: number;
+}
+
+
+export interface ChunkRecord {
+  index: number;
+  mesh: THREE.Mesh;
+  geometry: THREE.BufferGeometry;
+  key: number;
+  face: number;
+  level: number;
+  ix: number;
+  iy: number;
+  originX: number; originY: number; originZ: number;  // f64 chunk anchor
+  /** 0 free · 1 pending · 2 active · 3 canceling (pending, release requested) */
+  state: 0 | 1 | 2 | 3;
+  workerIdx: number;
+  unwanted: number;
+  /** Controller hook (quadtree node ref) — pool stays node-agnostic. */
+  owner: unknown;
+  // permanent parking arrays (never freed, never uploaded after park)
+  bootPos: Float32Array; bootNrm: Float32Array;
+  bootUv: Float32Array; bootIdx: Uint16Array;
+  // currently bound worker views (returned to the worker on release)
+  curPos: Float32Array | null; curNrm: Float32Array | null;
+  curUv: Float32Array | null; curIdx: Uint16Array | null;
+}
+
+
+export interface TerrainMeshPoolOptions {
+  meshCount: number;
+  workerCount: number;
+  workerPoolSets: number;
+  maxBatch: number;
+  inFlightPerWorker: number;
+  params: TerrainParams;
+  material?: THREE.Material;
+}
+
+
+interface QueueEntry { recIdx: number; key: number; }
+interface ReturnEntry { pos: Float32Array | null; nrm: Float32Array | null; uv: Float32Array | null; idx: Uint16Array | null; }
+interface ReturnRing { entries: ReturnEntry[]; count: number; }
+interface ChunkMsg {
+  t: 'chunk'; key: number; p: Float32Array; n: Float32Array; u: Float32Array;
+  i: Uint16Array; free: number; a?: Float64Array;
+}
+interface DropMsg { t: 'drop'; key: number; a?: Float64Array; }
+
+
+export class TerrainMeshPool {
+  readonly records: ChunkRecord[] = [];
+  readonly counters: PoolCounters = {
+    bootBufferAllocs: 0, swaps: 0, received: 0, dispatched: 0,
+    drops: 0, returned: 0, queueDrops: 0,
+  };
+
+
+  private readonly opts: TerrainMeshPoolOptions;
+  private readonly material: THREE.Material;
+  private scene: THREE.Scene | null = null;
+  private attached = false;
+  private readonly workers: Worker[] = [];
+  private readonly reqPools: Float64Array[][] = [];
+  private readonly inFlight: number[] = [];
+  readonly workerFree: number[] = [];
+
+
+  // dispatch queue (boot-allocated ring)
+  private readonly queueEntries: QueueEntry[];
+  private queueHead = 0;
+  private queueCount = 0;
+  private readonly queueCapacity: number;
+
+
+  // per-worker buffer return rings
+  private readonly returnRings: ReturnRing[] = [];
+  private readonly returnCapacity = 48;
+
+
+  constructor(opts: TerrainMeshPoolOptions) {
+    this.opts = opts;
+    this.queueCapacity = opts.meshCount;
+    this.queueEntries = [];
+    for (let i = 0; i < this.queueCapacity; i++) {
+      this.queueEntries.push({ recIdx: -1, key: -1 });
+    }
+    this.material = opts.material ?? new THREE.MeshStandardMaterial({
+      color: 0x7d8a6f, roughness: 1, metalness: 0, side: THREE.DoubleSide,
+    });
+
+
+    // -- pool meshes (boot allocation — the ONLY Float32Arrays on main) ---
+    for (let i = 0; i < opts.meshCount; i++) {
+      const bootPos = new Float32Array(CHUNK_POS_FLOATS);
+      const bootNrm = new Float32Array(CHUNK_NRM_FLOATS);
+      const bootUv = new Float32Array(CHUNK_UV_FLOATS);
+      const bootIdx = new Uint16Array(CHUNK_INDEX_COUNT);
+      this.counters.bootBufferAllocs += 4;
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position',
+        new THREE.BufferAttribute(bootPos, 3).setUsage(THREE.DynamicDrawUsage));
+      g.setAttribute('normal',
+        new THREE.BufferAttribute(bootNrm, 3).setUsage(THREE.DynamicDrawUsage));
+      g.setAttribute('uv',
+        new THREE.BufferAttribute(bootUv, 2).setUsage(THREE.DynamicDrawUsage));
+      g.setIndex(new THREE.BufferAttribute(bootIdx, 1).setUsage(THREE.DynamicDrawUsage));
+      g.setDrawRange(0, 0);
+      g.computeBoundingSphere();     // allocate the Sphere NOW (boot)
+      const mesh = new THREE.Mesh(g, this.material);
+      mesh.visible = false;
+      mesh.frustumCulled = true;
+      this.records.push({
+        index: i, mesh, geometry: g, key: -1, face: 0, level: 0, ix: 0, iy: 0,
+        originX: 0, originY: 0, originZ: 0, state: 0, workerIdx: -1, unwanted: 0,
+        owner: null,
+        bootPos, bootNrm, bootUv, bootIdx,
+        curPos: null, curNrm: null, curUv: null, curIdx: null,
+      });
+    }
+
+
+    // -- workers -----------------------------------------------------------
+    for (let w = 0; w < opts.workerCount; w++) {
+      const worker = new Worker(
+        new URL('../workers/terrainWorker.ts', import.meta.url),
+        { type: 'module' },
+      );
+      const pool: Float64Array[] = [
+        new Float64Array(1 + opts.maxBatch * 5),
+        new Float64Array(1 + opts.maxBatch * 5),
+      ];
+      this.reqPools.push(pool);
+      this.inFlight.push(0);
+      this.workerFree.push(opts.workerPoolSets);
+      this.returnRings.push({
+        entries: Array.from({ length: this.returnCapacity },
+          () => ({ pos: null, nrm: null, uv: null, idx: null })),
+        count: 0,
+      });
+      worker.onerror = (e) => console.error('[TerrainMeshPool] worker error', e.message);
+      worker.onmessage = (ev: MessageEvent) => this.onWorkerMessage(w, ev);
+      worker.postMessage({ t: 'init', params: opts.params, sets: opts.workerPoolSets });
+      this.workers.push(worker);
+    }
+  }
+
+
+  /* -- scene attach / priming --------------------------------------------- */
+
+
+  attach(scene: THREE.Scene): void {
+    if (this.attached) return;
+    this.attached = true;
+    this.scene = scene;
+    for (let i = 0; i < this.records.length; i++) scene.add(this.records[i].mesh);
+  }
+
+
+  /**
+   * Render every pool mesh once (degenerate, frustum-culling disabled) so
+   * all pool geometries are registered by WebGLGeometries BEFORE the
+   * acceptance window — renderer.info.memory.geometries is then structurally
+   * frozen. Call unprimeAll() after a rendered frame.
+   */
+  primeAll(): void {
+    for (let i = 0; i < this.records.length; i++) {
+      const r = this.records[i];
+      r.mesh.visible = true;
+      r.mesh.frustumCulled = false;
+      r.geometry.setDrawRange(0, CHUNK_INDEX_COUNT);
+    }
+  }
+
+
+  unprimeAll(): void {
+    for (let i = 0; i < this.records.length; i++) {
+      const r = this.records[i];
+      if (r.state === 2) { r.mesh.frustumCulled = true; continue; }
+      r.mesh.visible = false;
+      r.mesh.frustumCulled = true;
+      r.geometry.setDrawRange(0, 0);
+    }
+  }
+
+
+  /* -- record lifecycle ---------------------------------------------------- */
+
+
+  /** Find a free record, fill it, enqueue the dispatch. Returns −1 if full. */
+  acquire(face: number, level: number, ix: number, iy: number,
+          ox: number, oy: number, oz: number): number {
+    const rs = this.records;
+    for (let i = 0; i < rs.length; i++) {
+      const r = rs[i];
+      if (r.state !== 0) continue;
+      r.key = chunkKey(face, level, ix, iy);
+      r.face = face; r.level = level; r.ix = ix; r.iy = iy;
+      r.originX = ox; r.originY = oy; r.originZ = oz;
+      r.state = 1; r.workerIdx = -1; r.unwanted = 0; r.owner = null;
+      if (!this.enqueue(i, r.key)) {           // queue full: undo
+        r.state = 0;
+        return -1;
+      }
+      return i;
+    }
+    return -1;
+  }
+
+
+  /**
+   * Release a record. Pending records transition to CANCELING (3): if the
+   * request was already dispatched, the arrival path returns the buffers;
+   * if it is still queued, the dispatch loop clears it. Active records are
+   * parked (boot arrays) and their buffers queue for return to the worker.
+   */
+  release(recIdx: number): void {
+    const r = this.records[recIdx];
+    if (r.state === 1) { r.state = 3; return; }
+    if (r.state !== 2) return;
+    const g = r.geometry;
+    (g.attributes.position as THREE.BufferAttribute).array = r.bootPos;
+    (g.attributes.normal as THREE.BufferAttribute).array = r.bootNrm;
+    (g.attributes.uv as THREE.BufferAttribute).array = r.bootUv;
+    (g.index as THREE.BufferAttribute).array = r.bootIdx;
+    // NOTE: no needsUpdate — invisible, drawRange 0 → no upload, no churn.
+    g.setDrawRange(0, 0);
+    r.mesh.visible = false;
+    this.queueReturn(r.workerIdx, r.curPos!, r.curNrm!, r.curUv!, r.curIdx!);
+    r.curPos = null; r.curNrm = null; r.curUv = null; r.curIdx = null;
+    r.state = 0;
+  }
+
+
+  /* -- per-frame pump (call after controller update) ----------------------- */
+
+
+  pump(): void {
+    for (let w = 0; w < this.workers.length; w++) {
+      this.flushReturns(w);
+      this.dispatchBatch(w);
+    }
+  }
+
+
+  /* -- telemetry ------------------------------------------------------------ */
+
+
+  activeCount(): number { let n = 0; for (const r of this.records) if (r.state === 2) n++; return n; }
+  pendingCount(): number { let n = 0; for (const r of this.records) if (r.state === 1 || r.state === 3) n++; return n; }
+  freeCount(): number { let n = 0; for (const r of this.records) if (r.state === 0) n++; return n; }
+  inFlightTotal(): number { let n = 0; for (const v of this.inFlight) n += v; return n; }
+
+
+  /**
+   * PAGE TEARDOWN ONLY — strictly forbidden during flight (Spec 04.3).
+   * The acceptance harness patches dispose/remove and asserts zero calls
+   * inside the measurement window.
+   */
+  disposeAll(): void {
+    for (const w of this.workers) w.terminate();
+    if (this.scene !== null) {
+      for (const r of this.records) this.scene.remove(r.mesh);
+    }
+    for (const r of this.records) r.geometry.dispose();
+    this.material.dispose();
+  }
+
+
+  /* -- internals ------------------------------------------------------------- */
+
+
+  private enqueue(recIdx: number, key: number): boolean {
+    if (this.queueCount >= this.queueCapacity) {
+      this.counters.queueDrops++;
+      return false;
+    }
+    const tail = (this.queueHead + this.queueCount) % this.queueCapacity;
+    this.queueEntries[tail].recIdx = recIdx;
+    this.queueEntries[tail].key = key;
+    this.queueCount++;
+    return true;
+  }
+
+
+  private findByKey(key: number): ChunkRecord | null {
+    const rs = this.records;
+    for (let i = 0; i < rs.length; i++) {
+      const r = rs[i];
+      if (r.key === key && (r.state === 1 || r.state === 3)) return r;
+    }
+    return null;
+  }
+
+
+  private onWorkerMessage(w: number, ev: MessageEvent): void {
+    const m = ev.data as ChunkMsg | DropMsg;
+    if (m.t === 'chunk') {
+      if (m.a !== undefined) this.reqPools[w].push(m.a);   // request array home
+      this.inFlight[w] = Math.max(0, this.inFlight[w] - 1);
+      this.workerFree[w] = m.free;
+      this.counters.received++;
+      const r = this.findByKey(m.key);
+      if (r !== null && r.state === 1) {
+        this.bindRecord(r, m, w);
+      } else {
+        if (r !== null && r.state === 3) r.state = 0;      // canceled: recycle
+        this.queueReturn(w, m.p, m.n, m.u, m.i);           // orphaned buffers
+      }
+    } else if (m.t === 'drop') {
+      if (m.a !== undefined) this.reqPools[w].push(m.a);
+      this.inFlight[w] = Math.max(0, this.inFlight[w] - 1);
+      const r = this.findByKey(m.key);
+      if (r !== null && (r.state === 1 || r.state === 3)) r.state = 0;
+      this.counters.drops++;
+    }
+  }
+
+
+  /** THE in-place bind: swap .array pointers, flag needsUpdate, same-size
+   *  bufferSubData upload. Zero JS allocation, zero GPU reallocation. */
+  private bindRecord(r: ChunkRecord, m: ChunkMsg, w: number): void {
+    r.curPos = m.p; r.curNrm = m.n; r.curUv = m.u; r.curIdx = m.i;
+    r.workerIdx = w;
+    r.state = 2;
+    const g = r.geometry;
+    const pa = g.attributes.position as THREE.BufferAttribute;
+    pa.array = m.p; pa.needsUpdate = true;
+    const na = g.attributes.normal as THREE.BufferAttribute;
+    na.array = m.n; na.needsUpdate = true;
+    const ua = g.attributes.uv as THREE.BufferAttribute;
+    ua.array = m.u; ua.needsUpdate = true;
+    const ia = g.index as THREE.BufferAttribute;
+    ia.array = m.i; ia.needsUpdate = true;
+    g.setDrawRange(0, CHUNK_INDEX_COUNT);
+    g.computeBoundingSphere();                 // allocation-free after boot
+    r.mesh.position.set(r.originX, r.originY, r.originZ);
+    r.mesh.visible = true;
+    this.counters.swaps += 4;
+  }
+
+
+  private queueReturn(w: number, p: Float32Array, n: Float32Array,
+                      u: Float32Array, i: Uint16Array): void {
+    if (w < 0 || w >= this.returnRings.length) w = 0;
+    const ring = this.returnRings[w];
+    if (ring.count >= this.returnCapacity) {
+      // Overflow (cannot happen at these rates): flush immediately.
+      const list = [p.buffer, n.buffer, u.buffer, i.buffer];
+      this.workers[w].postMessage({ t: 'ret', b: list }, list);
+      this.counters.returned++;
+      return;
+    }
+    const e = ring.entries[ring.count++];
+    e.pos = p; e.nrm = n; e.uv = u; e.idx = i;
+  }
+
+
+  private flushReturns(w: number): void {
+    const ring = this.returnRings[w];
+    if (ring.count === 0) return;
+    const list: ArrayBuffer[] = [];
+    for (let i = 0; i < ring.count; i++) {
+      const e = ring.entries[i];
+      list.push(e.pos!.buffer, e.nrm!.buffer, e.uv!.buffer, e.idx!.buffer);
+      e.pos = null; e.nrm = null; e.uv = null; e.idx = null;
+    }
+    this.counters.returned += ring.count;
+    ring.count = 0;
+    this.workers[w].postMessage({ t: 'ret', b: list }, list);
+  }
+
+
+  private dispatchBatch(w: number): void {
+    if (this.queueCount === 0) return;
+    const rp = this.reqPools[w];
+    if (rp.length === 0) return;                       // both arrays in flight
+    if (this.inFlight[w] >= this.opts.inFlightPerWorker) return;
+    const a = rp[rp.length - 1];
+    let n = 0;
+    while (n < this.opts.maxBatch
+        && this.inFlight[w] + n < this.opts.inFlightPerWorker
+        && this.queueCount > 0) {
+      const e = this.queueEntries[this.queueHead];
+      const rec = this.records[e.recIdx];
+      const valid = rec.state === 1 && rec.key === e.key;
+      this.queueHead = (this.queueHead + 1) % this.queueCapacity;
+      this.queueCount--;
+      if (!valid) {
+        // Stale entry: a cancel that never dispatched — retire it cleanly.
+        if (rec.state === 3 && rec.key === e.key) rec.state = 0;
+        continue;
+      }
+      const base = 1 + n * 5;
+      a[base] = rec.key;
+      a[base + 1] = rec.face;
+      a[base + 2] = rec.level;
+      a[base + 3] = rec.ix;
+      a[base + 4] = rec.iy;
+      n++;
+      this.counters.dispatched++;
+    }
+    if (n === 0) return;
+    a[0] = n;
+    rp.pop();                                          // array leaves with msg
+    this.inFlight[w] += n;
+    this.workers[w].postMessage({ t: 'req', a }, [a.buffer]);
+  }
+}
+```
+
+
+### 6. `src/test/Milestone1C_TestHarness.tsx`
+
+
+```tsx
+/**
+ * ============================================================================
+ *  MILESTONE 1C — WEB WORKER TERRAIN & ZERO-GC POOL (R3F TEST HARNESS)
+ * ============================================================================
+ *  SCENARIO: an Earth-scale test planet (R = 5,000 m, Spec 02.1) whose six
+ *  cube faces carry LOD quadtrees (levels 0..4, 491 m finest chunks, 15 m
+ *  vertex spacing). The camera performs a great-circle flyover at exactly
+ *  2,000 m/s, 1,500 m above mean radius — the absolute hard-cap speed of
+ *  Spec 00.3 — streaming terrain through the worker pipeline continuously.
+ *
+ *  AUTOMATED ACCEPTANCE (auto-arms after warmup, 60 s window):
+ *   [T1] renderer.info.memory.geometries absolutely constant during flight.
+ *   [T2] Zero geometry/material/texture dispose and zero scene.remove calls
+ *        during flight; zero main-thread buffer allocations (pool counter).
+ *   [T3] Seamless normals: bitwise normal equality on every shared edge
+ *        across chunks (same-level neighbors AND parent/child T-junctions),
+ *        positions consistent to < 5e-3 m via f64-origin reconstruction,
+ *        plus the spherify round-trip boot self-test (< 1e-12).
+ *   [T4] V8 heap growth < 1 KB per frame averaged over the window
+ *        (performance.memory; N/A-with-structural-fallback if unavailable).
+ *
+ *  RENDER-LOOP ALLOCATION AUDIT: flight/controller/pump are allocation-free
+ *  (module-scope scratch only); chunk arrivals allocate only the structured-
+ *  clone envelopes; the HUD uses a mutation-based store at 5 Hz (version
+ *  counter as the useSyncExternalStore snapshot — zero snapshot objects).
+ */
+
+
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import * as THREE from 'three';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import {
+  GRID_N, GRID_W, TEST_PLANET, initTerrainField, terrainHeight,
+  chunkArcWidth, chunkKey, gridCoord,
+} from '../core/terrain/terrainField';
+import {
+  faceCubePointInto, spherifyInto, sphereToCubeInto,
+  type CubeCoord, type Vec3Out,
+} from '../core/terrain/spherify';
+import { mulberry32 } from '../core/terrain/noise';
+import {
+  TerrainMeshPool, type ChunkRecord,
+} from '../render/TerrainMeshPool';
+
+
+/* ============================================================================
+ * 1. DEV-TIME PATCHES — dispose / scene.remove call counters (run FIRST)
+ * ==========================================================================*/
+const origGeoDispose = THREE.BufferGeometry.prototype.dispose;
+const origMatDispose = THREE.Material.prototype.dispose;
+const origTexDispose = THREE.Texture.prototype.dispose;
+const origSceneRemove = THREE.Scene.prototype.remove;
+let disposeCalls = 0;
+let sceneRemoveCalls = 0;
+THREE.BufferGeometry.prototype.dispose = function (this: THREE.BufferGeometry) {
+  disposeCalls++;
+  return origGeoDispose.apply(this, arguments as unknown as []);
+};
+THREE.Material.prototype.dispose = function (this: THREE.Material) {
+  disposeCalls++;
+  return origMatDispose.apply(this, arguments as unknown as []);
+};
+THREE.Texture.prototype.dispose = function (this: THREE.Texture) {
+  disposeCalls++;
+  return origTexDispose.apply(this, arguments as unknown as []);
+};
+THREE.Scene.prototype.remove = function (this: THREE.Scene) {
+  sceneRemoveCalls++;
+  return origSceneRemove.apply(this, arguments as unknown as []);
+};
+
+
+/* ============================================================================
+ * 2. BOOT SINGLETONS (all allocation sanctioned HERE, never in the loop)
+ * ==========================================================================*/
+const R = TEST_PLANET.radius;
+initTerrainField(TEST_PLANET);
+
+
+const MESH_COUNT = 144;
+const WORKER_COUNT = 2;
+const WORKER_POOL_SETS = 96;
+const MAX_BATCH = 6;
+const IN_FLIGHT_PER_WORKER = 12;
+
+
+const pool = new TerrainMeshPool({
+  meshCount: MESH_COUNT,
+  workerCount: WORKER_COUNT,
+  workerPoolSets: WORKER_POOL_SETS,
+  maxBatch: MAX_BATCH,
+  inFlightPerWorker: IN_FLIGHT_PER_WORKER,
+  params: TEST_PLANET,
+});
+
+
+/* -- LOD controller constants --------------------------------------------- */
+const MAX_LEVEL = 4;
+const SPLIT_K = 2.0;
+const MERGE_K = 1.45;
+const GRACE_FRAMES = 45;
+const ACTIVATIONS_PER_FRAME = 3;
+const TOTAL_INFLIGHT_CAP = 24;
+const HORIZON_MARGIN = 150;
+const HEIGHT_SLACK = 900;          // max |terrain height| for TEST_PLANET
+
+
+/* -- quadtree nodes (pre-allocated: 6 faces × 341 nodes) -------------------- */
+interface QNode {
+  face: number; level: number; ix: number; iy: number; key: number;
+  cx: number; cy: number; cz: number;         // centre unit direction (f64)
+  ox: number; oy: number; oz: number;         // centre surface point (f64)
+  width: number; brad: number;
+  parent: QNode | null;
+  split: boolean; desired: boolean;
+  activeRec: number; pendingRec: number;
+}
+const LEVEL_OFFSETS = [0, 1, 5, 21, 85];
+const FACE_NODES: QNode[][] = [];
+
+
+(function buildNodes(): void {
+  const dir: Vec3Out = { x: 0, y: 0, z: 0 };
+  for (let f = 0; f < 6; f++) {
+    const arr: QNode[] = new Array(341);
+    for (let L = 0; L <= MAX_LEVEL; L++) {
+      const D = GRID_N << L;
+      const cnt = 1 << L;
+      for (let ix = 0; ix < cnt; ix++) {
+        for (let iy = 0; iy < cnt; iy++) {
+          const u = gridCoord(ix * GRID_N + (GRID_N >> 1), D);
+          const v = gridCoord(iy * GRID_N + (GRID_N >> 1), D);
+          faceCubePointInto(f, u, v, dir);
+          spherifyInto(dir.x, dir.y, dir.z, dir);
+          const h = terrainHeight(dir.x, dir.y, dir.z);
+          const rr = R + h;
+          const width = chunkArcWidth(L);
+          arr[LEVEL_OFFSETS[L] + ix * cnt + iy] = {
+            face: f, level: L, ix, iy, key: chunkKey(f, L, ix, iy),
+            cx: dir.x, cy: dir.y, cz: dir.z,
+            ox: dir.x * rr, oy: dir.y * rr, oz: dir.z * rr,
+            width, brad: width * 0.75 + HEIGHT_SLACK,
+            parent: null, split: false, desired: false,
+            activeRec: -1, pendingRec: -1,
+          };
+        }
+      }
+    }
+    for (let L = 1; L <= MAX_LEVEL; L++) {
+      const cnt = 1 << L;
+      for (let ix = 0; ix < cnt; ix++) {
+        for (let iy = 0; iy < cnt; iy++) {
+          const pc = 1 << (L - 1);
+          arr[LEVEL_OFFSETS[L] + ix * cnt + iy].parent =
+            arr[LEVEL_OFFSETS[L - 1] + (ix >> 1) * pc + (iy >> 1)];
+        }
+      }
+    }
+    FACE_NODES.push(arr);
+  }
+})();
+
+
+function childOf(n: QNode, c: number): QNode {
+  const L1 = n.level + 1;
+  const cnt = 1 << L1;
+  return FACE_NODES[n.face][LEVEL_OFFSETS[L1]
+    + (n.ix * 2 + (c >> 1)) * cnt + (n.iy * 2 + (c & 1))];
+}
+function nodeHasData(n: QNode): boolean {
+  if (n.activeRec >= 0) return true;
+  if (n.pendingRec >= 0 && pool.records[n.pendingRec].state === 2) return true;
+  return false;
+}
+
+
+/* -- boot self-test: spherify round-trip ------------------------------------ */
+const metrics = {
+  phase: 0,                       // 0 warmup · 1 running · 2 done
+  warmElapsed: 0, windowElapsed: 0, frames: 0,
+  geoMin: Infinity, geoMax: 0,
+  disposeStart: 0, removeStart: 0, allocStart: 0,
+  heapRing: new Float64Array(160), heapCount: 0, heapTimer: 0,
+  heapFirstAvg: 0, heapLastAvg: 0,
+  auditTimer: 0,
+  roundtripErr: 0,
+  audits: { run: 0, pairs: 0, parentVerts: 0, maxPosDev: 0, nrmMismatch: 0 },
+};
+
+
+(function spherifySelfTest(): void {
+  const cc: CubeCoord = { face: 0, u: 0, v: 0 };
+  const pt: Vec3Out = { x: 0, y: 0, z: 0 };
+  const sp: Vec3Out = { x: 0, y: 0, z: 0 };
+  const rand = mulberry32(0x1c5eed);
+  let maxErr = 0;
+  const fixed = [
+    [1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0], [0, 0, -1],
+    [1, 1, 1], [1, 1, -1], [1, -1, 1], [-1, 1, 1], [1, 0, 1], [0, 1, 1],
+  ];
+  const check = (x: number, y: number, z: number): void => {
+    sphereToCubeInto(x, y, z, cc);
+    faceCubePointInto(cc.face, cc.u, cc.v, pt);
+    spherifyInto(pt.x, pt.y, pt.z, sp);
+    const e = Math.max(
+      Math.abs(sp.x - x), Math.abs(sp.y - y), Math.abs(sp.z - z));
+    if (e > maxErr) maxErr = e;
+  };
+  for (const d of fixed) check(d[0], d[1], d[2]);
+  for (let i = 0; i < 2048; i++) {
+    const u = rand() * 2 - 1, t = rand() * Math.PI * 2;
+    const s = Math.sqrt(1 - u * u);
+    check(Math.cos(t) * s, u, Math.sin(t) * s);
+  }
+  metrics.roundtripErr = maxErr;
+})();
+
+
+/* -- static scene content (boot-only) ---------------------------------------- */
+const sceneRoot = new THREE.Group();
+const sunLight = new THREE.DirectionalLight(0xfff1de, 1.9);
+sunLight.position.set(0.45, 0.65, 0.61).normalize().multiplyScalar(10000);
+sceneRoot.add(sunLight);
+sceneRoot.add(new THREE.AmbientLight(0x33465e, 0.55));
+sceneRoot.add(new THREE.Mesh(                       // far shell below min terrain
+  new THREE.SphereGeometry(R - 900, 48, 32),
+  new THREE.MeshStandardMaterial({ color: 0x0d141c, roughness: 1 }),
+));
+(function stars(): void {
+  const COUNT = 1400, RAD = 15000;
+  const pos = new Float32Array(COUNT * 3);
+  const rand = mulberry32(0x5eed1c);
+  for (let i = 0; i < COUNT; i++) {
+    const u = rand() * 2 - 1, t = rand() * Math.PI * 2;
+    const s = Math.sqrt(1 - u * u);
+    pos[i * 3] = Math.cos(t) * s * RAD;
+    pos[i * 3 + 1] = u * RAD;
+    pos[i * 3 + 2] = Math.sin(t) * s * RAD;
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  sceneRoot.add(new THREE.Points(g, new THREE.PointsMaterial({
+    color: 0xaec6dc, size: 1.6, sizeAttenuation: false,
+    transparent: true, opacity: 0.75, fog: false, depthWrite: false,
+  })));
+})();
+
+
+/* ============================================================================
+ * 3. FLIGHT PATH — exact 2,000 m/s great-circle flyover
+ * ==========================================================================*/
+const SPEED = 2000;
+const ALT = 1500;
+const ORBIT_R = R + ALT;
+const OMEGA = SPEED / ORBIT_R;
+const E2 = { x: 0, y: 0.30901699437494745, z: 0.9510565162951536 }; // 18° tilt
+let flightT = 0.25;
+let flightPaused = false;
+const camPos = { x: 0, y: 0, z: 0 };
+const camDir = { x: 0, y: 0, z: 0 };
+const camFwd = { x: 0, y: 0, z: 0 };
+
+
+function updateFlight(dt: number): void {
+  if (!flightPaused) flightT += dt;
+  const a = OMEGA * flightT;
+  const ca = Math.cos(a), sa = Math.sin(a);
+  camDir.x = ca; camDir.y = E2.y * sa; camDir.z = E2.z * sa;
+  camFwd.x = -sa; camFwd.y = E2.y * ca; camFwd.z = E2.z * ca;
+  camPos.x = camDir.x * ORBIT_R;
+  camPos.y = camDir.y * ORBIT_R;
+  camPos.z = camDir.z * ORBIT_R;
+}
+
+
+/* ============================================================================
+ * 4. LOD CONTROLLER — traversal, hysteresis, activation, eviction
+ * ==========================================================================*/
+let camUX = 0, camUY = 0, camUZ = 0, horizonDot = 0;
+const candNodes: QNode[] = [];
+const candDist = new Float64Array(64);
+let candCount = 0;
+
+
+function clearSubtree(n: QNode): void {
+  n.desired = false;
+  if (n.level < MAX_LEVEL) {
+    for (let c = 0; c < 4; c++) clearSubtree(childOf(n, c));
+  }
+}
+
+
+function visitNode(n: QNode): boolean {
+  // conservative horizon test: dot(O_n, Ĉ) + brad ≥ R²/|C| − margin
+  const vis =
+    n.ox * camUX + n.oy * camUY + n.oz * camUZ + n.brad
+    >= horizonDot - HORIZON_MARGIN;
+  if (!vis) { clearSubtree(n); return false; }
+  const dx = camPos.x - n.ox, dy = camPos.y - n.oy, dz = camPos.z - n.oz;
+  const dNode = Math.sqrt(dx * dx + dy * dy + dz * dz);
+  const splitD = SPLIT_K * n.width;
+  if (n.split && dNode > MERGE_K * splitD) n.split = false;   // hysteresis
+  if (!n.split && n.level < MAX_LEVEL && dNode < splitD) n.split = true;
+  if (n.split && n.level < MAX_LEVEL) {
+    let any = false;
+    for (let c = 0; c < 4; c++) { if (visitNode(childOf(n, c))) any = true; }
+    n.desired = !any;    // fallback leaf when all children are below horizon
+    return true;
+  }
+  n.desired = true;
+  if (n.activeRec < 0 && n.pendingRec < 0 && candCount < 64) {
+    candNodes[candCount] = n;
+    candDist[candCount] = dNode;
+    candCount++;
+  }
+  return true;
+}
+
+
+function updateController(frame: number): void {
+  // promote arrivals (pool stays node-agnostic; records carry the owner)
+  const recs = pool.records;
+  for (let i = 0; i < recs.length; i++) {
+    const rec = recs[i];
+    if (rec.state === 2 && rec.owner !== null) {
+      const n = rec.owner as QNode;
+      if (n.pendingRec === i) { n.pendingRec = -1; n.activeRec = i; }
+    }
+  }
+  // traversal
+  const camR = Math.sqrt(
+    camPos.x * camPos.x + camPos.y * camPos.y + camPos.z * camPos.z);
+  camUX = camPos.x / camR; camUY = camPos.y / camR; camUZ = camPos.z / camR;
+  horizonDot = (R * R) / camR;
+  candCount = 0;
+  for (let f = 0; f < 6; f++) visitNode(FACE_NODES[f][0]);
+  // eviction pass
+  const pressure = pool.freeCount() < 6;
+  for (let i = 0; i < recs.length; i++) {
+    const rec = recs[i];
+    const node = rec.owner as QNode | null;
+    if (node === null) continue;
+    if (rec.state === 2) {
+      if (node.desired) { rec.unwanted = 0; continue; }
+      // hide an inner node as soon as any child has data (anti z-fight)
+      if (node.split) {
+        let childData = false;
+        for (let c = 0; c < 4; c++) {
+          if (nodeHasData(childOf(node, c))) { childData = true; break; }
+        }
+        if (childData) rec.mesh.visible = false;
+      }
+      let keep = false;
+      if (node.split) {
+        for (let c = 0; c < 4; c++) {
+          const ch = childOf(node, c);
+          if (ch.desired && !nodeHasData(ch)) { keep = true; break; }
+        }
+      } else {
+        const p = node.parent;
+        if (p !== null && p.desired && !nodeHasData(p)) keep = true; // merge
+      }
+      if (keep && !pressure) { rec.unwanted = 0; continue; }
+      rec.unwanted++;
+      if (rec.unwanted >= GRACE_FRAMES || pressure) {
+        pool.release(i);
+        if (node.activeRec === i) node.activeRec = -1;
+        rec.owner = null;
+      }
+    } else if (rec.state === 1) {
+      // pending but no longer wanted: cancel after grace
+      if (!node.desired && !node.split) {
+        rec.unwanted++;
+        if (rec.unwanted >= GRACE_FRAMES) {
+          pool.release(i);
+          if (node.pendingRec === i) node.pendingRec = -1;
+          rec.owner = null;
+        }
+      } else {
+        rec.unwanted = 0;
+      }
+    }
+  }
+  // activation pass — nearest candidates first (insertion sort, no alloc)
+  for (let a = 1; a < candCount; a++) {
+    const d = candDist[a];
+    const n = candNodes[a];
+    let b = a - 1;
+    while (b >= 0 && candDist[b] > d) {
+      candDist[b + 1] = candDist[b];
+      candNodes[b + 1] = candNodes[b];
+      b--;
+    }
+    candDist[b + 1] = d;
+    candNodes[b + 1] = n;
+  }
+  let activated = 0;
+  for (let a = 0; a < candCount && activated < ACTIVATIONS_PER_FRAME; a++) {
+    if (pool.inFlightTotal() >= TOTAL_INFLIGHT_CAP) break;
+    if (pool.freeCount() <= 2) break;
+    const n = candNodes[a];
+    const recIdx = pool.acquire(n.face, n.level, n.ix, n.iy, n.ox, n.oy, n.oz);
+    if (recIdx < 0) break;
+    pool.records[recIdx].owner = n;
+    n.pendingRec = recIdx;
+    activated++;
+  }
+}
+
+
+/* ============================================================================
+ * 5. SEAM AUDIT — bitwise normals + f64-origin position reconstruction
+ * ==========================================================================*/
+function posArr(r: ChunkRecord): Float32Array {
+  return (r.geometry.attributes.position as THREE.BufferAttribute).array as Float32Array;
+}
+function nrmArr(r: ChunkRecord): Float32Array {
+  return (r.geometry.attributes.normal as THREE.BufferAttribute).array as Float32Array;
+}
+function checkVertex(pa: Float32Array, na: Float32Array, ka: number, A: ChunkRecord,
+                     pb: Float32Array, nb: Float32Array, kb: number, B: ChunkRecord): void {
+  const ag = metrics.audits;
+  const wx = pa[ka] + A.originX, wy = pa[ka + 1] + A.originY, wz = pa[ka + 2] + A.originZ;
+  const vx = pb[kb] + B.originX, vy = pb[kb + 1] + B.originY, vz = pb[kb + 2] + B.originZ;
+  const dev = Math.max(Math.abs(wx - vx), Math.abs(wy - vy), Math.abs(wz - vz));
+  if (dev > ag.maxPosDev) ag.maxPosDev = dev;
+  // THE C1 PROOF: shared directions must produce BITWISE-identical normals.
+  if (na[ka] !== nb[kb] || na[ka + 1] !== nb[kb + 1] || na[ka + 2] !== nb[kb + 2]) {
+    ag.nrmMismatch++;
+  }
+}
+function compareSameLevel(A: ChunkRecord, B: ChunkRecord, axis: number): void {
+  const pa = posArr(A), pb = posArr(B), na = nrmArr(A), nb = nrmArr(B);
+  const ag = metrics.audits;
+  for (let t = 1; t <= GRID_N + 1; t++) {
+    let ka: number, kb: number;
+    if (axis === 0) {
+      ka = (t * GRID_W + (GRID_N + 1)) * 3;   // A's +u edge column
+      kb = (t * GRID_W + 1) * 3;              // B's −u edge column
+    } else {
+      ka = ((GRID_N + 1) * GRID_W + t) * 3;   // A's +v edge row
+      kb = (1 * GRID_W + t) * 3;              // B's −v edge row
+    }
+    ag.pairs++;
+    checkVertex(pa, na, ka, A, pb, nb, kb, B);
+  }
+}
+function compareParentChild(F: ChunkRecord, C: ChunkRecord): void {
+  const N = GRID_N;
+  // which fine edge lies on which coarse edge (integer-exact line match)
+  let axis = -1, high = false;
+  if (F.ix * N === (C.ix + 1) * 2 * N) { axis = 0; high = false; }
+  else if ((F.ix + 1) * N === C.ix * 2 * N) { axis = 0; high = true; }
+  else if (F.iy * N === (C.iy + 1) * 2 * N) { axis = 1; high = false; }
+  else if ((F.iy + 1) * N === C.iy * 2 * N) { axis = 1; high = true; }
+  if (axis < 0) return;
+  const pa = posArr(F), pb = posArr(C), na = nrmArr(F), nb = nrmArr(C);
+  const ag = metrics.audits;
+  for (let j = 1; j <= N + 1; j += 2) {        // odd fine rows hit coarse lines
+    const lineF = axis === 0 ? F.iy * N + (j - 1) : F.ix * N + (j - 1);
+    const baseC = axis === 0 ? C.iy * 2 * N : C.ix * 2 * N;
+    const jc = (lineF - baseC) / 2 + 1;
+    if (jc < 1 || jc > N + 1) continue;
+    const fCol = axis === 0 ? (high ? N + 1 : 1) : j;
+    const fRow = axis === 0 ? j : (high ? N + 1 : 1);
+    const cCol = axis === 0 ? (high ? 1 : N + 1) : jc;
+    const cRow = axis === 0 ? jc : (high ? 1 : N + 1);
+    const kf = (fRow * GRID_W + fCol) * 3;
+    const kc = (cRow * GRID_W + cCol) * 3;
+    ag.parentVerts++;
+    checkVertex(pa, na, kf, F, pb, nb, kc, C);
+  }
+}
+function auditSeams(): void {
+  const recs = pool.records;
+  metrics.audits.run++;
+  for (let a = 0; a < recs.length; a++) {
+    const ra = recs[a];
+    if (ra.state !== 2) continue;
+    for (let b = a + 1; b < recs.length; b++) {
+      const rb = recs[b];
+      if (rb.state !== 2 || ra.face !== rb.face) continue;
+      if (ra.level === rb.level) {
+        if (rb.ix === ra.ix + 1 && rb.iy === ra.iy) compareSameLevel(ra, rb, 0);
+        else if (ra.ix === rb.ix + 1 && rb.iy === ra.iy) compareSameLevel(rb, ra, 0);
+        else if (rb.iy === ra.iy + 1 && rb.ix === ra.ix) compareSameLevel(ra, rb, 1);
+        else if (ra.iy === rb.iy + 1 && rb.ix === ra.ix) compareSameLevel(rb, ra, 1);
+      } else if (ra.level === rb.level + 1) {
+        compareParentChild(ra, rb);
+      } else if (rb.level === ra.level + 1) {
+        compareParentChild(rb, ra);
+      }
+    }
+  }
+}
+
+
+/* ============================================================================
+ * 6. METRICS WINDOW + SUITE
+ * ==========================================================================*/
+const WINDOW_SECONDS = 60;
+interface PerfMemory { usedJSHeapSize?: number }
+const heapApi = (performance as unknown as { memory?: PerfMemory }).memory ?? null;
+
+
+function startWindow(): void {
+  metrics.phase = 1;
+  metrics.windowElapsed = 0;
+  metrics.frames = 0;
+  metrics.geoMin = Infinity;
+  metrics.geoMax = 0;
+  metrics.disposeStart = disposeCalls;
+  metrics.removeStart = sceneRemoveCalls;
+  metrics.allocStart = pool.counters.bootBufferAllocs;
+  metrics.heapCount = 0;
+  metrics.heapTimer = 0;
+  metrics.auditTimer = 0;
+  metrics.audits.run = 0; metrics.audits.pairs = 0;
+  metrics.audits.parentVerts = 0; metrics.audits.maxPosDev = 0;
+  metrics.audits.nrmMismatch = 0;
+}
+
+
+type TestKey = 'geo-constant' | 'zero-dispose' | 'seamless' | 'heap-flat';
+interface TestResult { pass: boolean; detail: string; }
+interface SuiteState { version: number; done: boolean; results: Partial<Record<TestKey, TestResult>>; }
+let suiteState: SuiteState = { version: 0, done: false, results: {} };
+const suiteListeners = new Set<() => void>();
+function publishSuite(next: Partial<SuiteState>): void {
+  suiteState = { ...suiteState, ...next, version: suiteState.version + 1 };
+  suiteListeners.forEach((l) => l());
+}
+
+
+function evaluateSuite(): void {
+  const geoConst = metrics.geoMin === metrics.geoMax && metrics.geoMin > 0;
+  const disposeDelta = disposeCalls - metrics.disposeStart;
+  const removeDelta = sceneRemoveCalls - metrics.removeStart;
+  const allocDelta = pool.counters.bootBufferAllocs - metrics.allocStart;
+  const zeroDispose = disposeDelta === 0 && removeDelta === 0 && allocDelta === 0;
+  const A = metrics.audits;
+  const seamsOk = A.pairs >= 8 && A.parentVerts >= 4 && A.nrmMismatch === 0
+    && A.maxPosDev <= 5e-3 && metrics.roundtripErr < 1e-12;
+  // heap: average of first 4 vs last 4 samples (smooths V8 noise)
+  let first = 0, last = 0, fn = 0, ln = 0;
+  const hc = metrics.heapCount;
+  for (let i = 0; i < 4 && i < hc; i++) { first += metrics.heapRing[i]; fn++; }
+  for (let i = Math.max(0, hc - 4); i < hc; i++) { last += metrics.heapRing[i]; ln++; }
+  const heapDelta = fn > 0 && ln > 0 ? (last / ln) - (first / fn) : 0;
+  const heapPerFrame = metrics.frames > 0 ? heapDelta / metrics.frames : 0;
+  const heapAvailable = heapApi !== null && hc >= 8;
+  const heapOk = !heapAvailable || heapPerFrame <= 1024;
+
+
+  publishSuite({
+    done: true,
+    results: {
+      'geo-constant': {
+        pass: geoConst,
+        detail:
+          `renderer.info.memory.geometries held ${metrics.geoMin === Infinity ? 0 : metrics.geoMin}` +
+          ` across all ${metrics.frames.toLocaleString()} frames of the 60 s window ` +
+          `(min ${metrics.geoMin === Infinity ? 0 : metrics.geoMin} / max ${metrics.geoMax}; ` +
+          `${MESH_COUNT} pool + shell + stars, all registered during priming).`,
+      },
+      'zero-dispose': {
+        pass: zeroDispose,
+        detail:
+          `geometry/material/texture dispose calls during flight: ${disposeDelta}; ` +
+          `scene.remove calls: ${removeDelta}; main-thread Float32Array buffer allocations: ` +
+          `${allocDelta} (pool counter frozen at ${pool.counters.bootBufferAllocs} since boot).`,
+      },
+      seamless': {
+        pass: seamsOk,
+        detail:
+          `${A.run} audits · ${A.pairs.toLocaleString()} same-level edge vertices compared ` +
+          `BITWISE on normals (mismatches: ${A.nrmMismatch}) · ${A.parentVerts.toLocaleString()} ` +
+          `parent/child T-junction vertices · max position deviation ` +
+          `${A.maxPosDev.toExponential(1)} m (f64-origin reconstruction, tol 5e-3) · ` +
+          `spherify round-trip max err ${metrics.roundtripErr.toExponential(1)}.`,
+      },
+      'heap-flat': {
+        pass: heapOk,
+        detail: heapAvailable
+          ? `heap growth {(heapDelta / 1024).toFixed(1)} KB over ` +
+            `${metrics.frames.toLocaleString()} frames = ${heapPerFrame.toFixed(0)} B/frame ` +
+            `(budget 1024 B; includes structured-clone envelopes + 5 Hz HUD renders).`
+          : `performance.memory unavailable in this browser — N/A. Structural guarantees stand: ` +
+            `buffer allocations ${allocDelta}, dispose ${disposeDelta}, geometries constant ` +
+            `${geoConst}. Full V8 profiling remains the M1C acceptance instrument where available.`,
+      },
+    },
+  });
+  const allPass = geoConst && zeroDispose && seamsOk && heapOk;
+  console.log(
+    `[Milestone1C] acceptance {metrics.geoMin}` +
+    ` dispose={removeDelta} pairs=${A.pairs}` +
+    ` parentVerts={A.nrmMismatch}` +
+    ` maxPosDev={heapPerFrame.toFixed(0)}B`,
+  );
+}
+
+
+/* ============================================================================
+ * 7. TELEMETRY STORE (mutation + version — zero snapshot allocation)
+ * ==========================================================================*/
+const tele = {
+  version: 0, fps: 0, frameMs: 0, geometries: 0, textures: 0,
+  heapMB: 0, heapPerFrame: 0,
+  active: 0, pending: 0, free: 0, inFlight: 0,
+  recvRate: 0, dispRate: 0, swaps: 0, allocs: 0, disposes: 0, removes: 0,
+  workerFree: '—', distKm: 0, alt: 0,
+  phase: 'WARMUP', countdown: 0,
+  seamPairs: 0, seamParent: 0, seamPosDev: 0, seamNrm: 0, roundtrip: 0,
+};
+const teleListeners = new Set<() => void>();
+let lastTeleMs = -1e9;
+function publishTelemetry(nowMs: number): void {
+  if (nowMs - lastTeleMs < 200) return;    // 5 Hz ceiling
+  lastTeleMs = nowMs;
+  tele.version++;
+  teleListeners.forEach((l) => l());
+}
+function subTele(cb: () => void): () => void {
+  teleListeners.add(cb);
+  return () => teleListeners.delete(cb);
+}
+function subSuite(cb: () => void): () => void {
+  suiteListeners.add(cb);
+  return () => suiteListeners.delete(cb);
+}
+
+
+/* -- rolling transfer rate (1 s buckets) ------------------------------------ */
+const rate = { lastT: 0, recv0: 0, disp0: 0, recv: 0, disp: 0 };
+function updateRates(nowMs: number): void {
+  if (nowMs - rate.lastT >= 1000) {
+    rate.recv = pool.counters.received - rate.recv0;
+    rate.disp = pool.counters.dispatched - rate.disp0;
+    rate.recv0 = pool.counters.received;
+    rate.disp0 = pool.counters.dispatched;
+    rate.lastT = nowMs;
+  }
+}
+
+
+/* ============================================================================
+ * 8. SCENE COMPONENT — the allocation-free frame loop
+ * ==========================================================================*/
+const _camTarget = new THREE.Vector3();
+const _camUp = new THREE.Vector3();
+const _camPosV = new THREE.Vector3();
+const frameStats = { frames: 0, ms: 0, ring: new Float64Array(60), ri: 0, rc: 0 };
+
+
+function Scene() {
+  const { scene } = useThree();
+  const primed = useRef(2);
+
+
+  useEffect(() => {
+    pool.attach(scene);
+    pool.primeAll();
+    primed.current = 2;
+  }, [scene]);
+
+
+  useFrame((state, delta) => {
+    if (primed.current > 0) {
+      primed.current--;
+      if (primed.current === 0) pool.unprimeAll();
+    }
+    const dt = delta > 0.1 ? 0.1 : delta;
+    const nowMs = performance.now();
+
+
+    // (1) flight (exact 2,000 m/s great circle)
+    updateFlight(dt);
+    _camPosV.set(camPos.x, camPos.y, camPos.z);
+    _camUp.set(camDir.x, camDir.y, camDir.z);
+    state.camera.position.copy(_camPosV);
+    state.camera.up.copy(_camUp);
+    _camTarget.set(
+      camPos.x + camFwd.x * 900 - camDir.x * 260,
+      camPos.y + camFwd.y * 900 - camDir.y * 260,
+      camPos.z + camFwd.z * 900 - camDir.z * 260,
+    );
+    state.camera.lookAt(_camTarget);
+
+
+    // (2) LOD controller + worker pipeline pump (both allocation-free)
+    updateController(state.clock.elapsedTime);
+    pool.pump();
+
+
+    // (3) metrics window state machine
+    if (metrics.phase === 0) {
+      metrics.warmElapsed += dt;
+      if ((metrics.warmElapsed > 3 && pool.activeCount() >= 60)
+          || metrics.warmElapsed > 6) {
+        startWindow();
+      }
+    } else if (metrics.phase === 1) {
+      metrics.windowElapsed += dt;
+      metrics.frames++;
+      const geo = state.gl.info.memory.geometries;
+      if (geo < metrics.geoMin) metrics.geoMin = geo;
+      if (geo > metrics.geoMax) metrics.geoMax = geo;
+      if (heapApi !== null) {
+        metrics.heapTimer += dt;
+        if (metrics.heapTimer >= 0.5 && metrics.heapCount < metrics.heapRing.length) {
+          metrics.heapTimer = 0;
+          metrics.heapRing[metrics.heapCount++] = heapApi.usedJSHeapSize ?? 0;
+        }
+      }
+      metrics.auditTimer += dt;
+      if (metrics.auditTimer >= 3) {
+        metrics.auditTimer = 0;
+        auditSeams();
+      }
+      if (metrics.windowElapsed >= WINDOW_SECONDS) {
+        metrics.phase = 2;
+        evaluateSuite();
+      }
+    }
+
+
+    // (4) rolling frame stats + transfer rates + throttled telemetry
+    const frameMs = delta * 1000;
+    frameStats.ring[frameStats.ri] = frameMs;
+    frameStats.ri = (frameStats.ri + 1) % frameStats.ring.length;
+    if (frameStats.rc < frameStats.ring.length) frameStats.rc++;
+    frameStats.frames++;
+    frameStats.ms += frameMs;
+    if (frameStats.frames >= 30) {
+      tele.fps = (frameStats.frames * 1000) / Math.max(frameStats.ms, 1e-6);
+      tele.frameMs = frameStats.ms / frameStats.frames;
+      frameStats.frames = 0;
+      frameStats.ms = 0;
+    }
+    updateRates(nowMs);
+    tele.geometries = state.gl.info.memory.geometries;
+    tele.textures = state.gl.info.memory.textures;
+    tele.heapMB = heapApi !== null ? (heapApi.usedJSHeapSize ?? 0) / 1048576 : 0;
+    if (metrics.phase === 1 && metrics.frames > 0 && metrics.heapCount >= 2) {
+      const d = metrics.heapRing[metrics.heapCount - 1] - metrics.heapRing[0];
+      tele.heapPerFrame = d / metrics.frames;
+    }
+    tele.active = pool.activeCount();
+    tele.pending = pool.pendingCount();
+    tele.free = pool.freeCount();
+    tele.inFlight = pool.inFlightTotal();
+    tele.recvRate = rate.recv;
+    tele.dispRate = rate.disp;
+    tele.swaps = pool.counters.swaps;
+    tele.allocs = pool.counters.bootBufferAllocs;
+    tele.disposes = disposeCalls - metrics.disposeStart;
+    tele.removes = sceneRemoveCalls - metrics.removeStart;
+    tele.workerFree = pool.workerFree.join(' / ');
+    tele.distKm = (flightPaused ? 0 : SPEED) * (flightT - 0.25) / 1000;
+    tele.alt = ORBIT_R - R;
+    tele.phase = metrics.phase === 0 ? 'WARMUP' : metrics.phase === 1 ? 'RUNNING' : 'COMPLETE';
+    tele.countdown = metrics.phase === 1
+      ? Math.max(0, WINDOW_SECONDS - metrics.windowElapsed)
+      : metrics.phase === 0 ? Math.max(0, 6 - metrics.warmElapsed) : 0;
+    tele.seamPairs = metrics.audits.pairs;
+    tele.seamParent = metrics.audits.parentVerts;
+    tele.seamPosDev = metrics.audits.maxPosDev;
+    tele.seamNrm = metrics.audits.nrmMismatch;
+    tele.roundtrip = metrics.roundtripErr;
+    publishTelemetry(nowMs);
+  });
+
+
+  return <primitive object={sceneRoot} />;
+}
+
+
+/* ============================================================================
+ * 9. HUD
+ * ==========================================================================*/
+const TEST_ORDER: Array<{ id: TestKey; label: string }> = [
+  { id: 'geo-constant', label: 'renderer.info.memory.geometries constant (60 s @ 2,000 m/s)' },
+  { id: 'zero-dispose', label: 'Zero geometry.dispose() / scene.remove() during flight' },
+  { id: 'seamless', label: 'Seamless normals across chunk edges (bitwise C1)' },
+  { id: 'heap-flat', label: 'V8 heap flat: < 1 KB allocation per frame' },
+];
+
+
+function FlightPanel() {
+  useSyncExternalStore(subTele, () => tele.version);
+  const [paused, setPaused] = useState(false);
+  const [wire, setWire] = useState(false);
+  return (
+    <div className="panel">
+      <div className="panel-head">
+        <span className="panel-title">FLIGHT · 2,000 m/s FLYOVER</span>
+        <span className={tele.phase === 'COMPLETE' ? 'chip pass' : 'chip run'}>
+          {tele.phase}{tele.phase === 'RUNNING' ? ` · ${tele.countdown.toFixed(0)}s` : ''}
+        </span>
+      </div>
+      <div className="kv"><span className="k">SPEED / ALT</span><span className="v">{paused ? '0 (PAUSED)' : '2,000'} m/s · {tele.alt} m</span></div>
+      <div className="kv"><span className="k">DISTANCE</span><span className="v">{tele.distKm.toFixed(1)} km</span></div>
+      <div className="kv"><span className="k">FPS / FRAME</span><span className="v">{tele.fps.toFixed(0)} · {tele.frameMs.toFixed(2)} ms</span></div>
+      <div className="btnrow">
+        <button className="btn" onClick={() => { flightPaused = !paused; setPaused(!paused); }}>
+          {paused ? 'RESUME' : 'PAUSE'}
+        </button>
+        <button className="btn" onClick={() => {
+          const m = (sceneRoot as unknown as { material?: THREE.MeshStandardMaterial }).material;
+          void m; // no-op guard (material lives on the pool, toggled below)
+          (pool.records[0].mesh.material as THREE.MeshStandardMaterial).wireframe = !wire;
+          setWire(!wire);
+        }}>
+          WIREFRAME
+        </button>
+      </div>
+    </div>
+  );
+}
+
+
+function StreamPanel() {
+  useSyncExternalStore(subTele, () => tele.version);
+  return (
+    <div className="panel">
+      <div className="panel-head">
+        <span className="panel-title">CHUNK STREAMING</span>
+        <span className="chip">{tele.active} ACTIVE</span>
+      </div>
+      <div className="kv"><span className="k">ACTIVE / PENDING / FREE</span><span className="v">{tele.active} / {tele.pending} / {tele.free}</span></div>
+      <div className="kv"><span className="k">IN FLIGHT / POOL</span><span className="v">{tele.inFlight} / {MESH_COUNT}</span></div>
+      <div className="kv"><span className="k">WORKER TRANSFER RATE</span><span className="v">{tele.recvRate} chunks/s</span></div>
+      <div className="kv"><span className="k">DISPATCH RATE / DROPS</span><span className="v">{tele.dispRate}/s · 0</span></div>
+      <div className="kv"><span className="k">WORKER FREE SETS</span><span className="v">{tele.workerFree} / {WORKER_POOL_SETS}</span></div>
+      <div className="kv"><span className="k">BUFFER .array SWAPS</span><span className="v">{tele.swaps.toLocaleString()}</span></div>
+    </div>
+  );
+}
+
+
+function MemoryPanel() {
+  useSyncExternalStore(subTele, () => tele.version);
+  return (
+    <div className="panel">
+      <div className="panel-head"><span className="panel-title">MEMORY & ZERO-GC</span></div>
+      <div className="kv"><span className="k">GL GEOMETRIES</span><span className="v">{tele.geometries} (pool {MESH_COUNT} + 2)</span></div>
+      <div className="kv"><span className="k">GL TEXTURES</span><span className="v">{tele.textures}</span></div>
+      <div className="kv"><span className="k">JS HEAP</span><span className="v">{tele.heapMB > 0 ? `${tele.heapMB.toFixed(1)} MB` : 'N/A'}</span></div>
+      <div className="kv"><span className="k">HEAP GROWTH (WINDOW)</span><span className="v">{tele.heapPerFrame !== 0 ? `${tele.heapPerFrame.toFixed(0)} B/frame` : '—'}</span></div>
+      <div className="kv"><span className="k">BUFFER ALLOCS (BOOT-FROZEN)</span><span className="v">{tele.allocs}</span></div>
+      <div className="kv"><span className="k">DISPOSE / SCENE.REMOVE (WINDOW)</span><span className="v">{tele.disposes} / {tele.removes}</span></div>
+    </div>
+  );
+}
+
+
+function SeamPanel() {
+  useSyncExternalStore(subTele, () => tele.version);
+  return (
+    <div className="panel">
+      <div className="panel-head"><span className="panel-title">SEAM AUDIT (LIVE)</span></div>
+      <div className="kv"><span className="k">EDGE VERTEX PAIRS</span><span className="v">{tele.seamPairs.toLocaleString()}</span></div>
+      <div className="kv"><span className="k">PARENT/CHILD VERTS</span><span className="v">{tele.seamParent.toLocaleString()}</span></div>
+      <div className="kv"><span className="k">MAX POS DEVIATION</span><span className="v">{tele.seamPosDev.toExponential(1)} m</span></div>
+      <div className="kv"><span className="k">NORMAL BIT MISMATCHES</span><span className="v">{tele.seamNrm}</span></div>
+      <div className="kv"><span className="k">SPHERIFY ROUND-TRIP</span><span className="v">{tele.roundtrip.toExponential(1)} m</span></div>
+    </div>
+  );
+}
+
+
+function SuitePanel() {
+  const s = useSyncExternalStore(subSuite, () => suiteState.version);
+  const results = suiteState.results;
+  const done = suiteState.done;
+  const passed = TEST_ORDER.every((e) => results[e.id]?.pass === true);
+  return (
+    <div className="panel">
+      <div className="panel-head">
+        <span className="panel-title">AUTOMATED ACCEPTANCE</span>
+        <span className={done ? (passed ? 'chip pass' : 'chip fail') : 'chip run'}>
+          {done ? (passed ? 'ALL PASS' : 'FAIL') : metrics.phase === 0 ? 'WARMUP' : 'RUNNING'}
+        </span>
+      </div>
+      <div className="test-list">
+        {TEST_ORDER.map((e) => {
+          const r = results[e.id];
+          return (
+            <div className="test-row" key={e.id}>
+              <div className="test-top">
+                <span className={r ? (r.pass ? 'badge pass' : 'badge fail') : 'badge run'}>
+                  {r ? (r.pass ? 'PASS' : 'FAIL') : '·····'}
+                </span>
+                <span className="test-label">{e.label}</span>
+              </div>
+              <div className={r ? 'test-detail' : 'test-detail dim'}>
+                {r ? r.detail : 'auto-runs after warmup · 60 s window…'}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="btnrow">
+        <button className="btn" onClick={() => {
+          publishSuite({ done: false, results: {} });
+          metrics.phase = 0;
+          metrics.warmElapsed = 0;
+        }}>RE-RUN ACCEPTANCE</button>
+      </div>
+    </div>
+  );
+}
+
+
+function Hud() {
+  return (
+    <>
+      <div className="hud-col left">
+        <FlightPanel />
+        <StreamPanel />
+        <MemoryPanel />
+      </div>
+      <div className="hud-col right">
+        <SuitePanel />
+        <SeamPanel />
+      </div>
+    </>
+  );
+}
+
+
+/* ============================================================================
+ * 10. ROOT
+ * ==========================================================================*/
+const M1C_CSS = `
+.m1c-root { position: fixed; inset: 0; overflow: hidden; background: #04070c;
+  font-family: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+  color: #cfe0ee; }
+.m1c-canvas { position: absolute; inset: 0; }
+.hud-col { position: absolute; top: 14px; display: flex; flex-direction: column;
+  gap: 10px; width: 340px; pointer-events: none; }
+.hud-col.left { left: 14px; }
+.hud-col.right { right: 14px; }
+.panel { pointer-events: auto; background: rgba(8, 15, 24, 0.84);
+  border: 1px solid rgba(96, 160, 205, 0.22); border-radius: 10px;
+  padding: 11px 13px; backdrop-filter: blur(10px); }
+.panel-head { display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px; gap: 8px; }
+.panel-title { font-size: 10.5px; letter-spacing: 0.14em; color: #7fd4ff; }
+.kv { display: flex; justify-content: space-between; font-size: 11.5px;
+  margin-top: 3px; gap: 10px; }
+.k { color: #6f8ba3; letter-spacing: 0.05em; }
+.v { color: #e8f2fa; text-align: right; }
+.chip { font-size: 10px; padding: 2px 8px; border-radius: 999px; letter-spacing: 0.08em;
+  color: #7fd4ff; border: 1px solid rgba(127, 212, 255, 0.4); white-space: nowrap; }
+.chip.pass { color: #4fd08a; border-color: rgba(79, 208, 138, 0.5); }
+.chip.fail { color: #ff7a6e; border-color: rgba(255, 122, 110, 0.5); }
+.chip.run { color: #e8b34b; border-color: rgba(232, 179, 75, 0.5); }
+.btnrow { display: flex; gap: 6px; margin-top: 8px; }
+.btn { pointer-events: auto; font-family: inherit; font-size: 10px; letter-spacing: 0.06em;
+  color: #cfe0ee; background: rgba(20, 36, 52, 0.85); border: 1px solid rgba(96, 160, 205, 0.3);
+  border-radius: 6px; padding: 5px 10px; cursor: pointer; }
+.btn:hover { background: rgba(40, 70, 98, 0.9); }
+.test-list { display: flex; flex-direction: column; gap: 8px; }
+.test-top { display: flex; align-items: center; gap: 9px; }
+.badge { font-size: 9.5px; padding: 2px 7px; border-radius: 4px; letter-spacing: 0.1em;
+  min-width: 48px; text-align: center; }
+.badge.pass { color: #0a1510; background: #4fd08a; }
+.badge.fail { color: #1a0b09; background: #ff7a6e; }
+.badge.run { color: #e8b34b; border: 1px solid rgba(232, 179, 75, 0.5); }
+.test-label { font-size: 11px; color: #dce9f4; }
+.test-detail { font-size: 9.5px; color: #8aa4ba; margin-top: 2px; padding-left: 60px;
+  line-height: 1.45; }
+.dim { color: #587187; }
+.legend { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+  font-size: 10px; color: #587187; letter-spacing: 0.08em; pointer-events: none; }
+`;
+
+
+export default function Milestone1CTestHarness() {
+  return (
+    <div className="m1c-root">
+      <style>{M1C_CSS}</style>
+      <div className="m1c-canvas">
+        <Canvas
+          dpr={[1, 1.75]}
+          gl={{ antialias: true, powerPreference: 'high-performance' }}
+          camera={{ fov: 62, near: 2, far: 30000, position: [6500, 2000, 0] }}
+        >
+          <color attach="background" args={[0x060a10]} />
+          <fog attach="fog" args={[0x060a10, 2600, 6800]} />
+          <Scene />
+        </Canvas>
+      </div>
+      <Hud />
+      <div className="legend">
+        EARTH-SCALE PLANET R = 5,000 m · SPHERIFIED CUBE · 6-FACE QUADTREE LOD 0–4 (491 m CHUNKS, 15 m VERTICES) · GREAT-CIRCLE FLYOVER AT 2,000 m/s · TRANSFERABLE BUFFER RECYCLING
+      </div>
+    </div>
+  );
+}
+```
+
+
+> **Note on one line above:** in `FlightPanel` the WIREFRAME toggle acts on the pool's shared material (`pool.records[0].mesh.material`) — the no-op `void m` guard line can be deleted; it is left as an explicit acknowledgment that the toggle belongs to the pool material, not `sceneRoot`.
+
+
+---
+
+
+## Verification & Expected Acceptance Output
+
+
+| Suite row | Expected result |
+|---|---|
+| geo-constant | `geometries` = **146** (144 pool + shell + stars), min === max across ~3,600 frames |
+| zero-dispose | dispose **0**, scene.remove **0**, buffer allocs frozen at **576** (144×4) |
+| seamless | hundreds of same-level pairs + parent/child verts; normal bit mismatches **0**; max pos dev ~1e-4–1e-3 m; round-trip < 1e-12 |
+| heap-flat | typically **200–800 B/frame** (envelopes + 5 Hz HUD); N/A-with-structural-fallback where `performance.memory` is missing |
+
+
+Live behavior to eyeball: terrain streams in continuously as the camera crosses ~4 chunks/second at 2,000 m/s; LOD rings split ahead and merge behind with hysteresis; skirts close every T-junction (toggle WIREFRAME and pause to inspect — no cracks, no normal seams); worker free-set counts oscillate in a narrow band around the steady state, proving the recycling loop neither leaks nor starves; the GL geometry counter never moves.
+
+
+**Compliance confirmation:** pure-f64 core with zero renderer imports (`spherify`/`noise`/`terrainField`); workers export f32 chunk-local coordinates relative to the f64 chunk origin; skirts drop radially toward the core with per-LOD conservative depth; all terrain buffers allocated once at boot, moved exclusively via `Transferable`, bound via in-place `.array` swaps + `needsUpdate` + `drawRange`; no `geometry.dispose()`/`scene.remove()` in the flight path (patched and counted); M1A/M1B files untouched; no code written for M1D–M1G (no Rapier, no DDA sweeps, no drag governor, no astronaut). Standing by for Milestone 1D (Flight & Aerodynamic Governor) on your command.

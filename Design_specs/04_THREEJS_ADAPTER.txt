@@ -1,0 +1,41 @@
+﻿# 04_THREEJS_ADAPTER
+
+
+## 1. 3-Camera Layered Rendering
+We strictly avoid Three.js `logarithmicDepthBuffer` because it breaks early-Z optimization. Instead, we use a 3-camera layered setup with explicit depth clearing.
+*   **The Cameras:** 
+    *   Far: 200km – 10,000km (Layer Mask 2)
+    *   Mid: 2km – 300km (Layer Mask 1)
+    *   Near: 0.1m – 3km (Layer Mask 0)
+*   **The Render Loop:**
+    ```javascript
+    renderer.autoClear = false;
+    renderer.clear(true, true, false); // clear color and depth
+    renderer.render(scene, camFar);
+    renderer.clearDepth();
+    renderer.render(scene, camMid);
+    renderer.clearDepth();
+    renderer.render(scene, camNear);
+    ```
+
+
+## 2. Object Layer Assignment (No Pops)
+Objects are assigned to camera layers based on their Bounding Sphere distance (`d_n` = near edge, `d_f` = far edge).
+*   **Straddlers:** Objects straddling a boundary (e.g., at 2.4km) are always assigned to the *outer* (further) layer to preserve correct depth-sorting occlusion.
+*   **Imperative Assignment:** Layer assignment must run imperatively in the `rAF` (requestAnimationFrame) loop *before* rendering. Do **not** use React `useEffect` for this, as it will lag by one frame and cause visual popping.
+
+
+## 3. Web Worker Zero-GC Mesh Pooling
+Three.js handles rapid geometry swapping poorly if not strictly managed.
+*   **The Pool:** Allocate a fixed pool of `BufferGeometry` and `Mesh` objects at boot (e.g., 68 chunk meshes).
+*   **The Update (CRITICAL):** When a Web Worker returns a chunk via `Transferable` ArrayBuffer, do **not** replace the `BufferAttribute` object. 
+    *   Swap the `.array` pointer in-place.
+    *   Flag `attribute.needsUpdate = true`.
+    *   Three.js will use `bufferSubData` to upload it fast without GPU memory reallocation.
+*   **Disposal:** Never call `geometry.dispose()` or `scene.remove()` during flight. To recycle a chunk, simply set `mesh.visible = false` and return its underlying ArrayBuffers to the Worker pool.
+
+
+## 4. Sky Impostor Shader
+Instead of rendering a naive billboard disk for distant planets, we use a Ray-Cone intersection shader. 
+*   **Virtual Radius:** 
+*   **The Shader:** The impostor is drawn on a quad in the `camFar` or `camMid` layer. The fragment shader evaluates the true visual cone. This guarantees that when the impostor swaps to the real 3D LOD mesh, the silhouette edges align perfectly at a sub-pixel level

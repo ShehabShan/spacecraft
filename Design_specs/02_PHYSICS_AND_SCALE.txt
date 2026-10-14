@@ -1,0 +1,64 @@
+﻿# 02_PHYSICS_AND_SCALE
+
+
+## 1. Units and Base Scale
+The entire engine relies on strict unit consistency.
+*   **Distance:** 1 Game Unit = 1 Metre.
+*   **Time:** 1 tick =  game-seconds (for physics).
+*   **WorldScale:** Global scaling multiplier. Currently locked at `WorldScale = 1`.
+    *   Under `WorldScale = 1`, Earth's game radius is exactly .
+    *   All speeds, gravity ranges, and planet radii scale proportionally with this value.
+
+
+## 2. Celestial Scaling Formulas
+Real-world astronomical values are too large for gameplay. We compress them using specific formulas to maintain proportional relationships while keeping travel times fun.
+
+
+1.  **Planet/Moon Game Radius ():**
+    
+    *Exception: The Sun is fixed at an artistic radius of .*
+2.  **Planet Distance from Sun:**
+    
+3.  **Moon Orbit Distance:**
+    
+4.  **Gravity Range (Sphere of Influence):**
+    
+
+
+## 3. The Gameplay Gravity Model ()
+**CRITICAL RULE:** Real-world mass () must *never* be used to calculate gravity in the engine. It is stored solely as a fun fact for the HUD Watch.
+
+
+To ensure gravity feels correct on compressed planets, we derive the gravitational parameter () from the body's real-world surface gravity () and its compressed game radius ():
+*   
+*   *Example (Earth):* 
+
+
+**Gravity Application:**
+*   Gravity uses full inverse-square law up to 75% of the Gravity Range.
+*   From 75% to 100%, apply a  continuous `smoothstep` fade to zero.
+*   If gravity ranges overlap (e.g., Earth and Moon), the vectors are simply summed.
+
+
+## 4. Atmospheres and Aerodynamic Drag
+Atmospheres are shallow (e.g., Earth's game atmosphere is  high). 
+*   **Density Curve:** 
+*   **Drag Equation (Closed-form Exponential Map):**
+    To ensure absolute stability at , drag is applied as an exact decay per tick, never as a force that can overshoot or bounce:
+    $k = \beta_q \cdot \rho(alt) \cdot \vert{}v_{rel}\vert{} + \beta_l \cdot \rho(alt)$
+    
+*   *Note:*  must be calculated relative to the rotating atmosphere (i.e., incorporating the planet's transport velocity), not absolute space.
+
+
+## 5. Portal Math & Interception
+*   **Portal Trigger:** Must use a Swept-Segment intersection test against a  bubble. Simple distance checks will fail due to high-speed temporal aliasing.
+*   **Portal Placement:** 
+    
+    *Exception: The Sun's portal is fixed at  (outward only).*
+*   **Conjunction Failsafe:** A portal is blocked (greyed out) if its sweeping torus path intersects *any* solid body or atmosphere, including its own parent planet.
+
+
+## 6. Substep & Timescale Limits
+*   The game runs at a fixed  logic tick.
+*   Macro celestial rails run at 30x time scale.
+*   If the render frame drops, the physics engine may run a maximum of 5 substeps per frame. If it still falls behind, it must shed load (drop meteor visuals, freeze distant physics) rather than dilating the timestep.
