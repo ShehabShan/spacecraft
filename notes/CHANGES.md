@@ -129,3 +129,29 @@ Observations (NO change made — recorded for the Lead):
     session. Content identical to the report delivered in chat; output
     blocks verbatim. · Lead directive §10 state carriers. · Evidence: file
     created this commit. · Source: brief §10, §8.6.
+
+## 2026-10-14 — Milestone 1B (stopped at step 2)
+
+12. 2026-10-14 · 1B/step0 · notes/reports/M1B.md · F6 pre-scan executed
+   read-only over all seven canon files; table + exact 1C anomaly source
+   recorded. No canon touched. · Lead-ordered pre-scan. · Evidence: commit
+   fc3368c. · Source: Approval Ledger 2026-10-14; AGENT_BRIEF.md §10.4.
+
+13. 2026-10-14 · 1B/step1 · game/src/core/orbit/*, game/src/core/simulation/
+   SimulationCore.ts, game/src/test/Milestone1B_TestHarness.tsx · Extracted
+   5 blocks verbatim (2393 lines); parenthetical invariant held (exactly one
+   match — the sanctioned SimulationCore overlay, 395→486 lines; setSimTime/
+   fastForward/reverse/getCelestialStates verified). · §8 loop step 1. ·
+   Evidence: extraction report in notes/reports/M1B.md; commit 1d302df. ·
+   Source: brief §4, §7-1B.
+
+14. 2026-10-14 · 1B/step2 · src/test/Milestone1B_TestHarness.tsx (NO change
+   made) · F6 verdict check: token `${allPass ? …}` intact at L655 — no
+   repair applied. Typecheck then failed on TWO canon syntax defects beyond
+   F6 scope: badge-detail nested template missing `$` (extracted L466 =
+   canon 1734) and HUD fmtSimTime ternary missing `$` AND else-branch
+   (extracted L998 = canon 2266). Both in F6-FORBIDDEN string classes →
+   hard stop, exact sources pasted to the Lead in notes/reports/M1B.md §3. ·
+   Change policy §6 + F6 ratification stop clause. · Evidence: tsc output
+   (TS1109/TS1128/TS1005) pasted in report. · Source: AGENT_BRIEF.md §10.4
+   F6; §6.

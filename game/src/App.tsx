@@ -1,5 +1,6 @@
 const PAGES: Array<{ id: string; label: string }> = [
   { id: 'm1a', label: 'M1A — Core F64 Skeleton & Floating Origin' },
+  { id: 'm1b', label: 'M1B — Kepler Rails & Two-Tier Time' },
 ]
 
 // Menu page. Links are plain <a href> so navigation is a full page load —

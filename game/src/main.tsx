@@ -10,6 +10,7 @@ import App from './App'
 // chunk so unselected modules never execute.
 const pages: Record<string, () => Promise<{ default: ComponentType }>> = {
   m1a: () => import('./test/Milestone1A_TestHarness'),
+  m1b: () => import('./test/Milestone1B_TestHarness'),
 }
 
 const page = new URLSearchParams(window.location.search).get('page') ?? ''
