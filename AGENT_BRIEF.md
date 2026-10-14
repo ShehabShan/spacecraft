@@ -434,3 +434,15 @@ the next session's reconciliation handles it but must report the gap.
   with the path gate unchanged. Must match exactly one parenthetical heading
   across all canon (1B's SimulationCore); log every parenthetical match in
   the extraction report and stop if any other appears.
+- F6 pre-authorized fix RATIFIED (scope strictly limited): repair ONLY each
+  harness's acceptance-verdict console.log interpolation — insert the missing
+  `$` and change NOTHING else. Reference forms: 1B/1C/1D/1E
+  `[Milestone1X] acceptance ${allPass ? 'PASSED' : 'FAILED'}`; 1F/1G use
+  `${all ? …}`. FORBIDDEN: badge detail strings, HUD strings, any CSS
+  template literal (CSS uses bare `{` legitimately). If a gate line differs
+  in ANY other way: STOP and paste the exact extracted source to the Lead.
+- §8.8 COMMIT & PUSH POLICY AMENDED: commit after every §8 loop step with
+  labeled messages, after every §10.2 checkpoint, and at session wind-down;
+  pushing branch m1-assembly to origin is PRE-AUTHORIZED after every commit.
+  NEVER push to main, never force-push, never stage Design_specs/ or
+  Milestone/.
