@@ -484,3 +484,21 @@ the next session's reconciliation handles it but must report the gap.
   milestone, is STOP-AND-ROUTE (paste the exact canon line; the Lead
   authorizes the micro-repair). NO blanket pre-authorization beyond F6,
   F7, 1C-CP ITEM 1, and 1C-CP ITEM 2.
+- F10a + F10b AUTHORIZED (Lead ruling 2026-10-15, original-author
+  confirmed): F10a — 1C spherifySelfTest compared unit outputs against RAW
+  non-unit corner inputs (1 − 1/√3 = 4.226e-1 by construction); fix:
+  compare against the NORMALIZED input; criterion/probes unchanged.
+  F10b — 1C terrainWorker req handler transferred the request array on the
+  FIRST chunk response while the batch loop still read it (detached reads
+  silently destroyed entries 2..n, stranding records until pool deadlock);
+  fix: transfer on the LAST response (chunk or drop path); requirements
+  preserved: every request returns its array, ≤1 array in flight per
+  worker, zero per-chunk allocation, payloads/contract unchanged; main
+  thread unchanged.
+- 145/146 CLOSED (Lead ruling 2026-10-15, report-only): 145 is the true
+  geometry count for the 1C page — the far shell sphere is frustum-culled
+  every frame (camera pitch 15.52° down + half-fov 31° → bottom plane
+  46.52° below horizontal; shell angular radius 39.12° at nadir 90° misses
+  by 4.36°) → never registers. Authorial miscount in the 146 estimate; no
+  change. Observation routed (optional, not required): worker 1 idle under
+  canon's w=0-first queue drain; efficiency artifact only.

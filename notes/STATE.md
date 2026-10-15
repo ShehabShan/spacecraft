@@ -1,18 +1,15 @@
 # SOLARIS — ASSEMBLY STATE (see AGENT_BRIEF.md §10)
 
 ## NEXT ACTION
-BLOCKED awaiting Lead rulings F10a + F10b (full diagnosis in
-notes/reports/M1C.md): (F10a) 1C harness self-test compares unit spherify
-outputs against RAW non-unit corner inputs → roundtripErr 4.226e-1 = 1−1/√3;
-the inverse itself is exact (1.1e-13 on unit inputs); proposal: normalize
-the comparison target (harness-only). (F10b) terrainWorker.ts req handler
-transfers the request array home on the FIRST chunk response while still
-reading it for batch entries 2..n → detached reads → undefined params →
-requests silently lost → stranded pendings (140) → pool exhaustion → LOD
-collapse (active 24→2) → parentVerts=0; proposal: ride the array on the
-LAST response (~3 worker lines; main thread already position-agnostic).
-On authorization: apply, typecheck+build, re-run 1C gate + full 1A/1B
-regression, complete M1C.md, commit, push, STOP at the approval gate.
+Await Lead approval of the M1C report (notes/reports/M1C.md — GATE GREEN:
+PASSED 4/4 + 1A/1B regression 5/5, "3 passed (1.2m)"). On approval: begin
+Milestone 1D — read Milestone/Milestone 1D.txt in full, run
+`node tools/extract.mjs 1D` (expect 4 blocks: atmosphere, aerodynamics,
+flightController, harness; no parentheticals), apply F4 (delete the leftover
+`const _segP0x: number[] = [0];` line in flightController.ts), register
+?page=m1d, typecheck+build, run the 1D gate (budget 120 s) + full
+1A/1B/1C regression, write notes/reports/M1D.md, commit per cadence, push,
+STOP at the approval gate.
 
 ## MILESTONE LEDGER
 | MS | Status | Evidence |
@@ -20,19 +17,16 @@ regression, complete M1C.md, commit, push, STOP at the approval gate.
 | scaffold | DONE | game/ tree committed (WIP d849d6b); deps pinned per §3.3 (react 18.2.0, three 0.165.0, R3F 8.18.0, zustand ^4.4, TS ~5.4, vite 5.4.21, playwright 1.64.0); `npm run typecheck` + `npm run build` clean |
 | 1A | APPROVED | Commit df1e04f "M1A: extracted, gates green"; gate GREEN 5/5 PASS, 9 rebases matching canon's predicted trace, zero canon edits; report: notes/reports/M1A.md |
 | 1B | APPROVED | Gate GREEN (`acceptance PASSED in 21.5 ms`, 5/5 rows) + 1A regression 5/5 on the overlaid core; commits d582efc/F9 3f12b43/final db13db8; report: notes/reports/M1B.md; Lead approval 2026-10-15 |
-| 1C | EXTRACTED · GATE RUN · BLOCKED (2 canon defects → F10a/F10b) | 6/6 verbatim, no parentheticals; 1C-CP ITEM 2→1 + F5 applied, typecheck clean (2cd69a1); worker chunk bundled; gate: geo/dispose/heap PASS, seamless FAIL — diagnosed: F10a (self-test unit-compare, Node-proven 4.226e-1=1−1/√3) + F10b (worker req-array detach race, protocol-traced); 1A/1B regression GREEN; report: notes/reports/M1C.md |
+| 1C | GATE GREEN·AWAITING LEAD | Extraction 6/6 (2cd69a1; 1C-CP ITEM 2→1 + F5 at extraction, typecheck clean); first gate FAILED → F10a/F10b diagnosed + ruled + applied (9b4afdf); FINAL: `[Milestone1C] acceptance PASSED` 4/4 (pairs 53,064, parentVerts 9,592, nrmMismatch 0, heap 0 B/frame) + 1A/1B regression 5/5; 145/146 closed (authorial miscount); report: notes/reports/M1C.md |
 
 ## IN-FLIGHT
-Milestone 1C / gate run — FAILED on the seamless row; diagnosed to root
-cause, routed (F10a/F10b). Symptom chain: roundtripErr 4.2e-1 (Node repro:
-only the 4 raw corners fail — self-test compares unit outputs against
-non-unit inputs); parentVerts=0 (protocol trace: worker0 got all 117 reqs,
-batches n=1–3, dispatch stops with 140 pending / inflight 0; worker req
-handler transfers `a.buffer` on the first response then reads the detached
-array for entries 2..n). Healthy: geo constant 145, dispose/remove 0,
-allocs frozen 576, heap 0 B/frame, nrmMismatch 0, maxPosDev 2.0e-5, 1A/1B
-regression green. Nothing tried beyond diagnosis; probes kept in
-game/tools/diag-*.mjs for fix verification.
+Milestone 1C — COMPLETE through §8 step 6: F10a/F10b applied and verified
+(probe: ACTIVE plateau 93–96, parentVerts 6,061 at 40 s, roundtrip 1.1e-13,
+req'd = resps = 1093); final gate PASSED 4/4 + full regression green.
+Parked at §8.7 approval gate. No open debugging. Open (non-blocking)
+observation routed to the Lead: worker 1 idle under canon's w=0-first
+queue drain (efficiency artifact; optional canon change available if
+wanted). Diagnostic probes kept: game/tools/diag-m1c.mjs, diag-spherify.mjs.
 
 ## APPROVAL LEDGER (settled — never re-ask)
 | Date | Decision |
@@ -53,6 +47,9 @@ game/tools/diag-*.mjs for fix verification.
 | 2026-10-15 | Standing damage protocol: families (A) $-stripping, (B) object-key quote loss; every NEW instance in any milestone = stop-and-route; no blanket pre-authorization beyond F6, F7, 1C-CP ITEM 1/2 |
 | 2026-10-15 | MILESTONE 1B: APPROVED (gate GREEN, 5/5 PASS, 21.5 ms synchronous suite, 1A regression green inline + as a page on the overlaid core); deferred verdict-stat restoration stays parked |
 | 2026-10-15 | MILESTONE 1C ORDERED: execute per §8 with 1C-CP ITEM 2 → ITEM 1 → F5 applied at extraction time (typecheck immediately after); worker-pipeline verification FIRST on any stall; budget 150 s + full 1A/1B regression |
+| 2026-10-15 | F10a authorized (authorial self-test normalization; criterion unchanged) |
+| 2026-10-15 | F10b authorized (authorial detach race; last-response transfer; zero allocation preserved; main thread unchanged) |
+| 2026-10-15 | 145/146 investigation authorized (report-only, no forced counts) — CLOSED: shell permanently frustum-culled (analytic proof, 4.36° margin); 145 true count; authorial miscount |
 
 ## SESSION LOG
 | # | Date | Goal | Outcome | Handoff note |
