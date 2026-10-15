@@ -226,3 +226,24 @@ Observations (NO change made — recorded for the Lead):
    instance = stop-and-route; no blanket pre-authorization beyond F6, F7,
    1C-CP ITEM 1/2. · Ruling carrier. · Evidence: §10.4 entries. · Source:
    Lead ruling 2026-10-15.
+
+## 2026-10-15 — Milestone 1C (extraction + ruled patches)
+
+22. 2026-10-15 · 1C/step1 · game/src/core/terrain/*, game/src/workers/
+   terrainWorker.ts, game/src/render/TerrainMeshPool.ts,
+   game/src/test/Milestone1C_TestHarness.tsx · Extracted 6 blocks verbatim
+   (2180 lines); ZERO parenthetical matches (invariant intact — 1B's
+   SimulationCore remains the only one). · §8 loop step 1. · Evidence:
+   extraction report. · Source: brief §4, §7-1C.
+
+23. 2026-10-15 · 1C/step2 · game/src/test/Milestone1C_TestHarness.tsx ·
+   Applied at extraction time per Lead order, in order: 1C-CP ITEM 2
+   (`seamless': {` → `'seamless': {` — family-B quote loss; NOTE: canon line
+   is 1894, not 1902 as earlier estimated — corrected on full read);
+   1C-CP ITEM 1 (verdict console.log replaced byte-exact with the addendum
+   text — structural diff, so whole-statement replacement per the
+   application rule); F5 (deleted the `void m;` no-op guard line in the
+   WIREFRAME onClick — canon's own closing note sanctions it). No other byte
+   changed. · Typecheck immediately after: CLEAN. · Evidence: tsc pass;
+   patch sites verified. · Source: Lead ruling 1C-CP (2026-10-15), F5
+   (brief §4), ruling step 3c ordering.
