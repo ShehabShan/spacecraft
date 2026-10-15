@@ -837,11 +837,11 @@ function Scene() {
         script.phase = 'BURN';
         runBurn(); // synchronous → evaluateSuite() → DONE
       }
-    } else if (script.phase === 'DONE') {
+    } else if ((script.phase as Phase) === 'DONE') {
       readUserInput();
     }
     const scripted = script.phase !== 'DONE' && script.phase !== 'WARMUP'
-      ? script.phase !== 'DONE' : false;
+      ? (script.phase as Phase) !== 'DONE' : false;
 
 
     /* -- (2) FLIGHT (Spec 01.1 steps 5–7) ---------------------------------- */

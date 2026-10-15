@@ -363,7 +363,7 @@ export class FlightController {
       n++;
     }
     if (this._accumulator >= FLIGHT_DT) this._accumulator = 0; // shed
-    if (this._wtPos !== null) {
+    if (this._wtPos !== null && this._wtVel !== null) {
       this._wtPos.x = this.pos.x; this._wtPos.y = this.pos.y; this._wtPos.z = this.pos.z;
       this._wtVel.x = this.vel.x; this._wtVel.y = this.vel.y; this._wtVel.z = this.vel.z;
     }

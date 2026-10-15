@@ -296,3 +296,19 @@ Observations (NO change made — recorded for the Lead):
    `let segP0x…` module block immediately after it. No other byte changed.
    Typecheck immediately after: CLEAN. · Pre-authorized fix per brief §4. ·
    Evidence: tsc pass. · Source: brief §4 F4; Lead directive 2026-10-15.
+
+29. 2026-10-15 · 1D/step2-ERRATUM + step3 · game/src/core/physics/
+   flightController.ts, game/src/test/Milestone1D_TestHarness.tsx ·
+   CORRECTION: commit 02b313c's message claims "typecheck clean" — FALSE;
+   the check was masked by a pipe (tail's exit status). Actual tsc result:
+   3 strict-TS errors, the FIRST canon strict-mode failures (1A–1C were
+   clean). All three are type-level only, runtime-neutral, fixed minimally
+   under §6 MAY-fix ("type errors"): (a) flightController update() —
+   write-through guard extended to `this._wtPos !== null &&
+   this._wtVel !== null` (both set together in attachWriteThrough; TS
+   cannot narrow one from the other) — canon 740; (b)+(c) harness phase
+   comparisons cast `(script.phase as Phase)` at canon 1971 and 1974–5 —
+   runBurn() legitimately sets phase='DONE' mid-chain, invisible to TS
+   property narrowing; runtime untouched. Typecheck + build re-verified
+   with UNPIPED exit codes: both 0. · Evidence: this entry; tsc log. ·
+   Source: brief §6.
