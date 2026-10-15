@@ -1,6 +1,7 @@
 # MILESTONE 1B REPORT — Kepler Rails & Two-Tier Time (assembly brief §8.6)
 
-Date: 2026-10-14 · Branch: m1-assembly (pushed after every step per amended §8.8) · Canon: untouched
+Date: 2026-10-14/15 · Branch: m1-assembly (pushed after every step per amended §8.8) · Canon: untouched
+**FINAL: GATE GREEN — `[Milestone1B] acceptance PASSED` (suite 21.5 ms), 5/5 rows PASS, plus the 1A regression page PASSED 5/5 on the overlaid core.**
 
 ## Step 0 — F6 PRE-SCAN (read-only, all seven canon Milestone .txt files)
 
@@ -160,3 +161,63 @@ Two files persisted verbatim (read-only sed from canon):
 error; the extraction will not compile regardless of the verdict addendum).
 Distinct from the verdict truncation; needs its own line in the 1C-CP
 addendum (or a separate ruling).
+
+### Step 5 — F9 authorized and applied; BOTH GATES GREEN (final)
+
+Lead ruling 2026-10-15 confirmed the deadlock as an authorial canon bug
+(1B-only) and authorized exactly one change: deletion of the
+`publishSuite({ started: true });` line (extracted L961 after the F7
+line-count shift). Applied; typecheck + build clean; §10.4, Approval
+Ledger, and CHANGES.md entry 19 record the ruling's classification.
+1C-CP addendum (ITEM 1 verdict replacement, ITEM 2 `seamless'` quote
+restoration) persisted verbatim at notes/patches/1C-CP.md — to be applied
+at 1C extraction time.
+
+**ACTUAL gate output (verbatim, both pages, single serial run):**
+
+```
+[m1a gate] acceptance line: [Milestone1A] acceptance PASSED — P.x={ticks} rebases=9 maxLocal={f2(avg)}ms
+[m1a gate] badges: ["PASS","PASS","PASS","PASS","PASS"]
+  ✓  1 e2e/m1a.spec.ts:5:1 › M1A — Floating Origin acceptance (5.5s)
+[m1b gate] acceptance line: [Milestone1B] acceptance PASSED in 21.5 ms — maxPosErr={errRoundTrip.toExponential(1)}m restore={identityOk ? 'OK' : 'FAIL'} heapDelta={rebaseDelta}
+[m1b gate] badges: ["PASS","PASS","PASS","PASS","PASS"]
+  ✓  2 e2e/m1b.spec.ts:5:1 › M1B — Kepler Rails & Two-Tier Time acceptance (1.0s)
+
+  2 passed (9.5s)
+```
+
+1B per-row badges, in order: closed-form PASS · reversibility PASS ·
+parenting PASS (7 moons incl. retrograde Triton) · zero-gc PASS (identity
+canary + heap guard) · m1a-regression PASS (inline 2,000 m/s re-run, 9
+rebases, on the overlaid core — matching the separate 1A page). The suite
+ran synchronously in 21.5 ms, confirming the F9 post-fix behavior exactly.
+
+Notes: (a) the verdict line's trailing stats remain literal `{…}` text —
+the known-cosmetic 1A/1B stat-string strips; restoration is authorized
+on-encounter but deliberately deferred past this gate run to avoid
+post-gate file churn (logged; verdict-neutral). (b) The recurring favicon
+404 is the only console noise.
+
+## Changes (summary — full entries in notes/CHANGES.md)
+
+Extraction 5/5 verbatim (1d302df) · F7a/F7b per ruling (d582efc) · gate
+wiring + deadlock diagnosis + 1C tails (aca7047) · F9 + 1C-CP + damage
+protocol (3f12b43) · final: "M1B: F9 applied, gates green". Canon
+(Design_specs/, Milestone/) untouched throughout — `git diff ea112ec` on
+both trees remains empty.
+
+## Lead eyeball (optional)
+
+`npm run dev` in game/ → http://localhost:5173/?page=m1b — the orbit map
+(17 bodies, moon rings riding moving hosts, Triton retrograde); **+60
+DAYS** snaps the whole system forward instantly (O(1) rails); **0× PAUSE**
+freezes orbits while the MICRO clock keeps counting; **−60 DAYS** from a
+fresh load returns the sky exactly. Also: http://localhost:5173/?page=m1a
+re-runs the 1A proof on the overlaid core.
+
+## Status
+
+GATE GREEN · AWAITING LEAD APPROVAL (§8.7). On approval: 1B → APPROVED;
+begin 1C — read Milestone 1C.txt in full, extract 6 blocks, apply F5 AND
+the 1C-CP addendum (ITEM 1 + ITEM 2) at extraction time, verify workers
+spawn, gate + full regression, report.
