@@ -279,3 +279,20 @@ Observations (NO change made — recorded for the Lead):
    (canon pump drains the shared queue at w=0 first; efficiency artifact;
    all criteria pass). · Ruling item 4 (report-only). · Evidence: M1C.md §5,
    probe wfree W1=96 constant. · Source: Lead ruling 2026-10-15.
+
+## 2026-10-15 — Milestone 1D (extraction + F4)
+
+27. 2026-10-15 · 1D/step1 · game/src/core/physics/atmosphere.ts,
+   game/src/core/physics/aerodynamics.ts, game/src/core/physics/
+   flightController.ts, game/src/test/Milestone1D_TestHarness.tsx ·
+   Extracted 4 blocks verbatim (2182 lines); ZERO parenthetical matches
+   (invariant intact). · §8 loop step 1. · Evidence: extraction report. ·
+   Source: brief §4, §7-1D.
+
+28. 2026-10-15 · 1D/step2 · game/src/core/physics/flightController.ts ·
+   F4 applied: deleted the single leftover line
+   `const _segP0x: number[] = [0]; // boxed scalars avoided — use plain
+   module lets:` (canon 622 / extracted 249); the live state is the
+   `let segP0x…` module block immediately after it. No other byte changed.
+   Typecheck immediately after: CLEAN. · Pre-authorized fix per brief §4. ·
+   Evidence: tsc pass. · Source: brief §4 F4; Lead directive 2026-10-15.
