@@ -1,15 +1,18 @@
 # SOLARIS — ASSEMBLY STATE (see AGENT_BRIEF.md §10)
 
 ## NEXT ACTION
-Await Lead approval of the M1C report (notes/reports/M1C.md — GATE GREEN:
-PASSED 4/4 + 1A/1B regression 5/5, "3 passed (1.2m)"). On approval: begin
-Milestone 1D — read Milestone/Milestone 1D.txt in full, run
-`node tools/extract.mjs 1D` (expect 4 blocks: atmosphere, aerodynamics,
-flightController, harness; no parentheticals), apply F4 (delete the leftover
-`const _segP0x: number[] = [0];` line in flightController.ts), register
-?page=m1d, typecheck+build, run the 1D gate (budget 120 s) + full
-1A/1B/1C regression, write notes/reports/M1D.md, commit per cadence, push,
-STOP at the approval gate.
+BLOCKED awaiting Lead rulings F11 + F12 (full diagnosis in
+notes/reports/M1D.md). F11 (T3): the airborne-|Δv| bound 8 contradicts the
+ratified β_q=3.2e-3 dive physics (true peak ≈ 10.3–10.4 m/s/tick ≈ 60 g at
+the ρv² max; observed 10.30; v@1km 264.7 matches independent integration
+262) — proposal: raise the bound to 12 (or 16); the no-clamp evidence is
+untouched. F12 (T5): the static shell sphere registers MID-RUN (camera
+looks down the nadir at 10 km → shell enters frustum) stepping geometries
+150→151 → constancy fails; proposal: harness-only priming of the static
+shell during the 2 primed frames (frustumCulled=false, then restore) —
+mirrors primeAll's documented intent; count constant at 151; criterion
+unchanged. On authorization: apply, re-run the 1D gate + full regression,
+complete M1D.md, commit, push, STOP at the approval gate.
 
 ## MILESTONE LEDGER
 | MS | Status | Evidence |
@@ -17,16 +20,24 @@ STOP at the approval gate.
 | scaffold | DONE | game/ tree committed (WIP d849d6b); deps pinned per §3.3 (react 18.2.0, three 0.165.0, R3F 8.18.0, zustand ^4.4, TS ~5.4, vite 5.4.21, playwright 1.64.0); `npm run typecheck` + `npm run build` clean |
 | 1A | APPROVED | Commit df1e04f "M1A: extracted, gates green"; gate GREEN 5/5 PASS, 9 rebases matching canon's predicted trace, zero canon edits; report: notes/reports/M1A.md |
 | 1B | APPROVED | Gate GREEN (`acceptance PASSED in 21.5 ms`, 5/5 rows) + 1A regression 5/5 on the overlaid core; commits d582efc/F9 3f12b43/final db13db8; report: notes/reports/M1B.md; Lead approval 2026-10-15 |
-| 1C | GATE GREEN·AWAITING LEAD | Extraction 6/6 (2cd69a1; 1C-CP ITEM 2→1 + F5 at extraction, typecheck clean); first gate FAILED → F10a/F10b diagnosed + ruled + applied (9b4afdf); FINAL: `[Milestone1C] acceptance PASSED` 4/4 (pairs 53,064, parentVerts 9,592, nrmMismatch 0, heap 0 B/frame) + 1A/1B regression 5/5; 145/146 closed (authorial miscount); report: notes/reports/M1C.md |
+| 1C | APPROVED | Gate GREEN 4/4 + 1A/1B regression 5/5 ("3 passed (1.2m)"); F10a/F10b verified against all four ruling requirements; final commit a86ce94; report: notes/reports/M1C.md; Lead approval 2026-10-15 |
+| 1D | EXTRACTED · GATE RUN · BLOCKED (2 canon calibrations → F11/F12) | 4/4 verbatim + F4 (02b313c; erratum in dc55895: 3 strict-TS type-only fixes, §6 MAY-fix); regression 1A/1B/1C GREEN; gate: atmosphere/dive/zero-gc PASS (v@1km 264.7, min AGL 3.38 m, LANDED, burn heap 0 B), drag-continuity FAIL (maxDv 10.30 vs bound 8 — physics correct for ratified β_q) + integration FAIL (shell registers mid-run 150→151) → F11/F12 routed; report: notes/reports/M1D.md |
+| 1E–1G | NOT STARTED | 1E next (F1 at extraction); 1F (F3 + impostorMath purity); 1G (F2 + hand-applied KCC patch + MANDATORY full 1E re-run) |
 
 ## IN-FLIGHT
-Milestone 1C — COMPLETE through §8 step 6: F10a/F10b applied and verified
-(probe: ACTIVE plateau 93–96, parentVerts 6,061 at 40 s, roundtrip 1.1e-13,
-req'd = resps = 1093); final gate PASSED 4/4 + full regression green.
-Parked at §8.7 approval gate. No open debugging. Open (non-blocking)
-observation routed to the Lead: worker 1 idle under canon's w=0-first
-queue drain (efficiency artifact; optional canon change available if
-wanted). Diagnostic probes kept: game/tools/diag-m1c.mjs, diag-spherify.mjs.
+Milestone 1D / gate run — FAILED on T3 (drag-continuity) and T5
+(integration); diagnosed to root cause, routed (F11/F12). T3: maxDv=10.30
+vs the author's bound 8 — independent integration of the ratified
+β_q=3.2e-3 gives v@1km=262 (observed 264.7) and peak per-tick Δv ≈ 10.4
+(~60 g at the ρv² max; entry overshoots v_safe BY DESIGN) → the bound is an
+authorial miscalibration. T5: MutationObserver trace shows geometries
+150→151 exactly at the dive start — the static shell sphere enters the
+frustum for the first time (nadir view from 10 km) and registers mid-run;
+primeAll covers only pool meshes. Healthy: atmosphere PASS (52 m/s wind
+exact, a(0)=340.3), dive PASS (≤400 @ 1 km with huge margin, min post-tick
+AGL 3.38 m, LANDED, 4 contacts), zero-gc PASS (20,000 ticks, identities ✓,
+heap 0 B), regression 1A/1B/1C GREEN. Probes: game/tools/diag-m1d.mjs.
+Nothing tried beyond diagnosis; no acceptance logic touched.
 
 ## APPROVAL LEDGER (settled — never re-ask)
 | Date | Decision |
@@ -50,6 +61,8 @@ wanted). Diagnostic probes kept: game/tools/diag-m1c.mjs, diag-spherify.mjs.
 | 2026-10-15 | F10a authorized (authorial self-test normalization; criterion unchanged) |
 | 2026-10-15 | F10b authorized (authorial detach race; last-response transfer; zero allocation preserved; main thread unchanged) |
 | 2026-10-15 | 145/146 investigation authorized (report-only, no forced counts) — CLOSED: shell permanently frustum-culled (analytic proof, 4.36° margin); 145 true count; authorial miscount |
+| 2026-10-15 | MILESTONE 1C: APPROVED (gate GREEN 4/4, regressions green, F10a/F10b verified) |
+| 2026-10-15 | Worker-1 idle: OBSERVATION-ONLY — benign load-balancing artifact of canon's w=0-first queue drain; least-in-flight tweak DECLINED under §6 (no failing row); known benign artifact. Geometry-row precedent: rows assert CONSTANCY, never a specific count |
 
 ## SESSION LOG
 | # | Date | Goal | Outcome | Handoff note |
