@@ -958,7 +958,6 @@ function Scene() {
     // (5) Auto-run the acceptance suite once, after a short warmup.
     if (!suiteAutoStarted && state.clock.elapsedTime > 0.75) {
       suiteAutoStarted = true;
-      publishSuite({ started: true });
       runSuite();
     }
 

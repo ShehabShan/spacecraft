@@ -198,3 +198,31 @@ Observations (NO change made — recorded for the Lead):
    verdict addendum). Routed. · F8 ruling asked for the tail; defect
    discovered while supplying it. · Evidence: byte-verbatim extracts. ·
    Source: Lead ruling 2026-10-14 (F8).
+
+## 2026-10-15 — Milestone 1B completion (F9 + 1C-CP per Lead ruling)
+
+19. 2026-10-15 · 1B/step5 · game/src/test/Milestone1B_TestHarness.tsx ·
+   F9 AUTHORIZED AND APPLIED: deleted the single line
+   `publishSuite({ started: true });` from the auto-run block (was extracted
+   L961 after the F7 line-count shift). Nothing else touched — guard, suite
+   body, results, criteria verbatim. Classification: authorial canon bug,
+   1B-only, 1C–1G verified unaffected; acceptance-neutral (PENDING vs
+   RUNNING chip for the first 0.75 s). · Removes the self-deadlock: auto-run
+   now passes the reentrancy guard, runs synchronously, publishes once at
+   completion; RE-RUN passes because done=true. · Evidence: typecheck +
+   build clean after deletion; gate output below (M1B.md §Step 5). · Source:
+   Lead ruling 2026-10-15 (F9); AGENT_BRIEF.md §10.4.
+
+20. 2026-10-15 · protocol · notes/patches/1C-CP.md (created) · 1C-CP
+   addendum persisted VERBATIM as delivered: ITEM 1 = 1C verdict console.log
+   full replacement text + application rule; ITEM 2 = canon-1902 `seamless'`
+   opening-quote restoration. TO BE APPLIED AT 1C EXTRACTION TIME. · Lead
+   dictated; assembler must not synthesize 1C content. · Evidence: file
+   byte-transcribed from the ruling. · Source: Lead ruling 2026-10-15; §10.4.
+
+21. 2026-10-15 · protocol · AGENT_BRIEF.md §10.4 · Standing damage protocol
+   recorded: families (A) $-stripping in template literals, (B) quote loss
+   on object keys; typecheck gate catches B per extraction; every NEW
+   instance = stop-and-route; no blanket pre-authorization beyond F6, F7,
+   1C-CP ITEM 1/2. · Ruling carrier. · Evidence: §10.4 entries. · Source:
+   Lead ruling 2026-10-15.

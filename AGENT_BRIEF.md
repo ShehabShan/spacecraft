@@ -465,3 +465,22 @@ the next session's reconciliation handles it but must report the gap.
   verbatim tail (~80 lines) of the 1C harness code block in the next report
   so the addendum matches extracted variable names. 1C stays gated until the
   addendum lands.
+- F9 AUTHORIZED (Lead ruling 2026-10-15, original-author confirmed): the 1B
+  auto-run self-deadlock is an AUTHORIAL canon bug (1B-only; 1C–1G verified
+  unaffected). Authorized edit: delete the single line
+  `publishSuite({ started: true });` from the extracted 1B harness auto-run
+  block. Acceptance-neutral (chip shows PENDING instead of RUNNING for the
+  first 0.75 s — RUNNING could never render in a synchronous suite).
+- 1C-CP ADDENDUM DELIVERED (Lead ruling 2026-10-15): persisted verbatim at
+  notes/patches/1C-CP.md. ITEM 1 = full replacement text for the 1C verdict
+  console.log (application rule: $-only diff → minimal restoration;
+  structural diff → whole-statement replacement; result byte-equal either
+  way). ITEM 2 = canon-1902 `seamless'` opening-quote restoration. APPLY AT
+  1C EXTRACTION TIME, NOT BEFORE.
+- STANDING DAMAGE PROTOCOL (Lead ruling 2026-10-15): two confirmed
+  transcription-damage families in canon — (A) $-stripping inside template
+  literals, (B) quote loss on object keys. The typecheck gate catches
+  family B at each extraction. Each NEW instance of either family, in any
+  milestone, is STOP-AND-ROUTE (paste the exact canon line; the Lead
+  authorizes the micro-repair). NO blanket pre-authorization beyond F6,
+  F7, 1C-CP ITEM 1, and 1C-CP ITEM 2.
