@@ -247,3 +247,12 @@ Observations (NO change made — recorded for the Lead):
    changed. · Typecheck immediately after: CLEAN. · Evidence: tsc pass;
    patch sites verified. · Source: Lead ruling 1C-CP (2026-10-15), F5
    (brief §4), ruling step 3c ordering.
+
+24. 2026-10-15 · 1C/step3 · game/e2e/m1c.spec.ts (created earlier),
+   game/tools/diag-spherify.mjs + game/tools/diag-m1c.mjs (created) · 1C
+   gate FAILED on `seamless` (parentVerts=0, roundtripErr 4.2e-1); full
+   diagnosis to root cause with protocol-level proof; BOTH defects routed
+   to the Lead (F10a/F10b) — no unauthorized fixes. 1A/1B regression GREEN. ·
+   §6 + standing damage protocol (new defect class: authorial race/test-
+   contract bugs → route like F9). · Evidence: notes/reports/M1C.md §3–5. ·
+   Source: brief §6; Lead rulings F9/standing protocol.

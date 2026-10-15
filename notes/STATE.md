@@ -1,23 +1,23 @@
 # SOLARIS — ASSEMBLY STATE (see AGENT_BRIEF.md §10)
 
 ## NEXT ACTION
-Await Lead approval of the M1B report (notes/reports/M1B.md — GATE GREEN:
-suite PASSED in 21.5 ms, 5/5 rows, 1A regression PASSED 5/5 on the overlaid
-core). On approval: begin Milestone 1C — read Milestone/Milestone 1C.txt in
-full, run `node tools/extract.mjs 1C` (expect 6 blocks; apply F5 there),
-apply the 1C-CP addendum (notes/patches/1C-CP.md: ITEM 1 verdict-line
-replacement per its application rule, ITEM 2 `seamless'` quote restoration)
-at extraction time, F6 verdict check, register ?page=m1c, typecheck+build,
-verify workers actually spawn (first debug suspect if zero chunks arrive),
-run the 1C gate (budget 150 s) + full regression of 1A/1B pages, write
-notes/reports/M1C.md, commit per cadence, push, STOP at the approval gate.
+Executing Milestone 1C per the Lead order: read canon in full (done first),
+`node tools/extract.mjs 1C` (expect 6 blocks, NO parenthetical matches),
+apply at extraction time in order — 1C-CP ITEM 2 (`seamless'` quote), 1C-CP
+ITEM 1 (verdict console.log, byte-exact per notes/patches/1C-CP.md), F5
+(delete `void m;` in WIREFRAME onClick) — typecheck immediately; verify
+workers bundle+spawn (first suspect on any stall: the
+`new URL('../workers/terrainWorker.ts', import.meta.url)` path and
+src/render|src/workers sibling layout); register ?page=m1c; build; run the
+1C gate (150 s) + full 1A/1B regression; write notes/reports/M1C.md; commit
+per cadence; push; STOP at the approval gate.
 
 ## MILESTONE LEDGER
 | MS | Status | Evidence |
 |----|--------|----------|
 | scaffold | DONE | game/ tree committed (WIP d849d6b); deps pinned per §3.3 (react 18.2.0, three 0.165.0, R3F 8.18.0, zustand ^4.4, TS ~5.4, vite 5.4.21, playwright 1.64.0); `npm run typecheck` + `npm run build` clean |
 | 1A | APPROVED | Commit df1e04f "M1A: extracted, gates green"; gate GREEN 5/5 PASS, 9 rebases matching canon's predicted trace, zero canon edits; report: notes/reports/M1A.md |
-| 1B | GATE GREEN·AWAITING LEAD | Extraction 5/5 + overlay verified (1d302df); F7a/F7b (d582efc); F9 applied (3f12b43); gate: `[Milestone1B] acceptance PASSED in 21.5 ms`, 5/5 badges; 1A regression PASSED 5/5; report: notes/reports/M1B.md |
+| 1B | APPROVED | Gate GREEN (`acceptance PASSED in 21.5 ms`, 5/5 rows) + 1A regression 5/5 on the overlaid core; commits d582efc/F9 3f12b43/final db13db8; report: notes/reports/M1B.md; Lead approval 2026-10-15 |
 | 1C–1G | NOT STARTED | 1C unblocked: 1C-CP addendum at notes/patches/1C-CP.md (apply at extraction); F5 applies at extraction |
 
 ## IN-FLIGHT
@@ -45,6 +45,8 @@ Deferred (authorized-on-encounter, deliberately not applied): the cosmetic
 | 2026-10-15 | F9 authorized (original-author confirmed): authorial canon defect, 1B-only, 1C–1G verified unaffected; single-line deletion of `publishSuite({ started: true })`; acceptance-neutral |
 | 2026-10-15 | 1C-CP addendum delivered (ITEM 1 verdict-line replacement with application rule; ITEM 2 `seamless'` quote restoration); persisted at notes/patches/1C-CP.md; apply at 1C extraction time |
 | 2026-10-15 | Standing damage protocol: families (A) $-stripping, (B) object-key quote loss; every NEW instance in any milestone = stop-and-route; no blanket pre-authorization beyond F6, F7, 1C-CP ITEM 1/2 |
+| 2026-10-15 | MILESTONE 1B: APPROVED (gate GREEN, 5/5 PASS, 21.5 ms synchronous suite, 1A regression green inline + as a page on the overlaid core); deferred verdict-stat restoration stays parked |
+| 2026-10-15 | MILESTONE 1C ORDERED: execute per §8 with 1C-CP ITEM 2 → ITEM 1 → F5 applied at extraction time (typecheck immediately after); worker-pipeline verification FIRST on any stall; budget 150 s + full 1A/1B regression |
 
 ## SESSION LOG
 | # | Date | Goal | Outcome | Handoff note |
