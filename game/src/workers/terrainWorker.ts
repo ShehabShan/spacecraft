@@ -221,16 +221,20 @@ ctx.onmessage = (ev: MessageEvent) => {
   if (m.t === 'req') {
     const a = m.a;                    // ownership of this array is OURS now
     const n = a[0];
-    let first = true;
     for (let k = 0; k < n; k++) {
       const key = a[1 + k * 5], face = a[2 + k * 5], level = a[3 + k * 5];
       const ix = a[4 + k * 5], iy = a[5 + k * 5];
+      // F10b: the request array rides the LAST response of the batch.
+      // Transferring it on the first detached it mid-loop — every later
+      // read returned undefined. All reads above happen while the array
+      // is still worker-owned.
+      const last = k === n - 1;
       const set = setPool.pop();
       if (set === undefined) {
         // Defensive: cannot happen while inFlightCap ≤ pool (enforced by
         // the main thread), but never leave a request unanswered.
-        if (first) { ctx.postMessage({ t: 'drop', key, a } as DropOut, [a.buffer]); first = false; }
-        else ctx.postMessage({ t: 'drop', key } as DropOut);
+        if (last) { ctx.postMessage({ t: 'drop', key, a } as DropOut, [a.buffer]); }
+        else { ctx.postMessage({ t: 'drop', key } as DropOut); }
         continue;
       }
       generateChunk(key, face, level, ix, iy, set);
@@ -239,15 +243,14 @@ ctx.onmessage = (ev: MessageEvent) => {
         p: set.pos, n: set.nrm, u: set.uv, i: set.idx,
         free: setPool.length,
       };
-      if (first) {
+      if (last) {
         msg.a = a;                    // return the request array for reuse
         ctx.postMessage(msg, [set.pos.buffer, set.nrm.buffer, set.uv.buffer, set.idx.buffer, a.buffer]);
-        first = false;
       } else {
         ctx.postMessage(msg, [set.pos.buffer, set.nrm.buffer, set.uv.buffer, set.idx.buffer]);
       }
     }
-    // If every entry dropped before `a` was returned (first===true and
-    // n===0 is impossible; drops always flush `a` on the first response).
+    // `a` is always returned: the last iteration always posts (chunk or
+    // drop path), and n ≥ 1 (the main thread never dispatches empty batches).
   }
 };

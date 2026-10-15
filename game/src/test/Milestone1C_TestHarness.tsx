@@ -199,11 +199,16 @@ const metrics = {
     [1, 1, 1], [1, 1, -1], [1, -1, 1], [-1, 1, 1], [1, 0, 1], [0, 1, 1],
   ];
   const check = (x: number, y: number, z: number): void => {
+    // F10a: sphereToCubeInto normalizes defensively per its contract, so the
+    // round-trip target must be the NORMALIZED input direction (raw cube
+    // corners are not unit — 1 − 1/√3 ≈ 0.4226 by construction otherwise).
+    const inv = 1 / Math.sqrt(x * x + y * y + z * z);
+    const nx = x * inv, ny = y * inv, nz = z * inv;
     sphereToCubeInto(x, y, z, cc);
     faceCubePointInto(cc.face, cc.u, cc.v, pt);
     spherifyInto(pt.x, pt.y, pt.z, sp);
     const e = Math.max(
-      Math.abs(sp.x - x), Math.abs(sp.y - y), Math.abs(sp.z - z));
+      Math.abs(sp.x - nx), Math.abs(sp.y - ny), Math.abs(sp.z - nz));
     if (e > maxErr) maxErr = e;
   };
   for (const d of fixed) check(d[0], d[1], d[2]);
