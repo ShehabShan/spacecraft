@@ -1,16 +1,18 @@
 # SOLARIS — ASSEMBLY STATE (see AGENT_BRIEF.md §10)
 
 ## NEXT ACTION
-Executing Milestone 1C per the Lead order: read canon in full (done first),
-`node tools/extract.mjs 1C` (expect 6 blocks, NO parenthetical matches),
-apply at extraction time in order — 1C-CP ITEM 2 (`seamless'` quote), 1C-CP
-ITEM 1 (verdict console.log, byte-exact per notes/patches/1C-CP.md), F5
-(delete `void m;` in WIREFRAME onClick) — typecheck immediately; verify
-workers bundle+spawn (first suspect on any stall: the
-`new URL('../workers/terrainWorker.ts', import.meta.url)` path and
-src/render|src/workers sibling layout); register ?page=m1c; build; run the
-1C gate (150 s) + full 1A/1B regression; write notes/reports/M1C.md; commit
-per cadence; push; STOP at the approval gate.
+BLOCKED awaiting Lead rulings F10a + F10b (full diagnosis in
+notes/reports/M1C.md): (F10a) 1C harness self-test compares unit spherify
+outputs against RAW non-unit corner inputs → roundtripErr 4.226e-1 = 1−1/√3;
+the inverse itself is exact (1.1e-13 on unit inputs); proposal: normalize
+the comparison target (harness-only). (F10b) terrainWorker.ts req handler
+transfers the request array home on the FIRST chunk response while still
+reading it for batch entries 2..n → detached reads → undefined params →
+requests silently lost → stranded pendings (140) → pool exhaustion → LOD
+collapse (active 24→2) → parentVerts=0; proposal: ride the array on the
+LAST response (~3 worker lines; main thread already position-agnostic).
+On authorization: apply, typecheck+build, re-run 1C gate + full 1A/1B
+regression, complete M1C.md, commit, push, STOP at the approval gate.
 
 ## MILESTONE LEDGER
 | MS | Status | Evidence |
@@ -18,15 +20,19 @@ per cadence; push; STOP at the approval gate.
 | scaffold | DONE | game/ tree committed (WIP d849d6b); deps pinned per §3.3 (react 18.2.0, three 0.165.0, R3F 8.18.0, zustand ^4.4, TS ~5.4, vite 5.4.21, playwright 1.64.0); `npm run typecheck` + `npm run build` clean |
 | 1A | APPROVED | Commit df1e04f "M1A: extracted, gates green"; gate GREEN 5/5 PASS, 9 rebases matching canon's predicted trace, zero canon edits; report: notes/reports/M1A.md |
 | 1B | APPROVED | Gate GREEN (`acceptance PASSED in 21.5 ms`, 5/5 rows) + 1A regression 5/5 on the overlaid core; commits d582efc/F9 3f12b43/final db13db8; report: notes/reports/M1B.md; Lead approval 2026-10-15 |
-| 1C–1G | NOT STARTED | 1C unblocked: 1C-CP addendum at notes/patches/1C-CP.md (apply at extraction); F5 applies at extraction |
+| 1C | EXTRACTED · GATE RUN · BLOCKED (2 canon defects → F10a/F10b) | 6/6 verbatim, no parentheticals; 1C-CP ITEM 2→1 + F5 applied, typecheck clean (2cd69a1); worker chunk bundled; gate: geo/dispose/heap PASS, seamless FAIL — diagnosed: F10a (self-test unit-compare, Node-proven 4.226e-1=1−1/√3) + F10b (worker req-array detach race, protocol-traced); 1A/1B regression GREEN; report: notes/reports/M1C.md |
 
 ## IN-FLIGHT
-Milestone 1B — COMPLETE through §8 step 6: F9 applied (single-line
-deletion), typecheck+build clean, 1B gate PASSED (21.5 ms synchronous
-suite, 5/5 badges) + 1A regression PASSED (5/5) in one serial run
-("2 passed (9.5s)"). Parked at §8.7 approval gate. No open debugging.
-Deferred (authorized-on-encounter, deliberately not applied): the cosmetic
-`$`-strips in the 1B verdict trailing stats (verdict-neutral, logged).
+Milestone 1C / gate run — FAILED on the seamless row; diagnosed to root
+cause, routed (F10a/F10b). Symptom chain: roundtripErr 4.2e-1 (Node repro:
+only the 4 raw corners fail — self-test compares unit outputs against
+non-unit inputs); parentVerts=0 (protocol trace: worker0 got all 117 reqs,
+batches n=1–3, dispatch stops with 140 pending / inflight 0; worker req
+handler transfers `a.buffer` on the first response then reads the detached
+array for entries 2..n). Healthy: geo constant 145, dispose/remove 0,
+allocs frozen 576, heap 0 B/frame, nrmMismatch 0, maxPosDev 2.0e-5, 1A/1B
+regression green. Nothing tried beyond diagnosis; probes kept in
+game/tools/diag-*.mjs for fix verification.
 
 ## APPROVAL LEDGER (settled — never re-ask)
 | Date | Decision |
