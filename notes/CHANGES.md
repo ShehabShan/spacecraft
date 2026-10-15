@@ -256,3 +256,26 @@ Observations (NO change made — recorded for the Lead):
    §6 + standing damage protocol (new defect class: authorial race/test-
    contract bugs → route like F9). · Evidence: notes/reports/M1C.md §3–5. ·
    Source: brief §6; Lead rulings F9/standing protocol.
+
+25. 2026-10-15 · 1C/step4 · game/src/test/Milestone1C_TestHarness.tsx,
+   game/src/workers/terrainWorker.ts · F10a + F10b applied per Lead ruling
+   (9b4afdf): (a) spherifySelfTest check() now compares the round-tripped
+   output against the NORMALIZED input direction — criterion, 2048 random
+   probes, and fixed probes unchanged; (b) the worker req handler transfers
+   the request array on the LAST response of the batch (chunk or drop path)
+   — all reads happen while worker-owned; requirements (a)–(d) of the ruling
+   preserved. · Authorial canon defects confirmed from authorship. ·
+   Evidence: post-fix probe (ACTIVE plateau 93–96, parentVerts 6,061 at 40 s,
+   rt=1.1e-13, req'd 1093 = resps 1093) and gate PASSED. · Source: Lead
+   ruling 2026-10-15 (F10a/F10b).
+
+26. 2026-10-15 · 1C/step5 · (no code change) · 145-vs-146 investigation
+   closed as authorial miscount: the far shell sphere (radius 4100) is
+   frustum-culled every frame — camera pitch 15.52° down + half-fov 31°
+   puts the bottom frustum plane 46.52° below horizontal; the nadir-pointing
+   shell (angular radius arcsin(4100/6500)=39.12°) misses it by 4.36° for
+   the entire flight → never draws → never registers. True count = 144 pool
+   + stars = 145 exactly, constant. Observation also routed: worker 1 idle
+   (canon pump drains the shared queue at w=0 first; efficiency artifact;
+   all criteria pass). · Ruling item 4 (report-only). · Evidence: M1C.md §5,
+   probe wfree W1=96 constant. · Source: Lead ruling 2026-10-15.
