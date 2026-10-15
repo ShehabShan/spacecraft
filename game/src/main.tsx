@@ -11,6 +11,7 @@ import App from './App'
 const pages: Record<string, () => Promise<{ default: ComponentType }>> = {
   m1a: () => import('./test/Milestone1A_TestHarness'),
   m1b: () => import('./test/Milestone1B_TestHarness'),
+  m1c: () => import('./test/Milestone1C_TestHarness'),
 }
 
 const page = new URLSearchParams(window.location.search).get('page') ?? ''
