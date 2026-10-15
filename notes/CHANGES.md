@@ -312,3 +312,20 @@ Observations (NO change made — recorded for the Lead):
    property narrowing; runtime untouched. Typecheck + build re-verified
    with UNPIPED exit codes: both 0. · Evidence: this entry; tsc log. ·
    Source: brief §6.
+
+30. 2026-10-15 · 1D/step4 · (no code change) · 1D gate FAILED on 2 rows;
+   diagnosed, routed (F11/F12 proposals). T3 drag-continuity: maxDv=10.30
+   vs bound 8 — independent integration of the ratified β_q=3.2e-3 dive
+   gives v@1km=262 (observed 264.7 ✓) and peak per-tick Δv ≈ 10.3–10.4
+   (~60 g at the ρv² max near 3–4 km; entry overshoots v_safe BY DESIGN);
+   the author's prose (310–345 arrival, 17 g / 2.8 m/s per tick, +0.2%
+   overshoot) is inconsistent with their own shipped constant — the bound
+   8 is an authorial miscalibration. T5 integration: GL geometries step
+   150→151 at dive start (MutationObserver trace) — the far shell sphere
+   enters the frustum for the first time when the camera looks down the
+   nadir at 10 km and registers mid-run; primeAll covers only pool meshes,
+   so the static shell's registration is view-dependent → geoMin(150) ≠
+   geoMax(151) → constancy fails. Both are acceptance-logic calibrations →
+   Lead only. Regression 1A/1B/1C GREEN. · §6 (may NOT touch acceptance
+   logic) + F9/F10 routing precedent. · Evidence: notes/reports/M1D.md §3–4,
+   diag traces. · Source: brief §6; Lead directive 2026-10-15 (1D).
