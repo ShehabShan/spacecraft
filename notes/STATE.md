@@ -1,17 +1,18 @@
 # SOLARIS — ASSEMBLY STATE (see AGENT_BRIEF.md §10)
 
 ## NEXT ACTION
-Await Lead approval of the M1D report (notes/reports/M1D.md — GATE GREEN:
-PASSED 5/5 + full 1A/1B/1C regression, "4 passed (1.5m)"). On approval:
-begin Milestone 1E — read Milestone/Milestone 1E.txt in full, run
-`node tools/extract.mjs 1E` (expect 3 blocks: sphericalFrame,
-astronautKCC, harness; no parentheticals), apply F1 AT EXTRACTION (replace
-the `require('../core/terrain/terrainField')` shim inside slopeFromNormal
-with a top-level ESM `import { terrainNormalInto } from
-'../core/terrain/terrainField'` — delete the shim indirection), register
+Execute Milestone 1E per the §8 loop (ORDERED 2026-10-16): read
+Milestone/Milestone 1E.txt in full (§1.1 parallel-transport proofs, §1.2
+dual step/slope rule RATIFIED, §1.3 Coriolis 1.8 cm theorem, §1.4
+spin-interpolated sweep), run `node tools/extract.mjs 1E` (expect 3 blocks:
+sphericalFrame, astronautKCC, harness; zero parentheticals), apply F1
+(MANDATORY: require-shim → top-level ESM import of terrainNormalInto) and
+F13 (PRE-AUTHORIZED: mulberry32 `0x51ope5` → `0x5109e5`; skip + note if
+grep finds nothing) AT EXTRACTION TIME, typecheck unpiped, register
 ?page=m1e, typecheck+build (unpiped exit codes), run the 1E gate (budget
-90 s) + full 1A/1B/1C/1D regression, write notes/reports/M1E.md, commit per
-cadence, push, STOP at the approval gate.
+90 s) + full 1A/1B/1C/1D regression (~3 m serial), write
+notes/reports/M1E.md (verify steep-field restore of TEST_PLANET
+explicitly), commit per cadence, push, STOP at the approval gate.
 
 ## MILESTONE LEDGER
 | MS | Status | Evidence |
@@ -20,8 +21,9 @@ cadence, push, STOP at the approval gate.
 | 1A | APPROVED | Commit df1e04f "M1A: extracted, gates green"; gate GREEN 5/5 PASS, 9 rebases matching canon's predicted trace, zero canon edits; report: notes/reports/M1A.md |
 | 1B | APPROVED | Gate GREEN (`acceptance PASSED in 21.5 ms`, 5/5 rows) + 1A regression 5/5 on the overlaid core; commits d582efc/F9 3f12b43/final db13db8; report: notes/reports/M1B.md; Lead approval 2026-10-15 |
 | 1C | APPROVED | Gate GREEN 4/4 + 1A/1B regression 5/5 ("3 passed (1.2m)"); F10a/F10b verified against all four ruling requirements; final commit a86ce94; report: notes/reports/M1C.md; Lead approval 2026-10-15 |
-| 1D | GATE GREEN·AWAITING LEAD | 4/4 verbatim + F4; erratum + 3 strict-TS type-only fixes ratified (dc55895); F11/F12 applied per ruling (51fefcb); FINAL: `[Milestone1D] acceptance PASSED` 5/5 (v@1km 264.7 ≤ 400, maxDv 10.30 ≤ 12, min AGL 3.38 m, LANDED, geo constant 151, burn heap 0 B) + full 1A/1B/1C regression ("4 passed (1.5m)"); report: notes/reports/M1D.md |
-| 1E–1G | NOT STARTED | 1E next (F1 at extraction); 1F (F3 + impostorMath purity); 1G (F2 + hand-applied KCC patch + MANDATORY full 1E re-run) |
+| 1D | APPROVED | Commit e830759; gate GREEN 5/5 + full 1A/1B/1C regression green ("4 passed (1.5m)"); F11/F12 applied as ruled; erratum + standing rule adopted; authorship verified: v@1000m 264.7 matches corrected derivation, locals max 1022.8 matches 1A structural prediction (1022.67), geo 151 = F12-predicted constant count; report: notes/reports/M1D.md; Lead approval 2026-10-16 |
+| 1E | IN PROGRESS | Ordered 2026-10-16 (F1 MANDATORY + F13 pre-authorized at extraction); watch: slope-site scan routing, TEST_PLANET restore verification; KCC stays PRISTINE (1G §3.5 patch is 1G's, never now) |
+| 1F–1G | NOT STARTED | 1F (F3 + impostorMath purity); 1G (F2 + hand-applied KCC patch + MANDATORY full 1E re-run) |
 
 ## IN-FLIGHT
 Milestone 1D — COMPLETE through §8 step 6: F11/F12 applied and verified
@@ -59,6 +61,9 @@ Diagnostic probes kept: game/tools/diag-m1d.mjs (and earlier diag-*).
 | 2026-10-15 | F11 authorized (bound 8→12 + corrected prose; β_q ratified and vindicated; overshoot prose corrected — g at 3R = 1.09 m/s² < entry drag 3.79) |
 | 2026-10-15 | F12 authorized (shell priming completion; expected constant 151; 1C's 145 untouched) |
 | 2026-10-15 | Erratum ratified (02b313c "typecheck clean" was false); STANDING RULE adopted: typecheck/build with UNPIPED exit codes; "clean" claims backed by observed exit 0 |
+| 2026-10-16 | MILESTONE 1D: APPROVED (gate GREEN 5/5, full 1A/1B/1C regression green, F11/F12 applied as ruled, erratum + standing rule adopted; verified from authorship: v@1000m 264.7 matches the corrected derivation, locals max 1022.8 matches the 1A structural prediction 1022.67, geo 151 is the F12-predicted constant count; commit e830759; report notes/reports/M1D.md) |
+| 2026-10-16 | MILESTONE 1E ORDERED: execute per §8 with F1 MANDATORY (require() breaks ESM builds) and F13 PRE-AUTHORIZED (authorial `0x51ope5` invalid hex → `0x5109e5` entire-argument replacement; skip + note if absent); watch items: slope-site scan failure = paste params before touching (authorial calibration question), verify steep-field TEST_PLANET restore, astronautKCC.ts PRISTINE (1G §3.5 patch applied in 1G, never now) |
+| 2026-10-16 | Fresh-session bootstrap completed per §10.3 — reconciliation clean (git log/status/filesystem agree with STATE.md; canon byte-identical to ea112ec; only .DS_Store dirty); NEXT ACTION was awaiting this directive's M1D approval — proceeded without further go as instructed |
 
 ## SESSION LOG
 | # | Date | Goal | Outcome | Handoff note |
@@ -67,6 +72,7 @@ Diagnostic probes kept: game/tools/diag-m1d.mjs (and earlier diag-*).
 | 2 | 2026-10-14 | Protocol install + reconcile | AGENT_BRIEF.md written verbatim (389-line paste + 47-line §10 append); session-1 work preserved as WIP d849d6b; notes/ tree created; CHANGES.md relocated to root; STATE.md written from evidence; M1A report persisted to notes/reports/M1A.md | Session parked at the 1A approval gate — resumed by session 3 |
 | 3 | 2026-10-14 | 1A approval + protocol install | approved + installed + pushed | Run the F6 pre-scan over all seven Milestone .txt files (report per file whether the acceptance-line `$` is present), then begin Milestone 1B: read Milestone/Milestone 1B.txt in full, run `node tools/extract.mjs 1B` (expect 5 blocks; the parenthetical overlay on src/core/simulation/SimulationCore.ts explicitly reported — it must be the ONLY parenthetical match), F6 check/repair on the 1B harness, register ?page=m1b, typecheck+build, run the 1B gate PLUS the 1A page as regression, write notes/reports/M1B.md with verbatim gate output and the pre-scan table, commit per the amended cadence, push, then STOP at the approval gate. |
 | 4 | 2026-10-14/15 | M1B execution | (continuation — session resumed after wind-down in the same live session) Pre-scan done (1C verdict missing → F8); extraction 5/5 + overlay, invariant held; F7a/F7b per ruling → typecheck/build clean; 1A regression green; 1B deadlock diagnosed to canon auto-run guard → F9 authorized + applied; 1C-CP persisted; BOTH gates green ("2 passed (9.5s)") | M1B parked at the approval gate — next: Lead approval of notes/reports/M1B.md, then 1C (extract 6 blocks, F5 + 1C-CP at extraction, workers check, gate + regression, report) |
+| 5 | 2026-10-16 | M1D approval + M1E execution | Fresh-session bootstrap per §10.3 clean (canon = ea112ec, evidence matches STATE.md); M1D APPROVED + 1E ordered recorded in ledgers before any 1E work; 1E execution per §8 loop (outcome in next handoff) | (pending — will be written at wind-down) |
 
 ## ANCHOR
 df1e04f — "M1A: extracted, gates green" (branch m1-assembly; chain: ea112ec
