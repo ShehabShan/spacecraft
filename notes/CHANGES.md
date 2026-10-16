@@ -329,3 +329,18 @@ Observations (NO change made — recorded for the Lead):
    Lead only. Regression 1A/1B/1C GREEN. · §6 (may NOT touch acceptance
    logic) + F9/F10 routing precedent. · Evidence: notes/reports/M1D.md §3–4,
    diag traces. · Source: brief §6; Lead directive 2026-10-15 (1D).
+
+31. 2026-10-15 · 1D/step5 · game/src/test/Milestone1D_TestHarness.tsx ·
+   F11 + F12 applied per Lead ruling: (F11a) drag-continuity pass criterion
+   `maxDv <= 8` → `maxDv <= 12`; (F11b) detail prose replaced with the
+   corrected physics (bound 12 — peak entry decel ≈ 63 g ≈ 10.4 m/s/tick at
+   the ρ·v² max near 2.5–3 km, transiently above a_struct BY DESIGN; the
+   extracted detail string was intact — no F6 restoration needed);
+   (F12a) shell Mesh captured as module const `shellMesh`; (F12b)
+   `shellMesh.frustumCulled = false` after pool.primeAll(); (F12c) restored
+   to true at unprime. No other bytes changed. · Authorial calibrations
+   corrected on the record (bound 8, "17 g = 2.8 m/s/tick", "+0.2%
+   overshoot" — g at 3R = 1.09 m/s² < entry drag 3.79, peak displayed
+   2,000.0); β_q = 3.2e-3 RATIFIED and vindicated. · Typecheck + build:
+   TSC_EXIT=0 BUILD_EXIT=0, observed unpiped per the new standing rule. ·
+   Source: Lead ruling 2026-10-15 (F11/F12).
