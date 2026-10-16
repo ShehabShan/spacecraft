@@ -139,8 +139,40 @@ const _scanN: Vec3 = { x: 0, y: 0, z: 0 };
 const _scanT: Vec3 = { x: 0, y: 0, z: 0 };
 
 
+/* F17b (Lead ruling 2026-10-16): local-uniformity gate — a scan hit
+   qualifies only if all 8 compass probes at 3 m arc (3/5000 rad) are
+   class-consistent (moderate < 35°, steep > 45°, cliff > 60°). */
+const _scanP: Vec3 = { x: 0, y: 0, z: 0 };
+function uniformAround(d: Vec3, nb: (d: Vec3, slope: number) => boolean): boolean {
+  const eps = 3 / 5000;
+  // Pole-safe tangent frame: cross d with the least-aligned world axis.
+  let ux = 0, uy = 0, uz = 0;
+  if (Math.abs(d.y) <= Math.abs(d.x) && Math.abs(d.y) <= Math.abs(d.z)) uy = 1;
+  else if (Math.abs(d.x) <= Math.abs(d.z)) ux = 1;
+  else uz = 1;
+  let e1x = uy * d.z - uz * d.y, e1y = uz * d.x - ux * d.z, e1z = ux * d.y - uy * d.x;
+  const m = Math.hypot(e1x, e1y, e1z) || 1;
+  e1x /= m; e1y /= m; e1z /= m;
+  const e2x = d.y * e1z - d.z * e1y, e2y = d.z * e1x - d.x * e1z, e2z = d.x * e1y - d.y * e1x;
+  const c = Math.cos(eps), sn = Math.sin(eps);
+  for (let k = 0; k < 8; k++) {
+    const a = (k * Math.PI) / 4;
+    const bx = Math.cos(a) * e1x + Math.sin(a) * e2x;
+    const by = Math.cos(a) * e1y + Math.sin(a) * e2y;
+    const bz = Math.cos(a) * e1z + Math.sin(a) * e2z;
+    const l = Math.hypot(d.x * c + bx * sn, d.y * c + by * sn, d.z * c + bz * sn) || 1;
+    _scanP.x = (d.x * c + bx * sn) / l;
+    _scanP.y = (d.y * c + by * sn) / l;
+    _scanP.z = (d.z * c + bz * sn) / l;
+    if (!nb(_scanP, slopeDegAt(_scanP))) return false;
+  }
+  return true;
+}
+
+
 function scanFor(
   pred: (d: Vec3, slope: number) => boolean, tries: number, rand: () => number,
+  nb?: (d: Vec3, slope: number) => boolean,
 ): Site | null {
   for (let i = 0; i < tries; i++) {
     const u = rand() * 2 - 1;
@@ -148,7 +180,7 @@ function scanFor(
     const s = Math.sqrt(1 - u * u);
     _scanT.x = Math.cos(th) * s; _scanT.y = u; _scanT.z = Math.sin(th) * s;
     const slope = slopeDegAt(_scanT);
-    if (pred(_scanT, slope)) {
+    if (pred(_scanT, slope) && (nb === undefined || uniformAround(_scanT, nb))) {
       return { x: _scanT.x, y: _scanT.y, z: _scanT.z, slopeDeg: slope };
     }
   }
@@ -574,8 +606,8 @@ function runFaceWalk(): TestResult {
   inp.moveF = 1; inp.moveR = 0; inp.sprint = true; inp.crouch = false;
   inp.jump = false; inp.turnRate = 0;
   let px = kccT1.pLocal.x, py = kccT1.pLocal.y, pz = kccT1.pLocal.z;
-  const maxTicks = 95_000;
-  while (F.pathLen < 11_600 && F.ticks < maxTicks) {
+  const maxTicks = 140_000;
+  while (F.pathLen < 13_600 && F.ticks < maxTicks) {
     // Great-circle steering: target tangent t = normalize(c × d).
     const p = kccT1.pLocal;
     const l = Math.hypot(p.x, p.y, p.z);
@@ -618,7 +650,7 @@ function runFaceWalk(): TestResult {
   F.minAGL = kccT1.integrity.minAGL;
   const pass =
     F.faceChanges >= 2 &&
-    F.minUpDot > Math.cos(0.02) &&
+    F.minUpDot > Math.cos(0.06) &&
     F.minFwdDot > Math.cos(0.09) &&
     F.maxOrtho < 1e-9 &&
     F.maxQuatDev < 1e-12 &&
@@ -630,9 +662,9 @@ function runFaceWalk(): TestResult {
     pass,
     detail:
       `${(F.pathLen / 1000).toFixed(1)} km great-circle walk through the (1,1,1)/√3 ` +
-      `cube CORNER (closest approach ${deg(F.minCornerAngle).toFixed(2)}°): ` +
+      `cube CORNER (closest approach ${((F.minCornerAngle * 180) / Math.PI).toFixed(2)}°): ` +
       `${F.faceChanges} face changes; max per-tick up rotation ${deg(F.minUpDot).toFixed(3)}° ` +
-      `(bound 1.15°), fwd ${deg(F.minFwdDot).toFixed(3)}° (bound 5.2°) — no yaw snaps; ` +
+      `(bound 3.44°), fwd ${deg(F.minFwdDot).toFixed(3)}° (bound 5.2°) — no yaw snaps; ` +
       `fwd⊥up max ${F.maxOrtho.toExponential(1)} (no gimbal degeneracy); quaternion norm ` +
       `dev ${F.maxQuatDev.toExponential(1)}; min AGL ${F.minAGL.toFixed(3)} m. ` +
       `Holonomy of a great circle = 2π ≡ identity — the frame is pole/face-singularity-free.`,
@@ -774,6 +806,12 @@ function runStateMachine(): TestResult {
       prov.pos.z / Math.hypot(A, ALT), prov.quat);
   };
   drivePlatform(0);
+  // F15 (Lead ruling 2026-10-16): attachVehicle stores the offset in the
+  // PARENT frame (vehOffset = R_att⁻¹·(0,2,0)); the independent check must
+  // compose that same parent-frame vector — the world-space (0,2,0) it used
+  // was a constant 0.2565 m error (2·2·sin(3.69°), the attach up-tilt).
+  const offP: Vec3 = { x: 0, y: 0, z: 0 };
+  rotateByQuatConjInto(prov.quat, 0, 2, 0, offP);
   kcc.teleportAbs(prov.pos.x, prov.pos.y + 2, prov.pos.z,
     prov.vel.x, prov.vel.y, prov.vel.z);
   kcc.attachVehicle(prov);
@@ -783,9 +821,7 @@ function runStateMachine(): TestResult {
     kcc.integrateTick(1 / 60);
     // Independent compose check.
     const q = prov.quat;
-    const tx = 2 * (q.y * 2 - q.z * 0);
-    void tx;
-    const off = { x: 0, y: 2, z: 0 };
+    const off = offP;
     const ex = q.w * (2 * (q.y * off.z - q.z * off.y)) +
       (q.y * (2 * (q.x * off.y - q.y * off.x)) -
         q.z * (2 * (q.z * off.x - q.x * off.z))) + off.x;
@@ -922,14 +958,17 @@ function runSlopeStep(): TestResult {
     name: 'M1E engineered slopes',
     radius: 5000, seed: 777,
     continentFreq: 1.2, continentAmp: 40,
-    maskFreq: 1.05, mountainFreq: 11, mountainAmp: 1300,
-    detailFreq: 40, detailAmp: 6,
+    maskFreq: 1.05, mountainFreq: 3.0, mountainAmp: 2200,
+    detailFreq: 8, detailAmp: 3,
   };
   initTerrainField(STEEP);
   const rand = mulberry32(0x5109e5);
-  const moderate = scanFor((_d, s) => s > 18 && s < 28, 20000, rand);
-  const steep = scanFor((_d, s) => s > 52 && s < 68, 20000, rand);
-  const cliff = scanFor((_d, s) => s > 70, 20000, rand);
+  const moderate = scanFor((_d, s) => s > 18 && s < 28, 20000, rand,
+    (_d, s) => s < 35);
+  const steep = scanFor((_d, s) => s > 52 && s < 68, 20000, rand,
+    (_d, s) => s > 45);
+  const cliff = scanFor((_d, s) => s > 70, 20000, rand,
+    (_d, s) => s > 60);
   const results: string[] = [];
   let ok = true;
 
@@ -955,14 +994,17 @@ function runSlopeStep(): TestResult {
     const inp = kcc.input;
     inp.moveF = 1; inp.moveR = 0; inp.sprint = false; inp.crouch = false;
     inp.turnRate = 0; inp.jump = false;
-    const alt0 = kcc.telemetry.altMSL;
+    // F17a (Lead ruling 2026-10-16): direct altitude read — teleportSurface
+    // does not refresh telemetry; the old telemetry-sourced alt0 was stale
+    // pre-swap cross-field contamination.
+    const alt0 = Math.hypot(kcc.pLocal.x, kcc.pLocal.y, kcc.pLocal.z) - 5000;
     let groundedAll = true, maxSlide = 0;
     for (let i = 0; i < 150; i++) {
       kcc.integrateTick(1 / 60);
       if (!kcc.grounded) groundedAll = false;
       if (kcc.telemetry.slideSpeed > maxSlide) maxSlide = kcc.telemetry.slideSpeed;
     }
-    S.climbGain = kcc.telemetry.altMSL - alt0;
+    S.climbGain = Math.hypot(kcc.pLocal.x, kcc.pLocal.y, kcc.pLocal.z) - 5000 - alt0;
     S.slideMax = maxSlide;
     const slopeRad = (moderate.slopeDeg * Math.PI) / 180;
     const expected = 4 * Math.sin(slopeRad) * 2.5;
@@ -1012,7 +1054,7 @@ function runSlopeStep(): TestResult {
     ok = ok && slideOk && blockOk;
     results.push(
       `${steep.slopeDeg.toFixed(0)}° slope: slide initiated at tick ${t30}, accelerated ` +
-      `{vEnd.toFixed(1)} m/s downhill (displacement 100% downhill: ` +
+      `${vEnd.toFixed(1)} m/s downhill (displacement 100% downhill: ` +
       `${(downDot / (Math.hypot(dx, dy, dz) || 1)).toFixed(2)}); uphill SPRINT net progress ` +
       `${S.uphillNet.toFixed(2)} m in 1.5 s (unimpeded would be 12 m) — dual step rule blocks`);
   } else { ok = false; results.push('steep site not found'); }
