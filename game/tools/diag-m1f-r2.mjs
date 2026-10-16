@@ -38,8 +38,16 @@ const { quatFromFrameInto, spinQuatInto, rotateAboutAxisInto, rotateByQuatInto, 
   await import('../src/core/physics/sphericalFrame.ts')
 const { projectDirectionInto, bodyGeometryInto } = await import('../src/core/render/impostorMath.ts')
 
-// instantiate the REAL edited harness function against the real core module
-const lookAtQuatInto = new Function('quatFromFrameInto', lookAtSrc + '\nreturn lookAtQuatInto;')(quatFromFrameInto)
+// instantiate the REAL edited harness function: write the verbatim extract
+// (plus a real import of quatFromFrameInto) to a temp .ts sibling and load it
+// through the registered TS loader — annotations stay, no local copy.
+import { writeFileSync, unlinkSync } from 'node:fs'
+const tmpTs = join(here, '_f27_extract.ts')
+writeFileSync(tmpTs,
+  "import { quatFromFrameInto, type Quat } from '../src/core/physics/sphericalFrame.ts'\n" +
+  lookAtSrc + '\nexport default lookAtQuatInto\n')
+const lookAtQuatInto = (await import('./_f27_extract.ts')).default
+unlinkSync(tmpTs)
 
 // -- verbatim harness constants (ARCS + LIVE_SECONDS read from the source) ---
 const ARCS = JSON.parse(harnessSrc.match(/const ARCS = (\[[^\]]*\]);/)[1])
