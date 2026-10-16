@@ -816,3 +816,20 @@ Observations (NO change made — recorded for the Lead):
     APPROVED, F25c ESCALATED → resolved by the user as option A, F25d
     APPROVED. · Lead instruction item 3 B-1. · Evidence: git log 0b2fae8;
     STATE.md approval ledger. · Source: Lead ruling 2026-10-17 item 3 B-1.
+
+56. 2026-10-17 · 1D/tools (NO harness change) · game/tools/
+    diag-m1d-details.mjs, game/tools/diag-m1d-dive.mjs (created) ·
+    Read-only evidence probes for the round-3 regression's m1d row-2
+    failure (diveGrounded false): details probe scrapes the five 1D
+    .test-row strings verbatim; dive probe polls the FLIGHT panel
+    SEQUENCE/ALT through DIVE→CRUISE and shows the ship skimming the
+    ~900 m mountain at 65.57 m AGL then timing out at the 45 s cap
+    still airborne (~386 m AGL, 78 m/s) — approved run landed (3.38 m).
+    All printed row-2 numbers match the approved gate to the digit
+    (264.7/10.30/rebases 8/geo 151/0 B); 1D files byte-identical to
+    e830759; failure is FPS-dependent (variable-step dive vs wall-scaled
+    cap) on this session's slower Chrome — classified environment-soft
+    per the M1A row-5 precedent, NO code changed, routed to the Lead. ·
+    Read-only diag tooling, user-pre-authorized 2026-10-15. · Evidence:
+    M1F.md §10.5. · Source: brief §7 regression rule + M1A row-5
+    environment-soft precedent.

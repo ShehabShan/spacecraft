@@ -1,17 +1,23 @@
 # SOLARIS — ASSEMBLY STATE (see AGENT_BRIEF.md §10)
 
 ## NEXT ACTION
-AWAITING LEAD RULING (round 2) on the M1F routes F27/F28/F25c — full
-evidence in notes/reports/M1F.md §9.3: F27 lookAt-convention mismatch
-(proposed one-line fix verified in Node: quatFromFrameInto(right, up) —
-harness-local lookAtQuatInto only, sphericalFrame untouched); F28
-identityOk second term bodies.length === 11 vs capacity-24 pool (proposed
-=== 24); F25c corridor gate (best 42.2° > 40°; 0 crossings measured on
-600 s sim — options: wider scan arcs / retarget SAT_B / rebases >= 1 /
-Lead's design; LIVE_SECONDS untouched per ruling). On ruling: apply →
-typecheck/build UNPIPED → Node verify → 1F gate (240 s) + full 1A–1E
-regression → update notes/reports/M1F.md → commit + push → STOP at the
-approval gate.
+AWAITING LEAD RULING (round 3) on the M1F routes F25e/F29 (full evidence
+in notes/reports/M1F.md §10): F25e corridor (F25d applied as ruled — full
+2,600 m horizon shows EVERY azimuth mountainous; best az 345° @ 67.5° >
+40° gate; 600 s sim 0 crossings, locals 371.8; no selection-input change
+can meet the gate at this spawn — options: retarget SAT_B / rebases >= 1 /
+longer LIVE_SECONDS / Lead's design); F29 (the now-AIMED renders expose
+two real-geometry failures: R3 silhouette 47.69% sym-diff — Node: mesh
+centre 637.09/360.61 vs impostor 640/360 = 2.97 px parallax vs 4.63/4.65
+px disk radii, the author's sub-pixel claim assumed a bubble-center eye;
+R5 straddler diffMid = 500 bytes — Node: camera→SAT_B ray blocked, worst
+clearance −4.0 m at 20% along; Near-band hill occludes SAT_B in auto but
+is clipped by Mid's 2,000 m near plane). PLUS one environment-soft note:
+m1d row 2 (diveGrounded) failed this session on FPS-dependent dive
+profiling (all numbers match the approved gate to the digit; 1D files
+byte-identical to e830759; no code changed — routed with options). On
+ruling: apply → Node verify → 1F gate (240 s) + full 1A–1E regression →
+update notes/reports/M1F.md → commit + push → STOP at the approval gate.
 
 ## MILESTONE LEDGER
 | MS | Status | Evidence |
@@ -22,35 +28,47 @@ approval gate.
 | 1C | APPROVED | Gate GREEN 4/4 + 1A/1B regression 5/5 ("3 passed (1.2m)"); F10a/F10b verified against all four ruling requirements; final commit a86ce94; report: notes/reports/M1C.md; Lead approval 2026-10-15 |
 | 1D | APPROVED | Commit e830759; gate GREEN 5/5 + full 1A/1B/1C regression green ("4 passed (1.5m)"); F11/F12 applied as ruled; erratum + standing rule adopted; authorship verified: v@1000m 264.7 matches corrected derivation, locals max 1022.8 matches 1A structural prediction (1022.67), geo 151 = F12-predicted constant count; report: notes/reports/M1D.md; Lead approval 2026-10-16 |
 | 1E | APPROVED | Commit 4c352dd (gate-green report + ledgers); FINAL: `[Milestone1E] acceptance PASSED` 6/6 (coriolis 0.75 cm west/1.02 s/1-tick plant; vehicleErr 0.0e+0; deorbit landed 22,307; face-walk 0.82° corner/2 changes; slope rows clean, minAGL n/a) + full 1A/1B/1C/1D regression ("5 passed (1.9m)", PLAYWRIGHT_EXIT=0); all nine rulings applied + vindicated (F14 core #1 7947369; F15–F17+$-strip e689d4c; F18 core #2 37a4c9e; F19/F20 7d77e52); report: notes/reports/M1E.md; Lead approval 2026-10-16 |
-| 1F | GATE RUN ×2 — FAILED, ROUTED (round 2) | Round 1: extraction 4/4 + F3/F21 (5a17673); gate FAILED 1/5 → F22–F26+D-1/D-2 routed (3c79440). Round 2: ruling applied + committed (0b2fae8); gate FAILED ["PASS","FAIL","PASS","FAIL","FAIL"] — R1 real-PASS, R3 PASS (F23 vindicated), F26 vindicated (geo constant 49), F22 live-path vindicated (9 instances, Sun ACTIVE); NEW routes F27 (lookAt ±90° convention mismatch — Sun renders opposite the scan window; fix verified in Node), F28 (identityOk bodies.length === 11 vs capacity-24), F25c (corridor 42.2° > 40° gate; 0 crossings measured); regression 1A–1E GREEN both runs ("5 passed (3.9m)"); report: notes/reports/M1F.md §9; round-3 ruling (F27/F28/F25d) received 2026-10-17, edits committed a6de872, verification in progress |
+| 1F | GATE RUN ×3 — FAILED, ROUTED (round 3) | Round 1: extraction 4/4 + F3/F21 (5a17673); gate FAILED 1/5 → F22–F26+D-1/D-2 routed (3c79440). Round 2: ruling applied (0b2fae8); gate FAILED ["PASS","FAIL","PASS","FAIL","FAIL"] → F27/F28/F25c routed. Round 3 (2026-10-17): ruling applied EXACTLY (a6de872 + B-1 74875e5 + probes 1c8a2b8/1d76fd0); TSC/BUILD exit 0; Node FIRST: 4/4 poses dead-center through the REAL edited lookAtQuatInto (F27 ✓), Sun r=20.95 px ideal 1,379 px; F25d branch (iii) per its own Node conditional (best az 345° @ 67.5° > 40°; 600 s sim 0 crossings, locals 371.8); third gate ["PASS","PASS","FAIL","PASS","FAIL"] — R2 PASS (footprint 105.5%, center 0.71 px; F27 VINDICATED), R4 PASS (heaps 0/0; F28 VINDICATED), R3 FAIL on the now-real silhouette clause (47.69% > 3%), R5 FAIL 0 shifts + NEW diffMid=500; regression 1A/1B/1C/1E GREEN, m1d row-2 ENV-SOFT (FPS-dependent dive profile; numbers match approved gate; files byte-identical to e830759; no code change); report: notes/reports/M1F.md §10; PARKED AT RULING GATE round 3 (routes F25e/F29) |
 | 1G | NOT STARTED | F2 + hand-applied KCC patch + MANDATORY full 1E re-run; re-grep the §3.5 patch against F14/F18's moved/edited regions |
 
 ## IN-FLIGHT
-Milestone 1F — PARKED AT THE RULING GATE, ROUND 2 (2026-10-16). Round-1
-ruling (F22–F26 + D-1/D-2) applied exactly; second gate: R1 PASS, R3 PASS
-(F23 vindicated), F26 vindicated (geo constant at 49), F22 live-path
-vindicated (9 active instances; Sun +47.7° ACTIVE). THREE NEW ROUTES
-awaiting the Lead (details + verbatim evidence in notes/reports/M1F.md §9):
-- F27: lookAtQuatInto builds X-forward frame quats (quatFromFrameInto
-  columns = (fwd, up, fwd×up)) — every lookAt pose aims the three.js
-  camera ~90° off-target while projectDirectionInto uses −Z. The Sun
-  RENDERS opposite the ±42 px window → R2 footprint 0 px; R3's silhouette
-  window sampled corner stars (8 px, vacuous); R5's straddle renders
-  likely never framed satB (diffs still valid determinism); live TP boom
-  faces ~90° from the astronaut. Proposed fix (VERIFIED dead-center in
-  Node): inside lookAtQuatInto, pass (right, up) to quatFromFrameInto
-  instead of (fwd, up) — one
-  line, harness-local, sphericalFrame untouched.
-- F28: identityOk term `sky.bodies.length === 11` — pool is capacity-24,
-  always 24; 11 was the author's active-count expectation (actual 9).
-  R4 fails solely on this term (heaps 0 B/0 B; children === 8 true).
-- F25c: corridor gate — best az 330° @ 42.2° > 40°; measured 0 crossings
-  (686.1 max bubble comp < 1,024 over 600 s sim; 69.7/72.7° walls beyond
-  1.2 km; SAT_B at 2.8 km across them). Options: wider scan arcs / SAT_B
-  retarget / rebases >= 1 / Lead's design. LIVE_SECONDS untouched per
-  ruling.
-R5's sunJump clause vacuous until crossings exist (F21a measurement live).
-1E is closed: APPROVED at 4c352dd.
+Milestone 1F — PARKED AT THE RULING GATE, ROUND 3 (2026-10-17). Round-3
+ruling (F27/F28/F25d + B-1) applied exactly and verified; F27 and F28
+VINDICATED in Node and browser (R2 PASS: Sun footprint 105.5%, centre
+0.71 px; R4 PASS: heaps 0/0). F25d's own conditional resolved to branch
+(iii): with the full 2,600 m horizon every azimuth is mountainous (best
+az 345° @ 67.5°), the 600 s sim shows 0 crossings (locals 371.8, path
+934.5 m, net 118.8 m; straight line to SAT_B max 80.6° at ~863 m) — the
+edit stays committed, gate run anyway, routed as F25e. TWO NEW ROUTES
+awaiting the Lead (details + verbatim evidence in notes/reports/M1F.md
+§10.4):
+- F25e: corridor — no azimuth at this spawn meets the 40° gate over the
+  full walk; no selection-input change can produce ≥2 crossings within
+  LIVE_SECONDS=120. Options: retarget SAT_B / rebases >= 1 / longer
+  LIVE_SECONDS / Lead's design.
+- F29: the now-aimed A/B clauses fail on real geometry. R3 silhouette:
+  mesh centre projects (637.09, 360.61) vs impostor (640.00, 360.00) —
+  2.97 px parallax vs 4.63/4.65 px disk radii (the mesh is placed
+  bubble-center-relative, the impostor staged along the fixed PROBE_DIR
+  from the observer 1,348.8 m off-center; the author's sub-pixel claim
+  assumed a bubble-center eye) → 47.69% sym-diff. R5 straddler: diffMid
+  = 500 bytes (diffNear 0) — the camera→SAT_B ray is blocked (worst
+  clearance −4.0 m at 20% along); the Near-band occluder is clipped by
+  Mid's 2,000 m near plane, so auto ≈ forced-Near ≠ forced-Mid. The 500
+  bytes ≈ 125 px are also the SAT_B framing evidence (renders
+  dead-centre, occluded).
+PLUS environment-soft note (not a 1F route): m1d row 2 failed this
+session on diveGrounded — the variable-step dive integrates real frame
+deltas against a wall-scaled 45 s cap, so the profile is FPS-dependent;
+this host's new Chrome renders slow ReadPixels frames (1F live trace
+1,603 frames vs 7,201 in round 2). All printed 1D numbers match the
+approved gate to the digit (264.7/10.30/8/151/0B; min AGL 65.57 vs
+approved 3.38/LANDED); 1D files byte-identical to e830759; deterministic
+across two runs; NO code changed (canon row; §6). Options routed: re-run
+on a faster/quieter machine, or a Lead ruling on the row's FPS
+sensitivity.
+R5's sunJump clause stays vacuous until crossings exist (F21a measurement
+live). 1E is closed: APPROVED at 4c352dd.
 
 ## APPROVAL LEDGER (settled — never re-ask)
 | Date | Decision |
@@ -106,6 +124,7 @@ R5's sunJump clause vacuous until crossings exist (F21a measurement live).
 | 2026-10-16 | D-1/D-2 AUTHORIZED + APPLIED ($ restored + paren repaired in R2 detail); O-1/O-2 ACCEPTED no action (recorded) |
 | 2026-10-16 | ROUND-2 ROUTES PENDING LEAD: F27 lookAt convention mismatch (quatFromFrameInto is an X-forward frame quat; lookAtQuatInto poses aim the camera ~90° off-target while projectDirectionInto uses −Z; Sun renders opposite the ±42 px window — proposed one-line fix quatFromFrameInto(right, up) VERIFIED dead-center in Node); F28 identityOk second term bodies.length === 11 structurally false (capacity-24 pool; active = 9); F25c corridor gate failure (0 crossings measured, numbers on record) |
 | 2026-10-17 | ROUND-2 RULING (Lead): diagnosis ACCEPTED as correct. F27 APPROVED — lookAtQuatInto only: quatFromFrameInto(fwd,up) → (right,up) + one-line comment "three.js camera basis: X=right, Y=up, −Z=forward (F27)"; sphericalFrame/projectDirectionInto/all four call sites/thresholds untouched. F28 APPROVED — identityOk second term → sky.bodies.length === IMPOSTOR_CAPACITY (imported from SkyImpostorPool, no literal 24); other canary terms + heap bounds untouched. F25d APPROVED (user decision, option A of the F25c escalation) — corridor scan widened to 2,600 m (ARCS extended to 16 arcs), comment updated, diag-m1f-core.mjs mirrored; SAT_B/LIVE_SECONDS/rebases/40° gate/R5 terms all untouched; conditional branch decided in Node at step 4b: (i) slope ≤ 40° → proceed; (ii) slope > 40° but ≥ 2 crossings within LIVE_SECONDS with locals ≤ 1,024 → proceed; (iii) otherwise keep the edit, run the gate anyway, route F25e. B-1 bookkeeping ordered (ledger commit note + ANCHOR → 0b2fae8 + this ledger). Expected gate: [PASS,PASS,PASS,PASS,PASS] if 4b predicts ≥ 2 crossings. |
+| 2026-10-17 | ROUND-3 EXECUTION COMPLETE: F27/F28/F25d/B-1 applied exactly (a6de872, 74875e5); TSC/BUILD exit 0 unpiped; Node 4b — F27 verified through the REAL edited function (4/4 poses dead-center), F25d conditional resolved to branch (iii) per the ruling's own procedure (best az 345° @ 67.5° > 40°; 600 s sim 0 crossings, locals 371.8 ≤ 1,024) → gate + regression run anyway as ruled. Third gate ["PASS","PASS","FAIL","PASS","FAIL"]: R2 PASS (F27 VINDICATED — footprint 105.5%, centre 0.71 px), R4 PASS (F28 VINDICATED — heaps 0/0), R3 FAIL on the now-real silhouette clause (47.69% > 3%), R5 FAIL (0 shifts + diffMid=500). NEW ROUTES PENDING LEAD: F25e (corridor unmeetable at this spawn over the full horizon — options unchanged) and F29 (R3 parallax: mesh centre 637.09/360.61 vs impostor 640/360, 2.97 px vs 4.63/4.65 px radii, author assumed bubble-center eye; R5 straddle ray blocked, worst clearance −4.0 m at 20% — Near-band occluder clipped by Mid's 2,000 m plane explains diffNear 0 / diffMid 500). m1d regression row-2 failure ENVIRONMENT-SOFT per M1A row-5 precedent: variable-step dive vs wall-scaled cap is FPS-dependent; all numbers match the approved gate (264.7/10.30/8/151/0B); 1D files byte-identical to e830759; deterministic; NO code changed; options routed (faster-machine re-run / ruling on FPS sensitivity). |
 
 ## SESSION LOG
 | # | Date | Goal | Outcome | Handoff note |
@@ -117,14 +136,16 @@ R5's sunJump clause vacuous until crossings exist (F21a measurement live).
 | 5 | 2026-10-16 | M1D approval + M1E execution | Bootstrap clean; M1D APPROVED + 1E ordered recorded; extraction 3/3, F13, F1 vacuous, 2 TS fixes, ?page=m1e wired; three ruling rounds total: (1) first gate FAIL 4 rows → F14–F17 + $-strip ruled + applied (F14 = core #1), all vindicated; (2) re-run FAIL 3 rows → F18 (core #2: launch compose at θ_prev + embed guard), F19 (cap 26,000), F20 (per-row reset + Infinity print) ruled + applied, Node verification FIRST agreed with browser number-for-number; (3) FINAL GATE GREEN: 1E 6/6 PASS + full 1A/1B/1C/1D regression "5 passed (1.9m)", PLAYWRIGHT_EXIT=0; spec-canonical coriolis row green (0.75 cm west, 1.02 s, 1-tick plant) | M1E parked at the approval gate — next: Lead approval of notes/reports/M1E.md; then 1F per §8 (extract 4 blocks, F3, impostorMath purity, gate 150 s + regression, report, STOP) |
 | 6 | 2026-10-16 | Prior-session CLOSURE ROW (appended by session 6 per §10.2 + Lead directive) | Session 5 ended at the M1E approval gate; its handoff note above was committed in 4c352dd, but no dedicated closure row existed at session end — the §10.2 gap is formal, noted in the Approval Ledger, closed by this row. M1E subsequently APPROVED by directive 2026-10-16 | Resumed by session 6 (fresh bootstrap, reconciliation clean, canon byte-identical to ea112ec) |
 | 7 | 2026-10-16 | M1E approval bookkeeping + M1F execution (two ruling rounds) | Bootstrap: directive items 1/2/6 already recorded in bbbbb47; ONE drift — prior session's uncommitted partial 1F extraction (re-extracted verbatim, nothing unique lost). Round 1: extraction 4/4 (0 parenthetical; layeredCameras silent; impostorMath PURE), F3a/c/b+F21a + F21b applied, 5 §6 strict-TS fixes, ?page=m1f wired, TSC/BUILD exit 0 (5a17673); gate FAILED 1/5 → F22–F26+D-1/D-2 root-caused (Node+browser probes) and routed (3c79440); regression 1A–1E GREEN. Round 2 (Lead ruling): all seven items applied exactly; Node verified FIRST (corridor 42.2° > 40° gate → measured 0 crossings; Sun +47.7° ACTIVE, footprint ideal ≈1,381 px); second gate FAILED ["PASS","FAIL","PASS","FAIL","FAIL"] — R3 PASS + F22/F23/F26/D-1/D-2 vindicated; THREE NEW ROUTES: F27 (lookAt X-forward-frame vs −Z convention — Sun renders opposite the ±42 px window; one-line fix VERIFIED in Node), F28 (identityOk bodies.length === 11 vs capacity-24 pool), F25c (corridor gate stop per the ruling's own conditional); regression 1A–1E GREEN again; report §9 + ledgers finalized | M1F awaits the Lead's round-2 ruling on F27/F28/F25c (evidence in notes/reports/M1F.md §9.3). On authorization: apply → Node verify → full gate + regression → report → commit + push → STOP at the approval gate. 1G after that. |
+| 8 | 2026-10-17 | M1F round-3 ruling execution | Preconditions clean (HEAD 0b2fae8 = origin, canon diff ea112ec empty). Environment repairs only: npm ci (node_modules absent), Chrome installed by the user mid-session. F27/F28/F25d applied exactly + B-1 (a6de872, 74875e5); TSC/BUILD exit 0; diag-m1f-r2 rewritten to execute the REAL edited lookAtQuatInto (verbatim runtime extract) — 4/4 poses dead-center; diag-m1f-core instrumented → F25d branch (iii) (az 345° @ 67.5°; 0 crossings; locals 371.8; straight line to SAT_B 80.6°); third gate ["PASS","PASS","FAIL","PASS","FAIL"] — F27/F28 VINDICATED (R2 footprint 105.5%/0.71 px; R4 heaps 0/0); F29 routed (R3 silhouette 47.69% = 2.97 px parallax vs 4.63 px radii; R5 diffMid 500 = ray blocked, −4.0 m at 20%) + F25e routed; regression 1A/1B/1C/1E GREEN, m1d row-2 ENV-SOFT (diveGrounded; numbers match approved gate; FPS-dependent; no code change; probes diag-m1d-details/dive created); report §10 + CHANGES 51–55 + ledgers | M1F awaits the Lead's round-3 ruling on F25e/F29 + the m1d env-soft decision (evidence in notes/reports/M1F.md §10.4–10.5). On authorization: apply → Node verify → full gate + regression → report → commit + push → STOP at the approval gate. 1G after that. |
 
 ## ANCHOR
 0b2fae8 — "M1F/ruling-round-1 APPLIED … parked at ruling gate round 2"
 (the last pushed, Lead-verified state at the 2026-10-17 round-3 ruling;
 branch m1-assembly; chain: ea112ec canon → d849d6b WIP preservation →
 2e409c0 protocol install → df1e04f M1A approval → … → 0b2fae8 M1F round-2
-gate). This wind-down STATE.md travels in a commit AFTER 0b2fae8 (a file
-cannot contain its own commit hash); resolve the exact carrier with
-`git log -1 --format=%H -- notes/STATE.md`. Canon (Design_specs/,
-Milestone/) must remain unchanged from ea112ec — verified: git diff ea112ec
-on both trees is empty.
+gate → a6de872 round-3 edits → 74875e5 B-1 → 1c8a2b8/1d76fd0 probes →
+9627eee CHANGES 51–55). This wind-down STATE.md travels in a commit AFTER
+those (a file cannot contain its own commit hash); resolve the exact
+carrier with `git log -1 --format=%H -- notes/STATE.md`. Canon
+(Design_specs/, Milestone/) must remain unchanged from ea112ec —
+verified: git diff ea112ec on both trees is empty.

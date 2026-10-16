@@ -475,3 +475,233 @@ window now further explained by F27).
 (R1, R3 green; F26 proven). On the next ruling: apply, re-run the 1F gate +
 full 1A–1E regression, update this report, commit + push, stop at the
 approval gate.
+
+---
+
+# 10. ROUND 3 — F27/F28/F25d applied (2026-10-17), third gate, vindications + two new routes + one environment-soft regression note
+
+The round-2→3 ruling applied EXACTLY as written, all three items
+harness-local: **F27** (lookAtQuatInto only:
+`quatFromFrameInto(fx,fy,fz,…)` → `quatFromFrameInto(rx,ry,rz,upx,upy,upz,out)`
++ the one-line comment; sphericalFrame, projectDirectionInto, all four call
+sites, every threshold untouched) · **F28** (identityOk second term only:
+`sky.bodies.length === 11` → `=== IMPOSTOR_CAPACITY`, imported from the
+existing SkyImpostorPool module — no literal 24; other canary terms and both
+heap bounds untouched) · **F25d** (the walkFwd IIFE ARCS widened to 16 arcs
+reaching 2,600 m + the F25 comment updated to "flattest 2,600 m corridor
+(F25d — covers the full walk to SAT_B at 2,400 m + margin)"; the identical
+ARCS change mirrored in game/tools/diag-m1f-core.mjs; the 24 azimuths,
+max-slope score, |Δh| tie-break, SAT formulas, spawn scan, LIVE_SECONDS,
+rebases >= 2, the 40° gate and every R5 term untouched) · **B-1** (STATE.md
+1F ledger row reads 0b2fae8 as committed; ANCHOR df1e04f → 0b2fae8;
+Approval Ledger rows F27/F28 APPROVED, F25c ESCALATED → user option A,
+F25d APPROVED). Commits a6de872 (edits), 74875e5 (B-1), 1c8a2b8/1d76fd0
+(probes), 9627eee (CHANGES 51–55).
+
+## 10.1 Typecheck + build (unpiped)
+
+TSC_EXIT=0 · BUILD_EXIT=0. (Fresh session: node_modules was absent;
+restored with `npm ci` from the pinned lockfile — environment setup only.
+A stray `npx` from the repo ROOT once fetched standalone playwright@1.64.1
+and errored "two different versions of @playwright/test"; re-run from
+game/ used the pinned project install — no project file changed.)
+
+## 10.2 Node checks FIRST (ruling 4b)
+
+**Poses through the REAL edited harness function** — diag-m1f-r2.mjs was
+rewritten to extract lookAtQuatInto VERBATIM from the harness source at
+runtime (brace-matched slice written to a self-cleaning temp .ts loaded
+through the registered TS loader — no local copy can drift), then run
+against the real sphericalFrame + impostorMath modules inside a verbatim
+boot/WARMUP/LIVE replica (the suite-time driver pose and sun geometry are
+the real end-of-walk values):
+
+| Pose | px | py | behind | centre offset |
+|---|---|---|---|---|
+| TP boom (astronaut) | 640.00 | 360.00 | false | 0.000 px |
+| R2 Sun | 640.00 | 360.00 | false | 0.000 px |
+| R3 silhouette (probe) | 640.00 | 360.00 | false | 0.000 px |
+| R5 straddle (SAT_B) | 640.00 | 360.00 | false | 0.000 px |
+
+**F27 VERIFIED in Node** — every suite pose now aims its target
+dead-center under projectDirectionInto's −Z convention (round 2:
+behind=true, px=py=0). Sun disk at suite time: θ=2.004° → r=20.95 px
+(pxPerRad=599.14), ideal footprint π·r²=1,379 px (round-2 measured 1,381),
+readback window ±2r ≈ ±42 px.
+
+**Corridor + sim (diag-m1f-core.mjs with the F25d ARCS):**
+
+- Best 5 of 24 azimuths: **az 345°: 67.5°** · az 270°: 71.0° · az 255°:
+  71.2° · az 120°: 71.4° · az 150°: 71.6°.
+- SELECTED az 345°, max slope **67.5° > 40° gate → MEASURE branch**.
+- 600 s sim on the selected corridor (120 wall s × 5× effective): **0
+  crossings** in the first 120 sim s and over the full 600 sim s; max
+  bubble-local component **371.8 m** ≤ 1,024; path 934.5 m; net
+  displacement 118.8 m.
+- SAT_B from spawn: 2,433.1 m, bearing 9.46° off the walkFwd tangent.
+- Straight line spawn → SAT_B: arc 1,279 m, max slope along it **80.6°**
+  (worst at ~863 m from spawn).
+- **F25d branch: (iii)** — the slope exceeds 40° AND the sim shows 0
+  crossings (< 2) within LIVE_SECONDS. Per the ruling: the F25d edit stays
+  committed, the gate and regression were still run (F27/F28 needed
+  browser verification), and the corridor result is routed as **F25e**
+  below. SAT_B, LIVE_SECONDS, rebases and the gate were NOT touched.
+
+## 10.3 Third browser gate — verbatim
+
+```
+[m1f] acceptance line: [Milestone1F] acceptance FAILED
+[m1f] badges: ["PASS","PASS","FAIL","PASS","FAIL"]
+  ✘ M1F — 3-Camera Layers & Sky Impostors acceptance (2.3m)  PLAYWRIGHT_EXIT=1
+```
+
+Per-row (verbatim DOM scrape, tools/diag-m1f-details.mjs):
+
+- **R1 PASS** — pair audit 1,556× / 1e9× / 11,611× (min 1,556× > 10);
+  single-camera counterfactual 0.0077 (fused); frozen determinism 0
+  differing bytes.
+- **R2 PASS — F27 VINDICATED**: `9 live instances: rendered disk θ vs
+  Float64 truth max err 0.0e+0 rad … Sun ground truth (1280×720 readback):
+  disk footprint 1,460 px vs ideal π·r² = 105.5%, (tol ±15%); center
+  offset 0.71 px vs the independent f64 projection (tol 1.5 px). r = 21.0
+  px from θ = 2.007°.` The Sun is IN the window and centered (round 2:
+  0 px / 999 px offset).
+- **R3 FAIL — first failure of the silhouette sub-clause WITH real
+  content**: unit sweep 21 flips (deterministic), 0 holes, 0 doubles, fade
+  slope ≤ 0.14/km, live trace 1,603 frames 0 holes crossed both fade
+  edges — all green. `Silhouette A/B at 232 km (mesh-only vs impostor-only
+  renders): edge symmetric difference 47.69% of the 130-px disk (< 3%…)`.
+  The window now contains the actual probe disk (130 px; round 2: 8
+  corner-star px) — F27 made the clause real, and it fails on alignment.
+  → **F29** below.
+- **R4 PASS — F28 VINDICATED**: heaps 0 B / 0 B, all canary terms true
+  (`bodies.length === IMPOSTOR_CAPACITY` = 24, children === 8).
+- **R5 FAIL — origin shifts 0 (< 2) as expected under F25d(iii)**, plus a
+  NEW fact: `Straddler A/B … 0 and 500 differing bytes` — diffNear = 0 ✓
+  but **diffMid = 500** (round 2: 0/0 with the camera aimed 90° away).
+  locals max 372 ≤ 1,024 ✓; geometries constant at 54 ✓; sunJump 0.0 mm
+  (vacuous — 0 crossings, so the clause is NOT non-vacuous as the ruling
+  hoped); "every Δ an exact multiple of 256" vacuously true (no shifts).
+  → **F29** below (the 500-byte fact) and **F25e** (the 0 shifts).
+
+## 10.4 NEW ROUTES (round 3 — awaiting Lead ruling)
+
+**F25e — the 2,600 m corridor is WORSE than the 800 m one; branch (iii).
+** With the full-walk horizon the scan now sees what the 800 m scan could
+not: every azimuth's far field is mountainous. Best corridor az 345° at
+67.5° (the round-2 42.2° was a short-horizon artifact — az 330° runs into
+the 69.7°/72.7° walls it could not see). The measured 600 s walk on az
+345°: 0 crossings, locals 371.8 m, 934.5 m path, 118.8 m net — the KCC
+crawls against 48–68° walls (the straight line to SAT_B itself is 80.6°
+at its worst). The 40° gate cannot be met by ANY azimuth at this spawn,
+so no selection-input change can produce ≥ 2 crossings within
+LIVE_SECONDS=120. Options for the Lead (unchanged set, now with
+full-horizon numbers): retarget SAT_B; accept rebases >= 1 (canon sets ≥3
+— the F21b round already lowered the row to 2); lengthen LIVE_SECONDS
+(gate infrastructure); or another design. Nothing was changed — the F25d
+edit stays as ruled.
+
+**F29 — the aimed renders are real now, and the two sub-pixel A/B clauses
+fail on real geometry.** F27 fixed the aim; the windows now contain the
+objects they were authored to measure, and two alignment assumptions that
+were vacuously true break:
+
+1. **R3 silhouette (47.69% sym-diff of a 130-px disk, < 3% required).**
+   Node math on the same walk replica: the probe MESH is positioned
+   bubble-center-relative at PROBE_DIR·232,000, while the impostor is
+   staged along the FIXED PROBE_DIR from the OBSERVER. The suite-time
+   observer sits 1,348.8 m from the bubble center, so the mesh's true
+   apparent direction differs from PROBE_DIR by parallax: the mesh centre
+   projects at px=(637.09, 360.61) vs the impostor centre at (640.00,
+   360.00) — a **2.97 px offset against disk radii of 4.63/4.65 px (64%
+   of a disk radius)**. The author's sub-pixel claim (96-seg chord error
+   ≈ 0.008 px) holds only for the silhouette comparison itself; the
+   comparison POSE places the eye on the surface, not at the bubble
+   center, so the two representations are compared ~3 px apart. The
+   browser's 47.69% matches: two ~9-px disks offset by ~3 px share almost
+   no edge pixels. (Sizes agree to 0.4% — the angular law is exact; only
+   the centre is offset.)
+2. **R5 straddler A/B: diffMid = 500 bytes (diffNear = 0).** The straddle
+   pose is 23.5 m ABOVE terrain, but the camera→SAT_B ray is **blocked
+   mid-path**: worst terrain clearance −4.0 m at 20% along (Node). Pass
+   structure explains the asymmetry: the occluding hill is ~487 m from
+   the camera — inside the Near band, clipped by the Mid camera's 2,000 m
+   near plane. forced-Mid-only shows SAT_B (hill clipped); auto draws the
+   hill in the Near pass (which renders LAST) covering SAT_B. Hence
+   auto≈forced-Near (0 bytes) and auto≠forced-Mid (500 bytes ≈ 125 px —
+   which is also the requested SAT_B framing evidence: the satellite
+   RENDERS in the window, dead-centre per the Node pose check, and its
+   occlusion footprint is the difference). The Spec-05 byte-zero demand
+   at the layer threshold is provable only when the straddle target has
+   clear line of sight from the pose; the author's pose (straight line
+   from spawn) crosses an 80.6° wall at this spawn.
+
+Note: R5's sunJump clause did NOT fail (0.0 mm, vacuous with 0 crossings)
+— the ruling's F29 trigger here is "R3's silhouette clause fails", with
+the R5 diffMid fact routed alongside it.
+
+## 10.5 Full regression — verbatim
+
+```
+  2 failed
+    e2e/m1d.spec.ts:6:1 › M1D — Flight & Aerodynamic Governor acceptance ───────────────────────────
+    e2e/m1f.spec.ts:9:1 › M1F — 3-Camera Layers & Sky Impostors acceptance ─────────────────────────
+  4 passed (4.3m)
+PLAYWRIGHT_EXIT=1
+```
+
+- m1a `["PASS","PASS","PASS","PASS","PASS"]` · m1b 5/5 in 22.4 ms ·
+  m1c 4/4 (geo=145) · m1e 6/6 — **1A/1B/1C/1E GREEN**.
+- m1f FAIL = the gate result above (expected routing).
+- **m1d FAILED row 2 (`["PASS","FAIL","PASS","PASS","PASS"]`) —
+  environment-soft, NOT a code regression.** Evidence:
+
+  - All 1D-relevant files are byte-identical to the approved commit:
+    `git diff e830759..HEAD` over the 1D harness, flightController,
+    aerodynamics, atmosphere, SimulationCore, TerrainMeshPool and
+    e2e/m1d.spec.ts is EMPTY. Pages are fully isolated (brief §3.2);
+    nothing from 1F loads on ?page=m1d.
+  - Every printed row-2 number matches the approved gate to the digit:
+    v@1000m = 264.7 (≤ 400 ✓), peak 2,000 ✓, maxDv 10.30 (bound 12 ✓),
+    rebases 8 ✓, geo 151 ✓, burnHeap 0 B ✓.
+  - The failing clause is `script.diveGrounded`: this run the ship never
+    touched. Suite detail: `min post-tick AGL 65.57 m; 0 contact events`.
+    HUD probe (tools/diag-m1d-dive.mjs): the ship descends the same
+    column, skims a ~900 m mountain at 65.57 m, the terrain falls away to
+    −44 m, and the 45 s cap fires with the ship still ~386 m AGL at 78
+    m/s. Approved run: min AGL 3.38 m, LANDED.
+  - Mechanism: the dive integrates `flight.update(dt·4, 6)` per frame
+    with dt = REAL frame delta (variable-step), against a wall-scaled
+    `simElapsed > 45` cap. The dive profile is therefore FPS-dependent:
+    this session the machine renders much slower frames during ReadPixels
+    stages (1F live trace 1,603 frames vs 7,201 in round 2 over the same
+    120 s; repeated "GPU stall due to ReadPixels" warnings — new Chrome
+    install on this host), and the larger frame deltas shift the
+    variable-step descent profile by ~60 m at closest approach — enough
+    to miss grounding before the cap. Deterministic across two runs
+    (full regression + solo re-run, identical numbers 264.7/10.30/65.57).
+  - Classification per the M1A row-5 precedent: environment-soft
+    machine-dependence of a canon row. NO code changed in response — the
+    cap, the integration scheme and the row are canon; §6 forbids
+    changing acceptance logic. Routed for a Lead decision (options
+    include a re-run on a faster/quieter machine, or a ruling on the
+    row's FPS sensitivity).
+
+## 10.6 Vindication ledger (round 3)
+
+F27 ✓✓ (Node: 4/4 poses dead-center through the REAL edited function;
+browser: R2 PASS 105.5% coverage, 0.71 px center) · F28 ✓ (browser R4
+PASS, heaps 0/0) · F25d ✓ applied as ruled; its conditional resolved to
+branch (iii) by the ruling's own Node procedure → F25e · F25's selection
+mechanism ✓ (worked exactly as designed, now over the full walk) · D-1/D-2
+still green (R2 detail prints correctly) · R3's non-silhouette clauses
+remain green (21 flips / 0.14 per km / live trace clean) · R1 green ·
+regression 1A/1B/1C/1E green.
+
+## Status
+
+**GATE FAILED (round 3) · ROUTED (F25e, F29) · 1D ENVIRONMENT-SOFT NOTE ·
+AWAITING LEAD RULING (§8.7).** F27/F28 vindicated in Node and browser;
+F25d applied and resolved to branch (iii) per its own conditional. On the
+next ruling: apply, re-run the 1F gate + full 1A–1E regression, update
+this report, commit + push, stop at the approval gate. 1G not started.
