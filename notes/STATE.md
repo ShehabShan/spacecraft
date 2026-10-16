@@ -1,22 +1,18 @@
 # SOLARIS — ASSEMBLY STATE (see AGENT_BRIEF.md §10)
 
 ## NEXT ACTION
-Await Lead rulings on the THREE re-run routings (notes/reports/M1E.md §5):
-(R1) coriolis — core edit #2: the launch branch composes absPos at θ_new
-while _sweep's tick-start embed check probes at θ_prev (0.867 m probe
-offset at the equator) → the jump re-lands within the launch tick
-(westDrift −85.22 cm, airTicks 0); proposed fix: compose the launch at
-θ_prev (physics-neutral — planet-frame trajectory unchanged, sweep
-consistency restored; expected after fix: airborne ≈ 61 ticks, west
-≈ +1.7 cm). (R2) state-machine deorbit cap 20,000 → ≈24,000 (free-fall
-needs ≈22,400 ticks; Node: r=12,551 m, v=146 m/s at the cap; all other
-criteria pass incl. vehicleErr 0.0e+0). (R3) cliff-row minAGL −0.206 =
-cross-row contamination from the zero-gc burn's phase-3 deorbit landing
-bisection (Node tick 20,590, −0.1119; cliff sprint never airborne) —
-outside the pre-authorized [−0.15,−0.05) window; options: per-row reset at
-runSlopeStep entry / wider bound / transient note. On rulings: apply,
-re-run the 1E gate + full regression, update M1E.md, re-present at the
-approval gate.
+Await Lead approval of the M1E report (notes/reports/M1E.md — GATE GREEN:
+`[Milestone1E] acceptance PASSED` 6/6 + full 1A/1B/1C/1D regression,
+"5 passed (1.9m)", PLAYWRIGHT_EXIT=0). On approval: 1E → APPROVED in the
+milestone ledger; begin Milestone 1F per the §8 loop — read
+Milestone/Milestone 1F.txt in full, run `node tools/extract.mjs 1F` (expect
+4 blocks; DEFENSIVE: discard any src/render/layeredCameras.ts block and
+report if it triggers), apply F3 ((a) delete the dead slopeDegAt stub;
+(b) sun-trace rebase-marking → per-frame module-counter comparison against
+core.stats.rebaseCount), verify impostorMath.ts has NO three imports (pure
+core), register ?page=m1f, typecheck+build unpiped, run the 1F gate (150 s)
++ full 1A–1E regression, write notes/reports/M1F.md, commit per cadence,
+push, STOP at the approval gate.
 
 ## MILESTONE LEDGER
 | MS | Status | Evidence |
@@ -26,28 +22,22 @@ approval gate.
 | 1B | APPROVED | Gate GREEN (`acceptance PASSED in 21.5 ms`, 5/5 rows) + 1A regression 5/5 on the overlaid core; commits d582efc/F9 3f12b43/final db13db8; report: notes/reports/M1B.md; Lead approval 2026-10-15 |
 | 1C | APPROVED | Gate GREEN 4/4 + 1A/1B regression 5/5 ("3 passed (1.2m)"); F10a/F10b verified against all four ruling requirements; final commit a86ce94; report: notes/reports/M1C.md; Lead approval 2026-10-15 |
 | 1D | APPROVED | Commit e830759; gate GREEN 5/5 + full 1A/1B/1C regression green ("4 passed (1.5m)"); F11/F12 applied as ruled; erratum + standing rule adopted; authorship verified: v@1000m 264.7 matches corrected derivation, locals max 1022.8 matches 1A structural prediction (1022.67), geo 151 = F12-predicted constant count; report: notes/reports/M1D.md; Lead approval 2026-10-16 |
-| 1E | GATE FAILED·ROUTED (2nd) | Fixes applied + vindicated: F14 first core-behavior edit (7947369), F15 (vehicleErr 0.0e+0), F16 (face-walk PASS), F17a/b (slope rows PASS; FINAL mountainAmp 2200), $-strip; commits e689d4c/dd3e97a; re-run FAILED on 3 NEW items — coriolis launch-phase core defect (exposed by F14), deorbit cap, cliff-minAGL contamination — routed with full numbers; report: notes/reports/M1E.md |
+| 1E | GATE GREEN·AWAITING LEAD | All nine rulings applied + vindicated (F14 core #1 7947369; F15–F17+$-strip e689d4c; F18 core #2 37a4c9e — launch compose at θ_prev + embed-guard; F19/F20 7d77e52); FINAL: `[Milestone1E] acceptance PASSED` 6/6 (coriolis 0.75 cm west/1.02 s/1-tick plant; vehicleErr 0.0e+0; deorbit landed 22,307; face-walk 0.82° corner/2 changes; slope rows clean, minAGL n/a) + full 1A/1B/1C/1D regression ("5 passed (1.9m)", PLAYWRIGHT_EXIT=0); report: notes/reports/M1E.md |
 | 1F–1G | NOT STARTED | 1F (F3 + impostorMath purity); 1G (F2 + hand-applied KCC patch + MANDATORY full 1E re-run) |
 
 ## IN-FLIGHT
-Milestone 1E — parked at the second ruling gate. All six prior rulings
-applied exactly as specified and VINDICATED: F14 (first core-behavior edit,
-7947369 — jumps now fire everywhere; zero-gc burn holds identities/heap/NaN
-with live jumps), F15 (vehicleErr 0.2565 → 0.0e+0), F16 (face-walk PASS:
-2 face changes, corner 0.82°, up 2.145 ≤ 3.44), F17a/b (slope moderate/
-steep/cliff-net all PASS on the recalibrated field; FINAL mountainAmp 2200;
-direct alt reads), $-strip. Re-run gate: badges
-["PASS","FAIL","FAIL","PASS","FAIL","PASS"]; regression 1A/1B/1C/1D green.
-THREE NEW ROUTINGS (nothing touched, full numbers in M1E.md §5):
-(R1) coriolis launch-tick re-land — core defect #2 exposed by F14: compose
-at θ_new vs embed probe at θ_prev (0.867 m) — westDrift −85.22 cm, airTicks
-0; (R2) deorbit cap 20,000 < ≈22,400 needed (landed=false; r=12,551 m,
-v=146 m/s at cap); (R3) cliff-minAGL −0.206 = burn landing bisection
-contaminating the global integrity.minAGL (cliff sprint never airborne;
-Node −0.1119 @ tick 20,590) — outside the conditional window. Standing
-rule: unpiped exits (TSC_EXIT=0 BUILD_EXIT=0 PLAYWRIGHT_EXIT=1 observed).
-Probes: game/tools/diag-m1e-field.mjs (field calibration), diag-m1e-core.mjs
-(Node row replication/attribution), diag-m1e.mjs (DOM scrape).
+Milestone 1E — COMPLETE through §8 step 6, parked at the approval gate.
+All nine rulings applied and vindicated; two authorized core edits on
+record (F14 7947369: dead-jump consumption relocation; F18 37a4c9e: launch
+compose at θ_prev + launch-tick embed guard — BOTH flagged for the 1G §3.5
+re-grep). Final gate: 6/6 PASS + full regression "5 passed (1.9m)",
+PLAYWRIGHT_EXIT=0. Node verification agreed with the browser
+number-for-number (coriolis 61 ticks / 0.75 cm west / 1.18 cm cross-track /
+1-tick plant; deorbit landed 22,307; vehicleErr 0.0e+0; slope minAGL +∞).
+Standing rule in force: unpiped exits (TSC_EXIT=0 BUILD_EXIT=0
+PLAYWRIGHT_EXIT=0 observed). Probes kept: diag-m1e.mjs (DOM scrape),
+diag-m1e-field.mjs (field calibration), diag-m1e-core.mjs (Node row
+verifier). F17c conditional relaxation MOOT. No open debugging.
 
 ## APPROVAL LEDGER (settled — never re-ask)
 | Date | Decision |
@@ -85,6 +75,10 @@ Probes: game/tools/diag-m1e-field.mjs (field calibration), diag-m1e-core.mjs
 | 2026-10-16 | F17a/b/c AUTHORIZED + APPLIED: stale-alt0 → direct hypot reads; STEEP recalibrated (freq 3.0, amp 2200, detail 8/3) + scanFor uniformity gate (8 compass probes @ 3 m; <35°/>45°/>60°); probe: FINAL mountainAmp 2200 (moderate@49 25.9°, steep@12 60.2°, cliff@4 73.2°, >70° = 17.96%); conditional cliff-AGL relaxation to −0.15 authorized ONLY within [−0.15,−0.05) — NOT triggered (browser −0.206 outside window); bounds otherwise kept, all PASS |
 | 2026-10-16 | L1015 $-strip AUTHORIZED + APPLIED (one instance, one character); F1-vacuous RATIFIED as-delivered; both strict-TS repairs RATIFIED (Math.SQRT1_3 confirmed nonexistent); F2 remains EXPECTED at 1G |
 | 2026-10-16 | Re-run outcome: 3 rows converted to PASS (face-walk, state-machine vehicleErr, slope moderate/steep/cliff-net; zero-gc PASS with F14 live); THREE NEW ROUTINGS: (R1) coriolis launch-tick compose@θ_new vs sweep embed@θ_prev = 0.867 m probe offset → re-lands in-tick (−85.22 cm; CORE EDIT #2 candidate: compose launch at θ_prev, physics-neutral); (R2) deorbit 20,000-tick cap < ≈22,400 needed (Node: r=12,551 m, v=146 m/s at cap); (R3) cliff-minAGL −0.206 = zero-gc burn's landing bisection contaminating the global accumulator (cliff sprint never airborne; Node tick 20,590 −0.1119) — outside conditional window → route |
+| 2026-10-16 | F18 AUTHORIZED + APPLIED (CORE EDIT #2, 37a4c9e): launch compose (P + velocity rotation) at θ_prev via an optional _composeGrounded phase param (default this._theta — all 3-arg sites unchanged); _flightTick/_sweep gain launchTick and the tick-start embed check is guarded `!launchTick`; rationale on record (θ_new compose = no physical instant, double-counted one transport tick = the 0.87 m phantom; guard removes the ~3e-14 m ulp coin-flip — launch AGL is exactly groundClearance); mid-sweep sampling untouched; flagged for the 1G §3.5 re-grep alongside F14 |
+| 2026-10-16 | F19 AUTHORIZED + APPLIED (7d77e52): deorbit cap 20,000 → 26,000 — landed at tick 22,307 (analytic ≈22,400) |
+| 2026-10-16 | F20 AUTHORIZED + APPLIED (7d77e52): resetIntegrityStats first in runSlopeStep (cliff criterion measures only its own window) + 'n/a (never airborne)' print; F17c conditional relaxation MOOT (post-reset minAGL = +∞) |
+| 2026-10-16 | Ratified observations: field calibration GREEN under original bounds on the recalibrated field; burn in-sweep transient within the Lipschitz bound, no row asserts it; ledgers append-only. VERIFICATION: Node first (coriolis 61 ticks/0.75 cm/1.18 cm/1-tick plant; landed 22,307; vehicleErr 0.0e+0; minAGL +∞) then browser — M1E GATE GREEN 6/6 + regression "5 passed (1.9m)", PLAYWRIGHT_EXIT=0 |
 
 ## SESSION LOG
 | # | Date | Goal | Outcome | Handoff note |
@@ -93,7 +87,7 @@ Probes: game/tools/diag-m1e-field.mjs (field calibration), diag-m1e-core.mjs
 | 2 | 2026-10-14 | Protocol install + reconcile | AGENT_BRIEF.md written verbatim (389-line paste + 47-line §10 append); session-1 work preserved as WIP d849d6b; notes/ tree created; CHANGES.md relocated to root; STATE.md written from evidence; M1A report persisted to notes/reports/M1A.md | Session parked at the 1A approval gate — resumed by session 3 |
 | 3 | 2026-10-14 | 1A approval + protocol install | approved + installed + pushed | Run the F6 pre-scan over all seven Milestone .txt files (report per file whether the acceptance-line `$` is present), then begin Milestone 1B: read Milestone/Milestone 1B.txt in full, run `node tools/extract.mjs 1B` (expect 5 blocks; the parenthetical overlay on src/core/simulation/SimulationCore.ts explicitly reported — it must be the ONLY parenthetical match), F6 check/repair on the 1B harness, register ?page=m1b, typecheck+build, run the 1B gate PLUS the 1A page as regression, write notes/reports/M1B.md with verbatim gate output and the pre-scan table, commit per the amended cadence, push, then STOP at the approval gate. |
 | 4 | 2026-10-14/15 | M1B execution | (continuation — session resumed after wind-down in the same live session) Pre-scan done (1C verdict missing → F8); extraction 5/5 + overlay, invariant held; F7a/F7b per ruling → typecheck/build clean; 1A regression green; 1B deadlock diagnosed to canon auto-run guard → F9 authorized + applied; 1C-CP persisted; BOTH gates green ("2 passed (9.5s)") | M1B parked at the approval gate — next: Lead approval of notes/reports/M1B.md, then 1C (extract 6 blocks, F5 + 1C-CP at extraction, workers check, gate + regression, report) |
-| 5 | 2026-10-16 | M1D approval + M1E execution | Bootstrap clean; M1D APPROVED + 1E ordered recorded; extraction 3/3, F13, F1 vacuous, 2 TS fixes, ?page=m1e wired; first gate FAILED 4 rows → 4 root causes routed; Lead ruled all six (F14–F17, $-strip) — applied exactly (F14 = first core-behavior edit), all vindicated where aimed (vehicleErr 0.0e+0, face-walk PASS, slope rows PASS, FINAL amp 2200, zero-gc holds with live jumps); re-run FAILED on 3 NEW items (coriolis launch-phase core defect, deorbit cap, cliff-minAGL contamination) — diagnosed + routed untouched; regression green throughout | Parked at the second ruling gate — next: Lead rulings on R1 (launch compose at θ_prev), R2 (deorbit cap ~24,000), R3 (cliff-minAGL measurement design); then apply, re-run, update M1E.md, re-present |
+| 5 | 2026-10-16 | M1D approval + M1E execution | Bootstrap clean; M1D APPROVED + 1E ordered recorded; extraction 3/3, F13, F1 vacuous, 2 TS fixes, ?page=m1e wired; three ruling rounds total: (1) first gate FAIL 4 rows → F14–F17 + $-strip ruled + applied (F14 = core #1), all vindicated; (2) re-run FAIL 3 rows → F18 (core #2: launch compose at θ_prev + embed guard), F19 (cap 26,000), F20 (per-row reset + Infinity print) ruled + applied, Node verification FIRST agreed with browser number-for-number; (3) FINAL GATE GREEN: 1E 6/6 PASS + full 1A/1B/1C/1D regression "5 passed (1.9m)", PLAYWRIGHT_EXIT=0; spec-canonical coriolis row green (0.75 cm west, 1.02 s, 1-tick plant) | M1E parked at the approval gate — next: Lead approval of notes/reports/M1E.md; then 1F per §8 (extract 4 blocks, F3, impostorMath purity, gate 150 s + regression, report, STOP) |
 
 ## ANCHOR
 df1e04f — "M1A: extracted, gates green" (branch m1-assembly; chain: ea112ec

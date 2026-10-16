@@ -512,3 +512,38 @@ Observations (NO change made — recorded for the Lead):
    · §6 + the ruling's stop-and-route terms. · Evidence:
    notes/reports/M1E.md §4–5; game/tools/diag-m1e-core.mjs (2d7bf7f). ·
    Source: Lead ruling 2026-10-16 (items 7c, 8).
+
+41. 2026-10-16 · 1E/fixes-2 · game/src/core/physics/astronautKCC.ts (F18),
+   game/src/test/Milestone1E_TestHarness.tsx (F19/F20),
+   game/tools/diag-m1e-core.mjs (rewritten as the post-fix verifier) ·
+   RULINGS R1/R2/R3 APPLIED EXACTLY AS SPECIFIED. **F18 — CORE EDIT #2**
+   (37a4c9e; flagged alongside F14 for the 1G §3.5 re-grep): (a)
+   _composeGrounded gains an optional spin phase
+   (theta = this._theta default — all 3-arg call sites unchanged), first
+   line spinQuatInto(theta, _qSpin); (b) the jump branch composes P AND
+   rotates the launch velocity at θ_prev; _flightTick(dt, true); (c)
+   _flightTick(dt, launchTick = false) passes through to _sweep; (d) _sweep
+   gains launchTick = false and guards the tick-start embed check with
+   `!launchTick`. Rationale ON RECORD: every normal flight tick's start
+   position corresponds to θ_prev; the launch compose at θ_new corresponded
+   to NO physical instant and double-counted one tick of transport (the
+   0.87 m phantom = the −85.22 cm); the guard removes the embed check's
+   ~3e-14 m compose/decompose-round-trip ulp coin-flip at launch (launch
+   AGL is EXACTLY groundClearance by construction; the check exists for
+   prior-tick transients and is semantically inapplicable at launch);
+   mid-sweep sampling untouched (the launch segment ascends
+   monotonically). F19 (7d77e52): deorbit cap 20,000 → 26,000. F20
+   (7d77e52): runSlopeStep resets kcc integrity stats as its FIRST
+   statement (the cliff criterion measures only its own window) + the
+   authorized 'n/a (never airborne)' Infinity print; the F17c conditional
+   relaxation is MOOT (post-reset minAGL = +∞). VERIFICATION per ruling 4b:
+   Node FIRST (diag-m1e-core.mjs): coriolis airTicks=61, west 0.75 cm
+   (window 0.6–6; theory 1.69), perp 1.18 cm (<1.2), settle 1 tick,
+   maxSettle 0.0000; state-machine landed=true at tick 22,307 (<26,000),
+   vehicleErr 0.0e+0, detachDv 0.0e+0, NaN 0; slope-step minAGL +Infinity
+   (never airborne), all bounds pass. Then the browser: TSC_EXIT=0
+   BUILD_EXIT=0 PLAYWRIGHT_EXIT=0 — `[Milestone1E] acceptance PASSED`
+   6/6 badges + full 1A/1B/1C/1D regression GREEN ("5 passed (1.9m)") —
+   browser and Node agree number-for-number. · Lead ruling 2026-10-16
+   (R1/R2/R3 = F18/F19/F20). · Evidence: notes/reports/M1E.md §3–4. ·
+   Source: Lead ruling 2026-10-16; brief §6 (evidence-backed fix path).
