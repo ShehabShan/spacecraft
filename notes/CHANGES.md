@@ -344,3 +344,12 @@ Observations (NO change made — recorded for the Lead):
    2,000.0); β_q = 3.2e-3 RATIFIED and vindicated. · Typecheck + build:
    TSC_EXIT=0 BUILD_EXIT=0, observed unpiped per the new standing rule. ·
    Source: Lead ruling 2026-10-15 (F11/F12).
+
+32. 2026-10-15 · protocol · game/tools/diag-spherify.mjs, diag-m1c.mjs,
+   diag-m1d.mjs · Committed and pushed the three forensic-diagnostic probes
+   (previously untracked scaffolding; diag-m1b.mjs already tracked since
+   aca7047). The user EXPLICITLY GAVE PERMISSION for these files to be
+   committed and pushed to GitHub (home-PC access via pull). No engine or
+   canon content; read-only observation tools cited as evidence in
+   notes/reports/M1B–M1D. · User authorization 2026-10-15. · Evidence: this
+   commit. · Source: user (Lead) direct instruction.
