@@ -1,17 +1,19 @@
 import { register } from 'node:module'
 register('./ts-resolve-loader.mjs', import.meta.url)
 
-// M1F gate-failure attribution probe (read-only; diag-m1e-core precedent).
-// Replicates the extracted 1F harness boot + WARMUP + LIVE walk VERBATIM in
-// Node and prints every number the routing needs:
-//  (1) rail geometry + horizon cull of all 9 catalog bodies at the spawn
-//      (R2: was the Sun impostor culled -> 0 px readback?),
-//  (2) the LIVE walk trace (R5: rebases during LIVE, where the walk stalls),
-//  (3) spawn-scan outcome + the F21b arithmetic inputs.
+// M1F F30 node-first gate (ruling round 4): mirror corridorFor/spawnEligible/
+// findSpawn VERBATIM (as they will land in the harness) and report every
+// number the proceed gate needs BEFORE the harness is edited:
+//   candidates evaluated / pass(1) / pass(1)+(2) · chosen index + score ·
+//   angular distance new vs old spawn · Earth elevation new vs old ·
+//   Sun elevation post-warmup + suite pose · corridor az + max slope ·
+//   min LOS margin + where · 600 s KCC sim (crossings/locals/path/net) ·
+//   findSpawn boot cost.
 const { initTerrainField, terrainHeight, terrainNormalInto } = await import(
   '../src/core/terrain/terrainField.ts'
 )
 const { mulberry32 } = await import('../src/core/terrain/noise.ts')
+const { rotateAboutAxisInto, signedAngleAbout } = await import('../src/core/physics/sphericalFrame.ts')
 const { SimulationCore } = await import('../src/core/simulation/SimulationCore.ts')
 const { AstronautKCC } = await import('../src/core/physics/astronautKCC.ts')
 
@@ -59,12 +61,8 @@ const sunVec = { x: -moonState.absPos.x, y: -moonState.absPos.y, z: -moonState.a
 const sunDist = Math.hypot(sunVec.x, sunVec.y, sunVec.z)
 const sunDir = { x: sunVec.x / sunDist, y: sunVec.y / sunDist, z: sunVec.z / sunDist }
 console.log(`rails: earthDist=${(earthDist / 1000).toFixed(1)} km  sunDist=${(sunDist / 1000).toFixed(1)} km`)
-console.log(`  earthDir=(${earthDir.x.toFixed(4)},${earthDir.y.toFixed(4)},${earthDir.z.toFixed(4)})`)
-console.log(`  sunDir  =(${sunDir.x.toFixed(4)},${sunDir.y.toFixed(4)},${sunDir.z.toFixed(4)})`)
-const cosES = Math.max(-1, Math.min(1, earthDir.x * sunDir.x + earthDir.y * sunDir.y + earthDir.z * sunDir.z))
-console.log(`  angle(earthDir,sunDir)=${((Math.acos(cosES) * 180) / Math.PI).toFixed(2)} deg`)
 
-// ---- verbatim spawn scan ------------------------------------------------
+// ---- shared scan scratch + helpers (harness-identical) ------------------
 const _scanT = { x: 0, y: 0, z: 0 }
 const _scanN = { x: 0, y: 0, z: 0 }
 function slopeFromNormal(d) {
@@ -72,7 +70,104 @@ function slopeFromNormal(d) {
   const c = _scanN.x * d.x + _scanN.y * d.y + _scanN.z * d.z
   return (Math.acos(Math.max(-1, Math.min(1, c))) * 180) / Math.PI
 }
-const SPAWN_DIR = (function findSpawn() {
+function surfacePoint(dirX, dirY, dirZ, alt) {
+  const h = terrainHeight(dirX, dirY, dirZ)
+  const rr = R + h + alt
+  return { x: dirX * rr, y: dirY * rr, z: dirZ * rr }
+}
+const SAT_R = 26
+
+// ---- F30 (a): corridorFor — mirrors the harness edit verbatim ------------
+function corridorFor(dir) {
+  const _p = { x: 0, y: 0, z: 0 }
+  let e1x = -dir.z, e1y = 0, e1z = dir.x   // ⊥ dir
+  const e1l = Math.hypot(e1x, e1y, e1z) || 1
+  e1x /= e1l; e1y /= e1l; e1z /= e1l
+  const e2x = dir.y * e1z - dir.z * e1y
+  const e2y = dir.z * e1x - dir.x * e1z
+  const e2z = dir.x * e1y - dir.y * e1x
+  const ARCS = [25, 50, 100, 200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400, 2600]
+  let bx = 0, by = 0, bz = 0, bestScore = Infinity, bestDev = 0, bestK = -1
+  for (let k = 0; k < 24; k++) {
+    const azim = (k * 15 * Math.PI) / 180
+    const c = Math.cos(azim), s = Math.sin(azim)
+    const tx = e1x * c + e2x * s, ty = e1y * c + e2y * s, tz = e1z * c + e2z * s
+    // rotation axis dir × t moves the surface point along +t
+    const ax = dir.y * tz - dir.z * ty
+    const ay = dir.z * tx - dir.x * tz
+    const az2 = dir.x * ty - dir.y * tx
+    let maxSlope = 0, maxDev = 0
+    let prevH = terrainHeight(dir.x, dir.y, dir.z)
+    for (const arc of ARCS) {
+      rotateAboutAxisInto(dir.x, dir.y, dir.z, ax, ay, az2, arc / R, _p)
+      const h = terrainHeight(_p.x, _p.y, _p.z)
+      maxDev = Math.max(maxDev, Math.abs(h - prevH)); prevH = h
+      maxSlope = Math.max(maxSlope, slopeFromNormal(_p))
+    }
+    if (maxSlope < bestScore || (maxSlope === bestScore && maxDev < bestDev)) {
+      bestScore = maxSlope; bestDev = maxDev; bx = tx; by = ty; bz = tz; bestK = k
+    }
+  }
+  return { fwd: { x: bx, y: by, z: bz }, maxSlope: bestScore, az: bestK * 15 }
+}
+
+// ---- F30 (b): LOS instrumentation (diag-only; spawnEligible inlines this) -
+function losClear(dir, fwd) {
+  const sp = surfacePoint(dir.x, dir.y, dir.z, 0)
+  const sb = {
+    x: sp.x + fwd.x * 2400 + dir.x * 400,
+    y: sp.y + fwd.y * 2400 + dir.y * 400,
+    z: sp.z + fwd.z * 2400 + dir.z * 400,
+  }
+  const bl = Math.hypot(sb.x - sp.x, sb.y - sp.y, sb.z - sp.z) || 1
+  const dx = (sb.x - sp.x) / bl, dy = (sb.y - sp.y) / bl, dz = (sb.z - sp.z) / bl
+  const poseX = sb.x - dx * 2400, poseY = sb.y - dy * 2400, poseZ = sb.z - dz * 2400
+  const segLen = Math.hypot(sb.x - poseX, sb.y - poseY, sb.z - poseZ) || 1
+  const N = Math.ceil(segLen / 10)
+  let minMargin = Infinity, minF = -1
+  for (let i = 0; i <= N; i++) {
+    const f = i / N
+    const qx = poseX + (sb.x - poseX) * f
+    const qy = poseY + (sb.y - poseY) * f
+    const qz = poseZ + (sb.z - poseZ) * f
+    const ql = Math.hypot(qx, qy, qz)
+    const clearance = ql - (R + terrainHeight(qx / ql, qy / ql, qz / ql))
+    const margin = clearance - SAT_R * f
+    if (margin < minMargin) { minMargin = margin; minF = f }
+    if (!(clearance > SAT_R * f)) return { ok: false, minMargin, minF }
+  }
+  return { ok: true, minMargin, minF }
+}
+
+// ---- F30 (b): spawnEligible — mirrors the harness edit verbatim ----------
+function spawnEligible(dir) {
+  const c = corridorFor(dir)
+  if (!(c.maxSlope <= 40)) return false
+  const sp = surfacePoint(dir.x, dir.y, dir.z, 0)
+  const sb = {
+    x: sp.x + c.fwd.x * 2400 + dir.x * 400,
+    y: sp.y + c.fwd.y * 2400 + dir.y * 400,
+    z: sp.z + c.fwd.z * 2400 + dir.z * 400,
+  }
+  const bl = Math.hypot(sb.x - sp.x, sb.y - sp.y, sb.z - sp.z) || 1
+  const dx = (sb.x - sp.x) / bl, dy = (sb.y - sp.y) / bl, dz = (sb.z - sp.z) / bl
+  const poseX = sb.x - dx * 2400, poseY = sb.y - dy * 2400, poseZ = sb.z - dz * 2400
+  const segLen = Math.hypot(sb.x - poseX, sb.y - poseY, sb.z - poseZ) || 1
+  const N = Math.ceil(segLen / 10)
+  for (let i = 0; i <= N; i++) {
+    const f = i / N
+    const qx = poseX + (sb.x - poseX) * f
+    const qy = poseY + (sb.y - poseY) * f
+    const qz = poseZ + (sb.z - poseZ) * f
+    const ql = Math.hypot(qx, qy, qz)
+    const clearance = ql - (R + terrainHeight(qx / ql, qy / ql, qz / ql))
+    if (!(clearance > SAT_R * f)) return false
+  }
+  return true
+}
+
+// ---- the 75° base rotation (unchanged) -----------------------------------
+function spawnBase() {
   let ax = earthDir.y * sunDir.z - earthDir.z * sunDir.y
   let ay = earthDir.z * sunDir.x - earthDir.x * sunDir.z
   let az = earthDir.x * sunDir.y - earthDir.y * sunDir.x
@@ -83,18 +178,28 @@ const SPAWN_DIR = (function findSpawn() {
   const ry = earthDir.y * c + (az * earthDir.x - ax * earthDir.z) * s
   const rz = earthDir.z * c + (ax * earthDir.y - ay * earthDir.x) * s
   const rl = Math.hypot(rx, ry, rz)
-  const base = { x: rx / rl, y: ry / rl, z: rz / rl }
+  return { x: rx / rl, y: ry / rl, z: rz / rl }
+}
+
+// candidate generator shared by all three passes (identical stream)
+function candidateAt(rand, base) {
+  const u = rand() * 2 - 1, th = rand() * Math.PI * 2
+  const q = Math.sqrt(1 - u * u)
+  const jitter = 0.02 + 0.1 * rand()
+  const cx = base.x + Math.cos(th) * q * jitter
+  const cy = base.y + u * jitter
+  const cz = base.z + Math.sin(th) * q * jitter
+  const cl = Math.hypot(cx, cy, cz)
+  _scanT.x = cx / cl; _scanT.y = cy / cl; _scanT.z = cz / cl
+}
+
+// ---- OLD acceptance (production at bbeb4f4) — for comparison only --------
+function findSpawnOld() {
+  const base = spawnBase()
   const rand = mulberry32(0x7f1a)
-  let best = base; let bestScore = Infinity
+  let best = base, bestScore = Infinity
   for (let i = 0; i < 24000; i++) {
-    const u = rand() * 2 - 1, th = rand() * Math.PI * 2
-    const q = Math.sqrt(1 - u * u)
-    const jitter = 0.02 + 0.1 * rand()
-    const cx = base.x + Math.cos(th) * q * jitter
-    const cy = base.y + u * jitter
-    const cz = base.z + Math.sin(th) * q * jitter
-    const cl = Math.hypot(cx, cy, cz)
-    _scanT.x = cx / cl; _scanT.y = cy / cl; _scanT.z = cz / cl
+    candidateAt(rand, base)
     const slope = slopeFromNormal(_scanT)
     if (slope < 0.01) continue
     const h0 = terrainHeight(_scanT.x, _scanT.y, _scanT.z)
@@ -111,12 +216,105 @@ const SPAWN_DIR = (function findSpawn() {
     if (score < 0.35) break
   }
   return best
-})()
-console.log(`spawn: dir=(${SPAWN_DIR.x.toFixed(5)},${SPAWN_DIR.y.toFixed(5)},${SPAWN_DIR.z.toFixed(5)}) ` +
-  `slope=${slopeFromNormal(SPAWN_DIR).toFixed(3)} deg h=${terrainHeight(SPAWN_DIR.x, SPAWN_DIR.y, SPAWN_DIR.z).toFixed(2)} m`)
-kcc.teleportSurface(SPAWN_DIR.x, SPAWN_DIR.y, SPAWN_DIR.z)
+}
 
-// ---- horizon cull of the 9 catalog bodies (harness convention: obs = moonRail + local) ----
+// ---- F30 (c) findSpawn — mirrors the harness edit verbatim (timed clean) --
+function findSpawn() {
+  const base = spawnBase()
+  const rand = mulberry32(0x7f1a)
+  let best = base, bestScore = Infinity
+  for (let i = 0; i < 24000; i++) {
+    candidateAt(rand, base)
+    const slope = slopeFromNormal(_scanT)
+    if (slope < 0.01) continue
+    const h0 = terrainHeight(_scanT.x, _scanT.y, _scanT.z)
+    let dev = 0
+    for (let k = 0; k < 4; k++) {
+      const a = k * 1.57 + 0.4
+      const ex = Math.cos(a) * 0.0006, ez = Math.sin(a) * 0.0006
+      const el = Math.hypot(_scanT.x + ex, _scanT.y, _scanT.z + ez)
+      dev = Math.max(dev, Math.abs(
+        terrainHeight((_scanT.x + ex) / el, _scanT.y / el, (_scanT.z + ez) / el) - h0))
+    }
+    const score = slope * 40 + dev
+    if (score < bestScore) {
+      if (spawnEligible(_scanT)) {
+        bestScore = score
+        best = { x: _scanT.x, y: _scanT.y, z: _scanT.z }
+        if (score < 0.35) break
+      }
+    }
+  }
+  return best
+}
+
+// ---- run the three passes + the round-4 report ----------------------------
+const oldSpawn = findSpawnOld()
+const t0 = performance.now()
+const newSpawn = findSpawn()
+const findSpawnMs = performance.now() - t0
+
+// counted pass (same acceptance; split counters for pass(1)/pass(1)+(2))
+{
+  const base = spawnBase()
+  const rand = mulberry32(0x7f1a)
+  var evaluated = 0, checked = 0, passCorr = 0, passBoth = 0, chosenIdx = -1, chosenScore = NaN
+  let bestScore = Infinity
+  for (let i = 0; i < 24000; i++) {
+    evaluated++
+    candidateAt(rand, base)
+    const slope = slopeFromNormal(_scanT)
+    if (slope < 0.01) continue
+    const h0 = terrainHeight(_scanT.x, _scanT.y, _scanT.z)
+    let dev = 0
+    for (let k = 0; k < 4; k++) {
+      const a = k * 1.57 + 0.4
+      const ex = Math.cos(a) * 0.0006, ez = Math.sin(a) * 0.0006
+      const el = Math.hypot(_scanT.x + ex, _scanT.y, _scanT.z + ez)
+      dev = Math.max(dev, Math.abs(
+        terrainHeight((_scanT.x + ex) / el, _scanT.y / el, (_scanT.z + ez) / el) - h0))
+    }
+    const score = slope * 40 + dev
+    if (score < bestScore) {
+      checked++
+      if (spawnEligible(_scanT)) {
+        passBoth++
+        bestScore = score; chosenIdx = i; chosenScore = score
+        if (score < 0.35) break
+      } else {
+        const c = corridorFor(_scanT)   // counter support only
+        if (c.maxSlope <= 40) passCorr++
+      }
+    }
+  }
+  console.log(`F30 spawn search: evaluated=${evaluated} eligibilityChecked(lazy, score<best)=${checked} ` +
+    `pass(1) total=${passCorr + passBoth} (corridor-only=${passCorr} + eligible=${passBoth}) — pass(1)+(2)=${passBoth}`)
+  console.log(`  chosen: index=${chosenIdx} score=${chosenScore}`)
+}
+const angOld = Math.acos(Math.max(-1, Math.min(1,
+  oldSpawn.x * newSpawn.x + oldSpawn.y * newSpawn.y + oldSpawn.z * newSpawn.z))) * 180 / Math.PI
+const elevOf = (dir, ref) => Math.asin(Math.max(-1, Math.min(1,
+  dir.x * ref.x + dir.y * ref.y + dir.z * ref.z))) * 180 / Math.PI
+const newCorr = corridorFor(newSpawn)
+const newLos = losClear(newSpawn, newCorr.fwd)
+console.log(`F30 spawns: old=(${oldSpawn.x.toFixed(5)},${oldSpawn.y.toFixed(5)},${oldSpawn.z.toFixed(5)}) ` +
+  `new=(${newSpawn.x.toFixed(5)},${newSpawn.y.toFixed(5)},${newSpawn.z.toFixed(5)}) angularDistance=${angOld.toFixed(3)}°`)
+console.log(`  Earth elevation: old=${elevOf(earthDir, oldSpawn).toFixed(2)}° new=${elevOf(earthDir, newSpawn).toFixed(2)}° (canon intent ≈15°)`)
+console.log(`  new corridor: azimuth=${newCorr.az}° maxSlope=${newCorr.maxSlope.toFixed(1)}° (gate ≤ 40°)`)
+console.log(`  new LOS pose→SAT_B: clear=${newLos.ok} minMargin=${newLos.minMargin.toFixed(1)} m at f=${newLos.minF.toFixed(3)}`)
+console.log(`  findSpawn boot cost: ${findSpawnMs.toFixed(0)} ms (gate ≤ 2,000 ms)`)
+console.log(`  new spawn: slope=${slopeFromNormal(newSpawn).toFixed(3)}° h=${terrainHeight(newSpawn.x, newSpawn.y, newSpawn.z).toFixed(2)} m`)
+kcc.teleportSurface(newSpawn.x, newSpawn.y, newSpawn.z)
+
+const walkFwd = newCorr.fwd
+const spawnPos = surfacePoint(newSpawn.x, newSpawn.y, newSpawn.z, 0)
+const SAT_B = {
+  x: spawnPos.x + walkFwd.x * 2400 + newSpawn.x * 400,
+  y: spawnPos.y + walkFwd.y * 2400 + newSpawn.y * 400,
+  z: spawnPos.z + walkFwd.z * 2400 + newSpawn.z * 400,
+}
+
+// ---- horizon cull of the 9 catalog bodies (harness convention) ------------
 const CAT = [
   ['sun', 20000], ['mercury', 3105.7], ['venus', 4870.3], ['mars', 2649.3],
   ['jupiter', 16640.2], ['saturn', 15120.4], ['uranus', 9980.5], ['neptune', 9835.4], ['pluto', 2160.8],
@@ -126,17 +324,14 @@ function elevationOf(dir, up) {
   return Math.asin(d >= 1 ? 1 : d <= -1 ? -1 : d)
 }
 function auditCull(label, obsLocal) {
-  // F22 post-fix cull: obs = moonRail + driver local, up = ABSOLUTE RADIAL
-  // normalize(O + local) — mirrors the harness's fixed formula
   const O = core.getOrigin()
   const ax = O.x + obsLocal.x, ay = O.y + obsLocal.y, az = O.z + obsLocal.z
   const al = Math.hypot(ax, ay, az) || 1
   const up = { x: ax / al, y: ay / al, z: az / al }
   console.log(`${label}: local=(${obsLocal.x.toFixed(1)},${obsLocal.y.toFixed(1)},${obsLocal.z.toFixed(1)}) |local|=${Math.hypot(obsLocal.x, obsLocal.y, obsLocal.z).toFixed(1)} ` +
     `O=(${O.x},${O.y},${O.z})`)
-  console.log(`  F22 radial up=(${up.x.toFixed(3)},${up.y.toFixed(3)},${up.z.toFixed(3)})`)
   const ox = moonState.absPos.x + obsLocal.x, oy = moonState.absPos.y + obsLocal.y, oz = moonState.absPos.z + obsLocal.z
-  let nActive = 0, sunLine = ''
+  let nActive = 0, sunElev = NaN
   for (const [id, rad] of CAT) {
     const st = core.getCelestialState(id)
     if (st === null) continue
@@ -148,81 +343,15 @@ function auditCull(label, obsLocal) {
     const culled = el < -(theta + 0.03)
     if (!culled) nActive++
     if (id === 'sun') {
+      sunElev = el
       const pxPerRad = 720 / (2 * Math.tan((31 * Math.PI) / 180))
       const rpx = theta * pxPerRad
-      sunLine = `  SUN: elev=${((el * 180) / Math.PI).toFixed(1)} deg theta=${((theta * 180) / Math.PI).toFixed(2)} -> ${culled ? 'CULLED' : 'ACTIVE'}; ideal footprint ~pi*r^2 = ${(Math.PI * rpx * rpx).toFixed(0)} px (r=${rpx.toFixed(1)} px)`
+      console.log(`  SUN: elev=${((el * 180) / Math.PI).toFixed(1)} deg theta=${((theta * 180) / Math.PI).toFixed(2)} -> ${culled ? 'CULLED' : 'ACTIVE'}; ideal footprint ~pi*r^2 = ${(Math.PI * rpx * rpx).toFixed(0)} px (r=${rpx.toFixed(1)} px)`)
     } else console.log(`  ${id.padEnd(8)} elev=${((el * 180) / Math.PI).toFixed(1).padStart(7)} deg ${culled ? 'CULLED' : 'active'}`)
   }
-  console.log(sunLine)
-  console.log(`  -> ${nActive} of 9 catalog bodies ACTIVE under the F22 radial up`)
-  return nActive
+  console.log(`  -> ${nActive} of 9 catalog bodies ACTIVE`)
+  return sunElev
 }
-
-// ---- walkFwd via the F25 corridor scan (mirrors the harness edit) ---------
-let CORRIDOR_INFO = ''
-let CORRIDOR_BEST_SLOPE = Infinity
-let CORRIDOR_BEST_AZ = -1
-const walkFwd = (function () {
-  const _p = { x: 0, y: 0, z: 0 }
-  let e1x = -SPAWN_DIR.z, e1y = 0, e1z = SPAWN_DIR.x
-  const e1l = Math.hypot(e1x, e1y, e1z) || 1
-  e1x /= e1l; e1y /= e1l; e1z /= e1l
-  const e2x = SPAWN_DIR.y * e1z - SPAWN_DIR.z * e1y
-  const e2y = SPAWN_DIR.z * e1x - SPAWN_DIR.x * e1z
-  const e2z = SPAWN_DIR.x * e1y - SPAWN_DIR.y * e1x
-  const ARCS = [25, 50, 100, 200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400, 2600]
-  let bx = 0, by = 0, bz = 0, bestScore = Infinity, bestDev = 0, bestK = -1
-  const rows = []
-  for (let k = 0; k < 24; k++) {
-    const azim = (k * 15 * Math.PI) / 180
-    const c = Math.cos(azim), s = Math.sin(azim)
-    const tx = e1x * c + e2x * s, ty = e1y * c + e2y * s, tz = e1z * c + e2z * s
-    const ax = SPAWN_DIR.y * tz - SPAWN_DIR.z * ty
-    const ay = SPAWN_DIR.z * tx - SPAWN_DIR.x * tz
-    const az2 = SPAWN_DIR.x * ty - SPAWN_DIR.y * tx
-    let maxSlope = 0, maxDev = 0
-    let prevH = terrainHeight(SPAWN_DIR.x, SPAWN_DIR.y, SPAWN_DIR.z)
-    for (const arc of ARCS) {
-      const th = arc / R, cc = Math.cos(th), ss = Math.sin(th)
-      // Rodrigues about (SPAWN_DIR × t): moves the point along +t
-      const px2 = SPAWN_DIR.x * cc + (ay * SPAWN_DIR.z - az2 * SPAWN_DIR.y) * ss
-      const py2 = SPAWN_DIR.y * cc + (az2 * SPAWN_DIR.x - ax * SPAWN_DIR.z) * ss
-      const pz2 = SPAWN_DIR.z * cc + (ax * SPAWN_DIR.y - ay * SPAWN_DIR.x) * ss
-      _p.x = px2; _p.y = py2; _p.z = pz2
-      const h = terrainHeight(_p.x, _p.y, _p.z)
-      maxDev = Math.max(maxDev, Math.abs(h - prevH)); prevH = h
-      maxSlope = Math.max(maxSlope, slopeFromNormal(_p))
-    }
-    rows.push({ k, az: k * 15, maxSlope, maxDev })
-    if (maxSlope < bestScore || (maxSlope === bestScore && maxDev < bestDev)) {
-      bestScore = maxSlope; bestDev = maxDev; bx = tx; by = ty; bz = tz; bestK = k
-    }
-  }
-  CORRIDOR_BEST_SLOPE = bestScore
-  CORRIDOR_BEST_AZ = bestK * 15
-  rows.sort((a, b) => a.maxSlope - b.maxSlope)
-  CORRIDOR_INFO = rows.slice(0, 5).map((r) =>
-    `az ${String(r.az).padStart(3)}°: maxSlope ${r.maxSlope.toFixed(1)}°, maxDev ${r.maxDev.toFixed(1)} m`).join(' | ')
-  console.log('F25 corridor scan (best 5 of 24 azimuths):')
-  console.log('  ' + CORRIDOR_INFO)
-  console.log(`  SELECTED: azimuth ${bestK * 15} deg, maxSlope ${bestScore.toFixed(1)} deg (<=40 deg gate: ${bestScore <= 40 ? 'PROCEED' : 'MEASURE'})`)
-  return { x: bx, y: by, z: bz }
-})()
-function surfacePoint(dirX, dirY, dirZ, alt) {
-  const h = terrainHeight(dirX, dirY, dirZ)
-  const rr = R + h + alt
-  return { x: dirX * rr, y: dirY * rr, z: dirZ * rr }
-}
-const spawnPos = surfacePoint(SPAWN_DIR.x, SPAWN_DIR.y, SPAWN_DIR.z, 0)
-const SAT_B = {
-  x: spawnPos.x + walkFwd.x * 2400 + SPAWN_DIR.x * 400,
-  y: spawnPos.y + walkFwd.y * 2400 + SPAWN_DIR.y * 400,
-  z: spawnPos.z + walkFwd.z * 2400 + SPAWN_DIR.z * 400,
-}
-
-// ---- verbatim sphericalFrame helpers used by the autopilot --------------
-const { signedAngleAbout } = await import('../src/core/physics/sphericalFrame.ts')
-const _vA = { x: 0, y: 0, z: 0 }
 
 // ---- WARMUP (ts=1) then LIVE (ts=6, 5 substeps) — verbatim input model ---
 const DT = 1 / 60
@@ -230,27 +359,24 @@ function frame(ts) {
   kcc.update(DT * ts, 5)
   core.advance(DT * ts)
 }
-// WARMUP: browser transitioned at warm>3 with pool active>=30 (HUD: 94 active)
 const WARM_S = 3.5
 kcc.input.moveF = 0.3; kcc.input.moveR = 0; kcc.input.sprint = false
 kcc.input.turnRate = 0.4
 for (let f = 0; f < Math.round(WARM_S / DT); f++) frame(1)
 const rebases0 = core.stats.rebaseCount
 console.log(`WARMUP done (${WARM_S}s): rebases0=${rebases0} maxLocalPostTick=${core.stats.focusMaxLocalPostTick.toFixed(1)}`)
-
-// cull audit at the harness's FIRST post-warmup frame (driver local ~ entity local)
-auditCull('post-WARMUP audit (harness up = normalize(driver LOCAL))', {
+const sunElevWarmup = auditCull('post-WARMUP audit', {
   x: astroState.localPosF32[0], y: astroState.localPosF32[1], z: astroState.localPosF32[2],
 })
 
 const WALL_SECONDS = Number(process.env.WALL_SECONDS ?? 120)
-// LIVE: autopilot verbatim; effective 5x (ts=6, 5-substep cap)
+const _vA = { x: 0, y: 0, z: 0 }
 let simS = 0
 let maxLocalLive = 0
 let distWalked = 0
 let prevAbs = { ...kcc.absPos }
 const trace = []
-const crossings = []   // F25d: { wallS, simS } at every rebase increment
+const crossings = []
 for (let f = 0; f < WALL_SECONDS / DT; f++) {
   const rebBefore = core.stats.rebaseCount
   const p = kcc.pLocal
@@ -289,82 +415,42 @@ for (const t of trace) console.log('  ' + t)
 console.log(`LIVE result: rebasesDuringLive=${core.stats.rebaseCount - rebases0} ` +
   `maxBubbleLocalComp=${maxLocalLive.toFixed(1)} totalWalked=${distWalked.toFixed(1)} m ` +
   `netFromSpawn=${Math.hypot(kcc.absPos.x - spawnPos.x, kcc.absPos.y - spawnPos.y, kcc.absPos.z - spawnPos.z).toFixed(1)} m`)
-console.log(`origin: O=(${core.getOrigin().x},${core.getOrigin().y},${core.getOrigin().z})`)
 
-// ---- F25d round-3 reporting ------------------------------------------------
-// Crossing clock convention: the harness LIVE window is LIVE_SECONDS = 120
-// WALL seconds; at ts=6 with the 5-substep cap that is 5x sim time -> the
-// default WALL_SECONDS=120 run below IS the 600 s sim (600 sim seconds).
 {
   const fmt = crossings.map((c) => `(wall ${c.wallS.toFixed(1)}s / sim ${c.simS.toFixed(0)}s)`)
   console.log(`crossings (${crossings.length} total): ${fmt.length > 0 ? fmt.join(', ') : 'NONE'}`)
   console.log(`  within first 120 SIM s: ${crossings.filter((c) => c.simS <= 120).length}` +
-    ` · within first 120 WALL s (= LIVE_SECONDS, the full default run): ` +
-    `${crossings.filter((c) => c.wallS <= 120).length}` +
-    ` · within full ${WALL_SECONDS} WALL s run (${simS.toFixed(0)} sim s): ${crossings.length}`)
-  // SAT_B geometry from the spawn
-  const dv = { x: SAT_B.x - spawnPos.x, y: SAT_B.y - spawnPos.y, z: SAT_B.z - spawnPos.z }
-  const dvLen = Math.hypot(dv.x, dv.y, dv.z)
-  const dvDir = { x: dv.x / dvLen, y: dv.y / dvLen, z: dv.z / dvLen }
-  const cosW = Math.max(-1, Math.min(1, dvDir.x * walkFwd.x + dvDir.y * walkFwd.y + dvDir.z * walkFwd.z))
-  console.log(`SAT_B from spawn: distance=${dvLen.toFixed(1)} m, bearing ${((Math.acos(cosW) * 180) / Math.PI).toFixed(2)}° off the walkFwd tangent`)
-  // max slope along the surface arc spawn -> SAT_B (the straight-line walk aim)
-  const satbDir = { x: SAT_B.x, y: SAT_B.y, z: SAT_B.z }
-  const sl = Math.hypot(satbDir.x, satbDir.y, satbDir.z) || 1
-  satbDir.x /= sl; satbDir.y /= sl; satbDir.z /= sl
-  const cosArc = Math.max(-1, Math.min(1,
-    SPAWN_DIR.x * satbDir.x + SPAWN_DIR.y * satbDir.y + SPAWN_DIR.z * satbDir.z))
-  const arcAng = Math.acos(cosArc)
-  const axx = SPAWN_DIR.y * satbDir.z - SPAWN_DIR.z * satbDir.y
-  const axy = SPAWN_DIR.z * satbDir.x - SPAWN_DIR.x * satbDir.z
-  const axz = SPAWN_DIR.x * satbDir.y - SPAWN_DIR.y * satbDir.x
-  const al = Math.hypot(axx, axy, axz) || 1
-  const ux = axx / al, uy = axy / al, uz = axz / al
-  let maxSlopeLine = 0, worstD = 0
-  for (let i = 0; i <= 200; i++) {
-    const th = (i / 200) * arcAng, c = Math.cos(th), s = Math.sin(th)
-    const cx = SPAWN_DIR.x * c + (uy * SPAWN_DIR.z - uz * SPAWN_DIR.y) * s
-    const cy = SPAWN_DIR.y * c + (uz * SPAWN_DIR.x - ux * SPAWN_DIR.z) * s
-    const cz = SPAWN_DIR.z * c + (ux * SPAWN_DIR.y - uy * SPAWN_DIR.x) * s
-    const sl2 = slopeFromNormal({ x: cx, y: cy, z: cz })
-    if (sl2 > maxSlopeLine) { maxSlopeLine = sl2; worstD = th * R }
-  }
-  console.log(`straight line spawn -> SAT_B: arc length=${(arcAng * R).toFixed(0)} m, max slope along it ` +
-    `${maxSlopeLine.toFixed(1)}° (worst at ~${worstD.toFixed(0)} m from spawn)`)
-  // F25d branch determination (ruling round 2, step 4b)
-  const bestSlope = Number(CORRIDOR_BEST_SLOPE)
+    ` · within LIVE_SECONDS (120 wall s = 600 sim s): ${crossings.filter((c) => c.wallS <= 120).length}`)
+  const sunElevSuite = auditCull('post-LIVE audit (R2 suite-time pose)', {
+    x: astroState.localPosF32[0], y: astroState.localPosF32[1], z: astroState.localPosF32[2],
+  })
+  // round-4 proceed gate
   const inLive = crossings.filter((c) => c.wallS <= 120).length
-  let branch, why
-  if (bestSlope <= 40) {
-    branch = '(i)'; why = 'best corridor max slope <= 40 deg -> proceed'
-  } else if (inLive >= 2 && maxLocalLive <= 1024) {
-    branch = '(ii)'; why = `slope > 40 but sim shows ${inLive} crossings >= 2 within LIVE_SECONDS with locals ${maxLocalLive.toFixed(1)} <= 1024 -> proceed`
-  } else {
-    branch = '(iii)'; why = `slope > 40 and crossings-in-LIVE ${inLive} / locals ${maxLocalLive.toFixed(1)} fail (ii) -> keep edit, run gate, route F25e`
-  }
-  console.log(`F25d branch: ${branch} — ${why}`)
+  const checks = [
+    [`eligible candidate exists`, passBoth >= 1],
+    [`>= 2 crossings within LIVE_SECONDS`, inLive >= 2],
+    [`locals <= 1,024`, maxLocalLive <= 1024],
+    [`Sun ACTIVE post-warmup`, sunElevWarmup > -(20000 / sunDist + 0.03)],
+    [`Sun ACTIVE at suite pose`, sunElevSuite > -(20000 / sunDist + 0.03)],
+    [`findSpawn cost <= 2,000 ms`, findSpawnMs <= 2000],
+  ]
+  for (const [label, ok] of checks) console.log(`  GATE ${ok ? 'PASS' : 'FAIL'}: ${label}`)
+  console.log(`F30 PROCEED: ${checks.every(([, ok]) => ok) ? 'YES — proceed with the harness edit' : 'NO — STOP and route F30x'}`)
 }
 
-// cull audit at suite time (driver local ~ entity local at end of walk)
-auditCull('post-LIVE audit (suite-time pose)', {
-  x: astroState.localPosF32[0], y: astroState.localPosF32[1], z: astroState.localPosF32[2],
-})
-
-// ---- terrain profile along walkFwd (why the sprint crawls) ----------------
+// ---- terrain profile along the new walkFwd --------------------------------
 console.log('terrain profile along walkFwd (surface slope at distance d):')
 {
-  // rotation axis moving SPAWN_DIR toward walkFwd
-  const axx = SPAWN_DIR.y * walkFwd.z - SPAWN_DIR.z * walkFwd.y
-  const axy = SPAWN_DIR.z * walkFwd.x - SPAWN_DIR.x * walkFwd.z
-  const axz = SPAWN_DIR.x * walkFwd.y - SPAWN_DIR.y * walkFwd.x
+  const axx = newSpawn.y * walkFwd.z - newSpawn.z * walkFwd.y
+  const axy = newSpawn.z * walkFwd.x - newSpawn.x * walkFwd.z
+  const axz = newSpawn.x * walkFwd.y - newSpawn.y * walkFwd.x
   const al = Math.hypot(axx, axy, axz) || 1
   const ux = axx / al, uy = axy / al, uz = axz / al
   for (let d = 0; d <= 2600; d += 200) {
     const th = d / R, c = Math.cos(th), s = Math.sin(th)
-    // Rodrigues: v' = v c + (u×v) s + u (u·v)(1-c); u·v=0 (tangent axis)
-    const cx = SPAWN_DIR.x * c + (uy * SPAWN_DIR.z - uz * SPAWN_DIR.y) * s
-    const cy = SPAWN_DIR.y * c + (uz * SPAWN_DIR.x - ux * SPAWN_DIR.z) * s
-    const cz = SPAWN_DIR.z * c + (ux * SPAWN_DIR.y - uy * SPAWN_DIR.x) * s
+    const cx = newSpawn.x * c + (uy * newSpawn.z - uz * newSpawn.y) * s
+    const cy = newSpawn.y * c + (uz * newSpawn.x - ux * newSpawn.z) * s
+    const cz = newSpawn.z * c + (ux * newSpawn.y - uy * newSpawn.x) * s
     console.log(`  d=${String(d).padStart(5)} m  slope=${slopeFromNormal({ x: cx, y: cy, z: cz }).toFixed(1).padStart(5)} deg  h=${terrainHeight(cx, cy, cz).toFixed(1)} m`)
   }
 }
