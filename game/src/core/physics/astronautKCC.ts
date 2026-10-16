@@ -464,9 +464,6 @@ export class AstronautKCC {
     this._face = face;
 
 
-    this.input.jump = false; // consumed (edge-triggered)
-
-
     if (this._mode === 'VEHICLE') {
       this._vehicleTick(dt);
       this.integrity.ticksVehicle++;
@@ -478,6 +475,12 @@ export class AstronautKCC {
       if (this._mode === 'ZERO-G') this.integrity.ticksZeroG++;
       else this.integrity.ticksAirborne++;
     }
+
+    // F14 (Lead ruling 2026-10-16): consumed AFTER the tick acted — canon
+    // cleared input.jump BEFORE _groundedTick read it, so no jump could
+    // ever fire. Edge-trigger preserved: one fire per press, on the next
+    // tick; airborne presses buffer to the landing tick (standard).
+    this.input.jump = false;
 
 
     // Mode hysteresis on the range-faded gravity magnitude.
