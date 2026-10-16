@@ -445,3 +445,70 @@ Observations (NO change made — recorded for the Lead):
    logic) + F9/F10/F11 routing precedent + standing damage protocol. ·
    Evidence: notes/reports/M1E.md §3–5 (verbatim gate output + diag scrape).
    · Source: brief §6; directive 5.b/5.d.
+
+## 2026-10-16 — Milestone 1E (F14–F17 applied per Lead ruling + re-run)
+
+39. 2026-10-16 · 1E/fixes · game/src/core/physics/astronautKCC.ts (F14),
+   game/src/test/Milestone1E_TestHarness.tsx (F15/F16/F17/$-strip),
+   game/tools/diag-m1e-field.mjs + ts-resolve-loader.mjs (F17b probe),
+   game/tools/diag-m1e-core.mjs (attribution) · ALL SIX RULINGS APPLIED
+   EXACTLY AS SPECIFIED (Lead ruling 2026-10-16, all confirmed authorial):
+   **F14 — THE FIRST CORE-BEHAVIOR EDIT** (7947369): the jump-consumption
+   line moved from BEFORE the mode dispatch (canon 812 / extracted 467) to
+   immediately AFTER it (before hysteresis); edge-trigger preserved;
+   _flightTick never reads input.jump; airborne presses buffer to the
+   landing tick. Flagged for 1G: re-grep the §3.5 patch application against
+   the moved line (no overlap, but verify). F15 (e689d4c): runStateMachine's
+   independent VEHICLE check now composes the PARENT-FRAME offset —
+   `rotateByQuatConjInto(prov.quat, 0, 2, 0, offP)` captured once at
+   attach-time quat before the loop (harness computes it; KCC private state
+   not read); dead `const tx…/void tx;` deleted; inner `off` replaced by the
+   captured `offP`. F16a: face-walk budget 11,600→13,600 AND cap
+   95,000→140,000 (both, per ruling). F16b: `cos(0.02)`→`cos(0.06)` +
+   detail "(bound 1.15°)"→"(bound 3.44°)". F16c: corner print
+   `deg(F.minCornerAngle)`→`(F.minCornerAngle*180/Math.PI)`. F17a: alt0 and
+   climbGain end-read both `Math.hypot(pLocal)−5000` (telemetry stale).
+   F17b: STEEP recalibrated (mountainFreq 3.0, mountainAmp 2200, detailFreq
+   8, detailAmp 3) + scanFor optional neighbor predicate + uniformAround()
+   (8 compass probes at 3 m arc; moderate <35°, steep >45°, cliff >60°);
+   probe verdict: FINAL mountainAmp = 2200 — moderate@try49 (25.9°), steep@
+   try12 (60.2°), cliff@try4 (73.2°), >70° class = 17.96% of the sphere;
+   +200 escalation NOT needed. $-strip: `$` restored at the slope-step
+   detail string. Typecheck + build UNPIPED: TSC_EXIT=0 BUILD_EXIT=0. ·
+   Lead ruling 2026-10-16 (items 1–5, 7a–b). · Evidence: commits 7947369,
+   e689d4c, dd3e97a; probe output in M1E.md §3.
+
+40. 2026-10-16 · 1E/step7c · (NO code change) · RE-RUN: 1E gate FAILED on 3
+   rows (badges ["PASS","FAIL","FAIL","PASS","FAIL","PASS"]); full
+   regression 1A/1B/1C/1D GREEN ("4 passed (1.9m)"). F14/F15/F16/F17a-b
+   VINDICATED: face-walk now PASS (2 face changes, corner prints 0.82°, up
+   2.145 ≤ 3.44); vehicleErr 0.0e+0 (< 1e-9 — was the constant 0.2565);
+   zero-gc PASS WITH F14 LIVE (real jumps in the 30k burn; identities ✓,
+   heap 0 B, NaN 0); slope-step moderate+steep+cliff-net criteria all PASS
+   on the new field (climbGain 4.9 vs expected 4.4 direct-read, slide
+   0.000, t30=5, vEnd 10.3, ratio 1.00, uphill 0.11, cliff net 0.02).
+   THREE REMAINING FAILURES — ALL ROUTED, NOTHING TOUCHED (per the ruling's
+   stop-and-route terms): (1) coriolis airTicks 0 — NEW CORE DEFECT EXPOSED
+   BY F14: the launch branch composes absPos at the ADVANCED θ_new while
+   _sweep's tick-start embed check probes terrain at θ_prev — probe
+   direction mis-rotated by exactly Ω·dt = 0.867 m at the equator → embed
+   hit → _landAt(θ_prev) re-plants ~0.87 m EAST within the launch tick
+   (westDrift −85.22 cm; perp 1.20 cm; Node tick-1 trace: grounded=true
+   immediately). Fix options belong to the Lead (core edit #2 — e.g.
+   compose the launch at θ_prev, physics-neutral: planet-frame trajectory
+   unchanged, only world-frame bookkeeping consistency with the sweep).
+   (2) state-machine landed=false — the canon 20,000-tick deorbit cap is
+   too small for the real free-fall (Node trace: tick 19,999 at r=12,551 m,
+   v=146 m/s, still airborne; analytic landing ≈ tick 22,400; every OTHER
+   criterion passes incl. vehicleErr 0.0e+0). (3) cliff-row minAGL −0.206 —
+   CROSS-ROW CONTAMINATION: the criterion reads the global
+   integrity.minAGL accumulator, which the zero-gc burn's phase-3 deorbit
+   landing bisection lowered BEFORE runSlopeStep ran (Node full-sequence:
+   tick 20,590, mode SURFACE, −0.1119; browser −0.206 — same transient
+   class, ulp-level V8 divergence in the chaotic 30k-tick trajectory); the
+   cliff sprint itself NEVER goes airborne (no minAGL drops in the
+   verbatim (a)/(b)/(c) replication; firstAirborneTick=null) — value
+   outside the pre-authorized [−0.15,−0.05) window → routed per ruling.
+   · §6 + the ruling's stop-and-route terms. · Evidence:
+   notes/reports/M1E.md §4–5; game/tools/diag-m1e-core.mjs (2d7bf7f). ·
+   Source: Lead ruling 2026-10-16 (items 7c, 8).

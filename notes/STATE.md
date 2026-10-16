@@ -1,20 +1,22 @@
 # SOLARIS — ASSEMBLY STATE (see AGENT_BRIEF.md §10)
 
 ## NEXT ACTION
-Await Lead rulings on the four routed 1E defects (notes/reports/M1E.md —
-GATE FAILED 4 rows, zero-gc + integration PASS, full 1A/1B/1C/1D regression
-green): F14-proposal DEAD JUMP (canon integrateTick consumes input.jump at
-canon 812 / extracted astronautKCC 467 BEFORE _groundedTick reads it at
-canon 932 / extracted 587 — relocate the one line after the mode dispatch),
-F15-proposal vehicle-verify offset (harness check composes the WORLD offset
-(0,2,0) as parent-frame; KCC's R_att⁻¹ compose is correct — fix the check,
-~2 lines), F16-proposal face-walk calibration (faceChanges 1 < 2 — pathLen
-budget eaten by unrestricted climbing; up-rotation 2.145° > 1.15°) + the
-deg() double-acos detail bug, F17-proposal slope-step calibration
-(moderate slide 5.275 > 0.05, steep displacement ratio 0.00 + uphill net
-2.13 > 0.3, cliff minAGL −0.091 < −0.05) + stale-alt0 fix, plus the routed
-family-A $-strip (extracted harness 1015). On rulings: apply, re-run the
-1E gate + full regression, update M1E.md, re-present at the approval gate.
+Await Lead rulings on the THREE re-run routings (notes/reports/M1E.md §5):
+(R1) coriolis — core edit #2: the launch branch composes absPos at θ_new
+while _sweep's tick-start embed check probes at θ_prev (0.867 m probe
+offset at the equator) → the jump re-lands within the launch tick
+(westDrift −85.22 cm, airTicks 0); proposed fix: compose the launch at
+θ_prev (physics-neutral — planet-frame trajectory unchanged, sweep
+consistency restored; expected after fix: airborne ≈ 61 ticks, west
+≈ +1.7 cm). (R2) state-machine deorbit cap 20,000 → ≈24,000 (free-fall
+needs ≈22,400 ticks; Node: r=12,551 m, v=146 m/s at the cap; all other
+criteria pass incl. vehicleErr 0.0e+0). (R3) cliff-row minAGL −0.206 =
+cross-row contamination from the zero-gc burn's phase-3 deorbit landing
+bisection (Node tick 20,590, −0.1119; cliff sprint never airborne) —
+outside the pre-authorized [−0.15,−0.05) window; options: per-row reset at
+runSlopeStep entry / wider bound / transient note. On rulings: apply,
+re-run the 1E gate + full regression, update M1E.md, re-present at the
+approval gate.
 
 ## MILESTONE LEDGER
 | MS | Status | Evidence |
@@ -24,27 +26,28 @@ family-A $-strip (extracted harness 1015). On rulings: apply, re-run the
 | 1B | APPROVED | Gate GREEN (`acceptance PASSED in 21.5 ms`, 5/5 rows) + 1A regression 5/5 on the overlaid core; commits d582efc/F9 3f12b43/final db13db8; report: notes/reports/M1B.md; Lead approval 2026-10-15 |
 | 1C | APPROVED | Gate GREEN 4/4 + 1A/1B regression 5/5 ("3 passed (1.2m)"); F10a/F10b verified against all four ruling requirements; final commit a86ce94; report: notes/reports/M1C.md; Lead approval 2026-10-15 |
 | 1D | APPROVED | Commit e830759; gate GREEN 5/5 + full 1A/1B/1C regression green ("4 passed (1.5m)"); F11/F12 applied as ruled; erratum + standing rule adopted; authorship verified: v@1000m 264.7 matches corrected derivation, locals max 1022.8 matches 1A structural prediction (1022.67), geo 151 = F12-predicted constant count; report: notes/reports/M1D.md; Lead approval 2026-10-16 |
-| 1E | GATE FAILED·ROUTED | Extraction 3/3 (2871 L, zero parentheticals); F13 applied; F1 vacuous (0 require — import already top-level); 2 §6 strict-TS fixes (TSC_EXIT=0 unpiped); ?page=m1e wired (caad62c); gate FAILED 4 rows (badges F,F,F,P,F,P) — zero-gc + integration PASS, regression 1A/1B/1C/1D green ("4 passed (1.9m)"); 4 root causes diagnosed + routed (F14–F17 proposals + $-strip); report: notes/reports/M1E.md |
+| 1E | GATE FAILED·ROUTED (2nd) | Fixes applied + vindicated: F14 first core-behavior edit (7947369), F15 (vehicleErr 0.0e+0), F16 (face-walk PASS), F17a/b (slope rows PASS; FINAL mountainAmp 2200), $-strip; commits e689d4c/dd3e97a; re-run FAILED on 3 NEW items — coriolis launch-phase core defect (exposed by F14), deorbit cap, cliff-minAGL contamination — routed with full numbers; report: notes/reports/M1E.md |
 | 1F–1G | NOT STARTED | 1F (F3 + impostorMath purity); 1G (F2 + hand-applied KCC patch + MANDATORY full 1E re-run) |
 
 ## IN-FLIGHT
-Milestone 1E — parked at the ruling gate after §8 step 5. Gate FAILED on
-face-walk / slope-step / state-machine / coriolis; zero-gc + integration
-PASS; full regression green. Root causes (all authorial canon defects, none
-extraction-related, NOTHING touched): (1) jump structurally dead —
-input.jump consumed before _groundedTick reads it (canon 812 vs 932);
-(2) harness VEHICLE verify composes world offset (0,2,0) instead of the
-parent-frame R_att⁻¹·(0,2,0) — constant 0.2565 m error, KCC correct (detach
-check 0.0e+0); (3) face-walk: faceChanges 1 < 2 (climb-inflated pathLen
-budget) + up-rotation 2.145° > 1.15° — real-terrain calibration; corner
-criterion actually PASSES (0.0143 rad; the detail string double-acos's it
-into "89.18°"); (4) slope-step: slide/uphill/AGL bounds vs the engineered
-field's wild dynamics + stale-alt0 cross-field contamination (climbGain
-103.3 m spurious). Watch 5.b params pasted in M1E.md §4.4; watch 5.c
-restore VERIFIED (canon 2490–2492 / extracted 1042–1043); watch 5.f KCC
-pristine except the §6 null-guard type fix. Standing rule in force: unpiped
-exit codes (TSC_EXIT=0 BUILD_EXIT=0 PLAYWRIGHT_EXIT=1 observed). Diagnostic
-probe kept: game/tools/diag-m1e.mjs (read-only DOM scrape).
+Milestone 1E — parked at the second ruling gate. All six prior rulings
+applied exactly as specified and VINDICATED: F14 (first core-behavior edit,
+7947369 — jumps now fire everywhere; zero-gc burn holds identities/heap/NaN
+with live jumps), F15 (vehicleErr 0.2565 → 0.0e+0), F16 (face-walk PASS:
+2 face changes, corner 0.82°, up 2.145 ≤ 3.44), F17a/b (slope moderate/
+steep/cliff-net all PASS on the recalibrated field; FINAL mountainAmp 2200;
+direct alt reads), $-strip. Re-run gate: badges
+["PASS","FAIL","FAIL","PASS","FAIL","PASS"]; regression 1A/1B/1C/1D green.
+THREE NEW ROUTINGS (nothing touched, full numbers in M1E.md §5):
+(R1) coriolis launch-tick re-land — core defect #2 exposed by F14: compose
+at θ_new vs embed probe at θ_prev (0.867 m) — westDrift −85.22 cm, airTicks
+0; (R2) deorbit cap 20,000 < ≈22,400 needed (landed=false; r=12,551 m,
+v=146 m/s at cap); (R3) cliff-minAGL −0.206 = burn landing bisection
+contaminating the global integrity.minAGL (cliff sprint never airborne;
+Node −0.1119 @ tick 20,590) — outside the conditional window. Standing
+rule: unpiped exits (TSC_EXIT=0 BUILD_EXIT=0 PLAYWRIGHT_EXIT=1 observed).
+Probes: game/tools/diag-m1e-field.mjs (field calibration), diag-m1e-core.mjs
+(Node row replication/attribution), diag-m1e.mjs (DOM scrape).
 
 ## APPROVAL LEDGER (settled — never re-ask)
 | Date | Decision |
@@ -76,6 +79,12 @@ probe kept: game/tools/diag-m1e.mjs (read-only DOM scrape).
 | 2026-10-16 | MILESTONE 1D: APPROVED (gate GREEN 5/5, full 1A/1B/1C regression green, F11/F12 applied as ruled, erratum + standing rule adopted; verified from authorship: v@1000m 264.7 matches the corrected derivation, locals max 1022.8 matches the 1A structural prediction 1022.67, geo 151 is the F12-predicted constant count; commit e830759; report notes/reports/M1D.md) |
 | 2026-10-16 | MILESTONE 1E ORDERED: execute per §8 with F1 MANDATORY (require() breaks ESM builds) and F13 PRE-AUTHORIZED (authorial `0x51ope5` invalid hex → `0x5109e5` entire-argument replacement; skip + note if absent); watch items: slope-site scan failure = paste params before touching (authorial calibration question), verify steep-field TEST_PLANET restore, astronautKCC.ts PRISTINE (1G §3.5 patch applied in 1G, never now) |
 | 2026-10-16 | Fresh-session bootstrap completed per §10.3 — reconciliation clean (git log/status/filesystem agree with STATE.md; canon byte-identical to ea112ec; only .DS_Store dirty); NEXT ACTION was awaiting this directive's M1D approval — proceeded without further go as instructed |
+| 2026-10-16 | F14 AUTHORIZED + APPLIED: dead-jump consumption relocated after the mode dispatch (canon cleared input.jump before _groundedTick read it) — FIRST CORE-BEHAVIOR EDIT, isolated commit 7947369; edge-trigger preserved; 1G note: re-grep the §3.5 patch against the moved line |
+| 2026-10-16 | F15 AUTHORIZED + APPLIED: vehicle-verify composes the parent-frame offset (conjugate-rotate (0,2,0) at attach quat); dead tx lines deleted; vindicated — vehicleErr 0.2565 → 0.0e+0 |
+| 2026-10-16 | F16a/b/c AUTHORIZED + APPLIED: face-walk budget 13,600 + cap 140,000; up bound cos(0.02)→cos(0.06) + detail "(bound 3.44°)"; corner print deg()→radians·180/π — vindicated (2 face changes, corner prints 0.82°) |
+| 2026-10-16 | F17a/b/c AUTHORIZED + APPLIED: stale-alt0 → direct hypot reads; STEEP recalibrated (freq 3.0, amp 2200, detail 8/3) + scanFor uniformity gate (8 compass probes @ 3 m; <35°/>45°/>60°); probe: FINAL mountainAmp 2200 (moderate@49 25.9°, steep@12 60.2°, cliff@4 73.2°, >70° = 17.96%); conditional cliff-AGL relaxation to −0.15 authorized ONLY within [−0.15,−0.05) — NOT triggered (browser −0.206 outside window); bounds otherwise kept, all PASS |
+| 2026-10-16 | L1015 $-strip AUTHORIZED + APPLIED (one instance, one character); F1-vacuous RATIFIED as-delivered; both strict-TS repairs RATIFIED (Math.SQRT1_3 confirmed nonexistent); F2 remains EXPECTED at 1G |
+| 2026-10-16 | Re-run outcome: 3 rows converted to PASS (face-walk, state-machine vehicleErr, slope moderate/steep/cliff-net; zero-gc PASS with F14 live); THREE NEW ROUTINGS: (R1) coriolis launch-tick compose@θ_new vs sweep embed@θ_prev = 0.867 m probe offset → re-lands in-tick (−85.22 cm; CORE EDIT #2 candidate: compose launch at θ_prev, physics-neutral); (R2) deorbit 20,000-tick cap < ≈22,400 needed (Node: r=12,551 m, v=146 m/s at cap); (R3) cliff-minAGL −0.206 = zero-gc burn's landing bisection contaminating the global accumulator (cliff sprint never airborne; Node tick 20,590 −0.1119) — outside conditional window → route |
 
 ## SESSION LOG
 | # | Date | Goal | Outcome | Handoff note |
@@ -84,7 +93,7 @@ probe kept: game/tools/diag-m1e.mjs (read-only DOM scrape).
 | 2 | 2026-10-14 | Protocol install + reconcile | AGENT_BRIEF.md written verbatim (389-line paste + 47-line §10 append); session-1 work preserved as WIP d849d6b; notes/ tree created; CHANGES.md relocated to root; STATE.md written from evidence; M1A report persisted to notes/reports/M1A.md | Session parked at the 1A approval gate — resumed by session 3 |
 | 3 | 2026-10-14 | 1A approval + protocol install | approved + installed + pushed | Run the F6 pre-scan over all seven Milestone .txt files (report per file whether the acceptance-line `$` is present), then begin Milestone 1B: read Milestone/Milestone 1B.txt in full, run `node tools/extract.mjs 1B` (expect 5 blocks; the parenthetical overlay on src/core/simulation/SimulationCore.ts explicitly reported — it must be the ONLY parenthetical match), F6 check/repair on the 1B harness, register ?page=m1b, typecheck+build, run the 1B gate PLUS the 1A page as regression, write notes/reports/M1B.md with verbatim gate output and the pre-scan table, commit per the amended cadence, push, then STOP at the approval gate. |
 | 4 | 2026-10-14/15 | M1B execution | (continuation — session resumed after wind-down in the same live session) Pre-scan done (1C verdict missing → F8); extraction 5/5 + overlay, invariant held; F7a/F7b per ruling → typecheck/build clean; 1A regression green; 1B deadlock diagnosed to canon auto-run guard → F9 authorized + applied; 1C-CP persisted; BOTH gates green ("2 passed (9.5s)") | M1B parked at the approval gate — next: Lead approval of notes/reports/M1B.md, then 1C (extract 6 blocks, F5 + 1C-CP at extraction, workers check, gate + regression, report) |
-| 5 | 2026-10-16 | M1D approval + M1E execution | Fresh-session bootstrap per §10.3 clean (canon = ea112ec, evidence matches STATE.md); M1D APPROVED + 1E ordered recorded in ledgers before any 1E work; extraction 3/3, F13 applied, F1 vacuous (0 require), 2 §6 strict-TS fixes, ?page=m1e wired; 1E gate FAILED 4 rows (authorial canon defects — dead jump, vehicle-verify offset, face-walk + slope-step calibration, stale-alt0) — all diagnosed + routed, NOTHING touched; regression 1A/1B/1C/1D green; report notes/reports/M1E.md | Parked at the ruling gate — next: Lead rulings on F14–F17 proposals + the routed $-strip; then apply, re-run 1E gate + full regression, update M1E.md, re-present at the approval gate |
+| 5 | 2026-10-16 | M1D approval + M1E execution | Bootstrap clean; M1D APPROVED + 1E ordered recorded; extraction 3/3, F13, F1 vacuous, 2 TS fixes, ?page=m1e wired; first gate FAILED 4 rows → 4 root causes routed; Lead ruled all six (F14–F17, $-strip) — applied exactly (F14 = first core-behavior edit), all vindicated where aimed (vehicleErr 0.0e+0, face-walk PASS, slope rows PASS, FINAL amp 2200, zero-gc holds with live jumps); re-run FAILED on 3 NEW items (coriolis launch-phase core defect, deorbit cap, cliff-minAGL contamination) — diagnosed + routed untouched; regression green throughout | Parked at the second ruling gate — next: Lead rulings on R1 (launch compose at θ_prev), R2 (deorbit cap ~24,000), R3 (cliff-minAGL measurement design); then apply, re-run, update M1E.md, re-present |
 
 ## ANCHOR
 df1e04f — "M1A: extracted, gates green" (branch m1-assembly; chain: ea112ec
