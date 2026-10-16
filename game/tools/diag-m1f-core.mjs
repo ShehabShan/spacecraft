@@ -160,6 +160,8 @@ function auditCull(label, obsLocal) {
 
 // ---- walkFwd via the F25 corridor scan (mirrors the harness edit) ---------
 let CORRIDOR_INFO = ''
+let CORRIDOR_BEST_SLOPE = Infinity
+let CORRIDOR_BEST_AZ = -1
 const walkFwd = (function () {
   const _p = { x: 0, y: 0, z: 0 }
   let e1x = -SPAWN_DIR.z, e1y = 0, e1z = SPAWN_DIR.x
@@ -168,7 +170,7 @@ const walkFwd = (function () {
   const e2x = SPAWN_DIR.y * e1z - SPAWN_DIR.z * e1y
   const e2y = SPAWN_DIR.z * e1x - SPAWN_DIR.x * e1z
   const e2z = SPAWN_DIR.x * e1y - SPAWN_DIR.y * e1x
-  const ARCS = [25, 50, 100, 200, 400, 600, 800]
+  const ARCS = [25, 50, 100, 200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400, 2600]
   let bx = 0, by = 0, bz = 0, bestScore = Infinity, bestDev = 0, bestK = -1
   const rows = []
   for (let k = 0; k < 24; k++) {
@@ -196,6 +198,8 @@ const walkFwd = (function () {
       bestScore = maxSlope; bestDev = maxDev; bx = tx; by = ty; bz = tz; bestK = k
     }
   }
+  CORRIDOR_BEST_SLOPE = bestScore
+  CORRIDOR_BEST_AZ = bestK * 15
   rows.sort((a, b) => a.maxSlope - b.maxSlope)
   CORRIDOR_INFO = rows.slice(0, 5).map((r) =>
     `az ${String(r.az).padStart(3)}°: maxSlope ${r.maxSlope.toFixed(1)}°, maxDev ${r.maxDev.toFixed(1)} m`).join(' | ')
@@ -246,7 +250,9 @@ let maxLocalLive = 0
 let distWalked = 0
 let prevAbs = { ...kcc.absPos }
 const trace = []
+const crossings = []   // F25d: { wallS, simS } at every rebase increment
 for (let f = 0; f < WALL_SECONDS / DT; f++) {
+  const rebBefore = core.stats.rebaseCount
   const p = kcc.pLocal
   _vA.x = SAT_B.x - p.x; _vA.y = SAT_B.y - p.y; _vA.z = SAT_B.z - p.z
   const tl = Math.hypot(_vA.x, _vA.y, _vA.z) || 1
@@ -257,6 +263,11 @@ for (let f = 0; f < WALL_SECONDS / DT; f++) {
   kcc.input.turnRate = Math.max(-2, Math.min(2, a * 3))
   frame(6)
   simS += 5 * DT
+  if (core.stats.rebaseCount !== rebBefore) {
+    for (let n = 0; n < core.stats.rebaseCount - rebBefore; n++) {
+      crossings.push({ wallS: f * DT, simS })
+    }
+  }
   const O = core.getOrigin()
   maxLocalLive = Math.max(maxLocalLive,
     Math.abs(kcc.absPos.x - O.x), Math.abs(kcc.absPos.y - O.y), Math.abs(kcc.absPos.z - O.z))
@@ -279,6 +290,60 @@ console.log(`LIVE result: rebasesDuringLive=${core.stats.rebaseCount - rebases0}
   `maxBubbleLocalComp=${maxLocalLive.toFixed(1)} totalWalked=${distWalked.toFixed(1)} m ` +
   `netFromSpawn=${Math.hypot(kcc.absPos.x - spawnPos.x, kcc.absPos.y - spawnPos.y, kcc.absPos.z - spawnPos.z).toFixed(1)} m`)
 console.log(`origin: O=(${core.getOrigin().x},${core.getOrigin().y},${core.getOrigin().z})`)
+
+// ---- F25d round-3 reporting ------------------------------------------------
+// Crossing clock convention: the harness LIVE window is LIVE_SECONDS = 120
+// WALL seconds; at ts=6 with the 5-substep cap that is 5x sim time -> the
+// default WALL_SECONDS=120 run below IS the 600 s sim (600 sim seconds).
+{
+  const fmt = crossings.map((c) => `(wall ${c.wallS.toFixed(1)}s / sim ${c.simS.toFixed(0)}s)`)
+  console.log(`crossings (${crossings.length} total): ${fmt.length > 0 ? fmt.join(', ') : 'NONE'}`)
+  console.log(`  within first 120 SIM s: ${crossings.filter((c) => c.simS <= 120).length}` +
+    ` · within first 120 WALL s (= LIVE_SECONDS, the full default run): ` +
+    `${crossings.filter((c) => c.wallS <= 120).length}` +
+    ` · within full ${WALL_SECONDS} WALL s run (${simS.toFixed(0)} sim s): ${crossings.length}`)
+  // SAT_B geometry from the spawn
+  const dv = { x: SAT_B.x - spawnPos.x, y: SAT_B.y - spawnPos.y, z: SAT_B.z - spawnPos.z }
+  const dvLen = Math.hypot(dv.x, dv.y, dv.z)
+  const dvDir = { x: dv.x / dvLen, y: dv.y / dvLen, z: dv.z / dvLen }
+  const cosW = Math.max(-1, Math.min(1, dvDir.x * walkFwd.x + dvDir.y * walkFwd.y + dvDir.z * walkFwd.z))
+  console.log(`SAT_B from spawn: distance=${dvLen.toFixed(1)} m, bearing ${((Math.acos(cosW) * 180) / Math.PI).toFixed(2)}° off the walkFwd tangent`)
+  // max slope along the surface arc spawn -> SAT_B (the straight-line walk aim)
+  const satbDir = { x: SAT_B.x, y: SAT_B.y, z: SAT_B.z }
+  const sl = Math.hypot(satbDir.x, satbDir.y, satbDir.z) || 1
+  satbDir.x /= sl; satbDir.y /= sl; satbDir.z /= sl
+  const cosArc = Math.max(-1, Math.min(1,
+    SPAWN_DIR.x * satbDir.x + SPAWN_DIR.y * satbDir.y + SPAWN_DIR.z * satbDir.z))
+  const arcAng = Math.acos(cosArc)
+  const axx = SPAWN_DIR.y * satbDir.z - SPAWN_DIR.z * satbDir.y
+  const axy = SPAWN_DIR.z * satbDir.x - SPAWN_DIR.x * satbDir.z
+  const axz = SPAWN_DIR.x * satbDir.y - SPAWN_DIR.y * satbDir.x
+  const al = Math.hypot(axx, axy, axz) || 1
+  const ux = axx / al, uy = axy / al, uz = axz / al
+  let maxSlopeLine = 0, worstD = 0
+  for (let i = 0; i <= 200; i++) {
+    const th = (i / 200) * arcAng, c = Math.cos(th), s = Math.sin(th)
+    const cx = SPAWN_DIR.x * c + (uy * SPAWN_DIR.z - uz * SPAWN_DIR.y) * s
+    const cy = SPAWN_DIR.y * c + (uz * SPAWN_DIR.x - ux * SPAWN_DIR.z) * s
+    const cz = SPAWN_DIR.z * c + (ux * SPAWN_DIR.y - uy * SPAWN_DIR.x) * s
+    const sl2 = slopeFromNormal({ x: cx, y: cy, z: cz })
+    if (sl2 > maxSlopeLine) { maxSlopeLine = sl2; worstD = th * R }
+  }
+  console.log(`straight line spawn -> SAT_B: arc length=${(arcAng * R).toFixed(0)} m, max slope along it ` +
+    `${maxSlopeLine.toFixed(1)}° (worst at ~${worstD.toFixed(0)} m from spawn)`)
+  // F25d branch determination (ruling round 2, step 4b)
+  const bestSlope = Number(CORRIDOR_BEST_SLOPE)
+  const inLive = crossings.filter((c) => c.wallS <= 120).length
+  let branch, why
+  if (bestSlope <= 40) {
+    branch = '(i)'; why = 'best corridor max slope <= 40 deg -> proceed'
+  } else if (inLive >= 2 && maxLocalLive <= 1024) {
+    branch = '(ii)'; why = `slope > 40 but sim shows ${inLive} crossings >= 2 within LIVE_SECONDS with locals ${maxLocalLive.toFixed(1)} <= 1024 -> proceed`
+  } else {
+    branch = '(iii)'; why = `slope > 40 and crossings-in-LIVE ${inLive} / locals ${maxLocalLive.toFixed(1)} fail (ii) -> keep edit, run gate, route F25e`
+  }
+  console.log(`F25d branch: ${branch} — ${why}`)
+}
 
 // cull audit at suite time (driver local ~ entity local at end of walk)
 auditCull('post-LIVE audit (suite-time pose)', {

@@ -63,7 +63,7 @@ import {
   fullyBelowHorizon, projectDirectionInto, quadHalfSize, thetaEdge,
   type ScreenProjection, type SkyGeometry,
 } from '../core/render/impostorMath';
-import { SkyImpostorPool, IMPOSTOR_FRAG_BODY } from '../render/SkyImpostorPool';
+import { SkyImpostorPool, IMPOSTOR_FRAG_BODY, IMPOSTOR_CAPACITY } from '../render/SkyImpostorPool';
 import {
   FAR_BIT, MID_BIT, MultiCameraRig, NEAR_BIT, RIG, layerMaskFor, renderAB,
   rigCamNear, setDriverPose,
@@ -210,9 +210,10 @@ kcc.teleportSurface(SPAWN_DIR.x, SPAWN_DIR.y, SPAWN_DIR.z);
 /* -- walk direction + satellites (moon-fixed, inside the spin group) -------- */
 const walkFwd: Vec3 = (function (): Vec3 {
   // F25 (Lead ruling 2026-10-16): corridor selection — 24 azimuths at 15°,
-  // flattest 800 m corridor wins (tie-break: max |Δh| between consecutive
-  // samples). The canon tangent pointed into a 68–78° mountain wall and the
-  // scripted sprint could never reach a rebase crossing.
+  // flattest 2,600 m corridor wins (F25d — covers the full walk to SAT_B at
+  // 2,400 m + margin; tie-break: max |Δh| between consecutive samples). The
+  // canon tangent pointed into a 68–78° mountain wall and the scripted sprint
+  // could never reach a rebase crossing.
   const _p: Vec3 = { x: 0, y: 0, z: 0 };
   let e1x = -SPAWN_DIR.z, e1y = 0, e1z = SPAWN_DIR.x;   // ⊥ SPAWN_DIR
   const e1l = Math.hypot(e1x, e1y, e1z) || 1;
@@ -220,7 +221,7 @@ const walkFwd: Vec3 = (function (): Vec3 {
   const e2x = SPAWN_DIR.y * e1z - SPAWN_DIR.z * e1y;
   const e2y = SPAWN_DIR.z * e1x - SPAWN_DIR.x * e1z;
   const e2z = SPAWN_DIR.x * e1y - SPAWN_DIR.y * e1x;
-  const ARCS = [25, 50, 100, 200, 400, 600, 800];
+  const ARCS = [25, 50, 100, 200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400, 2600];
   let bx = 0, by = 0, bz = 0, bestScore = Infinity, bestDev = 0;
   for (let k = 0; k < 24; k++) {
     const azim = (k * 15 * Math.PI) / 180;
@@ -768,7 +769,8 @@ function lookAtQuatInto(
   const rl = Math.hypot(rx, ry, rz) || 1;
   rx /= rl; ry /= rl; rz /= rl;
   const upx = ry * fz - rz * fy, upy = rz * fx - rx * fz, upz = rx * fy - ry * fx;
-  quatFromFrameInto(fx, fy, fz, upx, upy, upz, out);
+  // three.js camera basis: X=right, Y=up, −Z=forward (F27)
+  quatFromFrameInto(rx, ry, rz, upx, upy, upz, out);
 }
 
 
@@ -1243,7 +1245,7 @@ function runSuite(gl: THREE.WebGLRenderer, scene: THREE.Scene): void {
     probe.forcedD = -1; updateProbes(0);
     const identityOk =
       sky.mesh.instanceMatrix !== undefined &&
-      sky.bodies.length === 11 &&
+      sky.bodies.length === IMPOSTOR_CAPACITY &&
       astroMesh.children.length === 8; // full canary via object identity set
     results['zero-gc'] = {
       pass: identityOk && (pureDelta < 0 || pureDelta <= 262144) && (renderDelta < 0 || renderDelta <= 4194304),
