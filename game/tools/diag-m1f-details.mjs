@@ -2,19 +2,21 @@
 // .test-row badge + label + detail strings verbatim from the DOM — the
 // per-row evidence the routing needs (R3 clause numbers, R5 numbers).
 // Usage: node tools/diag-m1f-details.mjs   (expects vite preview on :4173)
+// DIAG_PAGE env overrides the page (e.g. DIAG_PAGE=m1a for the 1A rows).
 import { chromium } from 'playwright'
 
+const PAGE = process.env.DIAG_PAGE ?? 'm1f'
 const browser = await chromium.launch({ channel: 'chrome', headless: true })
 const page = await browser.newPage({ viewport: { width: 1280, height: 720 } })
 const lines = []
 page.on('console', (m) => lines.push(`${m.type()}: ${m.text()}`))
 page.on('pageerror', (e) => lines.push(`pageerror: ${e.message}`))
 
-await page.goto('http://localhost:4173/?page=m1f')
+await page.goto(`http://localhost:4173/?page=${PAGE}`)
 await page.waitForFunction(
   () => {
     const bs = document.querySelectorAll('.badge')
-    return bs.length === 5 && [...bs].every((b) => b.textContent !== '·····')
+    return bs.length >= 4 && [...bs].every((b) => b.textContent !== '·····')
   },
   null,
   { timeout: 240_000, polling: 1000 },

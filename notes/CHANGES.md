@@ -833,3 +833,64 @@ Observations (NO change made — recorded for the Lead):
     Read-only diag tooling, user-pre-authorized 2026-10-15. · Evidence:
     M1F.md §10.5. · Source: brief §7 regression rule + M1A row-5
     environment-soft precedent.
+
+57. 2026-10-17 · 1F/F30-gate · game/tools/diag-m1f-core.mjs (rewritten) ·
+    F30 Node-first gate BEFORE any harness edit: corridorFor/spawnEligible/
+    findSpawn mirrored verbatim (as they would land in the harness) + old-
+    acceptance pass for comparison + split counters + timed clean pass +
+    the full ruled report (candidates/checked/pass(1)/pass(1)+(2), chosen
+    index+score, angular distance, Earth elevation old vs new, Sun
+    elevation both poses, corridor az+slope, min LOS margin, 600 s KCC
+    sim, findSpawn ms). RESULT: GATE FAILS — 24,000 candidates, pass(1)=0
+    (the ±0.12 rad ≈ ±160 m jitter patch has NO ≤40° corridor over
+    2,600 m), pass(1)+(2)=0, nothing ever replaces best (lazy check ×24,000
+    → 32,078 ms), fallback=base with LOS fail −10.6 m at f=0.025; Sun
+    ACTIVE both poses; fallback walk 0 crossings/locals 656.3. Per the
+    ruling's own stop: F30 harness edit NOT applied; route F30x. ·
+    Read-only diag tooling + the ruling's stop condition. · Evidence:
+    M1F.md §11.1. · Source: Lead ruling round 4 item 3 F30.
+
+58. 2026-10-17 · 1F/ruling-4 · game/src/test/Milestone1F_TestHarness.tsx ·
+    F31 APPLIED: (a) the probe impostor feed computes, per probe, the f64
+    vector from the camera to the mesh's actual position
+    (PROBE_DIR·d − o − pose) and feeds dir = v/|v|, θ = asin(min(1,
+    PROBE_R/|v|)), dist = |v| to sky.setBody (probe B with dB/PROBE_R2) —
+    replacing the fixed PROBE_DIR, the d-based θ and d; (b) the R3
+    silhouette block aims the lookAt at the probe's ACTUAL position and
+    centres the window on the same observer-relative direction. Untouched
+    as ruled: the dA/dB drive, all hysteresis/alpha/fade paths, the mesh
+    placement, R3 thresholds and the ±80 px window, impostorMath.ts. ·
+    The mesh and the impostor are two representations of ONE object; the
+    fixed direction only held for an eye at the bubble centre (round-3
+    Node: 2.97 px parallax = 64% of a disk radius). · Evidence: TSC/BUILD
+    exit 0; Node alignment 0.000 px (gate ≤ 0.25), both radii 4.635 px
+    from the true 232,700 m; browser R3 sym 47.69% → 22.22% of a 90-px
+    disk (aim fixed; residual rasterization/shading phase noise routed
+    F32, do-not-patch honored). · Source: Lead ruling round 4 item 3 F31.
+
+59. 2026-10-17 · 1D/tools (E-1; NO 1D harness/spec/config change) ·
+    game/tools/diag-m1d-dive.mjs (extended), game/tools/diag-m1f-details
+    .mjs (DIAG_PAGE parameter) · E-1 evidence probes: the dive probe now
+    reports the WebGL UNMASKED_RENDERER string and mean FPS (rAF counter)
+    and accepts DIAG_CHROME_ARGS for a hardware-accelerated session
+    WITHOUT touching the pinned playwright config (E-1 forbids config
+    edits). RESULTS: config default = SwiftShader (software) 19.8 FPS on
+    ?page=m1d — the ship deterministically misses grounding (4/4 runs);
+    --use-angle=vulkan = ANGLE (AMD Radeon Graphics (RADV RENOIR)) 59.8
+    FPS — the ship GROUNDS before the 45 s cap (approved-run behavior).
+    The machine HAS a GPU; the pinned config cannot reach it headless.
+    m1d NOT passed in the full regression (pinned config) — environment
+    classification stands, no code change anywhere (1D harness, e2e
+    specs, config, 1D code all untouched). User one-liner: cd game &&
+    npx playwright test (on a machine whose Chrome defaults to hardware
+    WebGL). FPS backlog note recorded in STATE.md (do NOT fix). ·
+    Read-only diag tooling, user-pre-authorized 2026-10-15. · Evidence:
+    M1F.md §11.3. · Source: Lead ruling round 4 item 3 E-1.
+
+60. 2026-10-17 · 1F/bookkeeping · notes/STATE.md · B-2 APPLIED: Approval
+    Ledger rows — F30 APPROVED, F31 APPROVED, E-1 RULED, F25e/F29a/F29b
+    RESOLVED-BY F30/F31, "user delegated F25e/F29/m1d to Lead
+    (2026-10-17)"; ANCHOR → bbeb4f4; 1D FPS backlog note section added
+    (do-NOT-fix, deferred fixed-step review); NEXT ACTION = await Lead
+    ruling on F30x/F32/E-1; session row 9. · Lead instruction item 3 B-2.
+    · Evidence: STATE.md. · Source: Lead ruling round 4 item 3 B-2.

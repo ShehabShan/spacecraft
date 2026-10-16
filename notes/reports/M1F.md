@@ -705,3 +705,205 @@ AWAITING LEAD RULING (§8.7).** F27/F28 vindicated in Node and browser;
 F25d applied and resolved to branch (iii) per its own conditional. On the
 next ruling: apply, re-run the 1F gate + full 1A–1E regression, update
 this report, commit + push, stop at the approval gate. 1G not started.
+
+---
+
+# 11. ROUND 4 — F30 node-first gate FAILED → F30x routed; F31 applied (R3 improved, routed F32); E-1 ruled (no code change) (2026-10-17)
+
+Round-4 execution order honored: F30's Node gate ran BEFORE any harness
+edit, failed its own proceed conditions, and the F30 harness edit was NOT
+applied (per the ruling's "Otherwise, STOP after committing the diag, and
+route F30x"). F31 and E-1 are unconditional rulings and were executed.
+Commits: 5c6336b (F30 diag + route), 20c8a5e (F31 + probe), plus the
+report/ledger commits.
+
+## 11.1 F30 — Node-first gate: FAIL → F30x (raw numbers)
+
+diag-m1f-core.mjs was rewritten to mirror corridorFor / spawnEligible /
+findSpawn VERBATIM (as they would land in the harness) and report every
+ruled number. Findings:
+
+- **Candidates evaluated: 24,000** (the loop never breaks because no
+  candidate is eligible). **Eligibility lazily checked: all 24,000** —
+  with no eligible candidate, `bestScore` never improves, so the lazy
+  condition `score < bestScore` fires for every scored candidate.
+- **pass(1) = 0.** Not ONE candidate in the jitter domain has a ≤ 40°
+  corridor over 2,600 m. The domain is ±0.02–0.12 rad of direction-space
+  jitter around the base — an arc patch of ~±160 m on a 1,364.5 m moon —
+  and every direction in it hits > 65° terrain within the corridor
+  horizon (the old spawn's own best was 67.5°; its neighbours are the
+  same mountains).
+- **pass(1)+(2) = 0.** No candidate ever replaces best.
+- **Chosen candidate: NONE** (index −1). The harness fallback `best =
+  base` would ship: dir (0.42311, 0.00000, 0.90608), local slope 12.3°,
+  Earth elevation exactly **15.00°** (the canon intent — the old spawn
+  had drifted to 8.67°), but corridor az 150° @ **65.7°** and **LOS
+  FAIL** (min margin **−10.6 m at f = 0.025** — the straddle pose itself
+  ~10 m underground at that spot).
+- **findSpawn boot cost: 32,078 ms** (gate ≤ 2,000 ms; 16× over) — a
+  direct consequence of 24,000 lazy predicate calls.
+- Sun elevation: post-warmup **+29.9° ACTIVE**, suite pose **−2.9°
+  ACTIVE** (above the −(θ+0.03) cull line) — these two gate conditions
+  PASS. Fallback walk: 0 crossings in 600 sim s; locals 656.3 ≤ 1,024;
+  996.5 m path; 788.2 m net. Angular distance old spawn → fallback:
+  6.661°.
+- **Gate verdict: FAIL** (eligible-exists ✗, ≥2 crossings ✗, cost ✗;
+  locals ✓, Sun-at-both-poses ✓✓).
+
+**F30x route.** The predicates cannot find what the domain does not
+contain: within F30's constraints (no jitter widening, no new seed, no
+SAT_B retarget, no threshold change) there is NO eligible spawn, so the
+harness edit cannot proceed. Raw numbers above. Options that require a
+new Lead decision: (a) widen the jitter domain (F30 explicitly forbade
+this — needs a new ruling); (b) retarget SAT_B to a point the eligible
+set can see; (c) lengthen LIVE_SECONDS (gate infrastructure); (d) accept
+the corridor being slow (relax rebases — a gate term, needs a ruling);
+(e) keep F30's code shape with a different seed (forbidden within F30).
+Note (a)+(b) compose naturally: a wider jitter domain plus the existing
+F30 predicates would find a genuinely eligible spawn — the predicates
+themselves are sound; the domain is the binding constraint.
+
+## 11.2 F31 — applied and verified; R3 improved but still failing → F32
+
+Exact diff (harness): the probe impostor feed now computes, per probe,
+the f64 vector from the camera to the mesh's actual position
+(`PROBE_DIR·d − o − pose`), and feeds `dir = v/|v|`, `θ = asin(min(1,
+R/|v|))`, `dist = |v|` to sky.setBody; the R3 silhouette block aims the
+lookAt at the probe's actual position and centres the window on the same
+observer-relative direction. Untouched as ruled: the dA/dB drive, all
+hysteresis/alpha/fade paths, the mesh placement, R3 thresholds and the
+±80 px window, impostorMath.ts. TSC_EXIT=0, BUILD_EXIT=0 (unpiped).
+
+Node verification (diag-m1f-r2.mjs against the REAL edited harness):
+- Four poses dead-center (640.00/360.00, behind=false, 0.000 px) — F27
+  intact.
+- **F31 alignment: mesh centre (640.00, 360.00) vs impostor centre
+  (640.00, 360.00) → offset 0.000 px (gate ≤ 0.25 px)**; both disk
+  radii 4.635 px, now computed from the TRUE distance (232,700 m).
+- Round-3 record preserved for the ledger: pre-F31 parallax 2.97 px =
+  64% of a disk radius.
+
+Browser gate: badges ["PASS","PASS","FAIL","PASS","FAIL"].
+- R2 PASS (1,460 px / 105.5%, centre 0.71 px) and R4 PASS (heaps 0/0)
+  — F27/F28 still vindicated; F31 did not disturb them.
+- **R3: silhouette 47.69% of a 130-px disk → 22.22% of a 90-px disk.**
+  F31 fixed the aim (totA dropped 130 → 90: the window now contains just
+  the probe disk; centres aligned to 0.000 px) — all other R3 clauses
+  stay green (21 flips, 0 holes, 0 doubles, 0.14/km, live trace 1,588
+  frames 0 holes crossed both edges) — but sym-diff is still > 3%.
+- R5: 0 origin shifts (the F30x consequence) + diffMid 500 → **495**
+  (same occlusion, ±5 bytes from the changed probe staging); diffNear 0;
+  locals 372; geo constant 54; sunJump 0.0 mm (vacuous).
+
+**F32 route (raw numbers; do-not-patch honored).** The residual
+22.22% ≈ 20 differing pixels of a 90-px disk (radius ~4.6 px at 232.7
+km, 599.14 px/rad). Decomposition:
+1. The suite's A/B target is `samples: 0` (canon); alpha-to-coverage is
+   therefore a no-op, so the impostor writes FULL RGB through its ~0.66
+   px analytic AA band out to cov ≈ 0.001 — its rendered disk is ~0.33
+   px LARGER in radius than the mesh's rasterized silhouette.
+2. Hard-edge rasterization phase noise: a 96-gon polygon silhouette vs
+   the impostor's analytic shader circle, concentric to < 0.01 px but
+   sampled by the same pixel grid at ~29 edge pixels — sub-pixel phase
+   alone flips a sizable fraction of them.
+3. The brightness threshold (> 45) sits at a shading isophote
+   (lam·limb ≈ 0.18) near the limb, where the mesh's interpolated
+   per-vertex normals and the impostor's analytic normals disagree by
+   ~1 px locally.
+The shared angular law is exact (sizes agree to 0.4%, centres 0.000 px);
+the clause at this disk size measures rasterization/shading phase noise,
+not representation fidelity. Options for the Lead: MSAA on the A/B
+target (samples > 0 — harness-local), a larger silhouette fixture
+distance (the error fraction scales ~1/radius), a 1-px-dilated
+comparison set, or comparing alpha/coverage instead of RGB brightness.
+None applied (do-not-patch).
+
+## 11.3 E-1 — m1d environment evidence (no code change, honored)
+
+- The machine HAS a GPU: AMD Radeon Vega (Cezanne, RADV RENOIR),
+  /dev/dri present, Mesa radeon Vulkan ICD installed.
+- **The pinned playwright config's headless Chrome launches WITHOUT GPU
+  args and falls back to SwiftShader** (software): UNMASKED_RENDERER =
+  `ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero)
+  (0x0000C0DE)), SwiftShader driver)`; mean FPS on ?page=m1d = **19.8**
+  (337 frames). This degrades EVERY frame-time-sensitive row and is the
+  root cause of the whole session's slowness (1F live trace 1,588–1,603
+  frames vs 7,201 in round 2; 1A row 5's new failure, below).
+- **A hardware-accelerated session IS reachable with one launch arg**
+  (tested via the diag probe's DIAG_CHROME_ARGS — the config itself was
+  NOT touched, per E-1): `--use-angle=vulkan` → UNMASKED_RENDERER =
+  `ANGLE (AMD, Vulkan 1.4.318 (AMD Radeon Graphics (RADV RENOIR)
+  (0x00001638)), radv)`; mean FPS = **59.8** (506 frames); in that
+  session the dive ship GROUNDS before the 45 s cap (dive→cruise at
+  ~18.5 sim-s — the approved-run behavior), while under SwiftShader it
+  deterministically misses grounding (4/4 runs this session).
+- notes/reports/M1D.md records no renderer/FPS figures for the approved
+  run — nothing further to compare.
+- Full regression under the pinned config: m1d FAILED row 2 again
+  (`v@1000m=264.7 maxDv=10.30 rebases=7 recv=43 geo=151 burnHeap=0B`) —
+  NOT classified as passed.
+- Hardware acceleration is therefore AVAILABLE on this machine but
+  UNREACHABLE by the pinned config in headless mode. Exact one-line
+  command for the user's machine: `cd
+  /home/md-shehab-sarar/Websites/spacecraft/game && npx playwright test`
+  — on a machine whose Chrome defaults to hardware WebGL this passes as
+  pinned. On THIS machine the config would need a one-line addition
+  (e.g. `use: { launchOptions: { args: ['--use-angle=vulkan'] } }`) —
+  requiring a Lead authorization since E-1 forbids config edits; NOT
+  applied.
+- Backlog note recorded in STATE.md (do NOT fix): the 1D dive integrates
+  variable frame deltas against a wall-scaled 45 s cap, so it is
+  FPS-sensitive; a fixed-step review is deferred to a future milestone,
+  Lead's call.
+
+## 11.4 1A row 5 — new environment-soft failure this round (no code change)
+
+The full regression also tripped 1A row 5 (frame-time stability):
+`worst 44.20 ms across 148 measured frames; worst rebase-frame 33.80 ms
+— origin shifts cost no stutter frame`. The brief itself marks row 5
+machine-dependent ("if it alone fails under CI load, report it as
+environment-soft with evidence; do not change code to make it pass").
+All other 1A rows pass (P.x 10,000.000; locals 1,022.667; 9 rebases; Δ
+multiples of 256). SwiftShader explains it; no code change.
+
+## 11.5 Gate + regression — verbatim
+
+Gate (solo, budget 240 s):
+```
+[m1f gate] acceptance line: [Milestone1F] acceptance FAILED
+[m1f gate] badges: ["PASS","PASS","FAIL","PASS","FAIL"]
+  PLAYWRIGHT_EXIT=1
+```
+
+Full regression (same run, pinned config):
+```
+[m1a] ["PASS","PASS","PASS","PASS","FAIL"]   (row 5 frame time — env-soft)
+[m1b] PASSED in 34.5 ms — ["PASS","PASS","PASS","PASS","PASS"]
+[m1c] PASSED — geo=145 — ["PASS","PASS","PASS","PASS"]
+[m1d] FAILED — v@1000m=264.7 maxDv=10.30 rebases=7 recv=43 geo=151 burnHeap=0B — ["PASS","FAIL","PASS","PASS","PASS"]
+[m1e] PASSED — ["PASS","PASS","PASS","PASS","PASS","PASS"]
+[m1f] FAILED — ["PASS","PASS","FAIL","PASS","FAIL"]
+  3 failed
+  3 passed (4.8m)
+PLAYWRIGHT_EXIT=1
+```
+
+## 11.6 Vindication ledger (round 4)
+
+F27 ✓ (R2 PASS again: 105.5% / 0.71 px) · F28 ✓ (R4 PASS again: heaps
+0/0) · F30 predicates ✓ sound but their domain is empty → F30x routed
+with the gate-fail numbers (harness edit NOT applied, as ordered) · F31 ✓
+(Node alignment 0.000 px ≤ 0.25; R3 sym 47.69% → 22.22%; residual routed
+F32) · E-1 ✓ evidence complete (SwiftShader 19.8 FPS vs RADV 59.8 FPS;
+hardware grounds the ship; config untouched) · F25e/F29a/F29b resolved-
+by F30/F31 per the ruling (F30x outstanding for F29b/F25e's spawn fix).
+
+## Status
+
+**GATE FAILED (round 4) · ROUTED (F30x, F32) · E-1 EVIDENCE COMPLETE ·
+AWAITING LEAD RULING (§8.7).** The F30 Node gate failed inside its own
+constraints (no eligible spawn exists in the jitter domain) and the
+harness was not edited; F31 is applied and vindicated in Node, with the
+residual R3 silhouette noise routed F32; E-1 produced the renderer/FPS
+evidence and the hardware-acceleration path without touching the pinned
+config. NEXT ACTION: await Lead ruling on F30x/F32/E-1. 1G not started.

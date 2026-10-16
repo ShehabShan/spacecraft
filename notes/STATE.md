@@ -1,23 +1,29 @@
 # SOLARIS — ASSEMBLY STATE (see AGENT_BRIEF.md §10)
 
 ## NEXT ACTION
-AWAITING LEAD RULING (round 3) on the M1F routes F25e/F29 (full evidence
-in notes/reports/M1F.md §10): F25e corridor (F25d applied as ruled — full
-2,600 m horizon shows EVERY azimuth mountainous; best az 345° @ 67.5° >
-40° gate; 600 s sim 0 crossings, locals 371.8; no selection-input change
-can meet the gate at this spawn — options: retarget SAT_B / rebases >= 1 /
-longer LIVE_SECONDS / Lead's design); F29 (the now-AIMED renders expose
-two real-geometry failures: R3 silhouette 47.69% sym-diff — Node: mesh
-centre 637.09/360.61 vs impostor 640/360 = 2.97 px parallax vs 4.63/4.65
-px disk radii, the author's sub-pixel claim assumed a bubble-center eye;
-R5 straddler diffMid = 500 bytes — Node: camera→SAT_B ray blocked, worst
-clearance −4.0 m at 20% along; Near-band hill occludes SAT_B in auto but
-is clipped by Mid's 2,000 m near plane). PLUS one environment-soft note:
-m1d row 2 (diveGrounded) failed this session on FPS-dependent dive
-profiling (all numbers match the approved gate to the digit; 1D files
-byte-identical to e830759; no code changed — routed with options). On
-ruling: apply → Node verify → 1F gate (240 s) + full 1A–1E regression →
-update notes/reports/M1F.md → commit + push → STOP at the approval gate.
+AWAITING LEAD RULING on the round-4 routes F30x/F32/E-1 (full evidence in
+notes/reports/M1F.md §11): F30x — the F30 Node-first gate FAILED inside
+its own constraints (24,000 candidates, pass(1)=0: the ±0.12 rad ≈ ±160 m
+jitter patch contains NO ≤40° corridor over 2,600 m; pass(1)+(2)=0;
+fallback=base with LOS fail −10.6 m; findSpawn cost 32,078 ms) — the F30
+harness edit was NOT applied per the ruling's own stop; the predicates
+are sound but the jitter domain is the binding constraint (options:
+widen jitter / retarget SAT_B / lengthen LIVE_SECONDS / relax rebases /
+new seed — all need a ruling). F32 — F31 applied + vindicated (Node
+alignment 0.000 px; R3 sym 47.69%→22.22% of a 90-px disk) but the
+residual is rasterization/shading phase noise on a 4.6-px disk (A2C
+no-op on the samples:0 A/B target + hard-edge phase + limb isophote);
+options: MSAA on the A/B target / larger fixture distance / dilated
+comparison / cov-based metric. E-1 — evidence complete: the machine HAS
+a GPU (RADV RENOIR) but the pinned config's headless Chrome falls back
+to SwiftShader (19.8 FPS vs 59.8 with --use-angle=vulkan via diag-only
+args; the ship GROUNDS under hardware, deterministically misses under
+SwiftShader); config untouched per E-1; m1d NOT passed; one-line user
+command on record; config-arg option needs Lead authorization. 1A row 5
+also tripped this round (frame-time; env-soft per the brief's own note).
+On ruling: apply → Node verify → 1F gate (240 s) + full 1A–1F regression
+→ update notes/reports/M1F.md → commit + push → STOP at the approval
+gate.
 
 ## MILESTONE LEDGER
 | MS | Status | Evidence |
@@ -28,47 +34,52 @@ update notes/reports/M1F.md → commit + push → STOP at the approval gate.
 | 1C | APPROVED | Gate GREEN 4/4 + 1A/1B regression 5/5 ("3 passed (1.2m)"); F10a/F10b verified against all four ruling requirements; final commit a86ce94; report: notes/reports/M1C.md; Lead approval 2026-10-15 |
 | 1D | APPROVED | Commit e830759; gate GREEN 5/5 + full 1A/1B/1C regression green ("4 passed (1.5m)"); F11/F12 applied as ruled; erratum + standing rule adopted; authorship verified: v@1000m 264.7 matches corrected derivation, locals max 1022.8 matches 1A structural prediction (1022.67), geo 151 = F12-predicted constant count; report: notes/reports/M1D.md; Lead approval 2026-10-16 |
 | 1E | APPROVED | Commit 4c352dd (gate-green report + ledgers); FINAL: `[Milestone1E] acceptance PASSED` 6/6 (coriolis 0.75 cm west/1.02 s/1-tick plant; vehicleErr 0.0e+0; deorbit landed 22,307; face-walk 0.82° corner/2 changes; slope rows clean, minAGL n/a) + full 1A/1B/1C/1D regression ("5 passed (1.9m)", PLAYWRIGHT_EXIT=0); all nine rulings applied + vindicated (F14 core #1 7947369; F15–F17+$-strip e689d4c; F18 core #2 37a4c9e; F19/F20 7d77e52); report: notes/reports/M1E.md; Lead approval 2026-10-16 |
-| 1F | GATE RUN ×3 — FAILED, ROUTED (round 3) | Round 1: extraction 4/4 + F3/F21 (5a17673); gate FAILED 1/5 → F22–F26+D-1/D-2 routed (3c79440). Round 2: ruling applied (0b2fae8); gate FAILED ["PASS","FAIL","PASS","FAIL","FAIL"] → F27/F28/F25c routed. Round 3 (2026-10-17): ruling applied EXACTLY (a6de872 + B-1 74875e5 + probes 1c8a2b8/1d76fd0); TSC/BUILD exit 0; Node FIRST: 4/4 poses dead-center through the REAL edited lookAtQuatInto (F27 ✓), Sun r=20.95 px ideal 1,379 px; F25d branch (iii) per its own Node conditional (best az 345° @ 67.5° > 40°; 600 s sim 0 crossings, locals 371.8); third gate ["PASS","PASS","FAIL","PASS","FAIL"] — R2 PASS (footprint 105.5%, center 0.71 px; F27 VINDICATED), R4 PASS (heaps 0/0; F28 VINDICATED), R3 FAIL on the now-real silhouette clause (47.69% > 3%), R5 FAIL 0 shifts + NEW diffMid=500; regression 1A/1B/1C/1E GREEN, m1d row-2 ENV-SOFT (FPS-dependent dive profile; numbers match approved gate; files byte-identical to e830759; no code change); report: notes/reports/M1F.md §10; PARKED AT RULING GATE round 3 (routes F25e/F29) |
+| 1F | GATE RUN ×4 — FAILED, ROUTED (round 4) | Rounds 1–3 as below (extraction+F3/F21 5a17673; F22–F26+D-1/D-2 0b2fae8; F27/F28/F25d a6de872 — F27/F28 vindicated round 3). Round 4 (2026-10-17): F30 Node-first gate FAILED inside its own constraints → F30x routed, harness NOT edited (5c6336b); F31 applied + vindicated (Node alignment 0.000 px ≤ 0.25; browser R3 sym 47.69%→22.22% of a 90-px disk) → residual routed F32 (20c8a5e); E-1 evidence complete (SwiftShader 19.8 FPS vs RADV 59.8; ship grounds under hardware; config untouched); gate ["PASS","PASS","FAIL","PASS","FAIL"]; regression 1B/1C/1E green, 1A row-5 + 1D row-2 env-soft (SwiftShader), report: notes/reports/M1F.md §11; PARKED AT RULING GATE round 4 (F30x/F32/E-1) |
 | 1G | NOT STARTED | F2 + hand-applied KCC patch + MANDATORY full 1E re-run; re-grep the §3.5 patch against F14/F18's moved/edited regions |
 
 ## IN-FLIGHT
-Milestone 1F — PARKED AT THE RULING GATE, ROUND 3 (2026-10-17). Round-3
-ruling (F27/F28/F25d + B-1) applied exactly and verified; F27 and F28
-VINDICATED in Node and browser (R2 PASS: Sun footprint 105.5%, centre
-0.71 px; R4 PASS: heaps 0/0). F25d's own conditional resolved to branch
-(iii): with the full 2,600 m horizon every azimuth is mountainous (best
-az 345° @ 67.5°), the 600 s sim shows 0 crossings (locals 371.8, path
-934.5 m, net 118.8 m; straight line to SAT_B max 80.6° at ~863 m) — the
-edit stays committed, gate run anyway, routed as F25e. TWO NEW ROUTES
-awaiting the Lead (details + verbatim evidence in notes/reports/M1F.md
-§10.4):
-- F25e: corridor — no azimuth at this spawn meets the 40° gate over the
-  full walk; no selection-input change can produce ≥2 crossings within
-  LIVE_SECONDS=120. Options: retarget SAT_B / rebases >= 1 / longer
-  LIVE_SECONDS / Lead's design.
-- F29: the now-aimed A/B clauses fail on real geometry. R3 silhouette:
-  mesh centre projects (637.09, 360.61) vs impostor (640.00, 360.00) —
-  2.97 px parallax vs 4.63/4.65 px disk radii (the mesh is placed
-  bubble-center-relative, the impostor staged along the fixed PROBE_DIR
-  from the observer 1,348.8 m off-center; the author's sub-pixel claim
-  assumed a bubble-center eye) → 47.69% sym-diff. R5 straddler: diffMid
-  = 500 bytes (diffNear 0) — the camera→SAT_B ray is blocked (worst
-  clearance −4.0 m at 20% along); the Near-band occluder is clipped by
-  Mid's 2,000 m near plane, so auto ≈ forced-Near ≠ forced-Mid. The 500
-  bytes ≈ 125 px are also the SAT_B framing evidence (renders
-  dead-centre, occluded).
-PLUS environment-soft note (not a 1F route): m1d row 2 failed this
-session on diveGrounded — the variable-step dive integrates real frame
-deltas against a wall-scaled 45 s cap, so the profile is FPS-dependent;
-this host's new Chrome renders slow ReadPixels frames (1F live trace
-1,603 frames vs 7,201 in round 2). All printed 1D numbers match the
-approved gate to the digit (264.7/10.30/8/151/0B; min AGL 65.57 vs
-approved 3.38/LANDED); 1D files byte-identical to e830759; deterministic
-across two runs; NO code changed (canon row; §6). Options routed: re-run
-on a faster/quieter machine, or a Lead ruling on the row's FPS
-sensitivity.
-R5's sunJump clause stays vacuous until crossings exist (F21a measurement
+Milestone 1F — PARKED AT THE RULING GATE, ROUND 4 (2026-10-17). Round-4
+ruling executed in order; THREE routes await the Lead (details + verbatim
+evidence in notes/reports/M1F.md §11):
+- F30x: the Node-first gate failed inside F30's own constraints — the
+  spawn search evaluated 24,000 candidates, found ZERO with a ≤40°
+  corridor over 2,600 m (the ±0.12 rad ≈ ±160 m jitter patch is entirely
+  mountainous; pass(1)=0, pass(1)+(2)=0), so nothing replaces best (the
+  lazy check fires on all 24,000 → findSpawn cost 32,078 ms, 16× over
+  budget), and the `base` fallback has LOS fail (−10.6 m at f=0.025).
+  The F30 harness edit was NOT applied per the ruling's stop. The
+  predicates are sound; the jitter DOMAIN is the binding constraint.
+  Options needing a ruling: widen jitter (forbidden within F30) —
+  naturally composed with retargeting SAT_B; lengthen LIVE_SECONDS;
+  relax rebases (gate term); new seed (forbidden within F30).
+- F32: F31 APPLIED (probe impostors fed the mesh's actual
+  observer-relative f64 truth; R3 aims at the true position) and
+  vindicated in Node (alignment 0.000 px ≤ 0.25; both radii 4.635 px
+  from the true distance). Browser: R3 sym 47.69% of 130 px → 22.22% of
+  90 px — the aim fix worked (window now holds just the probe disk) but
+  the residual is rasterization/shading phase noise on a 4.6-px disk:
+  A2C is a no-op on the samples:0 A/B target (impostor ~0.33 px fatter),
+  hard-edge polygon-vs-circle phase, and the >45 limb isophote. All
+  other R3 clauses green. Options: MSAA on the A/B target / larger
+  fixture distance / 1-px dilated comparison / cov-based metric.
+- E-1 (RULED, no code change): the machine HAS a GPU (AMD RADV RENOIR)
+  but the pinned config's headless Chrome falls back to SwiftShader
+  (19.8 FPS; ship deterministically misses grounding) — a diag-only
+  `--use-angle=vulkan` launch reaches the GPU (59.8 FPS; ship GROUNDS).
+  Config untouched per E-1; m1d NOT passed; user one-liner on record;
+  the config-arg option needs Lead authorization.
+Environment-soft this round (SwiftShader): 1A row 5 frame-time (worst
+44.20 ms; brief's own machine-dependent row) — no code change.
+R5's sunJump stays vacuous until crossings exist (F21a measurement
 live). 1E is closed: APPROVED at 4c352dd.
+
+## 1D FPS BACKLOG (Lead-ordered note — do NOT fix now)
+The 1D dive integrates `flight.update(dt·4, 6)` with dt = REAL frame
+delta against a wall-scaled `simElapsed > 45` cap, so the dive outcome is
+frame-rate-sensitive (variable-step profile vs a wall clock). Under
+hardware WebGL the ship lands as approved; under SwiftShader it misses
+grounding by ~60 m. A fixed-step review is deferred to a future
+milestone, Lead's call. (Evidence: notes/reports/M1F.md §10.5, §11.3.)
 
 ## APPROVAL LEDGER (settled — never re-ask)
 | Date | Decision |
@@ -125,6 +136,9 @@ live). 1E is closed: APPROVED at 4c352dd.
 | 2026-10-16 | ROUND-2 ROUTES PENDING LEAD: F27 lookAt convention mismatch (quatFromFrameInto is an X-forward frame quat; lookAtQuatInto poses aim the camera ~90° off-target while projectDirectionInto uses −Z; Sun renders opposite the ±42 px window — proposed one-line fix quatFromFrameInto(right, up) VERIFIED dead-center in Node); F28 identityOk second term bodies.length === 11 structurally false (capacity-24 pool; active = 9); F25c corridor gate failure (0 crossings measured, numbers on record) |
 | 2026-10-17 | ROUND-2 RULING (Lead): diagnosis ACCEPTED as correct. F27 APPROVED — lookAtQuatInto only: quatFromFrameInto(fwd,up) → (right,up) + one-line comment "three.js camera basis: X=right, Y=up, −Z=forward (F27)"; sphericalFrame/projectDirectionInto/all four call sites/thresholds untouched. F28 APPROVED — identityOk second term → sky.bodies.length === IMPOSTOR_CAPACITY (imported from SkyImpostorPool, no literal 24); other canary terms + heap bounds untouched. F25d APPROVED (user decision, option A of the F25c escalation) — corridor scan widened to 2,600 m (ARCS extended to 16 arcs), comment updated, diag-m1f-core.mjs mirrored; SAT_B/LIVE_SECONDS/rebases/40° gate/R5 terms all untouched; conditional branch decided in Node at step 4b: (i) slope ≤ 40° → proceed; (ii) slope > 40° but ≥ 2 crossings within LIVE_SECONDS with locals ≤ 1,024 → proceed; (iii) otherwise keep the edit, run the gate anyway, route F25e. B-1 bookkeeping ordered (ledger commit note + ANCHOR → 0b2fae8 + this ledger). Expected gate: [PASS,PASS,PASS,PASS,PASS] if 4b predicts ≥ 2 crossings. |
 | 2026-10-17 | ROUND-3 EXECUTION COMPLETE: F27/F28/F25d/B-1 applied exactly (a6de872, 74875e5); TSC/BUILD exit 0 unpiped; Node 4b — F27 verified through the REAL edited function (4/4 poses dead-center), F25d conditional resolved to branch (iii) per the ruling's own procedure (best az 345° @ 67.5° > 40°; 600 s sim 0 crossings, locals 371.8 ≤ 1,024) → gate + regression run anyway as ruled. Third gate ["PASS","PASS","FAIL","PASS","FAIL"]: R2 PASS (F27 VINDICATED — footprint 105.5%, centre 0.71 px), R4 PASS (F28 VINDICATED — heaps 0/0), R3 FAIL on the now-real silhouette clause (47.69% > 3%), R5 FAIL (0 shifts + diffMid=500). NEW ROUTES PENDING LEAD: F25e (corridor unmeetable at this spawn over the full horizon — options unchanged) and F29 (R3 parallax: mesh centre 637.09/360.61 vs impostor 640/360, 2.97 px vs 4.63/4.65 px radii, author assumed bubble-center eye; R5 straddle ray blocked, worst clearance −4.0 m at 20% — Near-band occluder clipped by Mid's 2,000 m plane explains diffNear 0 / diffMid 500). m1d regression row-2 failure ENVIRONMENT-SOFT per M1A row-5 precedent: variable-step dive vs wall-scaled cap is FPS-dependent; all numbers match the approved gate (264.7/10.30/8/151/0B); 1D files byte-identical to e830759; deterministic; NO code changed; options routed (faster-machine re-run / ruling on FPS sensitivity). |
+| 2026-10-17 | USER DELEGATION: F25e, F29 and the m1d decision delegated to the Lead (2026-10-17); round-4 rulings FINAL for the round. |
+| 2026-10-17 | ROUND-4 RULING (Lead): F30 APPROVED (spawn-site eligibility: corridorFor extraction + spawnEligible predicate + gated findSpawn acceptance, Node-first gate, diag mirror); F31 APPROVED (probe impostor fed the mesh's actual observer-relative f64 truth; R3 aimed at the true position); E-1 RULED (m1d environment — NO code change, renderer/FPS evidence, hardware re-run attempt, user one-liner if unavailable, FPS backlog note); F25e/F29a/F29b RESOLVED-BY F30/F31; B-2 bookkeeping ordered (ANCHOR → bbeb4f4). |
+| 2026-10-17 | ROUND-4 EXECUTION COMPLETE: F30 Node-first gate run BEFORE any harness edit — FAILED its own proceed conditions (24,000 candidates; lazy-checked all (nothing eligible ever improves bestScore); pass(1)=0 — no ≤40° corridor over 2,600 m exists within the ±0.12 rad ≈ ±160 m jitter patch; pass(1)+(2)=0; fallback=base: Earth elev exactly 15.00° but corridor az 150° @ 65.7° and LOS fail −10.6 m at f=0.025; findSpawn cost 32,078 ms = 16× budget; Sun ACTIVE both poses; fallback walk 0 crossings) → F30x ROUTED, harness NOT edited per the ruling's stop (5c6336b). F31 APPLIED (20c8a5e) + TSC/BUILD exit 0 + Node vindicated (alignment 0.000 px ≤ 0.25; both radii 4.635 px from true distance; four poses dead-center) + browser R3 sym 47.69%→22.22% of a 90-px disk → residual routed F32 (A2C no-op on samples:0 A/B target ≈ +0.33 px impostor radius; hard-edge phase noise; limb isophote). E-1 evidence: SwiftShader (config default) 19.8 FPS vs RADV RENOIR (--use-angle=vulkan, diag-only) 59.8 FPS — ship GROUNDS under hardware, deterministically misses under SwiftShader; config untouched; m1d NOT passed; user one-liner recorded. Fourth gate ["PASS","PASS","FAIL","PASS","FAIL"]; regression 1B/1C/1E green + 1A row-5 env-soft (frame time 44.20 ms worst; brief's own machine-dependent row) + 1D row-2 env-soft; 3 failed · 3 passed (4.8m). |
 
 ## SESSION LOG
 | # | Date | Goal | Outcome | Handoff note |
@@ -137,15 +151,16 @@ live). 1E is closed: APPROVED at 4c352dd.
 | 6 | 2026-10-16 | Prior-session CLOSURE ROW (appended by session 6 per §10.2 + Lead directive) | Session 5 ended at the M1E approval gate; its handoff note above was committed in 4c352dd, but no dedicated closure row existed at session end — the §10.2 gap is formal, noted in the Approval Ledger, closed by this row. M1E subsequently APPROVED by directive 2026-10-16 | Resumed by session 6 (fresh bootstrap, reconciliation clean, canon byte-identical to ea112ec) |
 | 7 | 2026-10-16 | M1E approval bookkeeping + M1F execution (two ruling rounds) | Bootstrap: directive items 1/2/6 already recorded in bbbbb47; ONE drift — prior session's uncommitted partial 1F extraction (re-extracted verbatim, nothing unique lost). Round 1: extraction 4/4 (0 parenthetical; layeredCameras silent; impostorMath PURE), F3a/c/b+F21a + F21b applied, 5 §6 strict-TS fixes, ?page=m1f wired, TSC/BUILD exit 0 (5a17673); gate FAILED 1/5 → F22–F26+D-1/D-2 root-caused (Node+browser probes) and routed (3c79440); regression 1A–1E GREEN. Round 2 (Lead ruling): all seven items applied exactly; Node verified FIRST (corridor 42.2° > 40° gate → measured 0 crossings; Sun +47.7° ACTIVE, footprint ideal ≈1,381 px); second gate FAILED ["PASS","FAIL","PASS","FAIL","FAIL"] — R3 PASS + F22/F23/F26/D-1/D-2 vindicated; THREE NEW ROUTES: F27 (lookAt X-forward-frame vs −Z convention — Sun renders opposite the ±42 px window; one-line fix VERIFIED in Node), F28 (identityOk bodies.length === 11 vs capacity-24 pool), F25c (corridor gate stop per the ruling's own conditional); regression 1A–1E GREEN again; report §9 + ledgers finalized | M1F awaits the Lead's round-2 ruling on F27/F28/F25c (evidence in notes/reports/M1F.md §9.3). On authorization: apply → Node verify → full gate + regression → report → commit + push → STOP at the approval gate. 1G after that. |
 | 8 | 2026-10-17 | M1F round-3 ruling execution | Preconditions clean (HEAD 0b2fae8 = origin, canon diff ea112ec empty). Environment repairs only: npm ci (node_modules absent), Chrome installed by the user mid-session. F27/F28/F25d applied exactly + B-1 (a6de872, 74875e5); TSC/BUILD exit 0; diag-m1f-r2 rewritten to execute the REAL edited lookAtQuatInto (verbatim runtime extract) — 4/4 poses dead-center; diag-m1f-core instrumented → F25d branch (iii) (az 345° @ 67.5°; 0 crossings; locals 371.8; straight line to SAT_B 80.6°); third gate ["PASS","PASS","FAIL","PASS","FAIL"] — F27/F28 VINDICATED (R2 footprint 105.5%/0.71 px; R4 heaps 0/0); F29 routed (R3 silhouette 47.69% = 2.97 px parallax vs 4.63 px radii; R5 diffMid 500 = ray blocked, −4.0 m at 20%) + F25e routed; regression 1A/1B/1C/1E GREEN, m1d row-2 ENV-SOFT (diveGrounded; numbers match approved gate; FPS-dependent; no code change; probes diag-m1d-details/dive created); report §10 + CHANGES 51–55 + ledgers | M1F awaits the Lead's round-3 ruling on F25e/F29 + the m1d env-soft decision (evidence in notes/reports/M1F.md §10.4–10.5). On authorization: apply → Node verify → full gate + regression → report → commit + push → STOP at the approval gate. 1G after that. |
+| 9 | 2026-10-17 | M1F round-4 ruling execution | Preconditions clean (bbeb4f4 = origin, canon diff empty). F30 Node-first gate FIRST: FAILED inside its own constraints (24,000 candidates, pass(1)=0 — the jitter patch has no ≤40° corridor; cost 32,078 ms) → F30x routed, harness NOT edited per the ruling's stop; F31 applied + vindicated (Node alignment 0.000 px; browser R3 47.69%→22.22% of 90 px) → residual routed F32; E-1 evidence complete (SwiftShader 19.8 FPS vs RADV 59.8 via diag-only arg; ship grounds under HW; config untouched; m1d not passed); 1A row-5 env-soft this round (44.20 ms worst). Gate ["P","P","F","P","F"]; regression 3 failed · 3 passed (4.8m). Report §11 + CHANGES 57–60 + B-2 ledger + FPS backlog note | M1F awaits the Lead's ruling on F30x/F32/E-1 (evidence: notes/reports/M1F.md §11). On authorization: apply → Node verify → gate + regression → report → commit + push → STOP. 1G after that. |
 
 ## ANCHOR
-0b2fae8 — "M1F/ruling-round-1 APPLIED … parked at ruling gate round 2"
-(the last pushed, Lead-verified state at the 2026-10-17 round-3 ruling;
-branch m1-assembly; chain: ea112ec canon → d849d6b WIP preservation →
-2e409c0 protocol install → df1e04f M1A approval → … → 0b2fae8 M1F round-2
-gate → a6de872 round-3 edits → 74875e5 B-1 → 1c8a2b8/1d76fd0 probes →
-9627eee CHANGES 51–55). This wind-down STATE.md travels in a commit AFTER
-those (a file cannot contain its own commit hash); resolve the exact
-carrier with `git log -1 --format=%H -- notes/STATE.md`. Canon
+bbeb4f4 — "M1F round-3 report + ledgers" (the last pushed, Lead-verified
+state at the 2026-10-17 round-4 ruling; branch m1-assembly; chain:
+ea112ec canon → d849d6b WIP → 2e409c0 protocol → df1e04f M1A → … →
+0b2fae8 round-2 gate → a6de872 round-3 edits → 74875e5 B-1 →
+1c8a2b8/1d76fd0 probes → 9627eee CHANGES → bbeb4f4 round-3 report →
+5c6336b F30 diag/F30x → 20c8a5e F31). This wind-down STATE.md travels in
+a commit AFTER those (a file cannot contain its own commit hash); resolve
+the exact carrier with `git log -1 --format=%H -- notes/STATE.md`. Canon
 (Design_specs/, Milestone/) must remain unchanged from ea112ec —
 verified: git diff ea112ec on both trees is empty.
