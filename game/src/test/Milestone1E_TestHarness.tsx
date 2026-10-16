@@ -780,7 +780,7 @@ function runStateMachine(): TestResult {
   const pl = Math.hypot(P.x, P.y, P.z);
   kcc.teleportAbs(P.x, P.y, P.z, (-30 * P.x) / pl, (-30 * P.y) / pl, (-30 * P.z) / pl);
   let surfaceTick = -1, landed = false;
-  for (let i = 0; i < 20_000; i++) {
+  for (let i = 0; i < 26_000; i++) {   // F19 (Lead ruling 2026-10-16): 20_000 was under the ≈22,400-tick free-fall
     kcc.integrateTick(1 / 60);
     if (surfaceTick < 0 && kcc.mode === 'SURFACE') surfaceTick = i;
     if (kcc.grounded) { landed = true; break; }
@@ -951,6 +951,7 @@ const staticProv = {
 
 
 function runSlopeStep(): TestResult {
+  kcc.resetIntegrityStats();   // F20 (Lead ruling 2026-10-16): measure only this row's window
   const S = suite.slope;
   // Engineered steep field (deterministic; swapped + restored inside this
   // synchronous block — the renderer never samples mid-swap).
@@ -1075,7 +1076,8 @@ function runSlopeStep(): TestResult {
     ok = ok && cliffOk;
     results.push(
       `${cliff.slopeDeg.toFixed(0)}° cliff: net uphill progress ${S.cliffNet.toFixed(2)} m ` +
-      `over 1.5 s of sprint into the face (min AGL ${kcc.integrity.minAGL.toFixed(3)} m — ` +
+      `over 1.5 s of sprint into the face (min AGL ` +
+      `${kcc.integrity.minAGL === Number.POSITIVE_INFINITY ? 'n/a (never airborne)' : kcc.integrity.minAGL.toFixed(3)} m — ` +
       `penetration-free)`);
   } else { ok = false; results.push('cliff site not found'); }
 
