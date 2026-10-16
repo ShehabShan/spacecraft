@@ -502,3 +502,21 @@ the next session's reconciliation handles it but must report the gap.
   by 4.36°) → never registers. Authorial miscount in the 146 estimate; no
   change. Observation routed (optional, not required): worker 1 idle under
   canon's w=0-first queue drain; efficiency artifact only.
+- F11 + F12 AUTHORIZED (Lead ruling 2026-10-15, original-author confirmed):
+  F11 — 1D drag-continuity bound 8 derived from erroneous prose ("~17 g =
+  2.8 m/s/tick"); true physics with the RATIFIED β_q = 3.2e-3: peak entry
+  decel ≈ 620 m/s² ≈ 63 g ≈ 10.2–10.4 m/s per tick at the ρ·v² maximum near
+  2.5–3 km, transiently above a_struct BY DESIGN. Edits: bound 8 → 12 +
+  corrected detail prose. Also corrected on the record: the "+0.2%
+  overshoot" prose was wrong (g at 3R = 1.09 m/s² < entry drag 3.79 — the
+  ship decelerates from tick 1; peak displays 2,000.0). F12 — 1D static
+  shell registered MID-WINDOW (nadir view from 10 km puts it in the
+  frustum; primeAll covered only pool meshes). Edits: shellMesh module
+  const + frustumCulled=false during priming, restored at unprime;
+  geometries constant at 151; 1C's approved 145 NOT retro-changed.
+- ERRATUM RATIFIED + STANDING RULE (Lead ruling 2026-10-15): commit
+  02b313c's "typecheck clean" claim was false (pipe masked tsc's exit); the
+  three strict-TS fixes are ratified as legitimate §6 type-error repairs
+  (runtime-neutral). NEW STANDING RULE: typecheck/build commands must run
+  with UNPIPED exit codes, and any commit message claiming "clean" must be
+  backed by actual exit 0 observed in the transcript.
