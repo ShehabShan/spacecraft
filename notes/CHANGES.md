@@ -547,3 +547,81 @@ Observations (NO change made — recorded for the Lead):
    browser and Node agree number-for-number. · Lead ruling 2026-10-16
    (R1/R2/R3 = F18/F19/F20). · Evidence: notes/reports/M1E.md §3–4. ·
    Source: Lead ruling 2026-10-16; brief §6 (evidence-backed fix path).
+
+## 2026-10-16 — Milestone 1F (extraction + F3 expanded + F21)
+
+42. 2026-10-16 · 1F/step1 · game/src/core/render/impostorMath.ts,
+    game/src/render/SkyImpostorPool.ts, game/src/render/MultiCameraRig.tsx,
+    game/src/test/Milestone1F_TestHarness.tsx · Extracted 4 blocks verbatim
+    (2404 lines: impostorMath 171, SkyImpostorPool 326, MultiCameraRig 217,
+    harness 1690); ZERO parenthetical matches (invariant intact — 1B's
+    SimulationCore remains the only one); the defensive layeredCameras
+    discard did NOT trigger (zero canon matches). PURITY VERIFIED:
+    impostorMath.ts imports ONLY `rotateByQuatConjInto, type Quat` from
+    '../physics/sphericalFrame' — no three/react/rapier (brief §5). DRIFT
+    NOTE: a prior session had extracted these files uncommitted and begun
+    F3 application; its harness copy differed from verbatim canon (hash
+    00d95df3… vs the verbatim 6d56bb0f…; the other three were
+    byte-identical) and was overwritten by the re-run — nothing unique
+    lost (F3's replacement content is fully specified by the directive;
+    re-applied below); no APFS snapshot or backup copy existed. · §8 loop
+    step 1. · Evidence: extraction report + before/after hashes. · Source:
+    brief §4; directive 2026-10-16 item 3.b.
+
+43. 2026-10-16 · 1F/step2 · game/src/test/Milestone1F_TestHarness.tsx ·
+    F3a/F3c/F3b+F21a/F21b applied exactly per the expanded directive:
+    F3a — dead slopeDegAt stub function + its `void slopeDegAt;` line
+    deleted. F3c — terrainNormalInto added to the top-level terrainField
+    import; the require() shim inside slopeFromNormal deleted (F1/F2
+    pattern, real this time). F3b+F21a — `lastRebaseCount: 0` added to the
+    live object literal; the LIVE-phase push now stores CAMERA-RELATIVE
+    offsets (stagedPX/PY/PZ − drvLocal.x/y/z) with
+    `rebased: core.stats.rebaseCount !== live.lastRebaseCount` and updates
+    lastRebaseCount after the push; BOTH vestigial blocks deleted (the
+    vacuous `extends never ? 0 : 0` conditional inside the LIVE capture and
+    the self-assigning `const st = …` post-hoc block); sunJump bound
+    0.02 → 0.05; detail wording per the directive's replacement text — plus
+    "world position" → "camera-relative position" so the sentence describes
+    the measured quantity (micro-edit flagged to the Lead in the report).
+    F21b (arithmetic FIRST, from the extracted constants: ts=6 with the
+    5-substep cap → kcc.update AND core.advance run exactly 5 ticks/frame
+    in lockstep → LIVE_SECONDS 25 ≈ 125 s sim ≈ ~810–900 m at sprint 6.5 →
+    ~1 rebase crossing vs the row's `rebases >= 3` — confirms < 3):
+    LIVE_SECONDS 25 → 120, criterion `rebases >= 3` → `>= 2`, detail text
+    updated per the directive (each rebase is an independent Δ-lattice +
+    sky-invariance sample; 1D's cruise row already carries the 8-rebase
+    lattice evidence), Playwright budget 150 s → 240 s. · Lead directive
+    2026-10-16 (F3 expanded; F21a semantics/bound; F21b conditional
+    calibration). · Evidence: edits + post-fix typecheck (entry 44). ·
+    Source: directive item 3.d; AGENT_BRIEF.md §10.4.
+
+44. 2026-10-16 · 1F/step2 · game/src/test/Milestone1F_TestHarness.tsx ·
+    THREE strict-TS repairs under §6 MAY-fix ("type errors"), all
+    type-level and runtime-neutral: (a) the import list's rigCamFar →
+    rigCamNear — the R4 canary (extracted 1198) references rigCamNear while
+    canon imported rigCamFar (never used): exactly the directive's
+    known-suspect; import list corrected to match usage; (b) moonState
+    TS18047 ×3 in applyRenderState → non-null assertions (the boot guard
+    throws on null at module scope; TS cannot carry the narrowing into
+    function scope); (c) the dead 3-arg setDriverPose call (TS2554,
+    extracted 1380) deleted — immediately overwritten by the full 7-arg
+    call two lines below; F4 leftover-line pattern. ROUTED-IN-ADVANCE
+    (static analysis, awaiting gate confirmation): R4's identityOk reads
+    `astroMesh.geometry` (extracted 1218) where astroMesh is a THREE.Group
+    — TS2339 blocked the build AND at loose-JS runtime the expression is
+    `undefined`, so `identityOk` is false and the zero-gc row cannot pass
+    as authored (canon authorship defect class F9/F10a). Runtime-neutral
+    cast `(astroMesh as unknown as { geometry?: unknown })` applied ONLY to
+    unblock the build — the asserted expression and its runtime value are
+    untouched; if the gate confirms the row failure it is routed to the
+    Lead (acceptance-logic change = Lead only). · Brief §6; directive item
+    3.e. · Evidence: tsc 5 errors → TSC_EXIT=0 unpiped; BUILD_EXIT=0
+    unpiped. · Source: brief §6; directive 3.e.
+
+45. 2026-10-16 · 1F/step3 · game/src/main.tsx, game/e2e/m1f.spec.ts
+    (created) · Registered `?page=m1f` in the static page map (own chunk
+    verified: Milestone1F_TestHarness-BxLi97fs.js, 48.15 kB); wired the 1F
+    gate with the F21b budget (240 s wait for the acceptance line).
+    Typecheck + build re-verified UNPIPED: TSC_EXIT=0 BUILD_EXIT=0. · §8
+    loop step 3. · Evidence: build log (chunk list). · Source: brief §3.2,
+    §3.7.

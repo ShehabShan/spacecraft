@@ -29,15 +29,29 @@ per cadence + push → STOP at the approval gate.
 | 1G | NOT STARTED | F2 + hand-applied KCC patch + MANDATORY full 1E re-run; re-grep the §3.5 patch against F14/F18's moved/edited regions |
 
 ## IN-FLIGHT
-Milestone 1F — starting (directive 2026-10-16). Extraction not yet run.
-Plan on record in NEXT ACTION. Watch items: WebGL2 required for the A/B
-byte-diff rows (STOP if context creation fails — §3.7); geoConst mid-window
-step → MutationObserver probe (F12 precedent); spawn-scan failure → paste
-params, never touch the scan; headless multi-second main-thread pause is
-EXPECTED (3000-iteration burn + 300 three-pass renders + 5 A/B renders on
-the armed frame); clean NOTHING beyond F3's list (`void err; void te;`
-placeholders in the R2 audit loop stay verbatim); new canon damage
-(families A/B) routes per standing protocol.
+Milestone 1F — executing (directive 2026-10-16). DONE this session:
+extraction 4/4 verbatim re-run (zero parenthetical matches; layeredCameras
+discard NOT triggered; impostorMath purity VERIFIED — sole import is
+sphericalFrame); prior-session drift repaired (its uncommitted harness copy
+differed from verbatim canon — partial F3 application lost on overwrite,
+nothing unique: F3 re-applied from the directive); F3a/F3c/F3b+F21a/F21b
+applied exactly as expanded (F21b arithmetic confirmed <3 crossings →
+LIVE_SECONDS 120, rebases >= 2, budget 240 s); §6 strict-TS: import list
+rigCamFar→rigCamNear (the directive's known-suspect, confirmed), moonState!
+×3, dead 3-arg setDriverPose deleted; ROUTED-IN-ADVANCE pending gate
+confirmation: R4 identityOk reads astroMesh.geometry on a THREE.Group
+(undefined at runtime → row cannot pass as authored; runtime-neutral cast
+applied to unblock the build). ?page=m1f registered; e2e/m1f.spec.ts
+created (240 s). TSC_EXIT=0 BUILD_EXIT=0 unpiped.
+NEXT: run the 1F gate + full 1A–1E regression, write notes/reports/M1F.md,
+commit + push, STOP at the approval gate.
+Watch items: WebGL2 required for the A/B byte-diff rows (STOP if context
+creation fails — §3.7); geoConst mid-window step → MutationObserver probe
+(F12 precedent); spawn-scan failure → paste params, never touch the scan;
+headless multi-second main-thread pause is EXPECTED (3000-iteration burn +
+300 three-pass renders + 5 A/B renders on the armed frame); clean NOTHING
+beyond F3's list (`void err; void te;` placeholders in the R2 audit loop
+stay verbatim); new canon damage (families A/B) routes per standing protocol.
 1E is closed: APPROVED at commit 4c352dd; no open debugging.
 
 ## APPROVAL LEDGER (settled — never re-ask)
