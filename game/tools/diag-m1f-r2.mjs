@@ -344,3 +344,56 @@ console.log('\nfour poses through the REAL edited lookAtQuatInto (expect ~640/~3
     `(expect ≈π·21²≈1,385 px; round-2 measured 1,381)`)
   console.log(`  A/B readback window will be ±2r ≈ ±${(2 * rpx).toFixed(0)} px around the projected centre`)
 }
+
+// ---- F29 evidence (round 3): R3 silhouette parallax + R5 straddle camera ----
+{
+  console.log('\nF29 Node evidence (read-only math on the same walk replica):')
+  const pxPerRad = H / (2 * Math.tan((31 * Math.PI) / 180))
+  // R3: probe MESH sits at PROBE_DIR*dA from the BUBBLE CENTER; the impostor
+  // is staged along PROBE_DIR from the OBSERVER. Parallax = angle between
+  // (meshPos - observer) and PROBE_DIR, measured through the R3 pose quat.
+  const dA = 232000
+  const meshPos = { x: PROBE_DIR.x * dA, y: PROBE_DIR.y * dA, z: PROBE_DIR.z * dA }
+  const toMesh = { x: meshPos.x - drv.x, y: meshPos.y - drv.y, z: meshPos.z - drv.z }
+  const toMeshL = Math.hypot(toMesh.x, toMesh.y, toMesh.z)
+  const dirMesh = { x: toMesh.x / toMeshL, y: toMesh.y / toMeshL, z: toMesh.z / toMeshL }
+  const q3 = { x: 0, y: 0, z: 0, w: 1 }
+  lookAtQuatInto(drv.x, drv.y, drv.z,
+    drv.x + PROBE_DIR.x, drv.y + PROBE_DIR.y, drv.z + PROBE_DIR.z, 0, 1, 0, q3)
+  projectDirectionInto(PROBE_DIR.x, PROBE_DIR.y, PROBE_DIR.z, q3, FOV, W / H, W, H, out)
+  const impPX = { x: out.px, y: out.py }
+  projectDirectionInto(dirMesh.x, dirMesh.y, dirMesh.z, q3, FOV, W / H, W, H, out)
+  const meshPX = { x: out.px, y: out.py }
+  const rMesh = Math.asin(Math.min(1, 1800 / toMeshL)) * pxPerRad
+  const rImp = Math.asin(Math.min(1, 1800 / dA)) * pxPerRad
+  console.log(`  R3 silhouette: observer |drv|=${Math.hypot(drv.x, drv.y, drv.z).toFixed(1)} m from bubble centre`)
+  console.log(`    mesh centre px=(${meshPX.x.toFixed(2)},${meshPX.y.toFixed(2)}) vs impostor centre px=(${impPX.x.toFixed(2)},${impPX.y.toFixed(2)}) ` +
+    `-> parallax offset ${Math.hypot(meshPX.x - impPX.x, meshPX.y - impPX.y).toFixed(2)} px`)
+  console.log(`    disk radii: mesh ${rMesh.toFixed(2)} px (d=${toMeshL.toFixed(0)} m), impostor ${rImp.toFixed(2)} px (d=${dA} m) ` +
+    `-> offset ${(Math.hypot(meshPX.x - impPX.x, meshPX.y - impPX.y) / rImp * 100).toFixed(1)}% of a disk radius`)
+  console.log(`    (browser measured: sym-diff 47.69% of a 130-px disk)`)
+  // R5: straddle camera = SAT_B - dirToB*2400 (suite formula); is it buried?
+  const dirLen = Math.hypot(SAT_B.x - spawnPos.x, SAT_B.y - spawnPos.y, SAT_B.z - spawnPos.z)
+  const dx = (SAT_B.x - spawnPos.x) / dirLen, dy = (SAT_B.y - spawnPos.y) / dirLen, dz = (SAT_B.z - spawnPos.z) / dirLen
+  const poseX = SAT_B.x - dx * 2400, poseY = SAT_B.y - dy * 2400, poseZ = SAT_B.z - dz * 2400
+  const pl = Math.hypot(poseX, poseY, poseZ)
+  const pdir = { x: poseX / pl, y: poseY / pl, z: poseZ / pl }
+  const camAlt = pl - (R + terrainHeight(pdir.x, pdir.y, pdir.z))
+  console.log(`  R5 straddle camera: |pos|=${pl.toFixed(1)} m, terrain alt=${camAlt.toFixed(1)} m ` +
+    `(${camAlt < 0 ? 'BURIED under terrain' : 'above terrain'})`)
+  // terrain occlusion along the camera -> SAT_B ray (chord through the surface band)
+  const bl = Math.hypot(SAT_B.x, SAT_B.y, SAT_B.z)
+  let worst = 0, worstT = 0
+  for (let i = 1; i < 20; i++) {
+    const t = i / 20
+    const rx = poseX + (SAT_B.x - poseX) * t, ry = poseY + (SAT_B.y - poseY) * t, rz = poseZ + (SAT_B.z - poseZ) * t
+    const rl = Math.hypot(rx, ry, rz)
+    const rd = { x: rx / rl, y: ry / rl, z: rz / rl }
+    const alt = rl - (R + terrainHeight(rd.x, rd.y, rd.z))
+    if (alt < worst) { worst = alt; worstT = t }
+  }
+  console.log(`  R5 camera->SAT_B ray: worst terrain clearance ${worst.toFixed(1)} m at ${(worstT * 100).toFixed(0)}% along ` +
+    `(${worst < 0 ? 'RAY BLOCKED by terrain mid-path' : 'ray clear of terrain'})`)
+  // note: Near pass clips at 0.1 m, Mid pass clips at 2,000 m from the camera —
+  // terrain closer than 2,000 m renders ONLY in the Near pass, which draws LAST.
+}
