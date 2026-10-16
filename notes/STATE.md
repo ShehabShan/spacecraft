@@ -1,18 +1,20 @@
 # SOLARIS — ASSEMBLY STATE (see AGENT_BRIEF.md §10)
 
 ## NEXT ACTION
-Execute Milestone 1E per the §8 loop (ORDERED 2026-10-16): read
-Milestone/Milestone 1E.txt in full (§1.1 parallel-transport proofs, §1.2
-dual step/slope rule RATIFIED, §1.3 Coriolis 1.8 cm theorem, §1.4
-spin-interpolated sweep), run `node tools/extract.mjs 1E` (expect 3 blocks:
-sphericalFrame, astronautKCC, harness; zero parentheticals), apply F1
-(MANDATORY: require-shim → top-level ESM import of terrainNormalInto) and
-F13 (PRE-AUTHORIZED: mulberry32 `0x51ope5` → `0x5109e5`; skip + note if
-grep finds nothing) AT EXTRACTION TIME, typecheck unpiped, register
-?page=m1e, typecheck+build (unpiped exit codes), run the 1E gate (budget
-90 s) + full 1A/1B/1C/1D regression (~3 m serial), write
-notes/reports/M1E.md (verify steep-field restore of TEST_PLANET
-explicitly), commit per cadence, push, STOP at the approval gate.
+Await Lead rulings on the four routed 1E defects (notes/reports/M1E.md —
+GATE FAILED 4 rows, zero-gc + integration PASS, full 1A/1B/1C/1D regression
+green): F14-proposal DEAD JUMP (canon integrateTick consumes input.jump at
+canon 812 / extracted astronautKCC 467 BEFORE _groundedTick reads it at
+canon 932 / extracted 587 — relocate the one line after the mode dispatch),
+F15-proposal vehicle-verify offset (harness check composes the WORLD offset
+(0,2,0) as parent-frame; KCC's R_att⁻¹ compose is correct — fix the check,
+~2 lines), F16-proposal face-walk calibration (faceChanges 1 < 2 — pathLen
+budget eaten by unrestricted climbing; up-rotation 2.145° > 1.15°) + the
+deg() double-acos detail bug, F17-proposal slope-step calibration
+(moderate slide 5.275 > 0.05, steep displacement ratio 0.00 + uphill net
+2.13 > 0.3, cliff minAGL −0.091 < −0.05) + stale-alt0 fix, plus the routed
+family-A $-strip (extracted harness 1015). On rulings: apply, re-run the
+1E gate + full regression, update M1E.md, re-present at the approval gate.
 
 ## MILESTONE LEDGER
 | MS | Status | Evidence |
@@ -22,17 +24,27 @@ explicitly), commit per cadence, push, STOP at the approval gate.
 | 1B | APPROVED | Gate GREEN (`acceptance PASSED in 21.5 ms`, 5/5 rows) + 1A regression 5/5 on the overlaid core; commits d582efc/F9 3f12b43/final db13db8; report: notes/reports/M1B.md; Lead approval 2026-10-15 |
 | 1C | APPROVED | Gate GREEN 4/4 + 1A/1B regression 5/5 ("3 passed (1.2m)"); F10a/F10b verified against all four ruling requirements; final commit a86ce94; report: notes/reports/M1C.md; Lead approval 2026-10-15 |
 | 1D | APPROVED | Commit e830759; gate GREEN 5/5 + full 1A/1B/1C regression green ("4 passed (1.5m)"); F11/F12 applied as ruled; erratum + standing rule adopted; authorship verified: v@1000m 264.7 matches corrected derivation, locals max 1022.8 matches 1A structural prediction (1022.67), geo 151 = F12-predicted constant count; report: notes/reports/M1D.md; Lead approval 2026-10-16 |
-| 1E | IN PROGRESS | Ordered 2026-10-16 (F1 MANDATORY + F13 pre-authorized at extraction); watch: slope-site scan routing, TEST_PLANET restore verification; KCC stays PRISTINE (1G §3.5 patch is 1G's, never now) |
+| 1E | GATE FAILED·ROUTED | Extraction 3/3 (2871 L, zero parentheticals); F13 applied; F1 vacuous (0 require — import already top-level); 2 §6 strict-TS fixes (TSC_EXIT=0 unpiped); ?page=m1e wired (caad62c); gate FAILED 4 rows (badges F,F,F,P,F,P) — zero-gc + integration PASS, regression 1A/1B/1C/1D green ("4 passed (1.9m)"); 4 root causes diagnosed + routed (F14–F17 proposals + $-strip); report: notes/reports/M1E.md |
 | 1F–1G | NOT STARTED | 1F (F3 + impostorMath purity); 1G (F2 + hand-applied KCC patch + MANDATORY full 1E re-run) |
 
 ## IN-FLIGHT
-Milestone 1D — COMPLETE through §8 step 6: F11/F12 applied and verified
-(probe: geo = 151 from the first tracked frame, never moves; maxDv 10.30 ≤
-corrected bound 12; v@1km 264.7); final gate PASSED 5/5 + full 1A/1B/1C
-regression green ("4 passed (1.5m)"). Parked at §8.7 approval gate. No open
-debugging. Standing rule in force: unpiped exit codes for typecheck/build;
-"clean" claims backed by observed exit 0 (all runs in M1D.md comply).
-Diagnostic probes kept: game/tools/diag-m1d.mjs (and earlier diag-*).
+Milestone 1E — parked at the ruling gate after §8 step 5. Gate FAILED on
+face-walk / slope-step / state-machine / coriolis; zero-gc + integration
+PASS; full regression green. Root causes (all authorial canon defects, none
+extraction-related, NOTHING touched): (1) jump structurally dead —
+input.jump consumed before _groundedTick reads it (canon 812 vs 932);
+(2) harness VEHICLE verify composes world offset (0,2,0) instead of the
+parent-frame R_att⁻¹·(0,2,0) — constant 0.2565 m error, KCC correct (detach
+check 0.0e+0); (3) face-walk: faceChanges 1 < 2 (climb-inflated pathLen
+budget) + up-rotation 2.145° > 1.15° — real-terrain calibration; corner
+criterion actually PASSES (0.0143 rad; the detail string double-acos's it
+into "89.18°"); (4) slope-step: slide/uphill/AGL bounds vs the engineered
+field's wild dynamics + stale-alt0 cross-field contamination (climbGain
+103.3 m spurious). Watch 5.b params pasted in M1E.md §4.4; watch 5.c
+restore VERIFIED (canon 2490–2492 / extracted 1042–1043); watch 5.f KCC
+pristine except the §6 null-guard type fix. Standing rule in force: unpiped
+exit codes (TSC_EXIT=0 BUILD_EXIT=0 PLAYWRIGHT_EXIT=1 observed). Diagnostic
+probe kept: game/tools/diag-m1e.mjs (read-only DOM scrape).
 
 ## APPROVAL LEDGER (settled — never re-ask)
 | Date | Decision |
@@ -72,7 +84,7 @@ Diagnostic probes kept: game/tools/diag-m1d.mjs (and earlier diag-*).
 | 2 | 2026-10-14 | Protocol install + reconcile | AGENT_BRIEF.md written verbatim (389-line paste + 47-line §10 append); session-1 work preserved as WIP d849d6b; notes/ tree created; CHANGES.md relocated to root; STATE.md written from evidence; M1A report persisted to notes/reports/M1A.md | Session parked at the 1A approval gate — resumed by session 3 |
 | 3 | 2026-10-14 | 1A approval + protocol install | approved + installed + pushed | Run the F6 pre-scan over all seven Milestone .txt files (report per file whether the acceptance-line `$` is present), then begin Milestone 1B: read Milestone/Milestone 1B.txt in full, run `node tools/extract.mjs 1B` (expect 5 blocks; the parenthetical overlay on src/core/simulation/SimulationCore.ts explicitly reported — it must be the ONLY parenthetical match), F6 check/repair on the 1B harness, register ?page=m1b, typecheck+build, run the 1B gate PLUS the 1A page as regression, write notes/reports/M1B.md with verbatim gate output and the pre-scan table, commit per the amended cadence, push, then STOP at the approval gate. |
 | 4 | 2026-10-14/15 | M1B execution | (continuation — session resumed after wind-down in the same live session) Pre-scan done (1C verdict missing → F8); extraction 5/5 + overlay, invariant held; F7a/F7b per ruling → typecheck/build clean; 1A regression green; 1B deadlock diagnosed to canon auto-run guard → F9 authorized + applied; 1C-CP persisted; BOTH gates green ("2 passed (9.5s)") | M1B parked at the approval gate — next: Lead approval of notes/reports/M1B.md, then 1C (extract 6 blocks, F5 + 1C-CP at extraction, workers check, gate + regression, report) |
-| 5 | 2026-10-16 | M1D approval + M1E execution | Fresh-session bootstrap per §10.3 clean (canon = ea112ec, evidence matches STATE.md); M1D APPROVED + 1E ordered recorded in ledgers before any 1E work; 1E execution per §8 loop (outcome in next handoff) | (pending — will be written at wind-down) |
+| 5 | 2026-10-16 | M1D approval + M1E execution | Fresh-session bootstrap per §10.3 clean (canon = ea112ec, evidence matches STATE.md); M1D APPROVED + 1E ordered recorded in ledgers before any 1E work; extraction 3/3, F13 applied, F1 vacuous (0 require), 2 §6 strict-TS fixes, ?page=m1e wired; 1E gate FAILED 4 rows (authorial canon defects — dead jump, vehicle-verify offset, face-walk + slope-step calibration, stale-alt0) — all diagnosed + routed, NOTHING touched; regression 1A/1B/1C/1D green; report notes/reports/M1E.md | Parked at the ruling gate — next: Lead rulings on F14–F17 proposals + the routed $-strip; then apply, re-run 1E gate + full regression, update M1E.md, re-present at the approval gate |
 
 ## ANCHOR
 df1e04f — "M1A: extracted, gates green" (branch m1-assembly; chain: ea112ec

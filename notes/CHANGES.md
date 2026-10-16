@@ -415,3 +415,33 @@ Observations (NO change made — recorded for the Lead):
    §3.7 pattern). Typecheck + build re-verified with UNPIPED exit codes:
    TSC_EXIT=0 BUILD_EXIT=0. · §8 loop step 3. · Evidence: this commit. ·
    Source: brief §3.2, §3.7, §7-1E.
+
+38. 2026-10-16 · 1E/step5 · (NO code change) · 1E gate FAILED on 4 rows
+   (face-walk, slope-step, state-machine, coriolis; zero-gc and integration
+   PASS) — full regression 1A/1B/1C/1D GREEN in the same serial run
+   ("4 passed (1.9m)"). All four diagnosed to root cause; ALL ROUTED to the
+   Lead, nothing touched: (1) coriolis — the canon jump is STRUCTURALLY DEAD:
+   integrateTick clears `this.input.jump` (canon 812 / extracted
+   astronautKCC 467) BEFORE _groundedTick reads it (canon 932 / extracted
+   587), so airTicks = 0 and the SPEC-CANONICAL row measures a grounded
+   tick; (2) state-machine — the harness's independent VEHICLE verify
+   composes the WORLD attach offset (0,2,0) as if parent-frame
+   (extracted 788), but attachVehicle correctly stores R_att⁻¹·(0,2,0)
+   (extracted astronautKCC 296–311) — constant 0.2565 m verification error,
+   KCC self-consistent (detach check passes at 0.0e+0); (3) face-walk —
+   authorial calibration vs real terrain: faceChanges 1 < 2 (pathLen budget
+   consumed by unrestricted vertical climbing before the second boundary)
+   and max per-tick up rotation 2.145° > 1.15° bound; PLUS a detail-string
+   bug: deg(minCornerAngle) applies acos to an already-angular value — the
+   ACTUAL closest approach 0.0143 rad PASSES (< 0.06) but prints 89.18°;
+   (4) slope-step — authorial calibration/measurement on the engineered
+   field: moderate maxSlide 5.275 > 0.05 (walk crosses >45° patches near the
+   20° site), steep displacement-downhill ratio 0.00 and uphill sprint net
+   2.13 > 0.3 (wall-slide zigzag), cliff minAGL −0.091 < −0.05 (Lipschitz
+   transient, detected + landed), and alt0 read from STALE pre-swap
+   telemetry (teleportSurface does not fill telemetry; climbGain 103.3 m is
+   cross-field contamination). Scan params + STEEP TerrainParams pasted in
+   notes/reports/M1E.md per watch item 5.b. · §6 (may NOT touch acceptance
+   logic) + F9/F10/F11 routing precedent + standing damage protocol. ·
+   Evidence: notes/reports/M1E.md §3–5 (verbatim gate output + diag scrape).
+   · Source: brief §6; directive 5.b/5.d.
