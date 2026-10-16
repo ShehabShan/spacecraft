@@ -1,18 +1,20 @@
 # SOLARIS — ASSEMBLY STATE (see AGENT_BRIEF.md §10)
 
 ## NEXT ACTION
-Await Lead approval of the M1E report (notes/reports/M1E.md — GATE GREEN:
-`[Milestone1E] acceptance PASSED` 6/6 + full 1A/1B/1C/1D regression,
-"5 passed (1.9m)", PLAYWRIGHT_EXIT=0). On approval: 1E → APPROVED in the
-milestone ledger; begin Milestone 1F per the §8 loop — read
-Milestone/Milestone 1F.txt in full, run `node tools/extract.mjs 1F` (expect
-4 blocks; DEFENSIVE: discard any src/render/layeredCameras.ts block and
-report if it triggers), apply F3 ((a) delete the dead slopeDegAt stub;
-(b) sun-trace rebase-marking → per-frame module-counter comparison against
-core.stats.rebaseCount), verify impostorMath.ts has NO three imports (pure
-core), register ?page=m1f, typecheck+build unpiped, run the 1F gate (150 s)
-+ full 1A–1E regression, write notes/reports/M1F.md, commit per cadence,
-push, STOP at the approval gate.
+MILESTONE 1F EXECUTING per the Lead directive 2026-10-16 (M1E APPROVED +
+1F ordered with F3 expanded): read Milestone/Milestone 1F.txt in full →
+`node tools/extract.mjs 1F` (expect 4 blocks; zero parenthetical matches;
+defensive layeredCameras discard must NOT trigger) → purity check
+(impostorMath.ts imports ONLY core/physics/sphericalFrame) → apply F3
+expanded (a: delete dead slopeDegAt stub + `void slopeDegAt;`; b+F21a:
+sun-trace camera-relative offsets + lastRebaseCount + delete both
+vestigial blocks + bound 0.02→0.05 + detail wording; c: terrainNormalInto
+top-level import, delete require shim) → F21b conditional calibration
+(arithmetic first from extracted constants; if <3 crossings expected:
+LIVE_SECONDS 25→120, rebases >= 3 → >= 2, budget 150 s → 240 s) → §6
+strict-TS fixes logged → register ?page=m1f → typecheck+build UNPIPED →
+1F gate (240 s) + full 1A–1E regression → notes/reports/M1F.md → commit
+per cadence + push → STOP at the approval gate.
 
 ## MILESTONE LEDGER
 | MS | Status | Evidence |
@@ -22,22 +24,21 @@ push, STOP at the approval gate.
 | 1B | APPROVED | Gate GREEN (`acceptance PASSED in 21.5 ms`, 5/5 rows) + 1A regression 5/5 on the overlaid core; commits d582efc/F9 3f12b43/final db13db8; report: notes/reports/M1B.md; Lead approval 2026-10-15 |
 | 1C | APPROVED | Gate GREEN 4/4 + 1A/1B regression 5/5 ("3 passed (1.2m)"); F10a/F10b verified against all four ruling requirements; final commit a86ce94; report: notes/reports/M1C.md; Lead approval 2026-10-15 |
 | 1D | APPROVED | Commit e830759; gate GREEN 5/5 + full 1A/1B/1C regression green ("4 passed (1.5m)"); F11/F12 applied as ruled; erratum + standing rule adopted; authorship verified: v@1000m 264.7 matches corrected derivation, locals max 1022.8 matches 1A structural prediction (1022.67), geo 151 = F12-predicted constant count; report: notes/reports/M1D.md; Lead approval 2026-10-16 |
-| 1E | GATE GREEN·AWAITING LEAD | All nine rulings applied + vindicated (F14 core #1 7947369; F15–F17+$-strip e689d4c; F18 core #2 37a4c9e — launch compose at θ_prev + embed-guard; F19/F20 7d77e52); FINAL: `[Milestone1E] acceptance PASSED` 6/6 (coriolis 0.75 cm west/1.02 s/1-tick plant; vehicleErr 0.0e+0; deorbit landed 22,307; face-walk 0.82° corner/2 changes; slope rows clean, minAGL n/a) + full 1A/1B/1C/1D regression ("5 passed (1.9m)", PLAYWRIGHT_EXIT=0); report: notes/reports/M1E.md |
-| 1F–1G | NOT STARTED | 1F (F3 + impostorMath purity); 1G (F2 + hand-applied KCC patch + MANDATORY full 1E re-run) |
+| 1E | APPROVED | Commit 4c352dd (gate-green report + ledgers); FINAL: `[Milestone1E] acceptance PASSED` 6/6 (coriolis 0.75 cm west/1.02 s/1-tick plant; vehicleErr 0.0e+0; deorbit landed 22,307; face-walk 0.82° corner/2 changes; slope rows clean, minAGL n/a) + full 1A/1B/1C/1D regression ("5 passed (1.9m)", PLAYWRIGHT_EXIT=0); all nine rulings applied + vindicated (F14 core #1 7947369; F15–F17+$-strip e689d4c; F18 core #2 37a4c9e; F19/F20 7d77e52); report: notes/reports/M1E.md; Lead approval 2026-10-16 |
+| 1F | IN PROGRESS | Ordered 2026-10-16 with F3 expanded (a/b/c + F21a semantics and bound) + F21b conditional calibration; extraction pending |
+| 1G | NOT STARTED | F2 + hand-applied KCC patch + MANDATORY full 1E re-run; re-grep the §3.5 patch against F14/F18's moved/edited regions |
 
 ## IN-FLIGHT
-Milestone 1E — COMPLETE through §8 step 6, parked at the approval gate.
-All nine rulings applied and vindicated; two authorized core edits on
-record (F14 7947369: dead-jump consumption relocation; F18 37a4c9e: launch
-compose at θ_prev + launch-tick embed guard — BOTH flagged for the 1G §3.5
-re-grep). Final gate: 6/6 PASS + full regression "5 passed (1.9m)",
-PLAYWRIGHT_EXIT=0. Node verification agreed with the browser
-number-for-number (coriolis 61 ticks / 0.75 cm west / 1.18 cm cross-track /
-1-tick plant; deorbit landed 22,307; vehicleErr 0.0e+0; slope minAGL +∞).
-Standing rule in force: unpiped exits (TSC_EXIT=0 BUILD_EXIT=0
-PLAYWRIGHT_EXIT=0 observed). Probes kept: diag-m1e.mjs (DOM scrape),
-diag-m1e-field.mjs (field calibration), diag-m1e-core.mjs (Node row
-verifier). F17c conditional relaxation MOOT. No open debugging.
+Milestone 1F — starting (directive 2026-10-16). Extraction not yet run.
+Plan on record in NEXT ACTION. Watch items: WebGL2 required for the A/B
+byte-diff rows (STOP if context creation fails — §3.7); geoConst mid-window
+step → MutationObserver probe (F12 precedent); spawn-scan failure → paste
+params, never touch the scan; headless multi-second main-thread pause is
+EXPECTED (3000-iteration burn + 300 three-pass renders + 5 A/B renders on
+the armed frame); clean NOTHING beyond F3's list (`void err; void te;`
+placeholders in the R2 audit loop stay verbatim); new canon damage
+(families A/B) routes per standing protocol.
+1E is closed: APPROVED at commit 4c352dd; no open debugging.
 
 ## APPROVAL LEDGER (settled — never re-ask)
 | Date | Decision |
@@ -79,6 +80,12 @@ verifier). F17c conditional relaxation MOOT. No open debugging.
 | 2026-10-16 | F19 AUTHORIZED + APPLIED (7d77e52): deorbit cap 20,000 → 26,000 — landed at tick 22,307 (analytic ≈22,400) |
 | 2026-10-16 | F20 AUTHORIZED + APPLIED (7d77e52): resetIntegrityStats first in runSlopeStep (cliff criterion measures only its own window) + 'n/a (never airborne)' print; F17c conditional relaxation MOOT (post-reset minAGL = +∞) |
 | 2026-10-16 | Ratified observations: field calibration GREEN under original bounds on the recalibrated field; burn in-sweep transient within the Lipschitz bound, no row asserts it; ledgers append-only. VERIFICATION: Node first (coriolis 61 ticks/0.75 cm/1.18 cm/1-tick plant; landed 22,307; vehicleErr 0.0e+0; minAGL +∞) then browser — M1E GATE GREEN 6/6 + regression "5 passed (1.9m)", PLAYWRIGHT_EXIT=0 |
+| 2026-10-16 | MILESTONE 1E: APPROVED (gate GREEN 6/6 + full 1A–1E regression "5 passed (1.9m)"; F15 confirmed to the digit; F14/F18 noted as THE ONLY TWO CORE EDITS TO DATE, both astronautKCC.ts — flag both for re-grep at 1G §3.5 application; Coriolis-magnitude note on record: 0.75 cm measured vs ~1.8 cm ideal = first-order tilt-correction slop, window 0.6–6 cm was set for exactly this; discriminators exact: 61 ticks = 2u/g, plant 1 tick, west-positive; commit 4c352dd; report notes/reports/M1E.md) |
+| 2026-10-16 | 1E ordered→done bookkeeping closed: ordered 2026-10-16 (entry above), executed through three ruling rounds + two authorized core edits, gate green, approved same day |
+| 2026-10-16 | MILESTONE 1F ORDERED with F3 EXPANDED (Lead-ratified; every part conditional on the extracted canon matching the described form — material difference = STOP and route with exact extracted lines): F3a delete the dead slopeDegAt stub + its `void slopeDegAt;` line; F3c slopeFromNormal require() shim → terrainNormalInto added to the top-level terrainField import, shim deleted (F1/F2 pattern; real this time); F3b+F21a sun-trace semantics — canon's marking never marks (vacuous sunJump=0) and activating as-is measures the WRONG quantity (trace stores ABSOLUTE local staged position, shifts by rebase Δ up to 1,024 m; documented intent is CAMERA-RELATIVE invariance): add `lastRebaseCount: 0` to the `live` literal, store camera-relative offsets (staged − drvLocal) + `rebased: core.stats.rebaseCount !== live.lastRebaseCount` + update lastRebaseCount in the LIVE-phase push, DELETE both vestigial blocks, bound sunJump < 0.02 → < 0.05, detail wording updated (observer parallax ~12 mm/frame at D=9,600 m, d_sun≈600 km; ~20,000× discrimination retained) |
+| 2026-10-16 | F21b CONDITIONAL CALIBRATION authorized (F16a/F19 precedent): FIRST read-only arithmetic from the EXTRACTED constants accounting for the 5-substep cap (ts=6 → both kcc.update and core.advance run exactly 5 ticks/frame, in lockstep); Lead's authorship numbers: LIVE_SECONDS 25, ts 6, sprint 6.5, Ω 0.0005, R 1364.5 → ~900 m → ~1 rebase crossing vs the row's `rebases >= 3`; if arithmetic confirms <3 expected crossings: LIVE_SECONDS=120 (≥2 crossings guaranteed even at effective 3×), `rebases >= 3` → `>= 2` (detail text updated; 1D's cruise row carries the 8-rebase lattice evidence), Playwright budget 150 s → 240 s (gate infrastructure, §6); if extracted constants already yield ≥3, change nothing |
+| 2026-10-16 | §6 authority re-affirmed for 1F: strict-TS/build fixes authorized — if the R4 zero-gc canary references rigCamNear while the import list names rigCamFar (undefined name), correct the IMPORT LIST to match usage; any harness import that does not resolve against MultiCameraRig's exports is a §6 broken-import fix; log every fix |
+| 2026-10-16 | Prior-session closure: session 5 ended at the M1E approval gate; its STATE.md row (handoff note present) was committed in 4c352dd but no dedicated closure row existed — closure row appended to the SESSION LOG this session per §10.2 |
 
 ## SESSION LOG
 | # | Date | Goal | Outcome | Handoff note |
@@ -88,6 +95,7 @@ verifier). F17c conditional relaxation MOOT. No open debugging.
 | 3 | 2026-10-14 | 1A approval + protocol install | approved + installed + pushed | Run the F6 pre-scan over all seven Milestone .txt files (report per file whether the acceptance-line `$` is present), then begin Milestone 1B: read Milestone/Milestone 1B.txt in full, run `node tools/extract.mjs 1B` (expect 5 blocks; the parenthetical overlay on src/core/simulation/SimulationCore.ts explicitly reported — it must be the ONLY parenthetical match), F6 check/repair on the 1B harness, register ?page=m1b, typecheck+build, run the 1B gate PLUS the 1A page as regression, write notes/reports/M1B.md with verbatim gate output and the pre-scan table, commit per the amended cadence, push, then STOP at the approval gate. |
 | 4 | 2026-10-14/15 | M1B execution | (continuation — session resumed after wind-down in the same live session) Pre-scan done (1C verdict missing → F8); extraction 5/5 + overlay, invariant held; F7a/F7b per ruling → typecheck/build clean; 1A regression green; 1B deadlock diagnosed to canon auto-run guard → F9 authorized + applied; 1C-CP persisted; BOTH gates green ("2 passed (9.5s)") | M1B parked at the approval gate — next: Lead approval of notes/reports/M1B.md, then 1C (extract 6 blocks, F5 + 1C-CP at extraction, workers check, gate + regression, report) |
 | 5 | 2026-10-16 | M1D approval + M1E execution | Bootstrap clean; M1D APPROVED + 1E ordered recorded; extraction 3/3, F13, F1 vacuous, 2 TS fixes, ?page=m1e wired; three ruling rounds total: (1) first gate FAIL 4 rows → F14–F17 + $-strip ruled + applied (F14 = core #1), all vindicated; (2) re-run FAIL 3 rows → F18 (core #2: launch compose at θ_prev + embed guard), F19 (cap 26,000), F20 (per-row reset + Infinity print) ruled + applied, Node verification FIRST agreed with browser number-for-number; (3) FINAL GATE GREEN: 1E 6/6 PASS + full 1A/1B/1C/1D regression "5 passed (1.9m)", PLAYWRIGHT_EXIT=0; spec-canonical coriolis row green (0.75 cm west, 1.02 s, 1-tick plant) | M1E parked at the approval gate — next: Lead approval of notes/reports/M1E.md; then 1F per §8 (extract 4 blocks, F3, impostorMath purity, gate 150 s + regression, report, STOP) |
+| 6 | 2026-10-16 | Prior-session CLOSURE ROW (appended by session 6 per §10.2 + Lead directive) | Session 5 ended at the M1E approval gate; its handoff note above was committed in 4c352dd, but no dedicated closure row existed at session end — the §10.2 gap is formal, noted in the Approval Ledger, closed by this row. M1E subsequently APPROVED by directive 2026-10-16 | Resumed by session 6 (fresh bootstrap, reconciliation clean, canon byte-identical to ea112ec) |
 
 ## ANCHOR
 df1e04f — "M1A: extracted, gates green" (branch m1-assembly; chain: ea112ec
