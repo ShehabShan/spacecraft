@@ -819,14 +819,25 @@ function applyRenderState(
     if (!cull) written++;
     if (cb.id === 'sun') { sunGeom.dirX = _geo.dirX; sunGeom.dirY = _geo.dirY; sunGeom.dirZ = _geo.dirZ; sunGeom.theta = _geo.theta; sunGeom.dist = _geo.dist; }
   }
-  // probes (impostor side)
+  // probes (impostor side) — F31 (Lead ruling 2026-10-17): the impostor is
+  // the SAME object as the mesh, so it is fed the mesh's actual
+  // observer-relative f64 truth (as the catalog bodies are), not the fixed
+  // PROBE_DIR — that shortcut only holds for an eye at the bubble centre.
+  const paxv = PROBE_DIR.x * probe.dA - o.x - px;
+  const payv = PROBE_DIR.y * probe.dA - o.y - py;
+  const pazv = PROBE_DIR.z * probe.dA - o.z - pz;
+  const paDist = Math.hypot(paxv, payv, pazv) || 1;
   sky.setBody(SLOT_PROBE_A, 'probe-a', 3,
-    PROBE_DIR.x, PROBE_DIR.y, PROBE_DIR.z,
-    Math.asin(Math.min(1, PROBE_R / probe.dA)), probe.dA,
+    paxv / paDist, payv / paDist, pazv / paDist,
+    Math.asin(Math.min(1, PROBE_R / paDist)), paDist,
     0.79, 0.44, 0.29, probe.alphaImpA, probe.alphaImpA > 0.01);
+  const pbxv = PROBE_DIR.x * probe.dB - o.x - px;
+  const pbyv = PROBE_DIR.y * probe.dB - o.y - py;
+  const pbzv = PROBE_DIR.z * probe.dB - o.z - pz;
+  const pbDist = Math.hypot(pbxv, pbyv, pbzv) || 1;
   sky.setBody(SLOT_PROBE_B, 'probe-b', 3,
-    PROBE_DIR.x, PROBE_DIR.y, PROBE_DIR.z,
-    Math.asin(Math.min(1, PROBE_R2 / probe.dB)), probe.dB,
+    pbxv / pbDist, pbyv / pbDist, pbzv / pbDist,
+    Math.asin(Math.min(1, PROBE_R2 / pbDist)), pbDist,
     0.61, 0.50, 0.71, probe.alphaImpB, probe.alphaImpB > 0.01);
   // sun direction in camera space (f64)
   const sunCam = rotateByQuatConjInto(
@@ -1159,8 +1170,15 @@ function runSuite(gl: THREE.WebGLRenderer, scene: THREE.Scene): void {
     }
     // (c) silhouette: mesh-only vs impostor-only renders at 232 km
     const savedD = probe.forcedD; probe.forcedD = 232000; updateProbes(0);
+    // F31 (Lead ruling 2026-10-17): aim at the probe's ACTUAL position and
+    // centre the window on that same observer-relative direction — the mesh
+    // and the impostor are two representations of ONE object.
+    const o3 = core.getOrigin();
+    const pvx = PROBE_DIR.x * probe.dA - o3.x - drv.x;
+    const pvy = PROBE_DIR.y * probe.dA - o3.y - drv.y;
+    const pvz = PROBE_DIR.z * probe.dA - o3.z - drv.z;
     lookAtQuatInto(drv.x, drv.y, drv.z,
-      drv.x + PROBE_DIR.x, drv.y + PROBE_DIR.y, drv.z + PROBE_DIR.z, 0, 1, 0, drvQuat);
+      drv.x + pvx, drv.y + pvy, drv.z + pvz, 0, 1, 0, drvQuat);
     const pose = { x: drv.x, y: drv.y, z: drv.z, qx: drvQuat.x, qy: drvQuat.y, qz: drvQuat.z, qw: drvQuat.w };
     const meshOnly = abRender(gl, scene, () => {
       RIG.poseOverride = pose;
@@ -1178,7 +1196,8 @@ function runSuite(gl: THREE.WebGLRenderer, scene: THREE.Scene): void {
       probeMeshA.visible = false; probeMeshA.layers.mask = 0;
     });
     // edge-set symmetric difference (probe is the bright disk near center)
-    projectDirectionInto(PROBE_DIR.x, PROBE_DIR.y, PROBE_DIR.z,
+    const pvl = Math.hypot(pvx, pvy, pvz) || 1;
+    projectDirectionInto(pvx / pvl, pvy / pvl, pvz / pvl,
       { x: pose.qx, y: pose.qy, z: pose.qz, w: pose.qw } as Quat,
       (62 * Math.PI) / 180, AB_W / AB_H, AB_W, AB_H, _proj);
     const win = 80;
