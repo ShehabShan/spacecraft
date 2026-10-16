@@ -738,3 +738,81 @@ Observations (NO change made — recorded for the Lead):
     640.00/360.00, behind=false). Evidence for route F27. · User
     pre-authorization 2026-10-15 for diag tooling. · Evidence: M1F.md
     §9.3. · Source: diag tooling precedent.
+
+51. 2026-10-17 · 1F/ruling-3 · game/src/test/Milestone1F_TestHarness.tsx ·
+    F27 APPLIED (Lead ruling round 2→3): inside lookAtQuatInto only, the
+    quatFromFrameInto call now passes (rx, ry, rz, upx, upy, upz, out) —
+    RIGHT instead of fwd — plus the one-line comment "three.js camera
+    basis: X=right, Y=up, −Z=forward (F27)". right/up′ computations,
+    sphericalFrame, projectDirectionInto, all four call sites, and every
+    threshold untouched. · Harness-local authorial defect: quatFromFrameInto
+    builds columns (f, u, f×u) so passing (fwd, up′) made local +X the
+    forward; a three.js camera looks along local −Z = −(fwd×up) ≈ 90° off
+    target while the R2/R3 ground truth (projectDirectionInto) uses −Z.
+    With (right, up′), column 2 = right×up′ = −fwd so −Z = fwd — the
+    standard lookAt basis (Lead-verified algebra). · Evidence: round-2 gate
+    R2 footprint 0 px/center 999 px; Node round-3 (diag-m1f-r2.mjs against
+    the REAL edited function): all four poses (TP boom, R2 Sun, R3
+    silhouette, R5 SAT_B) project 640.00/360.00 behind=false, 0.000 px
+    offset; browser: R2 PASS (footprint 105.5%, center 0.71 px). · Source:
+    Lead ruling 2026-10-17 item 3 F27.
+
+52. 2026-10-17 · 1F/ruling-3 · game/src/test/Milestone1F_TestHarness.tsx ·
+    F28 APPLIED: identityOk second term only — sky.bodies.length === 11 →
+    sky.bodies.length === IMPOSTOR_CAPACITY, with IMPOSTOR_CAPACITY
+    imported from the existing SkyImpostorPool module (no literal 24).
+    instanceMatrix term, children.length === 8 term (F24), and both heap
+    bounds untouched. · The canon pool boot-allocates the full capacity-24
+    slot array (bodies.length is ALWAYS 24); 11 was the author's
+    active-count expectation (actual 9) — a visibility property R2 already
+    audits, not a GC-canary identity. Replaces a never-satisfiable term
+    with its stated intent ("pool mesh/attributes/bodies … never
+    re-allocated"); does not loosen the gate; same pattern as F24. ·
+    Evidence: round-2 R4 failed solely on this term (heaps 0/0, children
+    === 8 true); round-3 browser R4 PASS (heaps 0 B/0 B). · Source: Lead
+    ruling 2026-10-17 item 3 F28.
+
+53. 2026-10-17 · 1F/ruling-3 · game/src/test/Milestone1F_TestHarness.tsx ·
+    F25d APPLIED (user decision, option A of the F25c escalation): the
+    walkFwd corridor-scan ARCS widened from [25..800] (7 arcs) to
+    [25..2600] (16 arcs, +200 m steps above 800), and the F25 comment now
+    reads "flattest 2,600 m corridor (F25d — covers the full walk to SAT_B
+    at 2,400 m + margin)". The 24 azimuths at 15°, max-slope score,
+    |Δh| tie-break, SAT_A/B/C formulas, SPAWN_DIR/spawn scan,
+    LIVE_SECONDS=120, rebases >= 2, the 40° gate, and every R5 term
+    untouched. · Selection-input change, not a threshold change: the 800 m
+    horizon picked a corridor that runs into ≥69.7° walls before SAT_B at
+    2,400 m; the scan now optimizes the full walk. · Evidence: Node
+    diag-m1f-core.mjs with F25d ARCS — best 5: az 345° 67.5°, az 270°
+    71.0°, az 255° 71.2°, az 120° 71.4°, az 150° 71.6°; SELECTED az 345°
+    (67.5° > 40° → MEASURE); 600 s sim 0 crossings (locals max 371.8,
+    934.5 m path, 118.8 m net; straight line spawn→SAT_B max slope 80.6°
+    at ~863 m) → branch (iii): edit kept, gate run anyway, routed as
+    F25e. · Source: Lead ruling 2026-10-17 item 3 F25d.
+
+54. 2026-10-17 · 1F/tools · game/tools/diag-m1f-core.mjs, game/tools/
+    diag-m1f-r2.mjs, game/tools/diag-m1f-details.mjs (created) ·
+    diag-m1f-core.mjs: ARCS mirrored to the F25d 16-arc list verbatim +
+    round-3 instrumentation (crossing timestamps in wall/sim clocks,
+    SAT_B distance/bearing from spawn, max slope along the spawn→SAT_B
+    straight line, F25d branch determination (i)/(ii)/(iii)).
+    diag-m1f-r2.mjs REWRITTEN to execute the REAL edited harness
+    lookAtQuatInto — extracted verbatim from the harness source at runtime
+    into a self-cleaning temp .ts loaded through the registered TS loader
+    (no local copy can drift) — plus a verbatim boot/warmup/LIVE replica
+    so the four suite poses (TP boom, R2 Sun, R3 silhouette, R5 SAT_B)
+    use real geometry; also prints the Sun disk r/ideal-footprint numbers
+    and (F29) the R3 parallax + R5 straddle-ray clearance math.
+    diag-m1f-details.mjs created: read-only DOM scrape of the five
+    .test-row badge/label/detail strings (per-row evidence the gate spec
+    does not print). · Read-only diag tooling, user-pre-authorized
+    2026-10-15. · Evidence: M1F.md §10 (probe transcripts). · Source: Lead
+    ruling 2026-10-17 items 4b, 4c + diag tooling precedent.
+
+55. 2026-10-17 · 1F/bookkeeping · notes/STATE.md · B-1 APPLIED: the 1F
+    ledger row now reads the round-2 ruling as committed in 0b2fae8 (was
+    "commit pending"); ANCHOR moved df1e04f → 0b2fae8 (last pushed,
+    Lead-verified state); Approval Ledger rows added — F27 APPROVED, F28
+    APPROVED, F25c ESCALATED → resolved by the user as option A, F25d
+    APPROVED. · Lead instruction item 3 B-1. · Evidence: git log 0b2fae8;
+    STATE.md approval ledger. · Source: Lead ruling 2026-10-17 item 3 B-1.
