@@ -625,3 +625,55 @@ Observations (NO change made — recorded for the Lead):
     Typecheck + build re-verified UNPIPED: TSC_EXIT=0 BUILD_EXIT=0. · §8
     loop step 3. · Evidence: build log (chunk list). · Source: brief §3.2,
     §3.7.
+
+46. 2026-10-16 · 1F/step5 · (NO code change — GATE FAILED, ALL FOUR
+    FAILING ROWS ROUTED) · 1F gate: `[Milestone1F] acceptance FAILED`,
+    badges ["PASS","FAIL","FAIL","FAIL","FAIL"]; full 1A–1E regression
+    GREEN in the same serial run ("5 passed (3.9m)"; PLAYWRIGHT_EXIT=1 on
+    the 1F row only). Root causes proven by Node replication
+    (tools/diag-m1f-core.mjs) + live browser probe (tools/diag-m1f-browser
+    .mjs), nothing touched: **F22** (R2) horizon-cull up = normalize(driver
+    LOCAL) instead of the radial normalize(O+local) — |O|≈1,378 m ≈ R, so
+    the cull up is 91.6° off at the suite pose; the SUN (true elev +21.7°)
+    reads −68.9° → CULLED → sun footprint readback 0 px (row FAIL); sky
+    inverted (Uranus active, Venus/Mars/Jupiter culled); the harness's own
+    telemetry Earth-elevation path uses the correct radial — two
+    inconsistent code paths. **F23** (R3) unit sweep: 20 trips = 10 round
+    trips = 20 crossings + 1 initial-state correction = exactly 21 flips vs
+    the required 40 (unreachable as written), AND the smoothstep fade's max
+    slope 1.5/11,000 = 1.364e-4/m exceeds the 1.1e-4 bound (the bound is
+    below the canon function's own max derivative). **F24** (R4)
+    identityOk reads astroMesh.geometry on a THREE.Group (nonexistent →
+    structurally false; the F9/F10a class — routed in advance at #44; heap
+    criteria all PASS: 0 B pure + 0 B render burns). **F25** (R5-rebases)
+    the scripted walk cannot reach a rebase crossing: terrain along
+    walkFwd is a mountain wall (68° @200 m … 78° @1.2–1.4 km); 600 s sim
+    yields 625 m path / 347 m net, bubble locals peak 227 m ≪ 1,024 → 0
+    crossings (< 2). F21b's sprint arithmetic assumed clear ground. Walk
+    -target/LIVE_SECONDS calibration = Lead. **F26** (R5-geo) geo-constancy
+    window opens pre-first-render (onFrame runs before executePasses in the
+    same frame → first WARMUP read 0) + WARMUP streaming growth → geoMin=0
+    poisoned vs geoMax=107 → geoConst false; F12-class window defect,
+    proposed F20-shape reset at the WARMUP→LIVE transition. Cosmetics
+    routed per standing damage protocol: **D-1** family-A $-strip in R2's
+    detail (canon 1966 `{(coverage * 100).toFixed(1)}` — one character;
+    verdict-neutral); **D-2** unmatched paren in the same string.
+    Observations: O-1 silhouette window sampled only 8 disk px (probe
+    mostly unlit); O-2 R2's per-instance audit samples ONE body ×
+    mesh.count (slot-order break); O-3 browser/Node end-of-walk divergence
+    (36k ticks ulp) shifts individual bodies across the razor-edge wrong-up
+    cull boundary — immaterial post-F22. Renderer health VERIFIED
+    non-vacuous: near pass 33 draw calls/frame live; R1 determinism + R5
+    straddler byte-zero diffs are real. · §6 (may NOT touch acceptance
+    logic) + F9/F10/F11 routing precedent + standing damage protocol. ·
+    Evidence: notes/reports/M1F.md §4–6 (verbatim gate output + both probe
+    transcripts). · Source: brief §6; directive items 4–5.
+
+47. 2026-10-16 · 1F/tools · game/tools/diag-m1f-core.mjs, game/tools/
+    diag-m1f-browser.mjs (created) · Read-only forensic probes cited as
+    evidence in M1F.md §6: Node replication of the verbatim 1F boot/spawn/
+    walk/cull arithmetic (WALL_SECONDS env to extend the walk), and a
+    Playwright page probe of the rig module singletons (camera health,
+    stats sampling) against a dev server. No engine or canon content. ·
+    User pre-authorization 2026-10-15 for committing diag tooling. ·
+    Evidence: M1F.md §6. · Source: diag-m1b…m1e precedent.

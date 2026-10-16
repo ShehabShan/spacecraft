@@ -1,20 +1,17 @@
 # SOLARIS — ASSEMBLY STATE (see AGENT_BRIEF.md §10)
 
 ## NEXT ACTION
-MILESTONE 1F EXECUTING per the Lead directive 2026-10-16 (M1E APPROVED +
-1F ordered with F3 expanded): read Milestone/Milestone 1F.txt in full →
-`node tools/extract.mjs 1F` (expect 4 blocks; zero parenthetical matches;
-defensive layeredCameras discard must NOT trigger) → purity check
-(impostorMath.ts imports ONLY core/physics/sphericalFrame) → apply F3
-expanded (a: delete dead slopeDegAt stub + `void slopeDegAt;`; b+F21a:
-sun-trace camera-relative offsets + lastRebaseCount + delete both
-vestigial blocks + bound 0.02→0.05 + detail wording; c: terrainNormalInto
-top-level import, delete require shim) → F21b conditional calibration
-(arithmetic first from extracted constants; if <3 crossings expected:
-LIVE_SECONDS 25→120, rebases >= 3 → >= 2, budget 150 s → 240 s) → §6
-strict-TS fixes logged → register ?page=m1f → typecheck+build UNPIPED →
-1F gate (240 s) + full 1A–1E regression → notes/reports/M1F.md → commit
-per cadence + push → STOP at the approval gate.
+AWAITING LEAD RULING on the M1F gate-failure routes F22–F26 (+ cosmetics
+D-1/D-2, observations O-1–O-3) — full evidence in notes/reports/M1F.md §5.
+F22 horizon-cull up-vector (local vs radial — the Sun culled −68.9° vs
+true +21.7°) · F23 R3 unit-sweep calibration (21 flips vs 40; max-slope
+bound 1.1e-4 < the fade's own 1.364e-4) · F24 R4 identityOk reads
+Group.geometry (nonexistent) · F25 walk cannot reach a rebase crossing
+(terrain wall 68–78° on walkFwd; 347 m net in 600 s sim; calibration =
+Lead) · F26 geo window opens pre-first-render (F20-shape reset proposed).
+On ruling: apply authorized fixes → typecheck/build UNPIPED → re-run 1F
+gate (240 s) + full 1A–1E regression → update notes/reports/M1F.md →
+commit + push → STOP at the approval gate.
 
 ## MILESTONE LEDGER
 | MS | Status | Evidence |
@@ -25,34 +22,28 @@ per cadence + push → STOP at the approval gate.
 | 1C | APPROVED | Gate GREEN 4/4 + 1A/1B regression 5/5 ("3 passed (1.2m)"); F10a/F10b verified against all four ruling requirements; final commit a86ce94; report: notes/reports/M1C.md; Lead approval 2026-10-15 |
 | 1D | APPROVED | Commit e830759; gate GREEN 5/5 + full 1A/1B/1C regression green ("4 passed (1.5m)"); F11/F12 applied as ruled; erratum + standing rule adopted; authorship verified: v@1000m 264.7 matches corrected derivation, locals max 1022.8 matches 1A structural prediction (1022.67), geo 151 = F12-predicted constant count; report: notes/reports/M1D.md; Lead approval 2026-10-16 |
 | 1E | APPROVED | Commit 4c352dd (gate-green report + ledgers); FINAL: `[Milestone1E] acceptance PASSED` 6/6 (coriolis 0.75 cm west/1.02 s/1-tick plant; vehicleErr 0.0e+0; deorbit landed 22,307; face-walk 0.82° corner/2 changes; slope rows clean, minAGL n/a) + full 1A/1B/1C/1D regression ("5 passed (1.9m)", PLAYWRIGHT_EXIT=0); all nine rulings applied + vindicated (F14 core #1 7947369; F15–F17+$-strip e689d4c; F18 core #2 37a4c9e; F19/F20 7d77e52); report: notes/reports/M1E.md; Lead approval 2026-10-16 |
-| 1F | IN PROGRESS | Ordered 2026-10-16 with F3 expanded (a/b/c + F21a semantics and bound) + F21b conditional calibration; extraction pending |
+| 1F | GATE RUN — FAILED 1/5, ROUTED | Extraction 4/4 + F3 expanded + F21a/b applied (commit 5a17673); gate FAILED: R1 PASS (real — near pass 33 calls/frame verified), R2/R3/R4/R5 routed F22–F26 (+D-1/D-2 cosmetics, O-1–O-3 observations) with Node+browser root-cause evidence; full 1A–1E regression GREEN ("5 passed (3.9m)"); TSC_EXIT=0 BUILD_EXIT=0; report: notes/reports/M1F.md; PARKED AT RULING GATE 2026-10-16 |
 | 1G | NOT STARTED | F2 + hand-applied KCC patch + MANDATORY full 1E re-run; re-grep the §3.5 patch against F14/F18's moved/edited regions |
 
 ## IN-FLIGHT
-Milestone 1F — executing (directive 2026-10-16). DONE this session:
-extraction 4/4 verbatim re-run (zero parenthetical matches; layeredCameras
-discard NOT triggered; impostorMath purity VERIFIED — sole import is
-sphericalFrame); prior-session drift repaired (its uncommitted harness copy
-differed from verbatim canon — partial F3 application lost on overwrite,
-nothing unique: F3 re-applied from the directive); F3a/F3c/F3b+F21a/F21b
-applied exactly as expanded (F21b arithmetic confirmed <3 crossings →
-LIVE_SECONDS 120, rebases >= 2, budget 240 s); §6 strict-TS: import list
-rigCamFar→rigCamNear (the directive's known-suspect, confirmed), moonState!
-×3, dead 3-arg setDriverPose deleted; ROUTED-IN-ADVANCE pending gate
-confirmation: R4 identityOk reads astroMesh.geometry on a THREE.Group
-(undefined at runtime → row cannot pass as authored; runtime-neutral cast
-applied to unblock the build). ?page=m1f registered; e2e/m1f.spec.ts
-created (240 s). TSC_EXIT=0 BUILD_EXIT=0 unpiped.
-NEXT: run the 1F gate + full 1A–1E regression, write notes/reports/M1F.md,
-commit + push, STOP at the approval gate.
-Watch items: WebGL2 required for the A/B byte-diff rows (STOP if context
-creation fails — §3.7); geoConst mid-window step → MutationObserver probe
-(F12 precedent); spawn-scan failure → paste params, never touch the scan;
-headless multi-second main-thread pause is EXPECTED (3000-iteration burn +
-300 three-pass renders + 5 A/B renders on the armed frame); clean NOTHING
-beyond F3's list (`void err; void te;` placeholders in the R2 audit loop
-stay verbatim); new canon damage (families A/B) routes per standing protocol.
-1E is closed: APPROVED at commit 4c352dd; no open debugging.
+Milestone 1F — PARKED AT THE RULING GATE (2026-10-16). Gate FAILED 1/5;
+every failing clause root-caused with Node + browser probes and routed
+(F22–F26 + D-1/D-2), nothing unauthorized touched. Open items awaiting the
+Lead (details + probe transcripts in notes/reports/M1F.md §5–6):
+- F22: cull up = normalize(LOCAL) — 91.6° off radial at the suite pose;
+  SUN culled (−68.9° vs true +21.7°) → R2 footprint 0 px. Fix: compose O
+  before normalizing.
+- F23: R3 flips 21≠40 (loop = 20 crossings + 1 init-state correction) AND
+  maxSlope bound 1.1e-4 < the fade's own max derivative 1.364e-4.
+- F24: identityOk reads astroMesh.geometry on a Group — structurally false.
+- F25: terrain wall on walkFwd (68–78°) → 0 rebase crossings; walk-target
+  or LIVE_SECONDS calibration (spawn scan itself worked — params on
+  record).
+- F26: geo window opens pre-first-render → geoMin=0 poisoned; F20-shape
+  window reset at the WARMUP→LIVE transition proposed.
+Renderer health verified (near 33 calls/frame; mid=0 legitimate frustum
+culling; straddler/determinism passes REAL). F21a semantics live but
+unsampled (no crossings). 1E is closed: APPROVED at 4c352dd.
 
 ## APPROVAL LEDGER (settled — never re-ask)
 | Date | Decision |
@@ -110,6 +101,7 @@ stay verbatim); new canon damage (families A/B) routes per standing protocol.
 | 4 | 2026-10-14/15 | M1B execution | (continuation — session resumed after wind-down in the same live session) Pre-scan done (1C verdict missing → F8); extraction 5/5 + overlay, invariant held; F7a/F7b per ruling → typecheck/build clean; 1A regression green; 1B deadlock diagnosed to canon auto-run guard → F9 authorized + applied; 1C-CP persisted; BOTH gates green ("2 passed (9.5s)") | M1B parked at the approval gate — next: Lead approval of notes/reports/M1B.md, then 1C (extract 6 blocks, F5 + 1C-CP at extraction, workers check, gate + regression, report) |
 | 5 | 2026-10-16 | M1D approval + M1E execution | Bootstrap clean; M1D APPROVED + 1E ordered recorded; extraction 3/3, F13, F1 vacuous, 2 TS fixes, ?page=m1e wired; three ruling rounds total: (1) first gate FAIL 4 rows → F14–F17 + $-strip ruled + applied (F14 = core #1), all vindicated; (2) re-run FAIL 3 rows → F18 (core #2: launch compose at θ_prev + embed guard), F19 (cap 26,000), F20 (per-row reset + Infinity print) ruled + applied, Node verification FIRST agreed with browser number-for-number; (3) FINAL GATE GREEN: 1E 6/6 PASS + full 1A/1B/1C/1D regression "5 passed (1.9m)", PLAYWRIGHT_EXIT=0; spec-canonical coriolis row green (0.75 cm west, 1.02 s, 1-tick plant) | M1E parked at the approval gate — next: Lead approval of notes/reports/M1E.md; then 1F per §8 (extract 4 blocks, F3, impostorMath purity, gate 150 s + regression, report, STOP) |
 | 6 | 2026-10-16 | Prior-session CLOSURE ROW (appended by session 6 per §10.2 + Lead directive) | Session 5 ended at the M1E approval gate; its handoff note above was committed in 4c352dd, but no dedicated closure row existed at session end — the §10.2 gap is formal, noted in the Approval Ledger, closed by this row. M1E subsequently APPROVED by directive 2026-10-16 | Resumed by session 6 (fresh bootstrap, reconciliation clean, canon byte-identical to ea112ec) |
+| 7 | 2026-10-16 | M1E approval bookkeeping (already recorded in bbbbb47 by session 6's directive processing) + M1F execution | Bootstrap: items 1/2/6 of the directive already recorded in bbbbb47; ONE drift found — a prior session had extracted 1F + begun F3 uncommitted (harness hash ≠ verbatim; render/core files byte-identical); re-extraction restored verbatim, F3 re-applied (nothing unique lost — no snapshot existed; noted in report). 1F executed through §8 step 5: extraction 4/4 (0 parenthetical; layeredCameras silent; impostorMath PURE), F3a/c/b+F21a + F21b applied (arithmetic confirmed → LIVE_SECONDS 120, ≥2, budget 240 s), 5 strict-TS §6 fixes (rigCamFar→rigCamNear known-suspect confirmed; moonState! ×3; dead setDriverPose deleted; Group.geometry cast), TSC_EXIT=0 BUILD_EXIT=0 unpiped (5a17673). GATE: 1F FAILED 1/5 (R1 PASS real); regression 1A–1E GREEN ("5 passed (3.9m)"). All 4 failing rows root-caused via NEW Node+browser probes and ROUTED F22–F26 (+D-1/D-2 cosmetics, O-1–O-3 observations) — no unauthorized changes; renderer verified healthy (near 33 calls/frame; passes non-vacuous). Report notes/reports/M1F.md written; parked at the RULING gate | M1F awaits the Lead's ruling on F22–F26 (+D-1/D-2). On authorization: apply fixes, re-run 1F gate + full regression, update M1F.md, commit + push, STOP at the approval gate. 1G after that. |
 
 ## ANCHOR
 df1e04f — "M1A: extracted, gates green" (branch m1-assembly; chain: ea112ec
