@@ -126,21 +126,15 @@ function elevationOf(dir, up) {
   return Math.asin(d >= 1 ? 1 : d <= -1 ? -1 : d)
 }
 function auditCull(label, obsLocal) {
-  // replicate applyRenderState's cull EXACTLY: obs = moonRail + driver local,
-  // up = normalize(driver local)  <- the harness's actual formula
-  const ol = Math.hypot(obsLocal.x, obsLocal.y, obsLocal.z) || 1
-  const up = { x: obsLocal.x / ol, y: obsLocal.y / ol, z: obsLocal.z / ol }
-  // true radial up for comparison: moon-frame abs = O + local
+  // F22 post-fix cull: obs = moonRail + driver local, up = ABSOLUTE RADIAL
+  // normalize(O + local) — mirrors the harness's fixed formula
   const O = core.getOrigin()
   const ax = O.x + obsLocal.x, ay = O.y + obsLocal.y, az = O.z + obsLocal.z
   const al = Math.hypot(ax, ay, az) || 1
-  const upTrue = { x: ax / al, y: ay / al, z: az / al }
-  const dotUU = up.x * upTrue.x + up.y * upTrue.y + up.z * upTrue.z
-  console.log(`${label}: local=(${obsLocal.x.toFixed(1)},${obsLocal.y.toFixed(1)},${obsLocal.z.toFixed(1)}) |local|=${ol.toFixed(1)} ` +
+  const up = { x: ax / al, y: ay / al, z: az / al }
+  console.log(`${label}: local=(${obsLocal.x.toFixed(1)},${obsLocal.y.toFixed(1)},${obsLocal.z.toFixed(1)}) |local|=${Math.hypot(obsLocal.x, obsLocal.y, obsLocal.z).toFixed(1)} ` +
     `O=(${O.x},${O.y},${O.z})`)
-  console.log(`  harness up=normalize(local)=(${up.x.toFixed(3)},${up.y.toFixed(3)},${up.z.toFixed(3)}) vs ` +
-    `true radial=(${upTrue.x.toFixed(3)},${upTrue.y.toFixed(3)},${upTrue.z.toFixed(3)}) — ` +
-    `${((Math.acos(Math.max(-1, Math.min(1, dotUU))) * 180) / Math.PI).toFixed(1)} deg apart`)
+  console.log(`  F22 radial up=(${up.x.toFixed(3)},${up.y.toFixed(3)},${up.z.toFixed(3)})`)
   const ox = moonState.absPos.x + obsLocal.x, oy = moonState.absPos.y + obsLocal.y, oz = moonState.absPos.z + obsLocal.z
   let nActive = 0, sunLine = ''
   for (const [id, rad] of CAT) {
@@ -151,26 +145,64 @@ function auditCull(label, obsLocal) {
     const dir = { x: dx / d, y: dy / d, z: dz / d }
     const theta = Math.asin(Math.min(1, rad / d))
     const el = elevationOf(dir, up)
-    const elTrue = elevationOf(dir, upTrue)
     const culled = el < -(theta + 0.03)
     if (!culled) nActive++
-    if (id === 'sun') sunLine = `  SUN: harness-elev=${((el * 180) / Math.PI).toFixed(1)} deg (true-elev ${((elTrue * 180) / Math.PI).toFixed(1)}) theta=${((theta * 180) / Math.PI).toFixed(2)} -> ${culled ? 'CULLED' : 'active'}`
-    else console.log(`  ${id.padEnd(8)} harness-elev=${((el * 180) / Math.PI).toFixed(1).padStart(7)} deg (true ${((elTrue * 180) / Math.PI).toFixed(1).padStart(7)}) ${culled ? 'CULLED' : 'active'}`)
+    if (id === 'sun') {
+      const pxPerRad = 720 / (2 * Math.tan((31 * Math.PI) / 180))
+      const rpx = theta * pxPerRad
+      sunLine = `  SUN: elev=${((el * 180) / Math.PI).toFixed(1)} deg theta=${((theta * 180) / Math.PI).toFixed(2)} -> ${culled ? 'CULLED' : 'ACTIVE'}; ideal footprint ~pi*r^2 = ${(Math.PI * rpx * rpx).toFixed(0)} px (r=${rpx.toFixed(1)} px)`
+    } else console.log(`  ${id.padEnd(8)} elev=${((el * 180) / Math.PI).toFixed(1).padStart(7)} deg ${culled ? 'CULLED' : 'active'}`)
   }
   console.log(sunLine)
-  console.log(`  -> ${nActive} of 9 catalog bodies ACTIVE under the harness up`)
+  console.log(`  -> ${nActive} of 9 catalog bodies ACTIVE under the F22 radial up`)
   return nActive
 }
 
-// ---- walkFwd + SAT_B (verbatim) -----------------------------------------
+// ---- walkFwd via the F25 corridor scan (mirrors the harness edit) ---------
+let CORRIDOR_INFO = ''
 const walkFwd = (function () {
-  let tx = SPAWN_DIR.y * 0 - SPAWN_DIR.z * 1
-  let ty = SPAWN_DIR.z * 0 - SPAWN_DIR.x * 0
-  let tz = SPAWN_DIR.x * 1 - SPAWN_DIR.y * 0
-  const tl = Math.hypot(tx, ty, tz) || 1
-  tx /= tl; ty /= tl; tz /= tl
-  if (tx * sunDir.x + ty * sunDir.y + tz * sunDir.z < 0) { tx = -tx; tz = -tz }
-  return { x: tx, y: ty, z: tz }
+  const _p = { x: 0, y: 0, z: 0 }
+  let e1x = -SPAWN_DIR.z, e1y = 0, e1z = SPAWN_DIR.x
+  const e1l = Math.hypot(e1x, e1y, e1z) || 1
+  e1x /= e1l; e1y /= e1l; e1z /= e1l
+  const e2x = SPAWN_DIR.y * e1z - SPAWN_DIR.z * e1y
+  const e2y = SPAWN_DIR.z * e1x - SPAWN_DIR.x * e1z
+  const e2z = SPAWN_DIR.x * e1y - SPAWN_DIR.y * e1x
+  const ARCS = [25, 50, 100, 200, 400, 600, 800]
+  let bx = 0, by = 0, bz = 0, bestScore = Infinity, bestDev = 0, bestK = -1
+  const rows = []
+  for (let k = 0; k < 24; k++) {
+    const azim = (k * 15 * Math.PI) / 180
+    const c = Math.cos(azim), s = Math.sin(azim)
+    const tx = e1x * c + e2x * s, ty = e1y * c + e2y * s, tz = e1z * c + e2z * s
+    const ax = SPAWN_DIR.y * tz - SPAWN_DIR.z * ty
+    const ay = SPAWN_DIR.z * tx - SPAWN_DIR.x * tz
+    const az2 = SPAWN_DIR.x * ty - SPAWN_DIR.y * tx
+    let maxSlope = 0, maxDev = 0
+    let prevH = terrainHeight(SPAWN_DIR.x, SPAWN_DIR.y, SPAWN_DIR.z)
+    for (const arc of ARCS) {
+      const th = arc / R, cc = Math.cos(th), ss = Math.sin(th)
+      // Rodrigues about (SPAWN_DIR × t): moves the point along +t
+      const px2 = SPAWN_DIR.x * cc + (ay * SPAWN_DIR.z - az2 * SPAWN_DIR.y) * ss
+      const py2 = SPAWN_DIR.y * cc + (az2 * SPAWN_DIR.x - ax * SPAWN_DIR.z) * ss
+      const pz2 = SPAWN_DIR.z * cc + (ax * SPAWN_DIR.y - ay * SPAWN_DIR.x) * ss
+      _p.x = px2; _p.y = py2; _p.z = pz2
+      const h = terrainHeight(_p.x, _p.y, _p.z)
+      maxDev = Math.max(maxDev, Math.abs(h - prevH)); prevH = h
+      maxSlope = Math.max(maxSlope, slopeFromNormal(_p))
+    }
+    rows.push({ k, az: k * 15, maxSlope, maxDev })
+    if (maxSlope < bestScore || (maxSlope === bestScore && maxDev < bestDev)) {
+      bestScore = maxSlope; bestDev = maxDev; bx = tx; by = ty; bz = tz; bestK = k
+    }
+  }
+  rows.sort((a, b) => a.maxSlope - b.maxSlope)
+  CORRIDOR_INFO = rows.slice(0, 5).map((r) =>
+    `az ${String(r.az).padStart(3)}°: maxSlope ${r.maxSlope.toFixed(1)}°, maxDev ${r.maxDev.toFixed(1)} m`).join(' | ')
+  console.log('F25 corridor scan (best 5 of 24 azimuths):')
+  console.log('  ' + CORRIDOR_INFO)
+  console.log(`  SELECTED: azimuth ${bestK * 15} deg, maxSlope ${bestScore.toFixed(1)} deg (<=40 deg gate: ${bestScore <= 40 ? 'PROCEED' : 'MEASURE'})`)
+  return { x: bx, y: by, z: bz }
 })()
 function surfacePoint(dirX, dirY, dirZ, alt) {
   const h = terrainHeight(dirX, dirY, dirZ)

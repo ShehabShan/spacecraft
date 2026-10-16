@@ -677,3 +677,64 @@ Observations (NO change made — recorded for the Lead):
     stats sampling) against a dev server. No engine or canon content. ·
     User pre-authorization 2026-10-15 for committing diag tooling. ·
     Evidence: M1F.md §6. · Source: diag-m1b…m1e precedent.
+
+48. 2026-10-16 · 1F/ruling · game/src/test/Milestone1F_TestHarness.tsx ·
+    Lead ruling 2026-10-16 (F22–F26 + D-1/D-2) applied EXACTLY: F22 —
+    `const o = core.getOrigin()` hoisted to the top of applyRenderState
+    (single declaration), horizon-cull up replaced by the absolute radial
+    `((px+o.x)/L, (py+o.y)/L, (pz+o.z)/L)`, L = hypot(px+o.x, py+o.y,
+    pz+o.z); nothing else in the loop changed. F23 — `flips === 40` →
+    `=== 21` + detail clause "(21 = 20 threshold crossings + 1
+    initial-state correction — deterministic, no thrash)";
+    `maxSlope <= 0.00011` → `<= 0.00015`. F24 — the canary term →
+    `astroMesh.children.length === 8` (other terms unchanged per ruling).
+    F25 — the canon walkFwd IIFE replaced by the 24-azimuth × {25…800 m}
+    corridor scan (score = max slopeFromNormal, tie-break max |Δh|;
+    rotation axis SPAWN_DIR × t; SAT_A/B/C formulas unchanged after it;
+    LIVE_SECONDS untouched). F26 — geoMin/geoMax reset at the WARMUP→LIVE
+    transition + geo capture condition LIVE-only. D-1/D-2 — `$` restored
+    and paren repaired in R2's detail string. TSC_EXIT=0 BUILD_EXIT=0
+    unpiped. · Lead ruling 2026-10-16 items 1–6. · Evidence: second gate
+    output (M1F.md §9.2); Node verification (M1F.md §9.1). · Source: Lead
+    ruling 2026-10-16.
+
+49. 2026-10-16 · 1F/routing-2 · (NO code change — second gate FAILED on
+    R2/R4/R5; THREE NEW ROUTES, all evidence-backed) · Post-fix gate:
+    badges ["PASS","FAIL","PASS","FAIL","FAIL"]; regression 1A–1E GREEN
+    ("5 passed (3.9m)"). VINDICATED: F22 live-path (9 active instances, Sun
+    +47.7° ACTIVE, ideal footprint ≈1,381 px), F23 (R3 PASS: 21 flips,
+    0.14/km ≤ 0.15), F26 (geometries constant at 49), D-1/D-2. ROUTED:
+    **F27** — lookAt convention mismatch: quatFromFrameInto builds columns
+    (fwd, up, fwd×up) = X-forward frame (sphericalFrame:113–123), so the
+    harness-local lookAtQuatInto poses (R2 sun, R3 silhouette, R5
+    straddle, live TP boom) aim the three.js camera along local −Z =
+    −(fwd×up), ~90° from the target, while projectDirectionInto implements
+    the documented −Z convention — the Sun RENDERS but on the opposite
+    side of the ±42 px scan window (0 px/999 evidence; probe diag-m1f-r2
+    .mjs vs the REAL modules: behind=true px=py=0; +0.5° → 69,294 px;
+    proposed one-line fix quatFromFrameInto(right, up) VERIFIED dead-center
+    640.00/360.00). **F28** — identityOk's second term
+    `sky.bodies.length === 11` structurally false: the pool boot-allocates
+    capacity-24 slots (length is ALWAYS 24); 11 was the author's ACTIVE
+    count; actual active at suite = 9 (7 catalog + 2 probes = R2's "9 live
+    instances"). R4 fails solely on this term (heaps 0/0; children === 8
+    true). Proposed `=== 24`; Lead's call. **F25c** — per the ruling's own
+    conditional: best corridor az 330° at 42.2° > 40° → Node-measured 600 s
+    sim = 0 crossings (max bubble component 686.1 < 1,024; 1,321 m path /
+    478 m net; 69.7°/72.7° walls beyond 1.2 km; SAT_B at 2.8 km across
+    them) → STOP and route, no LIVE_SECONDS self-calibration. Also
+    disclosed: R3's silhouette sub-clause sampled a corner window (8 star
+    px) — vacuous until F27; R5's straddle byte-zero diffs remain valid
+    determinism but likely never framed satB. · §6 + item 9's
+    paste-raw-numbers demand + F25c's stop condition. · Evidence:
+    notes/reports/M1F.md §9 (verbatim output + probe transcripts). ·
+    Source: Lead ruling 2026-10-16 items 4c, 9.
+
+50. 2026-10-16 · 1F/tools · game/tools/diag-m1f-r2.mjs (created) ·
+    Read-only convention probe against the REAL sphericalFrame +
+    impostorMath modules: replicates lookAtQuatInto verbatim, projects the
+    look-target through projectDirectionInto (behind=true, px=py=0 — the
+    mismatch), and verifies the proposed right-axis fix (dead-center
+    640.00/360.00, behind=false). Evidence for route F27. · User
+    pre-authorization 2026-10-15 for diag tooling. · Evidence: M1F.md
+    §9.3. · Source: diag tooling precedent.

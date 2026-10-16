@@ -2,12 +2,13 @@
 
 Date: 2026-10-16 · Branch: m1-assembly · Canon: untouched (diff vs ea112ec = 0)
 
-**STATUS: GATE FAILED — 1/5 rows PASS — ALL FOUR FAILURES ROOT-CAUSED AND
-ROUTED (F22–F26 below); NO unauthorized acceptance-logic changes applied.**
-Full 1A–1E regression GREEN in the same serial run: `5 passed (3.9m)`; only
-the 1F row failed (`1 failed, 5 passed`). The single passing row (R1
-depth-compositing) is a REAL pass — verified non-vacuous by browser probe
-(near pass draws 33 objects/frame; frozen A/B frames carry real content).
+**STATUS (round 2): GATE FAILED 2/5+1 — R1 PASS (real) · R3 PASS (F23
+vindicated) · R2/R4/R5 routed (F27 lookAt-convention mismatch, F28
+capacity-term canary, F25c corridor stop). First-round routes F22–F26 +
+D-1/D-2 all applied per the Lead ruling 2026-10-16 and live-path
+vindicated; three NEW authorial defects exposed by the fixes are routed
+below (§9). NO unauthorized acceptance-logic changes.** Full 1A–1E
+regression GREEN in both serial runs (`5 passed (3.9m)`).
 
 ## 1. Extraction report (§8 step 1)
 
@@ -335,8 +336,142 @@ path; the cull itself awaits F22), Jupiter banded, the probe crossfade
 every 48 s, the straddler satellite crossing 2,400 m with zero visual
 change, and DEPTH-CLEAR TRIGGERS ticking at exactly 2/frame.
 
+## 9. LEAD RULING ROUND — F22–F26 + D-1/D-2 applied (2026-10-16), second gate, three new routes
+
+All seven authorized items applied EXACTLY as ruled: **F22** (origin hoisted
+to the top of applyRenderState — single declaration; cull up = absolute
+radial `normalize(O + local)` in the sky-bodies loop, nothing else changed)
+· **F23** (`flips === 21` + the deterministic-flips detail clause;
+`maxSlope <= 0.00015`) · **F24** (`astroMesh.children.length === 8`; other
+two canary terms unchanged) · **F25** (the canon walkFwd IIFE replaced by
+the 24-azimuth × {25,50,100,200,400,600,800 m} corridor scan, score = max
+slope, tie-break max |Δh|; SAT_A/B/C formulas unchanged after it;
+LIVE_SECONDS untouched) · **F26** (`geoMin/geoMax` reset at the WARMUP→LIVE
+transition; geo capture condition LIVE-only) · **D-1/D-2** (`$` restored +
+paren repaired in R2's detail). TSC_EXIT=0 BUILD_EXIT=0, both unpiped.
+
+### 9.1 Node verification FIRST (ruling 8b — diag-m1f-core.mjs)
+
+- **F22 VINDICATED (live path)**: post-WARMUP audit — Sun elev **+36.2° →
+  ACTIVE**, 7/9 catalog active (Saturn −25.6°, Uranus −58.3° correctly
+  culled); suite-pose audit — Sun **+47.7° ACTIVE**, ideal footprint
+  **π·21.0² ≈ 1,381 px**. Exactly the ruling's expectation.
+- **F25 corridor scan**: best 5 of 24 azimuths — **az 330°: 42.2°** · az
+  195°: 54.4° · az 135°: 56.2° · az 285°: 60.9° · az 120°: 61.9°. SELECTED
+  az 330° at **42.2° > the 40° gate → MEASURE branch**: 600 s sim walk on
+  the corridor → **0 crossings** (1,321 m path, 478 m net, max bubble-local
+  component **686.1** < 1,024; the corridor is clean to ~1.2 km then hits
+  69.7°/72.7° walls — SAT_B at 2,400+400 m lies beyond the scanned
+  horizon). Per the ruling's own conditional: **STOP and route — no
+  self-calibration** (route F25c below).
+
+### 9.2 Second browser gate — verbatim
+
+```
+[m1a] PASSED — ["PASS","PASS","PASS","PASS","PASS"]
+[m1b] PASSED in 19.8 ms — ["PASS","PASS","PASS","PASS","PASS"]
+[m1c] PASSED — geo=145 … — ["PASS","PASS","PASS","PASS"]
+[m1d] PASSED — v@1000m=264.7 maxDv=10.30 rebases=8 geo=151 — ["PASS","PASS","PASS","PASS","PASS"]
+[m1e] PASSED — ["PASS","PASS","PASS","PASS","PASS","PASS"]
+[m1f] acceptance line: [Milestone1F] acceptance FAILED
+[m1f] badges: ["PASS","FAIL","PASS","FAIL","FAIL"]
+  1 failed · 5 passed (3.9m)          PLAYWRIGHT_EXIT=1 (1F row only)
+```
+
+- **R3 PASS (F23 VINDICATED)**: `21 state flips (21 = 20 threshold
+  crossings + 1 initial-state correction — deterministic, no thrash), 0
+  hole frames, 0 double-full frames, fade slope ≤ 0.14/km (≤ 0.15)… Live
+  sweep trace: 7201 frames, 0 holes, crossed both fade edges. Silhouette
+  A/B … 0.00% of the 8-px disk` — flips/slope/holes/live clauses all REAL;
+  the silhouette sub-clause is vacuous-quality until F27 (window scanned
+  the wrong screen region — see below).
+- **R2 FAIL, failure mode CHANGED**: `9 live instances` (7 catalog + 2
+  probes — the cull fix is live), θ err 0.0e+0, positions exact, D-1 now
+  prints `π·r² = 0.0%` correctly — but `disk footprint 0 px … center
+  offset 999.00 px … r = 21.0 px from θ = 2.008°`. The Sun is ACTIVE yet
+  the readback window (±2r ≈ ±42 px) found nothing → F27.
+- **R4 FAIL**: heaps 0 B / 0 B, `children.length === 8` true — fails solely
+  on the second term `sky.bodies.length === 11` → F28.
+- **R5 FAIL**: `0 origin shifts (< 2)` — F25c; `f32 locals max 687 m ≤
+  1,024` ✓ (Node said 686.1 — browser/Node agree); **`GL geometries
+  constant at 49`** — F26 VINDICATED (LIVE-only window, constant > 0);
+  straddler A/B 0/0 bytes (determinism real; aim quality pending F27).
+
+### 9.3 NEW ROUTES (round 2 — awaiting Lead ruling)
+
+**F27 — lookAt convention mismatch (+Z/X-frame quat vs −Z camera
+convention).** PROVEN against the REAL modules (`tools/diag-m1f-r2.mjs`):
+
+```
+sun-pose quat = (0.0000, 0.8864, 0.0000, -0.4629)
+sun projection: px=0.0 py=0.0 behind=true      (expect ~640/~360!)
+  dir +0.5deg yaw -> px=69294.7 …              (target near camera-local X)
+probe-pose projection: px=0.0 py=0.0 behind=true
+PROPOSED FIX (quatFromFrameInto(right, up)):
+  sun projection: px=640.00 py=360.00 behind=false
+  probe projection: px=640.00 py=360.00 behind=false
+```
+
+Root cause: `quatFromFrameInto` (sphericalFrame:113–123) builds its matrix
+with **columns (fwd, up, fwd×up)** — the frame's **+X is the forward**. The
+harness-local `lookAtQuatInto` passes (fwd, cameraUp) into it, so every
+pose it builds (R2 sun pose, R3 silhouette pose, R5 straddle pose, and the
+live TP boom camera in computeDriverPose) is a quat whose local +X points
+at the target — a three.js camera with that quaternion looks along its
+local −Z = −(fwd×up), i.e. ~90° AWAY from the target. Meanwhile
+`projectDirectionInto` (impostorMath, used as the R2/R3 ground truth)
+documents and implements the standard **−Z** convention. The Sun renders —
+on the opposite side of the frame from the ±42 px window. Consequences: R2
+footprint/center clauses blocked; R3's silhouette window sampled a corner
+(the 8 "disk" px are stars — clause vacuous until fixed); R5's straddle
+renders likely never framed satB (byte-zero diffs remain valid as
+determinism, but the Spec-05 layer-threshold proof is weak until aimed);
+the live boom camera faces ~90° from the astronaut (cosmetic — Lead
+eyeball). **Proposed (verified in Node, one line, harness-local —
+sphericalFrame untouched):** in `lookAtQuatInto`, call
+`quatFromFrameInto(rx, ry, rz, upx, upy, upz, out)` (RIGHT instead of
+fwd) — columns become (right, up, right×up=back), local −Z = fwd; both test
+poses then project dead-center.
+
+**F28 — identityOk's second term is structurally false.**
+`sky.bodies.length === 11` — but `SkyImpostorPool` boot-allocates the
+FULL capacity-24 slot array (`bodies.length === IMPOSTOR_CAPACITY` always);
+the author's 11 was the expected ACTIVE count (9 catalog + 2 probes —
+canon's own verification table says "11+ instances"), and the actual active
+count at suite time is **9** (7 catalog above the corrected horizon + 2
+probes — exactly R2's "9 live instances"). R4 now fails solely on this
+term (heaps 0/0, `children.length === 8` true). The ruling's F24 fixed the
+geometry term and (correctly) left the others — this one is also broken.
+**Proposed:** `sky.bodies.length === 24` (the boot-allocated pool IS the
+identity being canaried) — or an active-count check if the Lead prefers
+semantics; Lead's call.
+
+**F25c — corridor gate failed; routed per the ruling's own conditional.**
+Best corridor az 330° at 42.2° > 40° → Node-measured 600 s sim: **0
+crossings** (max bubble component 686.1 < 1,024; 1,321 m path / 478 m net;
+69.7°/72.7° walls beyond 1.2 km on the corridor; SAT_B at 2.8 km lies
+across them). Per item 4c: STOP and route, no LIVE_SECONDS self-calibration.
+The scan itself worked exactly as designed (clean corridor to 800 m found
+at the first azimuth tried); the structural gap is that the 800 m scan
+horizon cannot see the wall at 1.2–1.6 km, and every azimuth's far field
+is mountainous (next-best already 54.4°). Options for the Lead: widen the
+scan arcs (e.g. to 2,600 m) so the selection optimizes the FULL walk;
+retarget SAT_B; accept `rebases >= 1`; or another design. Note R5's
+sunJump clause stays vacuous until crossings exist (F21a's measurement is
+live and waiting).
+
+### 9.4 Vindication ledger (this round)
+
+F22 live-path ✓ (9 instances; Sun +47.7° ACTIVE; R2's audit clauses all
+green) · F23 ✓ (R3 PASS on the real clauses) · F24 term ✓ (R4's remaining
+failure is F28's, not F24's) · F26 ✓ (geometries constant at 49) · D-1/D-2
+✓ (detail prints correctly) · O-1/O-2 recorded as accepted (O-1's 8-px
+window now further explained by F27).
+
 ## Status
 
-**GATE FAILED · ROUTED (F22–F26 + D-1/D-2) · AWAITING LEAD RULING (§8.7).**
-On ruling: apply authorized fixes, re-run the 1F gate + full 1A–1E
-regression, update this report, commit + push, stop at the approval gate.
+**GATE FAILED (round 2) · ROUTED (F27, F28, F25c) · AWAITING LEAD RULING
+(§8.7).** Round-1 routes F22–F26 + D-1/D-2 applied and live-path vindicated
+(R1, R3 green; F26 proven). On the next ruling: apply, re-run the 1F gate +
+full 1A–1E regression, update this report, commit + push, stop at the
+approval gate.

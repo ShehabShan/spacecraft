@@ -209,15 +209,40 @@ kcc.teleportSurface(SPAWN_DIR.x, SPAWN_DIR.y, SPAWN_DIR.z);
 
 /* -- walk direction + satellites (moon-fixed, inside the spin group) -------- */
 const walkFwd: Vec3 = (function (): Vec3 {
-  // tangent at spawn pointing perpendicular to the Earth azimuth
-  let tx = SPAWN_DIR.y * 0 - SPAWN_DIR.z * 1;
-  let ty = SPAWN_DIR.z * 0 - SPAWN_DIR.x * 0;
-  let tz = SPAWN_DIR.x * 1 - SPAWN_DIR.y * 0;
-  const tl = Math.hypot(tx, ty, tz) || 1;
-  tx /= tl; ty /= tl; tz /= tl;
-  // orient toward the sun side so Earth stays in view
-  if (tx * sunDir.x + ty * sunDir.y + tz * sunDir.z < 0) { tx = -tx; tz = -tz; }
-  return { x: tx, y: ty, z: tz };
+  // F25 (Lead ruling 2026-10-16): corridor selection — 24 azimuths at 15°,
+  // flattest 800 m corridor wins (tie-break: max |Δh| between consecutive
+  // samples). The canon tangent pointed into a 68–78° mountain wall and the
+  // scripted sprint could never reach a rebase crossing.
+  const _p: Vec3 = { x: 0, y: 0, z: 0 };
+  let e1x = -SPAWN_DIR.z, e1y = 0, e1z = SPAWN_DIR.x;   // ⊥ SPAWN_DIR
+  const e1l = Math.hypot(e1x, e1y, e1z) || 1;
+  e1x /= e1l; e1y /= e1l; e1z /= e1l;
+  const e2x = SPAWN_DIR.y * e1z - SPAWN_DIR.z * e1y;
+  const e2y = SPAWN_DIR.z * e1x - SPAWN_DIR.x * e1z;
+  const e2z = SPAWN_DIR.x * e1y - SPAWN_DIR.y * e1x;
+  const ARCS = [25, 50, 100, 200, 400, 600, 800];
+  let bx = 0, by = 0, bz = 0, bestScore = Infinity, bestDev = 0;
+  for (let k = 0; k < 24; k++) {
+    const azim = (k * 15 * Math.PI) / 180;
+    const c = Math.cos(azim), s = Math.sin(azim);
+    const tx = e1x * c + e2x * s, ty = e1y * c + e2y * s, tz = e1z * c + e2z * s;
+    // rotation axis SPAWN_DIR × t moves the surface point along +t
+    const ax = SPAWN_DIR.y * tz - SPAWN_DIR.z * ty;
+    const ay = SPAWN_DIR.z * tx - SPAWN_DIR.x * tz;
+    const az2 = SPAWN_DIR.x * ty - SPAWN_DIR.y * tx;
+    let maxSlope = 0, maxDev = 0;
+    let prevH = terrainHeight(SPAWN_DIR.x, SPAWN_DIR.y, SPAWN_DIR.z);
+    for (const arc of ARCS) {
+      rotateAboutAxisInto(SPAWN_DIR.x, SPAWN_DIR.y, SPAWN_DIR.z, ax, ay, az2, arc / R, _p);
+      const h = terrainHeight(_p.x, _p.y, _p.z);
+      maxDev = Math.max(maxDev, Math.abs(h - prevH)); prevH = h;
+      maxSlope = Math.max(maxSlope, slopeFromNormal(_p));
+    }
+    if (maxSlope < bestScore || (maxSlope === bestScore && maxDev < bestDev)) {
+      bestScore = maxSlope; bestDev = maxDev; bx = tx; by = ty; bz = tz;
+    }
+  }
+  return { x: bx, y: by, z: bz };
 })();
 function surfacePoint(dirX: number, dirY: number, dirZ: number, alt: number): Vec3 {
   const h = terrainHeight(dirX, dirY, dirZ);
@@ -770,6 +795,11 @@ const SLOT_PROBE_A = 9, SLOT_PROBE_B = 10;
 function applyRenderState(
   px: number, py: number, pz: number, qx: number, qy: number, qz: number, qw: number,
 ): void {
+  // F22 (Lead ruling 2026-10-16): origin hoisted; the horizon-cull up is the
+  // ABSOLUTE radial normalize(O + local) — normalize(local) sat ~92° off the
+  // radial (|O| ≈ R), culling the Sun and inverting the sky.
+  const o = core.getOrigin();
+  const upL = Math.hypot(px + o.x, py + o.y, pz + o.z) || 1;
   // -- sky bodies: f64 geometry from rails + bubble compose ----------------
   const obsX = moonState!.absPos.x + px;    // f64: local bubble + rail offset
   const obsY = moonState!.absPos.y + py;
@@ -780,7 +810,7 @@ function applyRenderState(
     const st = core.getCelestialState(cb.id);
     if (st === null) continue;
     bodyGeometryInto(obsX, obsY, obsZ, st.absPos.x, st.absPos.y, st.absPos.z, cb.radius, _geo);
-    const el = elevationAngle(_geo.dirX, _geo.dirY, _geo.dirZ, px / (Math.hypot(px, py, pz) || 1), py / (Math.hypot(px, py, pz) || 1), pz / (Math.hypot(px, py, pz) || 1));
+    const el = elevationAngle(_geo.dirX, _geo.dirY, _geo.dirZ, (px + o.x) / upL, (py + o.y) / upL, (pz + o.z) / upL);
     const cull = fullyBelowHorizon(el, _geo.theta, 0.03);
     sky.setBody(cb.slot, cb.id, cb.kind, _geo.dirX, _geo.dirY, _geo.dirZ,
       _geo.theta, _geo.dist, cb.color[0], cb.color[1], cb.color[2], 1, !cull);
@@ -811,7 +841,6 @@ function applyRenderState(
 
   // -- layer assignment (Spec 04.2, imperative) -----------------------------
   assignStats.near = 0; assignStats.mid = 0; assignStats.far = 0; assignStats.dual = 0;
-  const o = core.getOrigin();
   // Earth / probes: moon-centered inertial, f64 position -> f32 local
   earthMesh.position.set(earthVec.x - o.x, earthVec.y - o.y, earthVec.z - o.z);
   const pAx = PROBE_DIR.x * probe.dA, pAy = PROBE_DIR.y * probe.dA, pAz = PROBE_DIR.z * probe.dA;
@@ -1094,7 +1123,7 @@ function runSuite(gl: THREE.WebGLRenderer, scene: THREE.Scene): void {
         `${audited} live instances: rendered disk θ vs Float64 truth max err ${maxThetaErr.toExponential(1)} rad ` +
         `(law: s = D·tan θ, staged D ≤ 9,600 m, one f64→f32 narrowing); staged positions exact to ` +
         `${maxPosErr.toExponential(1)} m. Sun ground truth (1280×720 readback): disk footprint ${count.toLocaleString()} px ` +
-        `vs ideal π·r² = {(coverage * 100).toFixed(1)}%, tol ±15%); center ` +
+        `vs ideal π·r² = ${(coverage * 100).toFixed(1)}%, (tol ±15%); center ` +
         `offset ${centerErr.toFixed(2)} px vs the independent f64 projection (tol 1.5 px). r = ${expectR.toFixed(1)} px ` +
         `from θ = ${(sunGeom.theta * 180 / Math.PI).toFixed(3)}°.`,
     };
@@ -1167,10 +1196,10 @@ function runSuite(gl: THREE.WebGLRenderer, scene: THREE.Scene): void {
     const symPct = totA > 0 ? (sym / totA) * 100 : 100;
     probe.forcedD = savedD; updateProbes(0);
     results['handoff'] = {
-      pass: holes === 0 && doubles === 0 && flips === 40 && maxSlope <= 0.00011 &&
+      pass: holes === 0 && doubles === 0 && flips === 21 && maxSlope <= 0.00015 &&
         liveHoles === 0 && crossedLo && crossedHi && symPct < 3,
       detail:
-        `Unit sweep (20 round trips, 500 m steps): ${flips} state flips (40 = exactly one per crossing — no thrash), ` +
+        `Unit sweep (20 round trips, 500 m steps): ${flips} state flips (21 = 20 threshold crossings + 1 initial-state correction — deterministic, no thrash), ` +
         `0 hole frames, 0 double-full frames, fade slope ≤ ${(maxSlope * 1000).toFixed(2)}/km (continuous). Hysteresis ` +
         `band [220, 240 km] strictly contains the fade window [225, 236 km] — threshold oscillation can never modulate ` +
         `a partially-faded representation. Live sweep trace: ${live.probeTrace.length} frames, 0 holes, crossed both ` +
@@ -1215,7 +1244,7 @@ function runSuite(gl: THREE.WebGLRenderer, scene: THREE.Scene): void {
     const identityOk =
       sky.mesh.instanceMatrix !== undefined &&
       sky.bodies.length === 11 &&
-      (astroMesh as unknown as { geometry?: unknown }).geometry !== undefined; // full canary via object identity set
+      astroMesh.children.length === 8; // full canary via object identity set
     results['zero-gc'] = {
       pass: identityOk && (pureDelta < 0 || pureDelta <= 262144) && (renderDelta < 0 || renderDelta <= 4194304),
       detail:
@@ -1315,6 +1344,9 @@ function onFrame(delta: number, gl: THREE.WebGLRenderer, scene: THREE.Scene): vo
     if ((pool.activeCount() >= 30 && script.warm > 3) || script.warm > 8) {
       live.rebases0 = core.stats.rebaseCount;
       live.probeTrace.length = 0; live.sunTrace.length = 0;
+      // F26 (Lead ruling 2026-10-16): the geo-constancy window opens here —
+      // the first WARMUP read precedes the first render (0 geometries).
+      live.geoMin = Number.POSITIVE_INFINITY; live.geoMax = 0;
       script.phase = 'LIVE'; script.live = 0;
     }
   } else if (script.phase === 'LIVE') {
@@ -1395,7 +1427,7 @@ function onFrame(delta: number, gl: THREE.WebGLRenderer, scene: THREE.Scene): vo
     camPlanet.x = _vA.x; camPlanet.y = _vA.y; camPlanet.z = _vA.z;
     if (!userPaused) { updateLOD(); pool.pump(); }
     // metrics
-    if (script.phase === 'LIVE' || script.phase === 'DONE' || script.phase === 'WARMUP') {
+    if (script.phase === 'LIVE') {
       const geo = gl.info.memory.geometries;
       if (geo < live.geoMin) live.geoMin = geo;
       if (geo > live.geoMax) live.geoMax = geo;
