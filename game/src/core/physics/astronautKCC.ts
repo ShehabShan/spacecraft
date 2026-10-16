@@ -592,8 +592,12 @@ export class AstronautKCC {
       _vT.x = this._vCtl.x + this._vSlide.x + n.x * u;
       _vT.y = this._vCtl.y + this._vSlide.y + n.y * u;
       _vT.z = this._vCtl.z + this._vSlide.z + n.z * u;
-      this._composeGrounded(this._vCtl.x, this._vCtl.y, this._vCtl.z); // P only
-      spinQuatInto(this._theta, _qSpin);
+      this._composeGrounded(this._vCtl.x, this._vCtl.y, this._vCtl.z,
+        this._thetaPrev); // P only — F18: compose at tick-start spin
+      // F18 (Lead ruling 2026-10-16): velocity rotation at θ_prev too —
+      // composing at θ_new corresponded to no physical instant and
+      // double-counted one tick of transport (the 0.87 m phantom).
+      spinQuatInto(this._thetaPrev, _qSpin);
       rotateByQuatInto(_qSpin, _vT.x, _vT.y, _vT.z, _tmp);
       transportVelocityInto(cfg.spinOmega, this.absPos.x, this.absPos.y,
         this.absPos.z, _tmp2);
@@ -601,7 +605,7 @@ export class AstronautKCC {
       this.absVel.y = _tmp2.y + _tmp.y;
       this.absVel.z = _tmp2.z + _tmp.z;
       this._grounded = false;
-      this._flightTick(dt);      // launch tick continues inertially
+      this._flightTick(dt, true);      // launch tick continues inertially
       return;
     }
 
@@ -780,9 +784,12 @@ export class AstronautKCC {
   }
 
 
-  /** Grounded compose: P = R(θ)·pLocal; V = Ω×P + R(θ)·vRel. */
-  private _composeGrounded(vx: number, vy: number, vz: number): void {
-    spinQuatInto(this._theta, _qSpin);
+  /** Grounded compose: P = R(θ)·pLocal; V = Ω×P + R(θ)·vRel.
+   *  F18: optional explicit spin phase — the jump launch composes at
+   *  θ_prev (tick start) so the sweep's θ_prev probes stay consistent. */
+  private _composeGrounded(vx: number, vy: number, vz: number,
+    theta: number = this._theta): void {
+    spinQuatInto(theta, _qSpin);
     rotateByQuatInto(_qSpin, this.pLocal.x, this.pLocal.y, this.pLocal.z, _tmp);
     this.absPos.x = _tmp.x; this.absPos.y = _tmp.y; this.absPos.z = _tmp.z;
     rotateByQuatInto(_qSpin, vx, vy, vz, _tmp);
@@ -797,7 +804,7 @@ export class AstronautKCC {
   /* ---- airborne / zero-G: inertial integration ----------------------------- */
 
 
-  private _flightTick(dt: number): void {
+  private _flightTick(dt: number, launchTick = false): void {
     const cfg = this.cfg;
     const px = this.absPos.x, py = this.absPos.y, pz = this.absPos.z;
 
@@ -862,7 +869,8 @@ export class AstronautKCC {
 
 
     // Terrain sweep (band-gated) + landing.
-    this._sweep(prevX, prevY, prevZ, this.absPos.x, this.absPos.y, this.absPos.z, dt);
+    this._sweep(prevX, prevY, prevZ, this.absPos.x, this.absPos.y,
+      this.absPos.z, dt, launchTick);
 
 
     // Planet-frame mirror (face tracking / telemetry).
@@ -887,6 +895,7 @@ export class AstronautKCC {
     x0: number, y0: number, z0: number,
     x1: number, y1: number, z1: number,
     dt: number,
+    launchTick = false,
   ): void {
     const cfg = this.cfg;
     const R = cfg.planetRadius;
@@ -904,8 +913,14 @@ export class AstronautKCC {
 
 
     // Tick-start embed check (transient from a previous tick).
+    // F18 (Lead ruling 2026-10-16): skipped on the launch tick — launch AGL
+    // is EXACTLY groundClearance by construction, so `AGL < clearance`
+    // would be decided by the compose/decompose round-trip error (~3e-14 m,
+    // deterministic-but-unknown sign). The check exists for prior-tick
+    // transients and is semantically inapplicable at launch. Mid-sweep
+    // sampling is untouched (the launch segment ascends monotonically).
     const r0 = Math.sqrt(x0 * x0 + y0 * y0 + z0 * z0);
-    if (r0 < band) {
+    if (!launchTick && r0 < band) {
       spinQuatInto(this._thetaPrev, _qSpin);
       rotateByQuatConjInto(_qSpin, x0 / r0, y0 / r0, z0 / r0, _dS);
       if (r0 - (R + terrainHeight(_dS.x, _dS.y, _dS.z)) < cfg.groundClearance) {
