@@ -353,3 +353,65 @@ Observations (NO change made — recorded for the Lead):
    canon content; read-only observation tools cited as evidence in
    notes/reports/M1B–M1D. · User authorization 2026-10-15. · Evidence: this
    commit. · Source: user (Lead) direct instruction.
+
+## 2026-10-16 — Milestone 1E (extraction + fixes)
+
+33. 2026-10-16 · 1E/step1 · game/src/core/physics/sphericalFrame.ts,
+   game/src/core/physics/astronautKCC.ts, game/src/test/
+   Milestone1E_TestHarness.tsx · Extracted 3 blocks verbatim (2871 lines:
+   249 + 1096 + 1526); ZERO parenthetical matches (invariant intact — 1B's
+   SimulationCore remains the only one). · §8 loop step 1. · Evidence:
+   extraction report. · Source: brief §4, §7-1E.
+
+34. 2026-10-16 · 1E/step2 · game/src/test/Milestone1E_TestHarness.tsx ·
+   F13 PRE-AUTHORIZED, applied: canon ~2377 / extracted 929
+   `mulberry32(0x51ope5 as unknown as number || 0x5109e5)` — invalid hex
+   literal (`o`, `p` not lexable) — entire argument replaced with the
+   fallback-proven seed: `const rand = mulberry32(0x5109e5);`. No other byte
+   changed. · Authorial syntax error, confirmed from authorship (the `||
+   0x5109e5` fallback proves the intended seed). · Evidence: grep found
+   exactly one occurrence. · Source: Lead directive 2026-10-16 (F13).
+   F1 CHECKED AND VACUOUS: grep for `require(` in the extracted harness
+   found ZERO occurrences — the canon harness calls the top-level imported
+   `terrainNormalInto` directly (import at extracted L50–53 already includes
+   it); there is no shim to replace, so F1's ESM intent is satisfied
+   as-extracted and the build cannot break from require(). Documented, not
+   "skipped". · Source: brief §4 F1; directive item 3c.
+
+35. 2026-10-16 · 1E/step2 · game/src/core/physics/astronautKCC.ts,
+   game/src/test/Milestone1E_TestHarness.tsx · TWO strict-TS type-error
+   repairs under §6 MAY-fix ("type errors"), both type-level only,
+   runtime-neutral: (a) astronautKCC update() write-through guard
+   `if (this._wtPos !== null)` → `if (this._wtPos !== null &&
+   this._wtVel !== null)` (extracted 430 = canon ~775; _wtPos/_wtVel are set
+   together in attachWriteThrough so TS cannot narrow one from the other —
+   the identical pattern ratified in the 1D erratum, dc55895 fix (a));
+   (b) harness L195 `Math.SQRT1_3` (nonexistent Math constant — TS2551 ×3;
+   in loose JS it would be `undefined` → NaN angle → the face-walk corner
+   row could never pass) → `1 / Math.sqrt(3)` ×3, the author's documented
+   intent (the unit corner (1,1,1)/√3 per canon §3 comment and §1.1/§1.4
+   prose; unit vector restored: 3·(1/√3)² = 1). · Evidence: tsc 6 errors
+   (TS2531 ×3, TS2551 ×3) → TSC_EXIT=0 unpiped after the two edits. ·
+   Source: brief §6; 1D erratum ratification precedent (§10.4).
+
+36. 2026-10-16 · 1E/step2 · (NO change made — ROUTED per standing damage
+   protocol) · NEW family-A instance found in the extracted harness L1015
+   (canon ~2462–2463), slope-step row (b) detail string: the template
+   literal segment `` `{vEnd.toFixed(1)} m/s downhill (displacement 100%
+   downhill: ` + `` is missing `$` before `{vEnd.toFixed(1)}`. This is a
+   BADGE-DETAIL string — the F6-FORBIDDEN class — and F7/1C-CP cover 1B/1C
+   only, so per the standing protocol it is STOP-AND-ROUTE: not repaired;
+   awaiting the Lead's authorization for the one-character `$`
+   restoration. Verdict-neutral: syntactically valid (literal braces),
+   pass logic reads S.ok computed from climbOk/descGrounded/slideOk/
+   blockOk/cliffOk, never the detail text. · Standing damage protocol
+   (§10.4, 2026-10-15): every NEW instance of family A = stop-and-route. ·
+   Evidence: grep `` `{ `` — exactly one match in all three 1E files. ·
+   Source: AGENT_BRIEF.md §10.4 standing damage protocol; directive 5.d.
+
+37. 2026-10-16 · 1E/step3 · game/src/main.tsx, game/e2e/m1e.spec.ts (created) ·
+   Registered `?page=m1e` in the static page map (own chunk verified:
+   Milestone1E_TestHarness-DCd2LQg4.js); wired the 1E gate (90 s budget,
+   §3.7 pattern). Typecheck + build re-verified with UNPIPED exit codes:
+   TSC_EXIT=0 BUILD_EXIT=0. · §8 loop step 3. · Evidence: this commit. ·
+   Source: brief §3.2, §3.7, §7-1E.

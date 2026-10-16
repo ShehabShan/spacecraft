@@ -13,6 +13,7 @@ const pages: Record<string, () => Promise<{ default: ComponentType }>> = {
   m1b: () => import('./test/Milestone1B_TestHarness'),
   m1c: () => import('./test/Milestone1C_TestHarness'),
   m1d: () => import('./test/Milestone1D_TestHarness'),
+  m1e: () => import('./test/Milestone1E_TestHarness'),
 }
 
 const page = new URLSearchParams(window.location.search).get('page') ?? ''
