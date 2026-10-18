@@ -1212,8 +1212,23 @@ function runSuite(gl: THREE.WebGLRenderer, scene: THREE.Scene): void {
       const b = impOnly[i] > 45 ? 1 : 0;
       inA[y * 2 * win + x] = a; inB[y * 2 * win + x] = b;
       totA += a;
-      if (a !== b) sym++;
+      if (a !== b) {
+        sym++;
+        // Round-6 addendum (Lead): per-differing-pixel dump from WITHIN the
+        // classification loop — no new renders, emitted before the restore.
+        const dx = sx - _proj.px, dy = sy - _proj.py;
+        console.log(`R3DUMP px dx=${dx.toFixed(2)} dy=${dy.toFixed(2)} r=${Math.hypot(dx, dy).toFixed(2)} side=${a === 1 ? 'M' : 'I'}`);
+      }
     }
+    // disk radii measured from the A/B masks (area-derived + max-lit radius)
+    let meshR = 0, impR = 0, meshRmax = 0, impRmax = 0, nA = 0, nB = 0;
+    for (let y = 0; y < 2 * win; y++) for (let x = 0; x < 2 * win; x++) {
+      const rr = Math.hypot(Math.floor(_proj.px) - win + x - _proj.px, Math.floor(_proj.py) - win + y - _proj.py);
+      if (inA[y * 2 * win + x] === 1) { nA++; meshRmax = Math.max(meshRmax, rr); }
+      if (inB[y * 2 * win + x] === 1) { nB++; impRmax = Math.max(impRmax, rr); }
+    }
+    meshR = Math.sqrt(nA / Math.PI); impR = Math.sqrt(nB / Math.PI);
+    console.log(`R3DUMP hdr centre=(${_proj.px.toFixed(2)},${_proj.py.toFixed(2)}) meshR=${meshR.toFixed(2)} impR=${impR.toFixed(2)} meshRmax=${meshRmax.toFixed(2)} impRmax=${impRmax.toFixed(2)} totA=${totA} sym=${sym}`);
     const symPct = totA > 0 ? (sym / totA) * 100 : 100;
     probe.forcedD = savedD; updateProbes(0);
     results['handoff'] = {
