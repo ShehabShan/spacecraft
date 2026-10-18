@@ -907,3 +907,200 @@ harness was not edited; F31 is applied and vindicated in Node, with the
 residual R3 silhouette noise routed F32; E-1 produced the renderer/FPS
 evidence and the hardware-acceleration path without touching the pinned
 config. NEXT ACTION: await Lead ruling on F30x/F32/E-1. 1G not started.
+
+---
+
+# 12. ROUND 5 — F30x Node gate FAILED at every authorized rung → HARD STOP (harness NOT edited); F32 applied through its ladder (samples 4→8, R3 22.22% → 17.78%, still ≥3% → STOP) (2026-10-18)
+
+Round-5 execution order honored: the F30x Node-first gate ran BEFORE any
+harness edit, failed its proceed conditions at every widening rung the
+ruling authorized (0.28 → 0.45 → 0.58 span = the 0.60 rad hard ceiling,
+Earthrise band [8°,22°] then the authorized fallback [5°,25°]), and the
+spawn harness edit was NOT applied per the ruling's "if Node finds NO
+eligible candidate: STOP, do not apply, report." Fix 2 is an independent
+ruling and was executed through its full ladder (samples:4 → samples:8)
+to its own stop. Commits: 439f4d5 (F30x diag + stop), 8289c81 (F32
+rung 1), a8b25fa (F32 rung 2).
+
+## 12.1 F30x — Node-first gate: FAIL at every authorized rung → HARD STOP (raw numbers)
+
+diag-m1f-core.mjs extended: jitter span parameter (ladder), Earthrise
+guard [8°,22°] → [5°,25°] (authorized fallback), break-at-first-eligible
+cost rule (in place; never fires because nothing is eligible), failure
+classification counters, plus two diag-only surveys (domain survey over
+the full 0.62 rad cap; global sweep over the whole moon). Verbatim final
+run ([5°,25°] band, span 0.58):
+
+```
+rails: earthDist=38.8 km  sunDist=572.0 km
+F30x spawn search: evaluated=24000 (slope<0.01 skipped 0) eligibilityChecked(lazy, score<best)=24000 — failElev=8546 failCorr=15454 failLos=0 — eligible=0
+  chosen: index=-1 score=NaN
+F30x spawns: old=(0.32059,-0.03683,0.94650) new=(0.42311,0.00000,0.90608) angularDistance=6.661°
+  Earth elevation: old=8.67° new=15.00° (canon intent ≈15°)
+  new corridor: azimuth=150° maxSlope=65.7° (gate ≤ 40°)
+  new LOS pose→SAT_B: clear=false minMargin=-10.6 m at f=0.025
+  findSpawn boot cost: 20954 ms (gate ≤ 2,000 ms)
+  new spawn: slope=12.314° h=-30.76 m
+```
+
+Ladder table (all runs: 24,000 candidates, lazy-checked all, chosen
+index −1, fallback = base, Sun ACTIVE both poses every time):
+
+| span (max rad) | band | failElev | failCorr | failLos | eligible |
+|---|---|---|---|---|---|
+| 0.28 (≈0.30) | [8°,22°] | 5,822 | 18,178 | 0 | **0** |
+| 0.45 (≈0.47) | [8°,22°] | 9,735 | 14,265 | 0 | **0** |
+| 0.58 (=0.60 ceiling) | [8°,22°] | 11,585 | 12,415 | 0 | **0** |
+| 0.58 (=0.60 ceiling) | [5°,25°] | 8,546 | 15,454 | 0 | **0** |
+
+The LOS predicate was NEVER reached (failLos=0 everywhere): every
+in-band candidate already failed the corridor predicate. The binding
+constraint is NOT the domain size. The two surveys settle it:
+
+```
+F30x domain survey: 625 grid sites over the full 0.62 rad cap about base — sites with corridor <= 40°: 0; MIN corridor maxSlope = 48.7° (at 8.20° from base, Earth elev 15.91°)
+F30x global sweep: 2294 sites over the whole moon — sites with corridor <= 40°: 0
+  global MIN corridor maxSlope = 42.9° (Earth elev -7.55°, 28.9° from base)
+  MIN within the [5°,25°] Earthrise band = 49.7° (Earth elev 21.66°, 110.3° from base)
+```
+
+- **Domain survey:** 625 sites covering the ENTIRE authorized 0.62 rad
+  cap — ZERO sites with a ≤40° corridor over 2,600 m; the best corridor
+  anywhere in the domain is 48.7° (at a site with Earth elev 15.91° — a
+  perfect Earthrise composition whose flattest corridor is still 48.7°).
+- **Global sweep:** 2,294 sites over the WHOLE moon — ZERO sites with a
+  ≤40° corridor. Global minimum 42.9° (at Earth elev −7.55°, below the
+  horizon — no Earthrise). Inside the [5°,25°] Earthrise band the best
+  anywhere is 49.7° (110.3° from base, outside any authorized domain).
+- **Route implication for the next ruling:** the corridor predicate
+  (≤40° over 2,600 m, i.e. ≤ tan 40° ≈ 0.84 m rise per metre) is
+  UNMEETABLE on this terrain field (mountainFreq 6.5, mountainAmp 230 +
+  detailAmp 16 at radius 1,364.5 m) — no spawn domain widening can ever
+  fix it. The remaining levers are all OUTSIDE this ruling's scope and
+  each needs its own decision: (a) SAT_B retarget (round-4 option (b) —
+  move the straddle target to a point the eligible set can see), (b) a
+  corridor-threshold change (a gate/predicate change — hard stop here),
+  (c) a different terrain field for 1F (a scenario change), or (d) drop
+  the LOS-guarantee path and keep the old spawn (R5's diffMid stays
+  nonzero — not a fix). The ruling's arithmetic premise ("the LOS
+  predicate guarantees the R5 straddle ray is clear") remains sound; it
+  is the ≤40° input that cannot be satisfied.
+
+**F30x HARD STOP: the spawn harness edit was NOT applied.** walkFwd
+still derives from the OLD acceptance spawn (findSpawn at 0.1 span, no
+guard, no break), byte-identical to round 4.
+
+## 12.2 F32 — applied through its ladder: samples 4 → 8; R3 22.22% → 17.78% at BOTH rungs → STOP
+
+Exact diff (harness): one line — `abTarget = new THREE.WebGLRenderTarget(
+AB_W, AB_H, { samples: 4, depthBuffer: true })` (rung 1, 8289c81), then
+`samples: 8` (rung 2, a8b25fa). TSC_EXIT=0, BUILD_EXIT=0 unpiped at both
+rungs. Nothing else changed: threshold >45, ±80 px window, <3% criterion,
+232 km fixture, masks, poses all untouched.
+
+Rung results (browser gate, each a full solo run):
+
+| rung | R3 sym (of 90-px disk) | R1 determinism | R2 Sun footprint | verdict |
+|---|---|---|---|---|
+| samples:4 | 17.78% | 0 differing bytes | 1,372 px = 99.1% | still ≥3% |
+| samples:8 | **17.78% (identical)** | 0 differing bytes | 99.1% | **STOP** |
+
+- MSAA helped once (22.22% → 17.78%: the A2C no-op relief, F32 cause #1)
+  and then SATURATED: samples 4 and 8 produce the IDENTICAL sym-diff —
+  the residual 16 differing pixels of the 90-px disk are the limb
+  isophote (cause #3: the >45 threshold sits at a shading isophote where
+  mesh interpolated normals and the impostor's analytic normals disagree
+  by ~1 px locally) plus residual phase, neither of which sample count
+  can fix. Watch items held: R1 frozen-frame determinism 0 differing
+  bytes at both rungs; R2's Sun footprint moved 105.5% (samples:0) →
+  99.1% (MSAA) — INSIDE the ±15% tolerance (round-4's 105.5% was itself
+  inside; the movement is the MSAA gamma-resolve on the Sun disk edge).
+- Per the ruling's own ladder: still ≥3% after samples:8 → **STOP and
+  report — metric, threshold, window, fixture distance all unchanged.**
+- Next-ruling options unchanged from §11.2's list minus MSAA: a larger
+  silhouette fixture distance (error fraction scales ~1/radius), a 1-px
+  dilated comparison set, or comparing alpha/coverage instead of RGB
+  brightness — each is a metric/scenario change needing its own ruling.
+
+## 12.3 Gate + full regression — verbatim
+
+Solo gate (samples:8 state; budget 240 s):
+```
+[m1f gate] acceptance line: [Milestone1F] acceptance FAILED
+[m1f gate] badges: ["PASS","PASS","FAIL","PASS","FAIL"]
+  PLAYWRIGHT_EXIT=1
+```
+
+Per-row details probe (samples:8; FAIL rows verbatim):
+```
+=== FAIL — Mesh ⇄ impostor handoff: hysteresis, no popping, sub-pixel silhouette
+    Unit sweep (20 round trips, 500 m steps): 21 state flips (21 = 20 threshold crossings + 1 initial-state correction — deterministic, no thrash), 0 hole frames, 0 double-full frames, fade slope ≤ 0.14/km (continuous). Hysteresis band [220, 240 km] strictly contains the fade window [225, 236 km] — threshold oscillation can never modulate a partially-faded representation. Live sweep trace: 1590 frames, 0 holes, crossed both fade edges. Silhouette A/B at 232 km (mesh-only vs impostor-only renders): edge symmetric difference 17.78% of the 90-px disk (< 3% — sub-pixel alignment; 96-seg mesh chord error ≈ 0.008 px).
+
+=== FAIL — Floating Origin integration + byte-zero straddler A/B @2,400 m
+    0 origin shifts during the live walk (each rebase is an independent Δ-lattice + sky-invariance sample; 1D's cruise row already carries the 8-rebase lattice evidence; every Δ an exact multiple of 256 — the power-of-two lattice proof; f32 locals max 372 m ≤ 1,024); GL geometries constant at 54. Background rebase-invariance: the Sun instance's camera-relative position moved ≤ 0.0 mm across every rebase frame — indistinguishable from normal per-frame apparent parallax (~12 mm/frame at D=9,600 m, d_sun≈600 km); the origin jump itself (Δ up to 1,024 m in absolute local coords) never reaches the sky. Straddler A/B at the 2,400 m boundary (Sat B: d_n ≈ 2,374, d_f ≈ 2,426; renders: auto / forced-Near-only / forced-Mid-only): 0 and 529 differing bytes of 3686400 — identically zero, the Spec-05 pixel-difference demand proven at the layer threshold.
+```
+R5 note: diffMid 495 (round 4) → 524 (samples:4 run) → 529 (samples:8
+run) — the same occlusion event, ±tens of bytes of SwiftShader
+rasterization jitter around the blocked-ray pixels; never 0, exactly as
+predicted while F30x is stopped (the straddle ray is still blocked; the
+spawn fix was the geometric precondition for diffMid = 0).
+
+Full regression (pinned config, same session):
+```
+[m1a gate] badges: ["PASS","PASS","PASS","PASS","PASS"]
+[m1b gate] acceptance line: [Milestone1B] acceptance PASSED in 22.5 ms — ...
+[m1b gate] badges: ["PASS","PASS","PASS","PASS","PASS"]
+[m1c gate] acceptance line: [Milestone1C] acceptance PASSED — geo=145 ...
+[m1c gate] badges: ["PASS","PASS","PASS","PASS"]
+[m1d gate] acceptance line: [Milestone1D] acceptance FAILED — v@1000m=264.7 maxDv=10.30 rebases=8 recv=49 geo=151 burnHeap=0B
+[m1d gate] badges: ["PASS","FAIL","PASS","PASS","PASS"]
+[m1e gate] acceptance line: [Milestone1E] acceptance PASSED
+[m1e gate] badges: ["PASS","PASS","PASS","PASS","PASS","PASS"]
+[m1f gate] acceptance line: [Milestone1F] acceptance FAILED
+[m1f gate] badges: ["PASS","PASS","FAIL","PASS","FAIL"]
+  2 failed
+  4 passed (4.3m)
+PLAYWRIGHT_EXIT=1
+```
+- 1A 5/5 GREEN **including row 5 this round** (round 4's frame-time
+  failure did not reproduce — consistent with its environment-soft
+  classification; no code change either way).
+- 1D row 2 env-soft AGAIN per E-1 (diveGrounded false under
+  SwiftShader): all measured numbers match the approved gate (v@1000m
+  264.7, maxDv 10.30, geo 151, burnHeap 0B; rebases 8 / recv 49 are
+  run-dependent counters, both within their row's other clauses — the
+  row's FAIL is the grounding clause alone). No code or config change,
+  per E-1 and this ruling's regression instruction.
+- 1B/1C/1E green; 1F [P,P,F,P,F] as analyzed above.
+
+## 12.4 Vindication ledger (round 5)
+
+F30x ruling premise ✗ (its factual assumption "a widened domain + the
+same predicates finds an eligible spawn" is FALSIFIED by the surveys —
+the corridor predicate is unmeetable on this moon; the stop condition
+fired exactly as written, harness untouched) · F30x cost rule ✓ in
+place (never fires — nothing eligible) · Earthrise guard ✓ implemented
++ measured (band [8°,22°] and fallback [5°,25°] both empty of eligible
+candidates) · F32 mechanism #1 ✓ VINDICATED (22.22% → 17.78%, the
+predicted ~0.33 px A2C relief) · F32 saturation ✓ measured (identical
+17.78% at samples 4 and 8 — cause #3 dominant, MSAA-insensitive) · R1
+determinism ✓ 0 bytes at both rungs · R2 ✓ footprint 99.1% inside ±15%
+· F31 ✓ undisturbed (R3 window still holds just the probe disk, 90 px)
+· F27/F28 ✓ still vindicated (R2/R4 PASS) · E-1 ✓ honored (no config
+change; 1D row-2 reported env-soft; 1A row 5 recovered on its own).
+
+## Status
+
+**GATE FAILED (round 5) · BOTH FIXES AT THEIR RULING-PRESCRIBED STOPS ·
+AWAITING LEAD RULING (§8.7).** F30x hard-stopped BEFORE the harness edit
+(no eligible candidate exists at any authorized rung; the surveys prove
+the ≤40° corridor over 2,600 m is unmeetable ANYWHERE on this terrain
+field — the binding constraint is the predicate vs the terrain, not the
+domain). F32 applied through its ladder to saturation (R3 17.78%
+identical at samples 4 and 8; still ≥3% → stop; nothing measured
+changed). Gate [P,P,F,P,F]; regression 2 failed / 4 passed with 1D row-2
+env-soft (E-1) and 1A row 5 recovered. The 1F mission (§1) needs two
+decisions this engine cannot make: the R5 spawn geometry (retarget SAT_B
+/ corridor threshold / scenario — options in §12.1) and the R3 residual
+(fixture distance / dilated comparison / coverage metric — options in
+§12.2). 1G not started.

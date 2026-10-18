@@ -1,29 +1,26 @@
 # SOLARIS — ASSEMBLY STATE (see AGENT_BRIEF.md §10)
 
 ## NEXT ACTION
-AWAITING LEAD RULING on the round-4 routes F30x/F32/E-1 (full evidence in
-notes/reports/M1F.md §11): F30x — the F30 Node-first gate FAILED inside
-its own constraints (24,000 candidates, pass(1)=0: the ±0.12 rad ≈ ±160 m
-jitter patch contains NO ≤40° corridor over 2,600 m; pass(1)+(2)=0;
-fallback=base with LOS fail −10.6 m; findSpawn cost 32,078 ms) — the F30
-harness edit was NOT applied per the ruling's own stop; the predicates
-are sound but the jitter domain is the binding constraint (options:
-widen jitter / retarget SAT_B / lengthen LIVE_SECONDS / relax rebases /
-new seed — all need a ruling). F32 — F31 applied + vindicated (Node
-alignment 0.000 px; R3 sym 47.69%→22.22% of a 90-px disk) but the
-residual is rasterization/shading phase noise on a 4.6-px disk (A2C
-no-op on the samples:0 A/B target + hard-edge phase + limb isophote);
-options: MSAA on the A/B target / larger fixture distance / dilated
-comparison / cov-based metric. E-1 — evidence complete: the machine HAS
-a GPU (RADV RENOIR) but the pinned config's headless Chrome falls back
-to SwiftShader (19.8 FPS vs 59.8 with --use-angle=vulkan via diag-only
-args; the ship GROUNDS under hardware, deterministically misses under
-SwiftShader); config untouched per E-1; m1d NOT passed; one-line user
-command on record; config-arg option needs Lead authorization. 1A row 5
-also tripped this round (frame-time; env-soft per the brief's own note).
-On ruling: apply → Node verify → 1F gate (240 s) + full 1A–1F regression
-→ update notes/reports/M1F.md → commit + push → STOP at the approval
-gate.
+AWAITING LEAD RULING on the two round-5 stops (full evidence in
+notes/reports/M1F.md §12): (1) R5 spawn geometry — the F30x Node gate
+hard-stopped at EVERY authorized rung (jitter spans 0.28/0.45/0.58 = the
+0.60 rad ceiling × Earthrise bands [8°,22°]→[5°,25°]: eligible=0 each,
+failCorr = EVERY in-band candidate, failLos never reached) and the
+diag-only surveys prove the ≤40° corridor over 2,600 m is UNMEETABLE
+ANYWHERE on this terrain field (0 of 625 cap sites ≤40°, min 48.7°; 0 of
+2,294 whole-moon sites, global min 42.9° at Earth elev −7.55°, band-best
+49.7°) — the binding constraint is the PREDICATE vs the terrain, not the
+domain; the spawn harness edit was NOT applied. Options: SAT_B retarget
+/ corridor-threshold ruling / different 1F scenario (all outside the
+round-5 scope). (2) R3 residual — F32's MSAA ladder applied to the end:
+samples 4 then 8 both give sym 17.78% of the 90-px disk (22.22% →
+17.78% = the A2C relief, then SATURATED — the residual is the limb
+isophote, sample-count-insensitive); still ≥3% → STOP per the ladder;
+metric/threshold/window/fixture untouched. Options: larger fixture
+distance / 1-px dilated comparison / coverage-based metric. Gate
+[P,P,F,P,F]; regression 2 failed/4 passed (1D row-2 env-soft per E-1;
+1A row 5 recovered). On ruling: apply → Node verify → gate (240 s) +
+regression → report → commit + push → STOP at the approval gate.
 
 ## MILESTONE LEDGER
 | MS | Status | Evidence |
@@ -34,44 +31,47 @@ gate.
 | 1C | APPROVED | Gate GREEN 4/4 + 1A/1B regression 5/5 ("3 passed (1.2m)"); F10a/F10b verified against all four ruling requirements; final commit a86ce94; report: notes/reports/M1C.md; Lead approval 2026-10-15 |
 | 1D | APPROVED | Commit e830759; gate GREEN 5/5 + full 1A/1B/1C regression green ("4 passed (1.5m)"); F11/F12 applied as ruled; erratum + standing rule adopted; authorship verified: v@1000m 264.7 matches corrected derivation, locals max 1022.8 matches 1A structural prediction (1022.67), geo 151 = F12-predicted constant count; report: notes/reports/M1D.md; Lead approval 2026-10-16 |
 | 1E | APPROVED | Commit 4c352dd (gate-green report + ledgers); FINAL: `[Milestone1E] acceptance PASSED` 6/6 (coriolis 0.75 cm west/1.02 s/1-tick plant; vehicleErr 0.0e+0; deorbit landed 22,307; face-walk 0.82° corner/2 changes; slope rows clean, minAGL n/a) + full 1A/1B/1C/1D regression ("5 passed (1.9m)", PLAYWRIGHT_EXIT=0); all nine rulings applied + vindicated (F14 core #1 7947369; F15–F17+$-strip e689d4c; F18 core #2 37a4c9e; F19/F20 7d77e52); report: notes/reports/M1E.md; Lead approval 2026-10-16 |
-| 1F | GATE RUN ×4 — FAILED, ROUTED (round 4) | Rounds 1–3 as below (extraction+F3/F21 5a17673; F22–F26+D-1/D-2 0b2fae8; F27/F28/F25d a6de872 — F27/F28 vindicated round 3). Round 4 (2026-10-17): F30 Node-first gate FAILED inside its own constraints → F30x routed, harness NOT edited (5c6336b); F31 applied + vindicated (Node alignment 0.000 px ≤ 0.25; browser R3 sym 47.69%→22.22% of a 90-px disk) → residual routed F32 (20c8a5e); E-1 evidence complete (SwiftShader 19.8 FPS vs RADV 59.8; ship grounds under hardware; config untouched); gate ["PASS","PASS","FAIL","PASS","FAIL"]; regression 1B/1C/1E green, 1A row-5 + 1D row-2 env-soft (SwiftShader), report: notes/reports/M1F.md §11; PARKED AT RULING GATE round 4 (F30x/F32/E-1) |
+| 1F | GATE RUN ×5 — FAILED, BOTH ROUND-5 FIXES AT THEIR PRESCRIBED STOPS | Rounds 1–4 as below (extraction+F3/F21 5a17673; F22–F26 0b2fae8; F27/F28/F25d a6de872; F30 diag 5c6336b + F31 20c8a5e — F27/F28/F31 vindicated). Round 5 (2026-10-18): F30x Node gate HARD-STOPPED at every authorized rung (spans 0.28/0.45/0.58 = 0.60 rad ceiling × bands [8°,22°]→[5°,25°]: eligible=0 each; surveys: 0 of 625 cap sites and 0 of 2,294 whole-moon sites have a ≤40° corridor over 2,600 m — min 48.7° in-cap, 42.9° global) → spawn edit NOT applied (439f4d5); F32 MSAA ladder applied to the end (samples 4 → 8: R3 sym 22.22% → 17.78% at BOTH rungs — A2C relief then saturated, limb-isophote residual) → still ≥3%, STOP, nothing measured changed (8289c81, a8b25fa); gate ["PASS","PASS","FAIL","PASS","FAIL"] (R3 17.78%, R5 0 shifts + diffMid 529, R2 footprint 99.1%, R1 determinism 0 B); regression 2 failed/4 passed — 1D row-2 env-soft per E-1, 1A row 5 RECOVERED (5/5); report: notes/reports/M1F.md §12; PARKED AT RULING GATE round 5 (R5 spawn geometry + R3 residual) |
 | 1G | NOT STARTED | F2 + hand-applied KCC patch + MANDATORY full 1E re-run; re-grep the §3.5 patch against F14/F18's moved/edited regions |
 
 ## IN-FLIGHT
-Milestone 1F — PARKED AT THE RULING GATE, ROUND 4 (2026-10-17). Round-4
-ruling executed in order; THREE routes await the Lead (details + verbatim
-evidence in notes/reports/M1F.md §11):
-- F30x: the Node-first gate failed inside F30's own constraints — the
-  spawn search evaluated 24,000 candidates, found ZERO with a ≤40°
-  corridor over 2,600 m (the ±0.12 rad ≈ ±160 m jitter patch is entirely
-  mountainous; pass(1)=0, pass(1)+(2)=0), so nothing replaces best (the
-  lazy check fires on all 24,000 → findSpawn cost 32,078 ms, 16× over
-  budget), and the `base` fallback has LOS fail (−10.6 m at f=0.025).
-  The F30 harness edit was NOT applied per the ruling's stop. The
-  predicates are sound; the jitter DOMAIN is the binding constraint.
-  Options needing a ruling: widen jitter (forbidden within F30) —
-  naturally composed with retargeting SAT_B; lengthen LIVE_SECONDS;
-  relax rebases (gate term); new seed (forbidden within F30).
-- F32: F31 APPLIED (probe impostors fed the mesh's actual
-  observer-relative f64 truth; R3 aims at the true position) and
-  vindicated in Node (alignment 0.000 px ≤ 0.25; both radii 4.635 px
-  from the true distance). Browser: R3 sym 47.69% of 130 px → 22.22% of
-  90 px — the aim fix worked (window now holds just the probe disk) but
-  the residual is rasterization/shading phase noise on a 4.6-px disk:
-  A2C is a no-op on the samples:0 A/B target (impostor ~0.33 px fatter),
-  hard-edge polygon-vs-circle phase, and the >45 limb isophote. All
-  other R3 clauses green. Options: MSAA on the A/B target / larger
-  fixture distance / 1-px dilated comparison / cov-based metric.
-- E-1 (RULED, no code change): the machine HAS a GPU (AMD RADV RENOIR)
-  but the pinned config's headless Chrome falls back to SwiftShader
-  (19.8 FPS; ship deterministically misses grounding) — a diag-only
-  `--use-angle=vulkan` launch reaches the GPU (59.8 FPS; ship GROUNDS).
-  Config untouched per E-1; m1d NOT passed; user one-liner on record;
-  the config-arg option needs Lead authorization.
-Environment-soft this round (SwiftShader): 1A row 5 frame-time (worst
-44.20 ms; brief's own machine-dependent row) — no code change.
-R5's sunJump stays vacuous until crossings exist (F21a measurement
-live). 1E is closed: APPROVED at 4c352dd.
+Milestone 1F — PARKED AT THE RULING GATE, ROUND 5 (2026-10-18). Both
+prescribed fixes executed to their own stop conditions; THREE routes
+await the Lead (details + verbatim evidence in notes/reports/M1F.md
+§12):
+- F30x (R5 spawn): the Node-first gate ran BEFORE any harness edit and
+  hard-stopped at EVERY authorized rung — spans 0.28/0.45/0.58 (the
+  0.60 rad ceiling) × Earthrise bands [8°,22°] then [5°,25°]:
+  eligible=0 each with failCorr = EVERY in-band candidate (failLos
+  never reached); chosen index −1; fallback=base (corridor az 150° @
+  65.7°, LOS −10.6 m at f=0.025). Diag-only surveys prove the ≤40°
+  corridor over 2,600 m is UNMEETABLE on this terrain field: 0 of 625
+  cap sites (min 48.7°, at a site with Earth elev 15.91°); 0 of 2,294
+  whole-moon sites (global min 42.9° at Earth elev −7.55°, band-best
+  49.7°). The ruling's premise "a widened domain + the same predicates
+  finds an eligible spawn" is FALSIFIED — the binding constraint is the
+  predicate vs the terrain, not the domain. Options: SAT_B retarget /
+  corridor-threshold ruling / different 1F scenario.
+- F32 (R3 residual): MSAA ladder applied to the end — samples:4 then
+  samples:8 (single-line edits, 8289c81 + a8b25fa; TSC/BUILD exit 0
+  unpiped both rungs). R3 sym 22.22% → 17.78% of the 90-px disk at BOTH
+  rungs (identical): the predicted A2C relief landed, then MSAA
+  saturated — the residual is the limb isophote (>45 threshold at a
+  shading isophote, ~1 px local normal disagreement) + phase noise,
+  sample-count-insensitive. Still ≥3% → STOP per the ladder; metric/
+  threshold/window/fixture untouched. Watch items held: R1 determinism
+  0 differing bytes at both rungs; R2 Sun footprint 105.5% → 99.1%
+  (inside ±15%). Options: larger fixture distance / 1-px dilated
+  comparison / coverage-based metric.
+- E-1 (RULED round 4, honored): 1D row 2 env-soft again this round
+  (diveGrounded false under SwiftShader; numbers match the approved
+  gate: v@1000m 264.7, maxDv 10.30, geo 151, burnHeap 0B); NO code or
+  config change; 1A row 5 RECOVERED this round (5/5 — round 4's
+  frame-time failure did not reproduce, consistent with env-soft).
+R5's diffMid jitter across runs: 495 → 524 → 529 (same blocked-ray
+occlusion, ±tens of bytes of SwiftShader rasterization jitter; never 0
+while F30x is stopped — the spawn fix was the geometric precondition).
+1E is closed: APPROVED at 4c352dd. 1G not started.
 
 ## 1D FPS BACKLOG (Lead-ordered note — do NOT fix now)
 The 1D dive integrates `flight.update(dt·4, 6)` with dt = REAL frame
@@ -140,6 +140,8 @@ milestone, Lead's call. (Evidence: notes/reports/M1F.md §10.5, §11.3.)
 | 2026-10-17 | ROUND-4 RULING (Lead): F30 APPROVED (spawn-site eligibility: corridorFor extraction + spawnEligible predicate + gated findSpawn acceptance, Node-first gate, diag mirror); F31 APPROVED (probe impostor fed the mesh's actual observer-relative f64 truth; R3 aimed at the true position); E-1 RULED (m1d environment — NO code change, renderer/FPS evidence, hardware re-run attempt, user one-liner if unavailable, FPS backlog note); F25e/F29a/F29b RESOLVED-BY F30/F31; B-2 bookkeeping ordered (ANCHOR → bbeb4f4). |
 | 2026-10-17 | ROUND-4 EXECUTION COMPLETE: F30 Node-first gate run BEFORE any harness edit — FAILED its own proceed conditions (24,000 candidates; lazy-checked all (nothing eligible ever improves bestScore); pass(1)=0 — no ≤40° corridor over 2,600 m exists within the ±0.12 rad ≈ ±160 m jitter patch; pass(1)+(2)=0; fallback=base: Earth elev exactly 15.00° but corridor az 150° @ 65.7° and LOS fail −10.6 m at f=0.025; findSpawn cost 32,078 ms = 16× budget; Sun ACTIVE both poses; fallback walk 0 crossings) → F30x ROUTED, harness NOT edited per the ruling's stop (5c6336b). F31 APPLIED (20c8a5e) + TSC/BUILD exit 0 + Node vindicated (alignment 0.000 px ≤ 0.25; both radii 4.635 px from true distance; four poses dead-center) + browser R3 sym 47.69%→22.22% of a 90-px disk → residual routed F32 (A2C no-op on samples:0 A/B target ≈ +0.33 px impostor radius; hard-edge phase noise; limb isophote). E-1 evidence: SwiftShader (config default) 19.8 FPS vs RADV RENOIR (--use-angle=vulkan, diag-only) 59.8 FPS — ship GROUNDS under hardware, deterministically misses under SwiftShader; config untouched; m1d NOT passed; user one-liner recorded. Fourth gate ["PASS","PASS","FAIL","PASS","FAIL"]; regression 1B/1C/1E green + 1A row-5 env-soft (frame time 44.20 ms worst; brief's own machine-dependent row) + 1D row-2 env-soft; 3 failed · 3 passed (4.8m). |
 
+| 2026-10-18 | ROUND-5 RULING (Lead): Fix 1 AUTHORIZED — F30x consolidated (corridorFor/spawnEligible/findSpawn extracted verbatim into the harness; jitter widened 0.02+0.28·rand with progressive 0.45/0.6 ladder + 0.6 rad hard ceiling; Earthrise guard 8°..22° inside spawnEligible with [5°,25°] fallback + [2°,30°] outer stop; findSpawn cost bounded ≤2,000 ms via break-at-first-eligible; Node-first gate with the eight proceed checks; diag mirror byte-consistent). Fix 2 AUTHORIZED — MSAA on the A/B target: samples 0→4, escalation to 8, STOP at ≥3% without touching metric/threshold/window/fixture; R2 footprint watch + R1 determinism watch. Order of work: diag first, harness edits behind their gates, gate + regression + bookkeeping, STOP at the approval gate. |
+| 2026-10-18 | ROUND-5 EXECUTION COMPLETE: F30x Node gate run BEFORE any harness edit — HARD STOP at every authorized rung (spans 0.28/0.45/0.58 = 0.60 rad ceiling; bands [8°,22°]→[5°,25°]: eligible=0 each, failCorr = every in-band candidate, failLos never reached) + diag-only surveys: 0 of 625 cap sites ≤40° (min 48.7°) and 0 of 2,294 whole-moon sites ≤40° (global min 42.9° at Earth elev −7.55°, band-best 49.7°) → the ≤40° corridor over 2,600 m is UNMEETABLE on this terrain field; the spawn harness edit was NOT applied per the ruling's stop (439f4d5) — the ruling's premise is falsified, options routed (SAT_B retarget / corridor-threshold ruling / scenario). F32 applied through its ladder: samples 4 (8289c81) then 8 (a8b25fa), TSC/BUILD exit 0 unpiped both rungs; R3 sym 22.22% → 17.78% of the 90-px disk IDENTICAL at both rungs (A2C relief then saturated — limb-isophote residual) → still ≥3%, STOP per the ladder, nothing measured changed; R1 determinism 0 B both rungs; R2 footprint 99.1% inside ±15%. Fifth gate ["PASS","PASS","FAIL","PASS","FAIL"]; full regression 2 failed · 4 passed (4.3m) — 1D row-2 env-soft per E-1 (numbers match approved gate), 1A row 5 RECOVERED (5/5). |
 ## SESSION LOG
 | # | Date | Goal | Outcome | Handoff note |
 |---|------|------|---------|--------------|
@@ -153,13 +155,15 @@ milestone, Lead's call. (Evidence: notes/reports/M1F.md §10.5, §11.3.)
 | 8 | 2026-10-17 | M1F round-3 ruling execution | Preconditions clean (HEAD 0b2fae8 = origin, canon diff ea112ec empty). Environment repairs only: npm ci (node_modules absent), Chrome installed by the user mid-session. F27/F28/F25d applied exactly + B-1 (a6de872, 74875e5); TSC/BUILD exit 0; diag-m1f-r2 rewritten to execute the REAL edited lookAtQuatInto (verbatim runtime extract) — 4/4 poses dead-center; diag-m1f-core instrumented → F25d branch (iii) (az 345° @ 67.5°; 0 crossings; locals 371.8; straight line to SAT_B 80.6°); third gate ["PASS","PASS","FAIL","PASS","FAIL"] — F27/F28 VINDICATED (R2 footprint 105.5%/0.71 px; R4 heaps 0/0); F29 routed (R3 silhouette 47.69% = 2.97 px parallax vs 4.63 px radii; R5 diffMid 500 = ray blocked, −4.0 m at 20%) + F25e routed; regression 1A/1B/1C/1E GREEN, m1d row-2 ENV-SOFT (diveGrounded; numbers match approved gate; FPS-dependent; no code change; probes diag-m1d-details/dive created); report §10 + CHANGES 51–55 + ledgers | M1F awaits the Lead's round-3 ruling on F25e/F29 + the m1d env-soft decision (evidence in notes/reports/M1F.md §10.4–10.5). On authorization: apply → Node verify → full gate + regression → report → commit + push → STOP at the approval gate. 1G after that. |
 | 9 | 2026-10-17 | M1F round-4 ruling execution | Preconditions clean (bbeb4f4 = origin, canon diff empty). F30 Node-first gate FIRST: FAILED inside its own constraints (24,000 candidates, pass(1)=0 — the jitter patch has no ≤40° corridor; cost 32,078 ms) → F30x routed, harness NOT edited per the ruling's stop; F31 applied + vindicated (Node alignment 0.000 px; browser R3 47.69%→22.22% of 90 px) → residual routed F32; E-1 evidence complete (SwiftShader 19.8 FPS vs RADV 59.8 via diag-only arg; ship grounds under HW; config untouched; m1d not passed); 1A row-5 env-soft this round (44.20 ms worst). Gate ["P","P","F","P","F"]; regression 3 failed · 3 passed (4.8m). Report §11 + CHANGES 57–60 + B-2 ledger + FPS backlog note | M1F awaits the Lead's ruling on F30x/F32/E-1 (evidence: notes/reports/M1F.md §11). On authorization: apply → Node verify → gate + regression → report → commit + push → STOP. 1G after that. |
 
+| 10 | 2026-10-18 | M1F round-5 ruling execution | Preconditions clean (HEAD ab16263 = origin, canon diff ea112ec empty, node_modules present). Fix 1 (F30x): diag extended (span ladder + Earthrise guard [8,22]→[5,25] + first-eligible break + failure counters) and the Node gate run FIRST — HARD STOP at every authorized rung (eligible=0, failCorr = every in-band candidate, failLos never reached) + surveys: 0/625 cap sites ≤40° (min 48.7°), 0/2,294 whole-moon sites (global min 42.9° at Earth elev −7.55°) → the corridor predicate is unmeetable on this terrain field; spawn edit NOT applied per the ruling's stop (439f4d5). Fix 2 (F32): samples 0→4 (8289c81) then 8 (a8b25fa) — R3 sym 22.22%→17.78% IDENTICAL at both rungs (A2C relief then MSAA-saturated; limb-isophote residual) → still ≥3%, STOP per ladder, nothing measured changed; R1 determinism 0 B; R2 footprint 99.1% (inside ±15%). Fifth gate [P,P,F,P,F] (R3 17.78%; R5 0 shifts + diffMid 529); regression 2 failed/4 passed — 1D row-2 env-soft per E-1, 1A row 5 RECOVERED; report §12 + CHANGES 61–64 + ledgers | M1F awaits the Lead's ruling on the two round-5 stops: the R5 spawn geometry (SAT_B retarget / corridor-threshold ruling / scenario — evidence M1F.md §12.1) and the R3 residual (fixture distance / dilated comparison / coverage metric — evidence §12.2). On authorization: apply → Node verify → gate + regression → report → commit + push → STOP. 1G after that. |
+
 ## ANCHOR
-bbeb4f4 — "M1F round-3 report + ledgers" (the last pushed, Lead-verified
-state at the 2026-10-17 round-4 ruling; branch m1-assembly; chain:
+a8b25fa — "M1F/F32 ladder rung 2" (the last work commit; wind-down
+STATE.md travels after it; branch state at the 2026-10-18 round-5 stop; branch m1-assembly; chain:
 ea112ec canon → d849d6b WIP → 2e409c0 protocol → df1e04f M1A → … →
 0b2fae8 round-2 gate → a6de872 round-3 edits → 74875e5 B-1 →
 1c8a2b8/1d76fd0 probes → 9627eee CHANGES → bbeb4f4 round-3 report →
-5c6336b F30 diag/F30x → 20c8a5e F31). This wind-down STATE.md travels in
+5c6336b F30 diag/F30x → 20c8a5e F31 → 439f4d5 F30x diag/hard-stop → 8289c81 F32 rung 1 → a8b25fa F32 rung 2). This wind-down STATE.md travels in
 a commit AFTER those (a file cannot contain its own commit hash); resolve
 the exact carrier with `git log -1 --format=%H -- notes/STATE.md`. Canon
 (Design_specs/, Milestone/) must remain unchanged from ea112ec —

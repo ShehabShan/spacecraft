@@ -894,3 +894,61 @@ Observations (NO change made — recorded for the Lead):
     (do-NOT-fix, deferred fixed-step review); NEXT ACTION = await Lead
     ruling on F30x/F32/E-1; session row 9. · Lead instruction item 3 B-2.
     · Evidence: STATE.md. · Source: Lead ruling round 4 item 3 B-2.
+
+61. 2026-10-18 · 1F/F30x-gate · game/tools/diag-m1f-core.mjs (extended) ·
+    F30x Node-first gate BEFORE any harness edit, per the round-5 ruling:
+    jitter span parameterized (ladder 0.28 → 0.45 → 0.58 = the 0.60 rad
+    hard ceiling), Earthrise guard inside spawnEligible
+    (`elev = asin(clamp(earthDir·dir))` required within [8°,22°], then the
+    authorized fallback [5°,25°]), break-at-first-eligible cost rule,
+    failure-classification counters (elev/corridor/LOS), and two
+    diag-only surveys (625-site domain survey over the full 0.62 rad
+    cap; 2,294-site global sweep). RESULT: GATE FAILS AT EVERY RUNG —
+    eligible=0 with failCorr = EVERY in-band candidate (failLos never
+    reached); chosen index −1; fallback=base unchanged (corridor az 150°
+    @ 65.7°, LOS −10.6 m at f=0.025, cost ~20 s); Sun ACTIVE both poses.
+    Surveys: 0 of 625 cap sites ≤40° (min 48.7°, at Earth elev 15.91°);
+    0 of 2,294 moon sites ≤40° (global min 42.9° at Earth elev −7.55°,
+    band-best 49.7°) — the ≤40° corridor over 2,600 m is UNMEETABLE on
+    this terrain field; the domain is NOT the binding constraint. Per
+    the ruling's own hard stop: the spawn harness edit was NOT applied;
+    routed to the Lead (options: SAT_B retarget / corridor-threshold
+    ruling / different scenario). · Read-only diag tooling + the
+    ruling's stop condition. · Evidence: M1F.md §12.1 (verbatim ladder +
+    surveys). · Source: Lead ruling round 5 §2 (Fix 1) + §5 hard stops.
+
+62. 2026-10-18 · 1F/ruling-5 · game/src/test/Milestone1F_TestHarness.tsx ·
+    F32 APPLIED, rung 1: the A/B render target `samples: 0` → `samples:
+    4` (single line; the impostor limb is authored for MSAA —
+    SkyImpostorPool alphaToCoverage was a deterministic no-op on the
+    samples:0 target, inflating the impostor disk ~0.33 px, F32 cause
+    #1). Nothing measured changed: threshold >45, ±80 px window, <3%
+    criterion, 232 km fixture, masks, poses. TSC_EXIT=0 BUILD_EXIT=0
+    unpiped. Evidence: R3 sym 22.22% → 17.78% of the 90-px disk; R1
+    determinism 0 differing bytes; R2 footprint 105.5% → 99.1% (inside
+    ±15%). · MSAA addresses the A2C no-op + hard-edge phase noise; the
+    ruling's Fix 2 rung 1. · Evidence: M1F.md §12.2. · Source: Lead
+    ruling round 5 §3 (Fix 2).
+
+63. 2026-10-18 · 1F/ruling-5 · game/src/test/Milestone1F_TestHarness.tsx ·
+    F32 ladder rung 2: `samples: 4` → `samples: 8` (per the ruling's own
+    escalation "if sym% is still ≥ 3 after samples:4"). RESULT: R3 sym
+    17.78% — IDENTICAL to samples:4 → MSAA saturated; the residual is
+    the limb isophote (cause #3) + phase, sample-count-insensitive.
+    Still ≥3% → STOP per the ladder; metric/threshold/window/fixture
+    untouched; samples:8 kept as the final rung state. TSC_EXIT=0
+    BUILD_EXIT=0 unpiped. R1 determinism 0 bytes; R2 99.1%. · The
+    ruling's Fix 2 rung 2 + its stop. · Evidence: M1F.md §12.2 (rung
+    table). · Source: Lead ruling round 5 §3 (Fix 2 ladder + stop).
+
+64. 2026-10-18 · 1F/bookkeeping · notes/STATE.md · B-3 APPLIED: 1F
+    ledger row → GATE RUN ×5 — FAILED, BOTH ROUND-5 FIXES STOPPED (F30x
+    hard stop pre-harness + F32 ladder saturation); IN-FLIGHT rewritten
+    with the survey numbers; Approval Ledger rows — round-5 ruling
+    RECORDED (Fix 1 consolidated F30x: NOT APPLIED per its stop; Fix 2
+    MSAA ladder: applied to rung 2, stopped per its ladder), round-5
+    execution row; SESSION LOG row 10 + handoff note; NEXT ACTION =
+    await Lead ruling on the R5 spawn geometry + the R3 residual
+    (options in M1F.md §12.1/§12.2); ANCHOR → a8b25fa. · Lead
+    instruction item 6. · Evidence: STATE.md. · Source: Lead ruling
+    round 5 §4.6 + §10.2 protocol.
