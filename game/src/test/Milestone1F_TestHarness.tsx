@@ -970,7 +970,7 @@ let abA: Uint8Array | null = null;
 let abB: Uint8Array | null = null;
 function ensureAB(gl: THREE.WebGLRenderer): void {
   if (abTarget === null) {
-    abTarget = new THREE.WebGLRenderTarget(AB_W, AB_H, { samples: 0, depthBuffer: true });
+    abTarget = new THREE.WebGLRenderTarget(AB_W, AB_H, { samples: 4, depthBuffer: true });
     abA = new Uint8Array(AB_W * AB_H * 4);
     abB = new Uint8Array(AB_W * AB_H * 4);
     void gl;
