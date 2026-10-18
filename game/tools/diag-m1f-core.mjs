@@ -1,14 +1,18 @@
 import { register } from 'node:module'
 register('./ts-resolve-loader.mjs', import.meta.url)
 
-// M1F F30 node-first gate (ruling round 4): mirror corridorFor/spawnEligible/
-// findSpawn VERBATIM (as they will land in the harness) and report every
-// number the proceed gate needs BEFORE the harness is edited:
-//   candidates evaluated / pass(1) / pass(1)+(2) · chosen index + score ·
-//   angular distance new vs old spawn · Earth elevation new vs old ·
-//   Sun elevation post-warmup + suite pose · corridor az + max slope ·
-//   min LOS margin + where · 600 s KCC sim (crossings/locals/path/net) ·
-//   findSpawn boot cost.
+// M1F F30x node-first gate (ruling round 5, consolidated F30): mirror
+// corridorFor/spawnEligible/findSpawn VERBATIM (as they will land in the
+// harness) — jitter domain widened 0.02 + 0.28*rand (max ≈ 0.30 rad: NO
+// eligible) → 0.02 + 0.45*rand (max ≈ 0.47 rad, ruling round 5 ladder),
+// Earthrise guard 8°..22° inside spawnEligible, break at the FIRST eligible
+// candidate — and report every number the proceed gate needs BEFORE the
+// harness is edited:
+//   candidates evaluated / failure split (elev band / corridor / LOS) ·
+//   chosen index + score · angular distance new vs old spawn · Earth
+//   elevation new vs old · Sun elevation post-warmup + suite pose ·
+//   corridor az + max slope · min LOS margin + where · 600 s KCC sim
+//   (crossings/locals/path/net) · findSpawn boot cost.
 const { initTerrainField, terrainHeight, terrainNormalInto } = await import(
   '../src/core/terrain/terrainField.ts'
 )
@@ -140,7 +144,15 @@ function losClear(dir, fwd) {
 }
 
 // ---- F30 (b): spawnEligible — mirrors the harness edit verbatim ----------
+// F30x (ruling round 5): Earthrise guard first (canon composition: base is
+// exactly 15.00°; old shipped spawn 8.67°; both in the 8°..22° band).
+// Ladder evidence: spans 0.28/0.45/0.58 (max 0.60 rad ceiling) at [8°,22°]
+// → eligible=0 (failCorr = EVERY in-band candidate) → authorized band
+// fallback [5°,25°] at the ceiling span.
 function spawnEligible(dir) {
+  const elev = Math.asin(Math.max(-1, Math.min(1,
+    earthDir.x * dir.x + earthDir.y * dir.y + earthDir.z * dir.z)))
+  if (!(elev >= (5 * Math.PI) / 180 && elev <= (25 * Math.PI) / 180)) return false
   const c = corridorFor(dir)
   if (!(c.maxSlope <= 40)) return false
   const sp = surfacePoint(dir.x, dir.y, dir.z, 0)
@@ -181,11 +193,12 @@ function spawnBase() {
   return { x: rx / rl, y: ry / rl, z: rz / rl }
 }
 
-// candidate generator shared by all three passes (identical stream)
-function candidateAt(rand, base) {
+// candidate generator shared by all passes (identical stream; span = jitter
+// multiplier — old acceptance used 0.1, F30x uses 0.28: max ≈ 0.30 rad)
+function candidateAt(rand, base, span = 0.1) {
   const u = rand() * 2 - 1, th = rand() * Math.PI * 2
   const q = Math.sqrt(1 - u * u)
-  const jitter = 0.02 + 0.1 * rand()
+  const jitter = 0.02 + span * rand()
   const cx = base.x + Math.cos(th) * q * jitter
   const cy = base.y + u * jitter
   const cz = base.z + Math.sin(th) * q * jitter
@@ -218,13 +231,13 @@ function findSpawnOld() {
   return best
 }
 
-// ---- F30 (c) findSpawn — mirrors the harness edit verbatim (timed clean) --
+// ---- F30x (c) findSpawn — mirrors the harness edit verbatim (timed clean) -
 function findSpawn() {
   const base = spawnBase()
   const rand = mulberry32(0x7f1a)
   let best = base, bestScore = Infinity
   for (let i = 0; i < 24000; i++) {
-    candidateAt(rand, base)
+    candidateAt(rand, base, 0.58)
     const slope = slopeFromNormal(_scanT)
     if (slope < 0.01) continue
     const h0 = terrainHeight(_scanT.x, _scanT.y, _scanT.z)
@@ -241,7 +254,7 @@ function findSpawn() {
       if (spawnEligible(_scanT)) {
         bestScore = score
         best = { x: _scanT.x, y: _scanT.y, z: _scanT.z }
-        if (score < 0.35) break
+        break   // first eligible (F30x cost bound: eligibility is the requirement)
       }
     }
   }
@@ -254,17 +267,19 @@ const t0 = performance.now()
 const newSpawn = findSpawn()
 const findSpawnMs = performance.now() - t0
 
-// counted pass (same acceptance; split counters for pass(1)/pass(1)+(2))
+// counted pass (same stream + acceptance; split failure counters, break at
+// first eligible — mirrors the timed findSpawn above)
+var evaluated = 0, slopeSkipped = 0, checked = 0, failElev = 0, failCorr = 0, failLos = 0
+var passBoth = 0, chosenIdx = -1, chosenScore = NaN
 {
   const base = spawnBase()
   const rand = mulberry32(0x7f1a)
-  var evaluated = 0, checked = 0, passCorr = 0, passBoth = 0, chosenIdx = -1, chosenScore = NaN
   let bestScore = Infinity
   for (let i = 0; i < 24000; i++) {
     evaluated++
-    candidateAt(rand, base)
+    candidateAt(rand, base, 0.58)
     const slope = slopeFromNormal(_scanT)
-    if (slope < 0.01) continue
+    if (slope < 0.01) { slopeSkipped++; continue }
     const h0 = terrainHeight(_scanT.x, _scanT.y, _scanT.z)
     let dev = 0
     for (let k = 0; k < 4; k++) {
@@ -277,18 +292,20 @@ const findSpawnMs = performance.now() - t0
     const score = slope * 40 + dev
     if (score < bestScore) {
       checked++
-      if (spawnEligible(_scanT)) {
-        passBoth++
-        bestScore = score; chosenIdx = i; chosenScore = score
-        if (score < 0.35) break
-      } else {
-        const c = corridorFor(_scanT)   // counter support only
-        if (c.maxSlope <= 40) passCorr++
-      }
+      // inline classification in spawnEligible order (elev band → corridor → LOS)
+      const elev = Math.asin(Math.max(-1, Math.min(1,
+        earthDir.x * _scanT.x + earthDir.y * _scanT.y + earthDir.z * _scanT.z)))
+      if (!(elev >= (5 * Math.PI) / 180 && elev <= (25 * Math.PI) / 180)) { failElev++; continue }
+      const c = corridorFor(_scanT)
+      if (!(c.maxSlope <= 40)) { failCorr++; continue }
+      if (!losClear(_scanT, c.fwd).ok) { failLos++; continue }
+      passBoth++
+      bestScore = score; chosenIdx = i; chosenScore = score
+      break
     }
   }
-  console.log(`F30 spawn search: evaluated=${evaluated} eligibilityChecked(lazy, score<best)=${checked} ` +
-    `pass(1) total=${passCorr + passBoth} (corridor-only=${passCorr} + eligible=${passBoth}) — pass(1)+(2)=${passBoth}`)
+  console.log(`F30x spawn search: evaluated=${evaluated} (slope<0.01 skipped ${slopeSkipped}) ` +
+    `eligibilityChecked(lazy, score<best)=${checked} — failElev=${failElev} failCorr=${failCorr} failLos=${failLos} — eligible=${passBoth}`)
   console.log(`  chosen: index=${chosenIdx} score=${chosenScore}`)
 }
 const angOld = Math.acos(Math.max(-1, Math.min(1,
@@ -297,7 +314,7 @@ const elevOf = (dir, ref) => Math.asin(Math.max(-1, Math.min(1,
   dir.x * ref.x + dir.y * ref.y + dir.z * ref.z))) * 180 / Math.PI
 const newCorr = corridorFor(newSpawn)
 const newLos = losClear(newSpawn, newCorr.fwd)
-console.log(`F30 spawns: old=(${oldSpawn.x.toFixed(5)},${oldSpawn.y.toFixed(5)},${oldSpawn.z.toFixed(5)}) ` +
+console.log(`F30x spawns: old=(${oldSpawn.x.toFixed(5)},${oldSpawn.y.toFixed(5)},${oldSpawn.z.toFixed(5)}) ` +
   `new=(${newSpawn.x.toFixed(5)},${newSpawn.y.toFixed(5)},${newSpawn.z.toFixed(5)}) angularDistance=${angOld.toFixed(3)}°`)
 console.log(`  Earth elevation: old=${elevOf(earthDir, oldSpawn).toFixed(2)}° new=${elevOf(earthDir, newSpawn).toFixed(2)}° (canon intent ≈15°)`)
 console.log(`  new corridor: azimuth=${newCorr.az}° maxSlope=${newCorr.maxSlope.toFixed(1)}° (gate ≤ 40°)`)
@@ -424,18 +441,20 @@ console.log(`LIVE result: rebasesDuringLive=${core.stats.rebaseCount - rebases0}
   const sunElevSuite = auditCull('post-LIVE audit (R2 suite-time pose)', {
     x: astroState.localPosF32[0], y: astroState.localPosF32[1], z: astroState.localPosF32[2],
   })
-  // round-4 proceed gate
+  // round-5 F30x proceed gate
   const inLive = crossings.filter((c) => c.wallS <= 120).length
   const checks = [
-    [`eligible candidate exists`, passBoth >= 1],
+    [`eligible candidate exists (index ${chosenIdx}, score ${chosenScore})`, passBoth >= 1],
+    [`corridor <= 40° (az ${newCorr.az}°, max ${newCorr.maxSlope.toFixed(1)}°)`, newCorr.maxSlope <= 40],
+    [`LOS margin > 0 (${newLos.minMargin.toFixed(1)} m at f=${newLos.minF.toFixed(3)})`, newLos.ok && newLos.minMargin > 0],
+    [`findSpawn cost <= 2,000 ms`, findSpawnMs <= 2000],
     [`>= 2 crossings within LIVE_SECONDS`, inLive >= 2],
     [`locals <= 1,024`, maxLocalLive <= 1024],
     [`Sun ACTIVE post-warmup`, sunElevWarmup > -(20000 / sunDist + 0.03)],
     [`Sun ACTIVE at suite pose`, sunElevSuite > -(20000 / sunDist + 0.03)],
-    [`findSpawn cost <= 2,000 ms`, findSpawnMs <= 2000],
   ]
   for (const [label, ok] of checks) console.log(`  GATE ${ok ? 'PASS' : 'FAIL'}: ${label}`)
-  console.log(`F30 PROCEED: ${checks.every(([, ok]) => ok) ? 'YES — proceed with the harness edit' : 'NO — STOP and route F30x'}`)
+  console.log(`F30x PROCEED: ${checks.every(([, ok]) => ok) ? 'YES — proceed with the harness edit' : 'NO — STOP and report'}`)
 }
 
 // ---- terrain profile along the new walkFwd --------------------------------
@@ -453,4 +472,79 @@ console.log('terrain profile along walkFwd (surface slope at distance d):')
     const cz = newSpawn.z * c + (ux * newSpawn.y - uy * newSpawn.x) * s
     console.log(`  d=${String(d).padStart(5)} m  slope=${slopeFromNormal({ x: cx, y: cy, z: cz }).toFixed(1).padStart(5)} deg  h=${terrainHeight(cx, cy, cz).toFixed(1)} m`)
   }
+}
+
+// ---- F30x domain survey (diag-only): corridorFor(dir).maxSlope over a polar
+// grid covering the ENTIRE authorized jitter cap (radius 0.62 rad about the
+// base), band-independent — answers "does ANY site in the domain have a
+// ≤40° corridor over 2,600 m?" without relying on the 24,000-sample stream.
+{
+  const base = spawnBase()
+  const e1x = -base.z, e1y = 0, e1z = base.x
+  const e1l = Math.hypot(e1x, e1y, e1z) || 1
+  const u1x = e1x / e1l, u1y = e1y / e1l, u1z = e1z / e1l
+  const u2x = base.y * u1z - base.z * u1y
+  const u2y = base.z * u1x - base.x * u1z
+  const u2z = base.x * u1y - base.y * u1x
+  let minSlope = Infinity, minDir = null, nGrid = 0, nLe40 = 0
+  const RINGS = 13, PER = 48      // polar 0..0.62 rad step ~0.0517 rad (~4.4 px of arc)
+  for (let i = 0; i <= RINGS; i++) {
+    const polar = (i / RINGS) * 0.62
+    const cp = Math.cos(polar), sp = Math.sin(polar)
+    const per = i === 0 ? 1 : PER
+    for (let j = 0; j < per; j++) {
+      const az = (j / per) * Math.PI * 2
+      const mx = Math.cos(az) * u1x + Math.sin(az) * u2x
+      const my = Math.cos(az) * u1y + Math.sin(az) * u2y
+      const mz = Math.cos(az) * u1z + Math.sin(az) * u2z
+      const dir = { x: base.x * cp + mx * sp, y: base.y * cp + my * sp, z: base.z * cp + mz * sp }
+      const dl = Math.hypot(dir.x, dir.y, dir.z)
+      dir.x /= dl; dir.y /= dl; dir.z /= dl
+      nGrid++
+      const c = corridorFor(dir)
+      if (c.maxSlope <= 40) nLe40++
+      if (c.maxSlope < minSlope) { minSlope = c.maxSlope; minDir = dir }
+    }
+  }
+  const angBase = minDir === null ? NaN : Math.acos(Math.max(-1, Math.min(1,
+    base.x * minDir.x + base.y * minDir.y + base.z * minDir.z))) * 180 / Math.PI
+  const elevMin = minDir === null ? NaN : Math.asin(Math.max(-1, Math.min(1,
+    earthDir.x * minDir.x + earthDir.y * minDir.y + earthDir.z * minDir.z))) * 180 / Math.PI
+  console.log(`F30x domain survey: ${nGrid} grid sites over the full 0.62 rad cap about base — ` +
+    `sites with corridor <= 40°: ${nLe40}; MIN corridor maxSlope = ${minSlope.toFixed(1)}° ` +
+    `(at ${angBase.toFixed(2)}° from base, Earth elev ${elevMin.toFixed(2)}°)`)
+}
+
+// ---- F30x global sweep (diag-only, route evidence for the Lead): does a
+// ≤40° corridor over 2,600 m exist ANYWHERE on this moon, and at what Earth
+// elevation? Equal-angle lat/long grid at ~4° spacing, band-independent.
+{
+  let n = 0, nLe40 = 0
+  let minAll = Infinity, minAllDir = null
+  let minBand = Infinity, minBandDir = null
+  const lo = (5 * Math.PI) / 180, hi = (25 * Math.PI) / 180
+  for (let ilat = -20; ilat <= 20; ilat++) {
+    const lat = (ilat / 20) * (Math.PI / 2)
+    const per = Math.max(1, Math.round(90 * Math.cos(lat)))
+    for (let j = 0; j < per; j++) {
+      const lon = (j / per) * Math.PI * 2
+      const dir = { x: Math.cos(lat) * Math.cos(lon), y: Math.sin(lat), z: Math.cos(lat) * Math.sin(lon) }
+      n++
+      const c = corridorFor(dir)
+      const elev = Math.asin(Math.max(-1, Math.min(1,
+        earthDir.x * dir.x + earthDir.y * dir.y + earthDir.z * dir.z)))
+      if (c.maxSlope <= 40) nLe40++
+      if (c.maxSlope < minAll) { minAll = c.maxSlope; minAllDir = dir }
+      if (elev >= lo && elev <= hi && c.maxSlope < minBand) { minBand = c.maxSlope; minBandDir = dir }
+    }
+  }
+  const angFromBase = (d) => Math.acos(Math.max(-1, Math.min(1,
+    d.x * spawnBase().x + d.y * spawnBase().y + d.z * spawnBase().z))) * 180 / Math.PI
+  const elevOfDir = (d) => Math.asin(Math.max(-1, Math.min(1,
+    earthDir.x * d.x + earthDir.y * d.y + earthDir.z * d.z))) * 180 / Math.PI
+  console.log(`F30x global sweep: ${n} sites over the whole moon — sites with corridor <= 40°: ${nLe40}`)
+  console.log(`  global MIN corridor maxSlope = ${minAll.toFixed(1)}° ` +
+    `(Earth elev ${elevOfDir(minAllDir).toFixed(2)}°, ${angFromBase(minAllDir).toFixed(1)}° from base)`)
+  console.log(`  MIN within the [5°,25°] Earthrise band = ${minBand === Infinity ? 'n/a (no site in band?)' : minBand.toFixed(1) + '° ' +
+    `(Earth elev ${elevOfDir(minBandDir).toFixed(2)}°, ${angFromBase(minBandDir).toFixed(1)}° from base)`}`)
 }
