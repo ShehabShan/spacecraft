@@ -1104,3 +1104,108 @@ decisions this engine cannot make: the R5 spawn geometry (retarget SAT_B
 / corridor threshold / scenario — options in §12.1) and the R3 residual
 (fixture distance / dilated comparison / coverage metric — options in
 §12.2). 1G not started.
+
+---
+
+# 13. ROUND 6 — Track B dump + classification executed per the Lead addendum; classification lands in a ROUTING GAP → STOPPED before any rung; Track A blocked (base round-6 directive not on record) (2026-10-18)
+
+The round-6 ADDENDUM reached this session; the base round-6 directive it
+amends did not (reconciled: HEAD 779fcaf clean, no foreign commits, no
+directive persisted anywhere in the repo — notes/patches/ holds only
+1C-CP.md). The addendum is self-contained for Track B (it replaces the
+classification rules wholesale, specifies the dump site, and restates
+both rungs + routing), so Track B step 1 was executed under the
+addendum's own authority. Track A exists only as an ARCS-wording
+clarification ("the ARCS list (25, 50, 100, ..., 2600 m — 16 arcs, as
+coded)") to rules this session has never seen — NOT executed; the Lead
+is asked to supply the directive text. Commits: 21408a3 (dump edit +
+probe).
+
+## 13.1 The dump (verbatim; harness R3DUMP, emitted from within the
+classification loop between the last abRender and the state restore — no
+new renders; probe tools/diag-m1f-r3dump.mjs, read-only)
+
+```
+R3DUMP px dx=-2.00 dy=-5.00 r=5.39 side=I
+R3DUMP px dx=-1.00 dy=-5.00 r=5.10 side=I
+R3DUMP px dx=0.00 dy=-5.00 r=5.00 side=I
+R3DUMP px dx=1.00 dy=-5.00 r=5.10 side=I
+R3DUMP px dx=-4.00 dy=-4.00 r=5.66 side=I
+R3DUMP px dx=3.00 dy=-4.00 r=5.00 side=I
+R3DUMP px dx=-5.00 dy=-2.00 r=5.39 side=I
+R3DUMP px dx=4.00 dy=-2.00 r=4.47 side=I
+R3DUMP px dx=-5.00 dy=-1.00 r=5.10 side=I
+R3DUMP px dx=4.00 dy=0.00 r=4.00 side=I
+R3DUMP px dx=-5.00 dy=1.00 r=5.10 side=I
+R3DUMP px dx=4.00 dy=1.00 r=4.12 side=I
+R3DUMP px dx=-4.00 dy=3.00 r=5.00 side=I
+R3DUMP px dx=3.00 dy=3.00 r=4.24 side=I
+R3DUMP px dx=-2.00 dy=4.00 r=4.47 side=I
+R3DUMP px dx=1.00 dy=4.00 r=4.12 side=I
+R3DUMP hdr centre=(640.00,360.00) meshR=5.41 impR=5.86 meshRmax=90.82 impRmax=90.82 totA=92 sym=16
+```
+(meshRmax/impRmax hit 90.82 px = a stray lit background pixel inside the
+±80 px window present in BOTH masks; the area-derived radii 5.41/5.86
+are the disk radii. sym=16 here vs 16/90=17.78% in the gate run — ±2 px
+run-to-run jitter, same signature.)
+
+## 13.2 Classification (the addendum's replaced rules, applied verbatim)
+
+```
+r_disk(max r over differing px)=5.66  differing=16
+SHADING (r <= r_disk-2 = 3.66): 0 px
+EDGE (|r-r_disk| <= 2): 16 px  net one-sided I-M=+16 (impostor-larger)
+EDGE azimuth bins occupied=14/24 contiguous-arc-span=21 bins
+uniform ring (>=16 bins)=false  directional arc (<12 bins, contiguous, one-sided)=false
+dominant=EDGE (SHADING 0 vs EDGE 16)
+ROUTE: EDGE-dominant but neither uniform+net>=6 nor directional arc -> NO DEFINED ROUTE -> STOP and report
+```
+
+**STOPPED before any rung.** The measured signature matches NEITHER
+defined EDGE route by the letter: not "uniform ring" (14 bins < 16), not
+a "directional arc" (14 bins ≥ 12; span 21 bins ≈ 315°).
+
+## 13.3 Sanity-check vs §11.2 (as the addendum ordered) + two findings the Lead needs
+
+1. **The dump IS the §11.2 cause-#1 signature in substance.** All 16
+   differing pixels are impostor-lit-only at the OUTER rim (r 4.0–5.66
+   vs meshR 5.41); area-derived radii give a UNIFORM +0.45 px radius
+   excess (impR 5.86 − meshR 5.41 = +8.3%); the shell area 2π·5.41·0.45
+   ≈ 15.3 px ≈ sym=16 ✓; SHADING = 0 ✓ (the deep-interior isophote
+   contributes nothing). Mechanism: the impostor's analytic-AA/coverage
+   band writes resolved brightness ≥ 45/255 ≈ 0.18 coverage out to
+   ~0.4–0.45 px beyond its geometric rim, while the mesh's edge sits at
+   its geometric rim — the same +0.33 px scale excess §11.2 attributed
+   to the A2C no-op, PERSISTING at samples:8 through the
+   coverage-resolution channel (MSAA fixed the no-op, not the profile
+   mismatch at the >45 threshold). Angularly the ring is uniform:
+   expected occupancy under uniformity at n=16 is 24·(1−(23/24)^16) ≈
+   12.0 bins — observed 14; a directional arc is firmly rejected
+   (span 315°). The formal ≥16-bin criterion is STRUCTURALLY UNREACHABLE
+   at n=16 (16 pixels can occupy at most 16 bins, and any rim
+   collision — guaranteed at this density — drops it below).
+2. **The larger-fixture rung cannot reach the criterion from here.**
+   sym% ≈ 2·Δr/r_disk. If Δr stays a fixed ~0.45 px band (AA profile in
+   pixels): at ~75 km r_disk ≈ 5.41·(232/75) ≈ 16.7 px → sym% ≈ 5.4%.
+   If Δr scales with r (fixed angular excess): sym% stays 17.78%. Under
+   the Lead's own model (error ∝ 1/radius) the best case is
+   17.78%/3.09 ≈ 5.8%. ALL cases ≥ 3% — one rung cannot get there; the
+   threshold rung (> 45 → > 8) is the only directed rung that addresses
+   the measured mechanism (it re-bases BOTH representations' AA profiles
+   to the same ~0.03 coverage line), but the routing gates it on
+   SHADING-dominance, which measured 0 px.
+
+**Awaiting the Lead:** (a) the base round-6 directive text — Track A is
+wholly unspecified on record (only item 1's ARCS wording is known);
+(b) a one-line ruling on the routing gap: whether the EDGE-dominant +
+one-sided + statistically-uniform-ring signature (14/24 bins at n=16,
+net +16) routes to the threshold rung, the fixture rung, or a new rung.
+No rung was applied; no threshold, fixture, window, or metric changed.
+
+## Status
+
+**TRACK B: DUMP + CLASSIFICATION COMPLETE → NO DEFINED ROUTE → STOPPED
+PER THE ADDENDUM'S OWN TABLE. TRACK A: BLOCKED — base round-6 directive
+not on record in this session.** Harness carries only the verdict-neutral
+R3DUMP emission (21408a3); the suite state is otherwise exactly round-5's
+(samples:8; gate [P,P,F,P,F]; R3 17.78%). 1G not started.

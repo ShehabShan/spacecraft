@@ -1,26 +1,25 @@
 # SOLARIS — ASSEMBLY STATE (see AGENT_BRIEF.md §10)
 
 ## NEXT ACTION
-AWAITING LEAD RULING on the two round-5 stops (full evidence in
-notes/reports/M1F.md §12): (1) R5 spawn geometry — the F30x Node gate
-hard-stopped at EVERY authorized rung (jitter spans 0.28/0.45/0.58 = the
-0.60 rad ceiling × Earthrise bands [8°,22°]→[5°,25°]: eligible=0 each,
-failCorr = EVERY in-band candidate, failLos never reached) and the
-diag-only surveys prove the ≤40° corridor over 2,600 m is UNMEETABLE
-ANYWHERE on this terrain field (0 of 625 cap sites ≤40°, min 48.7°; 0 of
-2,294 whole-moon sites, global min 42.9° at Earth elev −7.55°, band-best
-49.7°) — the binding constraint is the PREDICATE vs the terrain, not the
-domain; the spawn harness edit was NOT applied. Options: SAT_B retarget
-/ corridor-threshold ruling / different 1F scenario (all outside the
-round-5 scope). (2) R3 residual — F32's MSAA ladder applied to the end:
-samples 4 then 8 both give sym 17.78% of the 90-px disk (22.22% →
-17.78% = the A2C relief, then SATURATED — the residual is the limb
-isophote, sample-count-insensitive); still ≥3% → STOP per the ladder;
-metric/threshold/window/fixture untouched. Options: larger fixture
-distance / 1-px dilated comparison / coverage-based metric. Gate
-[P,P,F,P,F]; regression 2 failed/4 passed (1D row-2 env-soft per E-1;
-1A row 5 recovered). On ruling: apply → Node verify → gate (240 s) +
-regression → report → commit + push → STOP at the approval gate.
+AWAITING LEAD on TWO round-6 items (evidence: notes/reports/M1F.md §13):
+(1) SUPPLY THE BASE ROUND-6 DIRECTIVE — this session received only the
+ADDENDUM (Track A ARCS wording + Track B classification/routing
+replacement); the directive text itself is not on record anywhere in the
+repo, so Track A is wholly unspecified here and was NOT executed.
+(2) RULE ON THE TRACK-B ROUTING GAP: the R3DUMP classification (16
+differing px, ALL impostor-lit-only at the outer rim, SHADING 0 / EDGE
+16, net one-sided +16 impostor-larger, ring over 14/24 bins spanning
+~315°) matches NEITHER defined EDGE route by the letter (uniform needs
+≥16 bins — structurally unreachable at n=16, uniform expectation ≈ 12;
+arc needs <12 bins — firmly rejected at span 21) → the addendum's own
+table has no row for it → STOPPED before any rung. Substance = the §11.2
+cause-#1 signature (uniform +0.45 px impostor radius excess persisting
+at samples:8 through the coverage/AA-profile channel); the fixture rung
+cannot reach <3% from here (best case ~5.4–5.8%, arithmetic in §13.3);
+the threshold rung (>45 → >8) is the one that addresses the measured
+mechanism but is gated on SHADING-dominance (measured 0). On ruling:
+apply the directed rung → sym re-measure → <3% gate else STOP → report
+→ commit + push → approval gate.
 
 ## MILESTONE LEDGER
 | MS | Status | Evidence |
@@ -35,43 +34,28 @@ regression → report → commit + push → STOP at the approval gate.
 | 1G | NOT STARTED | F2 + hand-applied KCC patch + MANDATORY full 1E re-run; re-grep the §3.5 patch against F14/F18's moved/edited regions |
 
 ## IN-FLIGHT
-Milestone 1F — PARKED AT THE RULING GATE, ROUND 5 (2026-10-18). Both
-prescribed fixes executed to their own stop conditions; THREE routes
-await the Lead (details + verbatim evidence in notes/reports/M1F.md
-§12):
-- F30x (R5 spawn): the Node-first gate ran BEFORE any harness edit and
-  hard-stopped at EVERY authorized rung — spans 0.28/0.45/0.58 (the
-  0.60 rad ceiling) × Earthrise bands [8°,22°] then [5°,25°]:
-  eligible=0 each with failCorr = EVERY in-band candidate (failLos
-  never reached); chosen index −1; fallback=base (corridor az 150° @
-  65.7°, LOS −10.6 m at f=0.025). Diag-only surveys prove the ≤40°
-  corridor over 2,600 m is UNMEETABLE on this terrain field: 0 of 625
-  cap sites (min 48.7°, at a site with Earth elev 15.91°); 0 of 2,294
-  whole-moon sites (global min 42.9° at Earth elev −7.55°, band-best
-  49.7°). The ruling's premise "a widened domain + the same predicates
-  finds an eligible spawn" is FALSIFIED — the binding constraint is the
-  predicate vs the terrain, not the domain. Options: SAT_B retarget /
-  corridor-threshold ruling / different 1F scenario.
-- F32 (R3 residual): MSAA ladder applied to the end — samples:4 then
-  samples:8 (single-line edits, 8289c81 + a8b25fa; TSC/BUILD exit 0
-  unpiped both rungs). R3 sym 22.22% → 17.78% of the 90-px disk at BOTH
-  rungs (identical): the predicted A2C relief landed, then MSAA
-  saturated — the residual is the limb isophote (>45 threshold at a
-  shading isophote, ~1 px local normal disagreement) + phase noise,
-  sample-count-insensitive. Still ≥3% → STOP per the ladder; metric/
-  threshold/window/fixture untouched. Watch items held: R1 determinism
-  0 differing bytes at both rungs; R2 Sun footprint 105.5% → 99.1%
-  (inside ±15%). Options: larger fixture distance / 1-px dilated
-  comparison / coverage-based metric.
-- E-1 (RULED round 4, honored): 1D row 2 env-soft again this round
-  (diveGrounded false under SwiftShader; numbers match the approved
-  gate: v@1000m 264.7, maxDv 10.30, geo 151, burnHeap 0B); NO code or
-  config change; 1A row 5 RECOVERED this round (5/5 — round 4's
-  frame-time failure did not reproduce, consistent with env-soft).
-R5's diffMid jitter across runs: 495 → 524 → 529 (same blocked-ray
-occlusion, ±tens of bytes of SwiftShader rasterization jitter; never 0
-while F30x is stopped — the spawn fix was the geometric precondition).
-1E is closed: APPROVED at 4c352dd. 1G not started.
+Milestone 1F — ROUND-6 ADDENDUM EXECUTION (Track B step 1), 2026-10-18.
+- Track A: BLOCKED — the base round-6 directive is not on record in this
+  session (reconciled: HEAD 779fcaf clean at wind-down, no foreign
+  commits, nothing persisted in notes/; only the addendum's ARCS-wording
+  clarification "the ARCS list (25, 50, ..., 2600 m — 16 arcs, as
+  coded)" is known). NOT executed; Lead asked to supply the text.
+- Track B step 1 DONE per the addendum ("do that and no further"): the
+  R3DUMP emission added to the R3 classification loop (harness, between
+  the last abRender and the state restore, no new renders) + read-only
+  probe diag-m1f-r3dump.mjs (commit 21408a3; TSC/BUILD exit 0 unpiped).
+- Classification (verbatim in M1F.md §13.2): r_disk 5.66 px; SHADING 0
+  px; EDGE 16 px; net one-sided +16 (impostor-larger); 14/24 azimuth
+  bins occupied, contiguous span 21 bins (~315°); dominant=EDGE.
+  NEITHER defined EDGE route matches by the letter → NO DEFINED ROUTE →
+  STOPPED before any rung (no threshold/fixture/window/metric change).
+- Substance (§13.3): the §11.2 cause-#1 signature — uniform +0.45 px
+  impostor radius excess persisting at samples:8 via the coverage/
+  AA-profile channel; ≥16-bin criterion unreachable at n=16 (expectation
+  ≈ 12); fixture rung bounded ≥ ~5.4% (cannot reach <3% in one rung).
+- Suite state otherwise exactly round-5's: samples:8; gate [P,P,F,P,F];
+  R3 17.78%; R5 0 shifts + diffMid ~529 (F30x spawn fix still stopped
+  from round 5); 1D row-2 env-soft per E-1. 1G not started.
 
 ## 1D FPS BACKLOG (Lead-ordered note — do NOT fix now)
 The 1D dive integrates `flight.update(dt·4, 6)` with dt = REAL frame
@@ -142,6 +126,9 @@ milestone, Lead's call. (Evidence: notes/reports/M1F.md §10.5, §11.3.)
 
 | 2026-10-18 | ROUND-5 RULING (Lead): Fix 1 AUTHORIZED — F30x consolidated (corridorFor/spawnEligible/findSpawn extracted verbatim into the harness; jitter widened 0.02+0.28·rand with progressive 0.45/0.6 ladder + 0.6 rad hard ceiling; Earthrise guard 8°..22° inside spawnEligible with [5°,25°] fallback + [2°,30°] outer stop; findSpawn cost bounded ≤2,000 ms via break-at-first-eligible; Node-first gate with the eight proceed checks; diag mirror byte-consistent). Fix 2 AUTHORIZED — MSAA on the A/B target: samples 0→4, escalation to 8, STOP at ≥3% without touching metric/threshold/window/fixture; R2 footprint watch + R1 determinism watch. Order of work: diag first, harness edits behind their gates, gate + regression + bookkeeping, STOP at the approval gate. |
 | 2026-10-18 | ROUND-5 EXECUTION COMPLETE: F30x Node gate run BEFORE any harness edit — HARD STOP at every authorized rung (spans 0.28/0.45/0.58 = 0.60 rad ceiling; bands [8°,22°]→[5°,25°]: eligible=0 each, failCorr = every in-band candidate, failLos never reached) + diag-only surveys: 0 of 625 cap sites ≤40° (min 48.7°) and 0 of 2,294 whole-moon sites ≤40° (global min 42.9° at Earth elev −7.55°, band-best 49.7°) → the ≤40° corridor over 2,600 m is UNMEETABLE on this terrain field; the spawn harness edit was NOT applied per the ruling's stop (439f4d5) — the ruling's premise is falsified, options routed (SAT_B retarget / corridor-threshold ruling / scenario). F32 applied through its ladder: samples 4 (8289c81) then 8 (a8b25fa), TSC/BUILD exit 0 unpiped both rungs; R3 sym 22.22% → 17.78% of the 90-px disk IDENTICAL at both rungs (A2C relief then saturated — limb-isophote residual) → still ≥3%, STOP per the ladder, nothing measured changed; R1 determinism 0 B both rungs; R2 footprint 99.1% inside ±15%. Fifth gate ["PASS","PASS","FAIL","PASS","FAIL"]; full regression 2 failed · 4 passed (4.3m) — 1D row-2 env-soft per E-1 (numbers match approved gate), 1A row 5 RECOVERED (5/5). |
+| 2026-10-18 | ROUND-6 ADDENDUM RECORDED (Lead): item 1 — Track A wording, "release-travel ARCS" reads as the ARCS list (25, 50, 100, ..., 2600 m — 16 arcs, as coded); item 2 — Track B §3.B.1 classification rules + §3.B.2 SIZE-OFFSET bullet REPLACED (per-pixel dump dx/dy/meshR/impR/r; SHADING r ≤ r_disk−2 vs EDGE |r−r_disk| ≤ 2; 24×15° azimuth bins; uniform ≥16 bins vs directional arc <12 contiguous one-sided; dump from WITHIN the classification loop, no new renders, "do that and no further"); item 3 — routing: exactly ONE rung then stop (SHADING-dominant → >45→>8; EDGE+uniform+net≥6 → larger-fixture ~75 km, do NOT stop on it; EDGE+directional arc → STOP; mixed → dominant rung only; post-rung <3% → gate else STOP). NOTE: the BASE round-6 directive is not on record in this session — Track A unexecutable; flagged to the Lead. |
+| 2026-10-18 | ROUND-6 EXECUTION (Track B step 1) COMPLETE: dump emitted + classified — 16 differing px all impostor-lit-only at the outer rim (r 4.0–5.66 vs meshR 5.41 px), SHADING 0 / EDGE 16, net one-sided +16 (impostor-larger), 14/24 bins occupied spanning ~315° → NEITHER defined EDGE route by the letter (uniform ≥16 unreachable at n=16, expectation ≈ 12; arc rejected at span 21) → NO DEFINED ROUTE → STOPPED before any rung per the addendum's own table + the brief's stop discipline. Substance = §11.2 cause-#1 signature (uniform +0.45 px radius excess persisting at samples:8 via the coverage/AA-profile channel); fixture rung bounded ≥ ~5.4% (cannot reach <3% in one rung — arithmetic §13.3). Commit 21408a3 (dump + probe, TSC/BUILD exit 0 unpiped); suite state otherwise exactly round-5's. |
+
 ## SESSION LOG
 | # | Date | Goal | Outcome | Handoff note |
 |---|------|------|---------|--------------|
@@ -157,13 +144,14 @@ milestone, Lead's call. (Evidence: notes/reports/M1F.md §10.5, §11.3.)
 
 | 10 | 2026-10-18 | M1F round-5 ruling execution | Preconditions clean (HEAD ab16263 = origin, canon diff ea112ec empty, node_modules present). Fix 1 (F30x): diag extended (span ladder + Earthrise guard [8,22]→[5,25] + first-eligible break + failure counters) and the Node gate run FIRST — HARD STOP at every authorized rung (eligible=0, failCorr = every in-band candidate, failLos never reached) + surveys: 0/625 cap sites ≤40° (min 48.7°), 0/2,294 whole-moon sites (global min 42.9° at Earth elev −7.55°) → the corridor predicate is unmeetable on this terrain field; spawn edit NOT applied per the ruling's stop (439f4d5). Fix 2 (F32): samples 0→4 (8289c81) then 8 (a8b25fa) — R3 sym 22.22%→17.78% IDENTICAL at both rungs (A2C relief then MSAA-saturated; limb-isophote residual) → still ≥3%, STOP per ladder, nothing measured changed; R1 determinism 0 B; R2 footprint 99.1% (inside ±15%). Fifth gate [P,P,F,P,F] (R3 17.78%; R5 0 shifts + diffMid 529); regression 2 failed/4 passed — 1D row-2 env-soft per E-1, 1A row 5 RECOVERED; report §12 + CHANGES 61–64 + ledgers | M1F awaits the Lead's ruling on the two round-5 stops: the R5 spawn geometry (SAT_B retarget / corridor-threshold ruling / scenario — evidence M1F.md §12.1) and the R3 residual (fixture distance / dilated comparison / coverage metric — evidence §12.2). On authorization: apply → Node verify → gate + regression → report → commit + push → STOP. 1G after that. |
 
+| 11 | 2026-10-18 | Round-6 addendum execution (Track B step 1) | Repo reconciled clean at 779fcaf — base round-6 directive NOT on record anywhere (Track A blocked, Lead asked to supply it). Track B per the addendum: R3DUMP emission added inside the R3 classification loop (no new renders) + read-only probe diag-m1f-r3dump.mjs (21408a3, TSC/BUILD 0 unpiped); dump captured (16 px, all impostor-lit-only rim shell, SHADING 0, net +16, 14/24 bins span 315°) → classification matches NEITHER defined EDGE route by the letter → NO DEFINED ROUTE → STOPPED before any rung; substance = §11.2 cause-#1 (+0.45 px uniform impostor radius excess at samples:8); fixture-rung arithmetic shows <3% unreachable in one rung (≥5.4%); threshold rung is the mechanism-matched one but gated on SHADING-dominance (0). Report §13 + CHANGES 65–67 + ledgers | M1F awaits the Lead on TWO items: (1) the base round-6 directive text (Track A wholly unspecified on record); (2) a one-line ruling on the gap signature (EDGE-dominant + one-sided + statistically-uniform ring): threshold rung / fixture rung / new rung. On ruling: apply → sym re-measure → <3% gate else STOP → report → commit + push → approval gate. 1G after. |
 ## ANCHOR
-a8b25fa — "M1F/F32 ladder rung 2" (the last work commit; wind-down
+21408a3 — "M1F/round-6 Track B step 1" (the last work commit; wind-down
 STATE.md travels after it; branch state at the 2026-10-18 round-5 stop; branch m1-assembly; chain:
 ea112ec canon → d849d6b WIP → 2e409c0 protocol → df1e04f M1A → … →
 0b2fae8 round-2 gate → a6de872 round-3 edits → 74875e5 B-1 →
 1c8a2b8/1d76fd0 probes → 9627eee CHANGES → bbeb4f4 round-3 report →
-5c6336b F30 diag/F30x → 20c8a5e F31 → 439f4d5 F30x diag/hard-stop → 8289c81 F32 rung 1 → a8b25fa F32 rung 2). This wind-down STATE.md travels in
+5c6336b F30 diag/F30x → 20c8a5e F31 → 439f4d5 F30x diag/hard-stop → 8289c81 F32 rung 1 → a8b25fa F32 rung 2 → 779fcaf round-5 report → 21408a3 round-6 Track B dump). This wind-down STATE.md travels in
 a commit AFTER those (a file cannot contain its own commit hash); resolve
 the exact carrier with `git log -1 --format=%H -- notes/STATE.md`. Canon
 (Design_specs/, Milestone/) must remain unchanged from ea112ec —

@@ -952,3 +952,45 @@ Observations (NO change made — recorded for the Lead):
     (options in M1F.md §12.1/§12.2); ANCHOR → a8b25fa. · Lead
     instruction item 6. · Evidence: STATE.md. · Source: Lead ruling
     round 5 §4.6 + §10.2 protocol.
+
+65. 2026-10-18 · 1F/round-6-TrackB · game/src/test/Milestone1F_TestHarness.tsx,
+    game/tools/diag-m1f-r3dump.mjs (created) · R3DUMP emitted from WITHIN
+    the R3 classification loop exactly as the addendum prescribed
+    (per-differing-pixel dx/dy from the projected centre + side M/I;
+    radii header meshR/impR area-derived + max-lit; between the last
+    abRender and the state restore; no new renders) + read-only
+    classification probe (SHADING r ≤ r_disk−2 vs EDGE |r−r_disk| ≤ 2;
+    24×15° azimuth bins; uniform-ring/directional-arc; net one-sided
+    I−M; dominance + route). Verdict-neutral console-only emission.
+    Track A NOT executed — the base round-6 directive is not on record
+    in this session (repo reconciled: HEAD 779fcaf clean, no foreign
+    commits, no directive persisted; only the addendum's ARCS-wording
+    clarification is known). · Lead round-6 addendum items 1–2 ("do that
+    and no further"). · Evidence: M1F.md §13.1. · Source: Lead round-6
+    addendum.
+
+66. 2026-10-18 · 1F/round-6-TrackB · (no harness behavior change) ·
+    CLASSIFICATION RESULT + STOP: 16 differing px, ALL impostor-lit-only
+    at the outer rim (r 4.0–5.66 px vs meshR 5.41), SHADING 0 / EDGE 16,
+    net one-sided +16 (impostor-larger), ring over 14/24 bins spanning
+    21 bins (~315°) — by the addendum's letter NEITHER defined EDGE route
+    (uniform ≥16 bins; arc <12 bins) → NO DEFINED ROUTE → STOPPED before
+    any rung (no threshold, fixture, window, or metric change).
+    Substance: the §11.2 cause-#1 signature — uniform +0.45 px impostor
+    radius excess persisting at samples:8 through the coverage/AA-profile
+    channel; the ≥16-bin criterion is structurally unreachable at n=16
+    (uniform expectation ≈ 12 bins); the fixture rung's best case is
+    ~5.4–5.8% ≥ 3% (arithmetic in M1F.md §13.3). Routed to the Lead:
+    supply the base directive (Track A) + rule on the gap signature. ·
+    The addendum's own routing table (no row for this signature) + the
+    brief's §6/§5 stop discipline. · Evidence: M1F.md §13.2–13.3. ·
+    Source: Lead round-6 addendum item 3.
+
+67. 2026-10-18 · 1F/bookkeeping · notes/STATE.md · B-4 APPLIED: IN-FLIGHT
+    → round-6 Track B state (dump done, stopped at the routing gap,
+    Track A blocked); Approval Ledger rows — round-6 addendum RECORDED +
+    round-6 execution row; SESSION LOG row 11 + handoff; NEXT ACTION =
+    Lead to supply the base round-6 directive + rule on the gap
+    signature; ANCHOR → 21408a3. · Lead addendum (applies whether or not
+    round-6 work has started) + §10.2. · Evidence: STATE.md. · Source:
+    Lead round-6 addendum + §10 protocol.
