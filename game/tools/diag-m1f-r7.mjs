@@ -118,31 +118,52 @@ function corridorFor(dir, nAz = 24) {
   return { fwd: { x: bx, y: by, z: bz }, maxSlope: bestScore, az: bestK * (360 / nAz) }
 }
 
-function losClear(dir, fwd) {
+// F-04: straddle-ray LOS — must use the same rendered pose as the harness (F-03).
+// Shared helper lives in src/test/m1fStraddle.ts so diag and harness cannot drift.
+// Screening uses theta=0,O=0 (pre-walk); clearance is evaluated in moon-fixed
+// (un-rotated samples against terrainHeight).
+const { straddlePoseInto: _straddlePoseInto } = await import('../src/test/m1fStraddle.ts')
+const { rotateByQuatConjInto: _rotByQConj2, spinQuatInto: _spinQ2 } = await import('../src/core/physics/sphericalFrame.ts')
+const _losQ2 = { x: 0, y: 0, z: 0, w: 1 }, _losTmp = { x: 0, y: 0, z: 0 }
+const _poseW = { x: 0, y: 0, z: 0 }, _tgtW = { x: 0, y: 0, z: 0 }, _upW = { x: 0, y: 0, z: 0 }
+const _qaW = { x: 0, y: 0, z: 0, w: 1 }, _vaW = { x: 0, y: 0, z: 0 }, _vbW = { x: 0, y: 0, z: 0 }
+function losClear(dir, fwd) { return losClearAtTheta(dir, fwd, 0, { x: 0, y: 0, z: 0 }) }
+function losClearAtTheta(dir, fwd, theta, origin) {
   const sp = surfacePoint(dir.x, dir.y, dir.z, 0)
-  const sb = {
-    x: sp.x + fwd.x * 2400 + dir.x * 400,
-    y: sp.y + fwd.y * 2400 + dir.y * 400,
-    z: sp.z + fwd.z * 2400 + dir.z * 400,
-  }
-  const bl = Math.hypot(sb.x - sp.x, sb.y - sp.y, sb.z - sp.z) || 1
-  const dx = (sb.x - sp.x) / bl, dy = (sb.y - sp.y) / bl, dz = (sb.z - sp.z) / bl
-  const poseX = sb.x - dx * 2400, poseY = sb.y - dy * 2400, poseZ = sb.z - dz * 2400
-  const segLen = Math.hypot(sb.x - poseX, sb.y - poseY, sb.z - poseZ) || 1
+  const sb = { x: sp.x + fwd.x * 2400 + dir.x * 400, y: sp.y + fwd.y * 2400 + dir.y * 400, z: sp.z + fwd.z * 2400 + dir.z * 400 }
+  _straddlePoseInto(sp, sb, theta, origin, _poseW, _tgtW, _upW, _qaW, _vaW, _vbW)
+  _spinQ2(theta, _losQ2)
+  const segLen = Math.hypot(_tgtW.x - _poseW.x, _tgtW.y - _poseW.y, _tgtW.z - _poseW.z) || 1
   const N = Math.ceil(segLen / 10)
   let minMargin = Infinity, minF = -1
+  let legacyMargin = Infinity, legacyMinF = -1
+  {
+    const bl0 = Math.hypot(sb.x - sp.x, sb.y - sp.y, sb.z - sp.z) || 1
+    const ldx = (sb.x - sp.x) / bl0, ldy = (sb.y - sp.y) / bl0, ldz = (sb.z - sp.z) / bl0
+    const lPoseX = sb.x - ldx * 2400, lPoseY = sb.y - ldy * 2400, lPoseZ = sb.z - ldz * 2400
+    const lSeg = Math.hypot(sb.x - lPoseX, sb.y - lPoseY, sb.z - lPoseZ) || 1
+    const lN = Math.ceil(lSeg / 10)
+    for (let i = 0; i <= lN; i++) {
+      const f = i / lN
+      const qx = lPoseX + (sb.x - lPoseX) * f, qy = lPoseY + (sb.y - lPoseY) * f, qz = lPoseZ + (sb.z - lPoseZ) * f
+      const ql = Math.hypot(qx, qy, qz)
+      const clearance = ql - (R + terrainHeight(qx / ql, qy / ql, qz / ql))
+      const margin = clearance - SAT_R * f
+      if (margin < legacyMargin) { legacyMargin = margin; legacyMinF = f }
+    }
+  }
   for (let i = 0; i <= N; i++) {
     const f = i / N
-    const qx = poseX + (sb.x - poseX) * f
-    const qy = poseY + (sb.y - poseY) * f
-    const qz = poseZ + (sb.z - poseZ) * f
-    const ql = Math.hypot(qx, qy, qz)
-    const clearance = ql - (R + terrainHeight(qx / ql, qy / ql, qz / ql))
+    const rx = _poseW.x + (_tgtW.x - _poseW.x) * f, ry = _poseW.y + (_tgtW.y - _poseW.y) * f, rz = _poseW.z + (_tgtW.z - _poseW.z) * f
+    const ax = rx + origin.x, ay = ry + origin.y, az = rz + origin.z
+    _rotByQConj2(_losQ2, ax, ay, az, _losTmp)
+    const ql = Math.hypot(_losTmp.x, _losTmp.y, _losTmp.z)
+    const clearance = ql - (R + terrainHeight(_losTmp.x / ql, _losTmp.y / ql, _losTmp.z / ql))
     const margin = clearance - SAT_R * f
     if (margin < minMargin) { minMargin = margin; minF = f }
-    if (!(clearance > SAT_R * f)) return { ok: false, minMargin, minF }
+    if (!(clearance > SAT_R * f)) return { ok: false, minMargin, minF, legacyMargin, legacyMinF }
   }
-  return { ok: true, minMargin, minF }
+  return { ok: true, minMargin, minF, legacyMargin, legacyMinF }
 }
 
 function spawnBase() {
@@ -197,6 +218,8 @@ const WARM_S = 3.5
 const WALL_SECONDS = 120
 
 function walkReplica(dir, nAz = 24, label = '') {
+  // F-06: reset spin phase that teleportSurface leaks across walks (tool-side)
+  try { kcc._theta = 0; kcc._thetaPrev = 0; kcc.lookYawDelta = 0; } catch {}
   const corr = corridorFor(dir, nAz)
   const los = losClear(dir, corr.fwd)
   const spawnPos = surfacePoint(dir.x, dir.y, dir.z, 0)
@@ -217,6 +240,11 @@ function walkReplica(dir, nAz = 24, label = '') {
   let prevAbs = { ...kcc.absPos }
   const crossings = []
   let vSum = 0, vN = 0, modeSlide = 0, modeAir = 0
+  // F-08: progress-based stall (Δ net / Δt over 5 s window)
+  const netHist = []
+  let netAtT = 0
+  let stallProgressS = 0
+  let progressSum = 0, progressN = 0
   for (let f = 0; f < WALL_SECONDS / DT; f++) {
     const rebBefore = core.stats.rebaseCount
     const p = kcc.pLocal
@@ -242,11 +270,22 @@ function walkReplica(dir, nAz = 24, label = '') {
     if (v < 0.5) stallS += DT
     if (kcc.mode === 'SLIDE') modeSlide++
     if (kcc.mode === 'AIRBORNE' || kcc.mode === 'ZERO-G') modeAir++
+    const curNet = Math.hypot(kcc.absPos.x - spawnPos.x, kcc.absPos.y - spawnPos.y, kcc.absPos.z - spawnPos.z)
+    netHist.push({ t: f * DT, net: curNet })
+    // 5 s window progress
+    while (netHist.length > 1 && netHist[0].t < f * DT - 5) netHist.shift()
+    if (netHist.length >= 2) {
+      const progress = (curNet - netHist[0].net) / Math.max(1e-9, f * DT - netHist[0].t)
+      progressSum += progress; progressN++
+      if (progress < 0.5) stallProgressS += DT
+    }
   }
   const sunSuite = sunElevAt({ x: astroState.localPosF32[0], y: astroState.localPosF32[1], z: astroState.localPosF32[2] })
   const net = Math.hypot(kcc.absPos.x - spawnPos.x, kcc.absPos.y - spawnPos.y, kcc.absPos.z - spawnPos.z)
   const t2 = crossings.length >= 2 ? crossings[1].wallS : Infinity
   const t1 = crossings.length >= 1 ? crossings[0].wallS : Infinity
+  const avgProgress = progressN > 0 ? progressSum / progressN : 0
+  const netOverSim = net / Math.max(simS, 1e-9)
   const rec = {
     label, dir: { x: +dir.x.toFixed(6), y: +dir.y.toFixed(6), z: +dir.z.toFixed(6) }, nAz,
     elevEarth: +elevEarth(dir).toFixed(2), angFromBase: +angFromBase(dir).toFixed(2),
@@ -255,7 +294,9 @@ function walkReplica(dir, nAz = 24, label = '') {
     crossings: crossings.length, t1WallS: t1 === Infinity ? null : +t1.toFixed(1),
     t2WallS: t2 === Infinity ? null : +t2.toFixed(1),
     localsMax: +maxLocalLive.toFixed(1), dist: +distWalked.toFixed(1), net: +net.toFixed(1),
-    avgV: +(vSum / vN).toFixed(2), stallS: +stallS.toFixed(1), modeSlideF: +(modeSlide / vN).toFixed(2),
+    avgV: +(vSum / vN).toFixed(2), stallS: +stallS.toFixed(1),
+    avgProgress: +avgProgress.toFixed(2), stallProgressS: +stallProgressS.toFixed(1), netOverSim: +netOverSim.toFixed(2),
+    modeSlideF: +(modeSlide / vN).toFixed(2),
     modeAirF: +(modeAir / vN).toFixed(2),
     sunWarmup: +((sunWarm * 180) / Math.PI).toFixed(1), sunWarmActive: sunWarm > SUN_CULL,
     sunSuite: +((sunSuite * 180) / Math.PI).toFixed(1), sunSuiteActive: sunSuite > SUN_CULL,
@@ -266,7 +307,7 @@ function walkReplica(dir, nAz = 24, label = '') {
     `WALK ${label || 'site'} ang=${rec.angFromBase}° earth=${rec.elevEarth}° corr=${rec.corrSlope}°@${rec.corrAz}° az-res=${nAz} ` +
     `LOS=${rec.losOk ? 'ok' : 'FAIL'}(${rec.losMargin}m@f${rec.losF}) crossings=${rec.crossings}` +
     `${rec.t2WallS !== null ? ` t2=${rec.t2WallS}s` : ''} locals=${rec.localsMax} dist=${rec.dist} net=${rec.net} ` +
-    `avgV=${rec.avgV} stall=${rec.stallS}s slideF=${rec.modeSlideF} airF=${rec.modeAirF} ` +
+    `avgV=${rec.avgV} avgProgress=${rec.avgProgress} net/sim=${rec.netOverSim} stall=${rec.stallS}s stallProg=${rec.stallProgressS}s slideF=${rec.modeSlideF} airF=${rec.modeAirF} ` +
     `sun(w/s)=${rec.sunWarmup}${rec.sunWarmActive ? 'A' : 'C'}/${rec.sunSuite}${rec.sunSuiteActive ? 'A' : 'C'} ` +
     `-> ${rec.walkOk ? 'WALK-PASS' : 'WALK-FAIL'}`)
   return rec
@@ -625,17 +666,29 @@ if (STAGE === 'A') {
     }
   }
 } else if (STAGE === 'GATE') {
-  const { readdirSync } = await import('node:fs')
+  const { readdirSync, statSync } = await import('node:fs')
   const files = readdirSync('/tmp').filter((f) => /^r7-walks.*\.json$/.test(f))
-  const seen = new Set()
-  const walks = []
+  // F-05: keep freshest (fresh: label wins, then newest mtime), reject net>dist+1
+  const byId = new Map()
+  let rejected = 0, replaced = 0, kept = 0
   for (const f of files) {
+    let mtime = 0; try { mtime = statSync('/tmp/' + f).mtimeMs } catch {}
     for (const w of JSON.parse(readFileSync('/tmp/' + f, 'utf-8'))) {
+      if (w.net > w.dist + 1) { rejected++; continue }
       const id = walkId(w)
-      if (!seen.has(id)) { seen.add(id); walks.push(w) }
+      const isFresh = String(w.label ?? '').startsWith('fresh:')
+      const prev = byId.get(id)
+      if (prev === undefined) { byId.set(id, { w, isFresh, mtime }); kept++ }
+      else {
+        const prevFresh = prev.isFresh
+        if ((isFresh && !prevFresh) || (isFresh === prevFresh && mtime >= prev.mtime)) {
+          byId.set(id, { w, isFresh, mtime }); replaced++
+        }
+      }
     }
   }
-  console.log(`GATE: merged ${files.length} store file(s), ${walks.length} unique walks`)
+  const walks = [...byId.values()].map((e) => e.w)
+  console.log(`GATE: merged ${files.length} store file(s), ${walks.length} unique walks (kept=${kept} replaced=${replaced} rejected=${rejected})`)
   const passers = walks.filter((w) => w.walkOk)
   const bandOf = (w) => (w.elevEarth >= 8 && w.elevEarth <= 22 ? 0 : 1)
   passers.sort((a, b) => bandOf(a) - bandOf(b) || (a.t2WallS ?? 999) - (b.t2WallS ?? 999) || a.corrSlope - b.corrSlope || b.losMargin - a.losMargin)

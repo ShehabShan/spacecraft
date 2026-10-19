@@ -1430,9 +1430,10 @@ notes/reports/evidence/M1F-r7-walks.json (429 records).
   the best walkers + the two falsification cases = **429 unique clean
   walks** (evidence file).
 - **RESULT: 0 sites reach ≥2 crossings within LIVE_SECONDS=120.**
-  29 sites reach exactly 1; 409 reach none. Of the 29, **7 satisfy every
+  29 sites reach exactly 1; 400 reach none. Of the 29, **6 satisfy every
   OTHER acceptance precondition** (LOS > 0, Sun ACTIVE both audit poses,
-  locals ≤ 1,024, net > 0, Earth in band) — e.g. #2234 (Earth 16.74°,
+  locals ≤ 1,024, net > 200, Earth in band; 7 matches `net > 0` and
+  includes legacy #1454 — F-11) — e.g. #2234 (Earth 16.74°,
   corridor 64°@?, LOS 4.8 m, Sun 20.2A/14.6A), #2325 (14.42°, 62.1°,
   LOS 23.0 m, Sun 21.7A/25.5A), #2368 (16.68°, 65.2°, LOS 15.3 m, Sun
   19.5A/27.6A). The corridor-slope rank predicted nothing (the best

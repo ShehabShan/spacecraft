@@ -1094,3 +1094,38 @@ Observations (NO change made — recorded for the Lead):
     WARMUP). · Lead approval in chat 2026-10-19. · Evidence: this
     entry + live probe. · Source: Lead directive (manual-testing
     overrides).
+
+74. 2026-10-19 · 1F/F-01..F-12 batch · game/src/test/Milestone1F_TestHarness.tsx ·
+    F-01 (P0 render/sky): observer for Sun/catalog bodies now `moonAbs + O + p`
+    (was `+ p`; +O from getOrigin, matches horizon up and probe path; 3 lines).
+    F-02 (P0 render/layers): assignObjectMesh distance now `|R·C − O − p|`
+    (was `|R·C − p|`, threads O via getOrigin; fixes terrain/sat Near/Mid/Far
+    banding post-rebase). F-03 (P0 test/R5 straddle): pose rebuilt in the
+    rendered frame `T=R·SAT_B−O`, `S=R·spawn−O`, `dir=norm(T−S)`, `pose=T−dir·2400`,
+    up=normalize(O+pose) (was moon-fixed SAT_B−dir·2400, up 0,1,0). F-12 (P1
+    test/suite): Sun/probe suite poses now use render-local `drv−O` and radial
+    up (was absolute drv, up 0,1,0). F-07 (P2 live/FPS): LIVE now runs a
+    fixed-step 1/60 accumulator with ts=6 (was variable `dt·ts`; walk outcome
+    FPS-independent, diag replica parity). Diag/tool fixes mirrored:
+    src/test/m1fStraddle.ts — shared straddle helper (harness+diag import).
+    · F-01/F-02 no-op at O=0, so pre-rebase rows unchanged. · Evidence:
+    TSC_EXIT=0; diag r7 stages A (2393-site lattice) + GATE smoke. · Source:
+    Lead issue batch F-01..F-12 (m1-assembly c0ae8bf review).
+75. 2026-10-19 · 1F/F-04..F-08/F-05 diag · game/tools/diag-m1f-r7.mjs ·
+    F-04 (P1 tools/diag LOS): losClear now builds the rendered straddle pose
+    via the shared m1fStraddle helper and un-rotates samples by R⁻¹ before
+    terrainHeight (was unrotated moon-fixed ray; now matches harness F-03).
+    F-06 (P1 KCC+diag): walkReplica resets leaked KCC spin phase `_theta`/
+    `_thetaPrev`/`lookYawDelta` at each walk (tool-side; teleportSurface core
+    unchanged — core API change would need a ruling). F-05 (P1 GATE): merge
+    keeps freshest `fresh:` label then newest mtime and rejects `net>dist+1`
+    (was first-seen wins; now kept/replaced/rejected counts). F-08 (P2 diag
+    stall): walkReplica now also tracks `avgProgress`/`stallProgressS` (Δ net
+    over 5 s window) and `net/sim` alongside legacy avgV/stallS. F-11 (P3
+    docs): M1F.md §15 report count fix: 409→400 zero-crossing, 7→6 admissible
+    (net>200 filter). · Evidence: TSC_EXIT=0, node --check, gate smoke. ·
+    Source: same batch.
+76. 2026-10-19 · 1F/F-11 docs · notes/reports/M1F.md §15.2 · Report counts:
+    409→400 zero-crossing (400+29=429), 7→6 admissible 1-crossing sites under
+    the coded `net>200` filter (7 matches `net>0` and includes legacy #1454;
+    6 fresh). · Notes-only. · F-11.
