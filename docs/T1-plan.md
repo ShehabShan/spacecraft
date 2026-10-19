@@ -2,7 +2,7 @@
 
 - Task: **T1** (playable moon) — definition: `notes/task.md` § "T1 — PLAYABLE MOON"
 - Branch: `t1-playable-moon`
-- Stage: **PLANNING** — plan status IN PROGRESS (4/7 sections; Steps 4/15)
+- Stage: **PLANNING** — plan status IN PROGRESS (4/7 sections; Steps 5/15)
 - Last updated: 2026-10-19
 - **Resume at the FIRST UNCHECKED BOX** (planning item or build step).
 - Rules: planning changes NO game code (plan + process files only); each checked
@@ -20,7 +20,7 @@
   - [x] §2 Assumptions and open questions
   - [x] §3 Current-state findings (verified repo facts)
   - [x] §4 Architecture (module/data-flow diagram, text)
-  - [ ] §5 File-by-file change plan
+  - [x] §5 File-by-file change plan
   - [ ] §6 World bootstrap plan
   - [ ] §7 Character rig specification
   - [ ] §8 Animation state machine (table)
@@ -548,8 +548,10 @@ runs before `executePasses`, in this fixed order:
 render).
 
 **4.4 Coordinate frames** (who uses which)
-- **Planet frame** (moon-fixed, f64): KCC `absPos`/`up`/`fwd`, `heading`,
+- **Planet frame** (moon-fixed, f64): KCC `pLocal`/`up`/`fwd`, `heading`,
   the spawn, the LOD inputs, and the terrain sampling for camera clearance.
+  KCC `absPos`/`absVel` are ABSOLUTE (inertial), not planet-frame (see the
+  §5 erratum).
 - **Render-local** (f32, origin-relative): `localPosF32`, the driver pose
   and `characterRoot`. Always Float64 subtraction, then narrowing.
 - **Spin**: planet to scene via `spinQuat(kcc.spinPhase)`. The character and
@@ -571,3 +573,306 @@ render).
   unregister the entity.
 - **Hot path**: stages 1–11 allocate nothing. All vectors, quaternions and
   telemetry structs are boot-allocated module or `MoonWorld` fields (§11).
+### §5 File-by-file change plan
+Paths are relative to `game/`. The exports and signatures below are binding
+for the build. Bodies are sketched only where the logic is not obvious;
+§6–§11 give the details. All `src/play/**` files obey §4.1: no
+`src/test/**` imports, nothing boots on import, and no per-frame
+allocation.
+
+**Erratum to §4.4** (verified at `astronautKCC.ts` 216–224): `kcc.absPos` and
+`kcc.absVel` are **absolute (inertial)**. Only `kcc.pLocal`, `kcc.up` and
+`kcc.fwd` are planet-frame. To convert between them, rotate by
+`spinQuatInto(kcc.spinPhase)`, or by its conjugate in the other direction,
+exactly as the harness's `computeDriverPose` and `refreshFwdWorld` do.
+§4.4 is corrected in place.
+
+**5.1 Edited existing files**
+
+| File | Change | Notes |
+|---|---|---|
+| `src/main.tsx` | add `play: () => import('./play/PlayPage')` to `pages` | Same pattern, so Vite splits it into its own chunk. Keeps the no-StrictMode comment. |
+| `src/App.tsx` | add `{ id: 'play', label: 'PLAY — Playable Moon (T1)' }` as the FIRST `PAGES` row; title becomes `SOLARIS — PLAY / MILESTONE HARNESSES` | Q7 default: m1e/m1f are not added. |
+| `src/core/physics/astronautKCC.ts` | CONDITIONAL (Q2/Q3 Lead ruling): optional `coyoteTime?: number` and `airControl?: number` on `AstronautConfig`, read as `cfg.coyoteTime ?? 0` | Spec in 5.3. Optional fields mean `EARTHSCALE_ASTRONAUT` and every harness config compile unchanged. |
+
+**5.2 New files (`src/play/`)**
+
+`world/moonConfig.ts` contains constants only, copied by value from harness
+lines 100–135 (the M1F moon). Ported values carry a `// WHY:` comment naming
+the source line.
+```ts
+export const MOON_PARAMS: TerrainParams;          // name 'Play Moon', R 1364.5, seed 20240119, …
+export const MOON_R: number; export const MOON_MU: number;  // 1.62·R²
+export const MAX_TERRAIN_H = 360; export const HEIGHT_SLACK = 420;
+export const MOON_SPIN_OMEGA = 0.0005;
+export const MOON_ASTRONAUT: AstronautConfig;     // harness KCC config verbatim (A2)
+export const PLAY_POOL_OPTS: Omit<TerrainMeshPoolOptions, 'material'>; // 96/2/96/6/12
+export const PLAY_TUNING: {
+  lookSens: number;            // 0.0022 rad/px (harness SENS)
+  camDistance: number; camDistMin: number; camDistMax: number; // 7 / 1.2 / 12
+  camPitchMin: number; camPitchMax: number; camPitchDefault: number; // −1.2 / 1.2 / 0.35
+  camClearance: number;        // 0.4 m
+  camPosTau: number; camRotTau: number; // spring-arm smoothing (§9)
+  pivotHeight: number;         // 1.4 m look-at height
+  jumpBufferS: number;         // 0.12
+  coyoteS: number;             // 0.10 (used only if Q2(a) is ruled in)
+  airControl: number;          // 0.3 (used only if Q3 is ruled in)
+};
+```
+
+`world/spawn.ts` holds the spawn logic. §6 decides whether to port the
+harness search or use a fixed constant.
+```ts
+export interface SpawnSite { dir: Vec3; score: number; earthElevDeg: number; }
+export function findEarthriseSpawn(earthDirPlanet: Vec3): SpawnSite; // deterministic, boot-only
+export function parseSpawnOverride(search: string): Vec3 | null;     // ?spawn=x,y,z (A7)
+```
+
+`world/MoonLod.ts` is the harness quadtree (lines 274–434) refactored into a
+class. The constants and the split/merge algorithm are unchanged; the only
+change is that the module-level state moves into instance fields.
+```ts
+export const LOD = { MAX_LEVEL: 4, SPLIT_K: 2.0, MERGE_K: 1.45, GRACE_FRAMES: 45,
+  ACTIVATIONS_PER_FRAME: 3, TOTAL_INFLIGHT_CAP: 24, HORIZON_MARGIN: 150 } as const;
+export class MoonLod {
+  constructor(pool: TerrainMeshPool, radius: number);
+  update(camPlanetX: number, camPlanetY: number, camPlanetZ: number): void; // zero-alloc
+  /** Loading gate (§10): every leaf whose centre is within radiusM of dir is resident. */
+  residentAround(dirX: number, dirY: number, dirZ: number, radiusM: number): boolean;
+  readonly stats: { active: number; pending: number; candidates: number };
+}
+```
+
+`world/skyState.ts` is ported from harness `applyRenderState` and
+`assignObject*` (lines 791–935), MINUS probe slots 9/10 and the test
+counters.
+```ts
+export const PLAY_BODIES: ReadonlyArray<{ slot: number; id: string; radius: number;
+  color: [number, number, number]; kind: number }>;   // slots 0–8, harness values
+export function applySkyState(w: MoonWorld,
+  px: number, py: number, pz: number, qx: number, qy: number, qz: number, qw: number): void;
+```
+It updates impostors and the Earth/glow, then sets layer masks for terrain
+records, the shell, `characterRoot` (always `NEAR_BIT`) and the sky objects.
+
+`world/moonWorld.ts` holds boot and teardown.
+```ts
+export interface MoonWorld {
+  core: SimulationCore; adapter: FloatingOriginAdapter; pool: TerrainMeshPool;
+  sky: SkyImpostorPool; kcc: AstronautKCC; astroState: EntityState; lod: MoonLod;
+  sceneRoot: THREE.Group; spinGroup: THREE.Group; skyGroup: THREE.Group;
+  characterRoot: THREE.Group; earthMesh: THREE.Mesh;
+  earthDir: Vec3; sunDir: Vec3; moonState: CelestialState;
+  spawn: SpawnSite;
+  dispose(): void;
+}
+export function createMoonWorld(opts: { spawnOverride: Vec3 | null }): MoonWorld;
+export function respawnPlayer(w: MoonWorld): void; // kcc.teleportSurface(spawn.dir); zero vel
+```
+The boot order is fixed:
+1. `initTerrainField`;
+2. the core, with `setTimeScale(0)`;
+3. the adapter;
+4. the pool;
+5. the sky;
+6. the KCC and the entity registration (`setFocusEntity` + `attachWriteThrough`);
+7. the Earth/Sun directions;
+8. the spawn and `teleportSurface`;
+9. the scene graph;
+10. `pool.attach(scene)`, which happens in `PlayPage` once R3F hands over
+    the scene.
+
+`input/InputState.ts` contains DOM code only (no THREE, no React).
+```ts
+export class InputState {
+  moveX = 0; moveY = 0;               // D−A, W−S
+  sprint = false; crouch = false;
+  jumpPressed = false;                // latched edge, cleared by the controller
+  lookDX = 0; lookDY = 0;             // accumulated movementX/Y while locked
+  toggleCamEdge = false; respawnEdge = false; pauseEdge = false;
+  pointerLocked = false;
+  attach(el: HTMLElement): void;      // keydown/keyup/blur/mousemove/pointerlockchange
+  detach(): void;
+  requestLock(): void;                // el.requestPointerLock()
+  clearEdges(): void;                 // end of frame
+}
+```
+Key map: WASD move, Shift sprint, Space jump, C crouch, V camera, R respawn,
+P pause. Esc pauses through the browser's pointer-lock release. `blur`
+clears all keys, and `preventDefault` applies to Space and the arrow keys.
+
+`controller/PlayerController.ts` is the only writer of `kcc.input`.
+```ts
+export class PlayerController {
+  constructor(kcc: AstronautKCC, tuning: typeof PLAY_TUNING);
+  firstPerson: boolean;
+  jumpedThisFrame: boolean;           // read by sampleTelemetry
+  step(inp: InputState, cam: ThirdPersonCamera, dt: number): void; // stage 4
+  postSimulate(): void;               // after kcc.update: launch detection
+  reset(): void;                      // respawn
+}
+```
+Movement math (planet frame; §9 has the full derivation):
+- the desired direction is `d = heading·moveY + right(heading, up)·moveX`,
+  clamped so that |d| ≤ 1;
+- `moveF = d·kcc.fwd` and `moveR = d·kRight`, where `kRight` uses the KCC's
+  OWN right convention, copied from `_groundedTick` and checked by a build
+  test (D must strafe right);
+- `turnRate = 0` in third person, with `autoTurnEnabled = true`;
+- in first person, `autoTurnEnabled = false` and `kcc.lookYawDelta` takes
+  the mouse yaw (harness pattern).
+
+Jump buffer, in the play layer (F10):
+```
+if (inp.jumpPressed) { buffer = tuning.jumpBufferS; inp.jumpPressed = false; }
+if (buffer > 0 && (kcc.grounded || coyoteActiveInKcc)) kcc.input.jump = !kcc.input.crouch;
+buffer = max(0, buffer - dt);
+postSimulate: if (wasGrounded && !kcc.grounded && vertSpeed > 0.5) { buffer = 0; jumpedThisFrame = true; }
+```
+
+`character/CharacterTelemetry.ts`:
+```ts
+export interface CharacterTelemetry {
+  grounded: boolean; speed: number; vertSpeed: number; slopeDeg: number;
+  sliding: boolean; sprint: boolean; crouch: boolean; inputMag: number;
+  jumped: boolean; landed: boolean; landingSpeed: number; airTime: number; dt: number;
+}
+export function createTelemetry(): CharacterTelemetry;
+export function sampleTelemetry(kcc: AstronautKCC, ctrl: PlayerController,
+  inp: InputState, dt: number, out: CharacterTelemetry): void;
+```
+How each field is derived:
+- `vertSpeed` = (`absVel` − `transportVelocityInto(Ω, absPos)`) ·
+  (spin · `up`), computed from module scratch. It is 0 when grounded.
+- `landed` is true when `integrity.landings` differs from the previous
+  frame's value; `landingSpeed` = `integrity.lastLandingRelSpeed`.
+- `sliding` = `telemetry.slideSpeed > 0.25`.
+
+`character/CharacterAnimator.ts` is THE GLB seam, an interface only:
+```ts
+export interface CharacterAnimator {
+  readonly root: THREE.Object3D;      // feet contact = origin, +Y up, −Z facing
+  readonly stateName: string;         // HUD/debug
+  update(t: Readonly<CharacterTelemetry>, dt: number): void;
+  setVisible(v: boolean): void;       // false in first person
+  dispose(): void;
+}
+```
+`stateName` is added to the four members listed in §4.2, for the HUD.
+§9/§10 document the future `GltfAnimator` (GLTFLoader + AnimationMixer:
+clip-per-state, `crossFadeTo`, `timeScale` driven by speed).
+
+`character/AstronautRig.ts` (§7 has the dimensions):
+```ts
+export const JOINTS = ['hips','spine','chest','neck','head',
+  'upperArmL','lowerArmL','handL','upperArmR','lowerArmR','handR',
+  'upperLegL','lowerLegL','footL','upperLegR','lowerLegR','footR'] as const;
+export type JointName = typeof JOINTS[number];
+export interface AstronautRig {
+  root: THREE.Group;                       // characterRoot child; carries the facing yaw fix
+  joints: Record<JointName, THREE.Object3D>;  // pivot groups; meshes hang below
+  restHipsY: number;
+  geometries: THREE.BufferGeometry[]; materials: THREE.Material[];
+}
+export function buildAstronautRig(): AstronautRig;  // boot only
+export function disposeAstronautRig(r: AstronautRig): void;
+```
+
+`character/animStateMachine.ts` (§8 has the table). The states are an
+`as const` object rather than a `const enum`, because esbuild's
+isolatedModules mode cannot inline a `const enum` across files.
+```ts
+export const AnimState = { Idle: 0, Walk: 1, Run: 2, JumpLaunch: 3,
+  JumpRise: 4, Fall: 5, Land: 6, Slide: 7 } as const;
+export type AnimStateId = typeof AnimState[keyof typeof AnimState];
+export class AnimStateMachine {
+  state: AnimStateId; prev: AnimStateId; timeInState: number;
+  blend: number;                         // 0→1 crossfade prev→state
+  blendTime: number;                     // per-transition, from the §8 table
+  step(t: Readonly<CharacterTelemetry>, dt: number): void;
+}
+```
+
+`character/ProceduralAnimator.ts`:
+```ts
+export type PoseFn = (s: PoseSample, out: PoseBuffer) => void; // s = {phase, speed, t, …}
+export class PoseBuffer { q: Float32Array /* JOINTS.length·4 */; hipsY: number; }
+export class ProceduralAnimator implements CharacterAnimator {
+  constructor(rig?: AstronautRig);       // builds its own rig by default
+  // update: sm.step → gait phase += dt·strideHz(speed) → evaluate prev+cur
+  // poses into two boot PoseBuffers → per-joint slerp by sm.blend → write joints
+}
+```
+Pose evaluation writes into preallocated buffers through
+`THREE.Quaternion.fromArray` / `slerpFlat`, with zero allocation.
+
+`camera/ThirdPersonCamera.ts`:
+```ts
+export class ThirdPersonCamera {
+  readonly heading: Vec3;                // planet frame, ⊥ kcc.up (§4.2)
+  pitch: number; distance: number; firstPerson: boolean;
+  readonly driver: { x: number; y: number; z: number; qx: number; qy: number; qz: number; qw: number }; // render-local
+  readonly camPlanet: Vec3;              // for MoonLod.update
+  preStep(kcc: AstronautKCC, lookDX: number, lookDY: number, sens: number): void; // stage 3
+  postStep(w: MoonWorld, dt: number): void;   // stage 8 → setDriverPose
+  reset(kcc: AstronautKCC): void;        // heading = kcc.fwd, pitch default
+}
+```
+
+`frame/playFrame.ts`:
+```ts
+export interface PlayRuntime { world: MoonWorld; input: InputState; ctrl: PlayerController;
+  cam: ThirdPersonCamera; animator: CharacterAnimator; telem: CharacterTelemetry; }
+export function createPlayFrame(rt: PlayRuntime):
+  (delta: number, gl: THREE.WebGLRenderer, scene: THREE.Scene) => void; // §4.3 stages 1–11
+```
+
+`ui/playStore.ts`:
+```ts
+export type PlayPhase = 'LOADING' | 'CLICK_TO_PLAY' | 'PLAYING' | 'PAUSED';
+export interface PlayHud { speed: number; state: string; grounded: boolean; fps: number;
+  lat: number; lon: number; altAGL: number; }
+export const usePlayStore: UseBoundStore<StoreApi<{ phase: PlayPhase; loadProgress: number;
+  hud: PlayHud; setPhase(p: PlayPhase): void; setLoad(p: number): void; setHud(h: PlayHud): void }>>;
+```
+The frame loop writes through `usePlayStore.getState()`. HUD writes go
+through `createTelemetryPublisher(100)`, and only `setPhase` is unthrottled.
+
+UI files:
+- `ui/PlayShell.tsx`: `export function PlayShell(props: { onRequestPlay(): void })` renders the overlays by phase.
+- `ui/Hud.tsx`: `export function Hud()` shows the controls hint, speed, state, FPS and coordinates.
+- `ui/Overlays.tsx`: `LoadingOverlay`, `ClickToPlayOverlay` and `PauseOverlay`.
+
+`PlayPage.tsx`, the route component:
+```ts
+export default function PlayPage(): JSX.Element;
+// useMemo(once) → createMoonWorld + runtime; <Canvas gl={{antialias:true}}>
+//   <primitive object={world.sceneRoot}/> <MultiCameraRig onFrame={frame}/> </Canvas>
+//   <PlayShell/>; useEffect → input.attach(canvas), pool.attach(scene); cleanup → dispose
+```
+
+**Optional:** `e2e/play.spec.ts` (Q6, last phase). It loads `/?page=play`,
+waits for CLICK_TO_PLAY, and asserts no console errors and a non-blank
+canvas. In a test-only mode (`?autoplay=1`) it presses W and asserts that
+the HUD speed is > 0.
+
+**5.3 Conditional core edit** (only on a Lead ruling for Q2/Q3; default-off,
+additive, acceptance-safe):
+- `coyoteTime` (s, default 0):
+  - when a SURFACE `_groundedTick` ends airborne WITHOUT a jump (a walk-off),
+    record `_coyoteLeft = coyoteTime` and the last surface normal;
+  - in `_flightTick`, while `_coyoteLeft > 0` and `input.jump` is set, apply
+    the jump impulse `jumpSpeed` along the stored normal (radial blend per
+    `upBlendWeight`) once, then set `_coyoteLeft = 0`;
+  - with a value of 0, the branch is never taken.
+- `airControl` (fraction, default 0): in SURFACE-airborne `_flightTick`, add
+  `airControl·(vDes − vRelTangential)/accelTau·dt`, tangent-projected and
+  capped so it never raises the speed above `sprintSpeed`. With a value of
+  0, the branch is skipped before any arithmetic.
+- Verification: m1e + m1f regression pages unchanged
+  (`npx playwright test e2e/m1e.spec.ts e2e/m1f.spec.ts`), and a byte-equal
+  integrity trace with the field at 0 (§13).
+
+**5.4 Process files** (every checkpoint): `docs/T1-plan.md`, `notes/task.md`,
+`notes/STATE.md`, plus a `notes/CHANGES.md` entry for every code change in
+the build stage.
