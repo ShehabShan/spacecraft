@@ -1,27 +1,16 @@
-# SOLARIS — ASSEMBLY STATE (see AGENT_BRIEF.md §10)
+# SOLARIS — STATE — PHASE 2: TASK DEVELOPMENT (contract: AGENT_BRIEF.md; phase-1 history preserved below)
 
 ## NEXT ACTION
-AWAITING LEAD RULING on the round-7 Track A option menu (M1F.md §15.7).
-The walk-outcome instrument was built, CALIBRATED (fresh-process base
-walk = core-diag numbers to the digit) and falsified-positive (old spawn
-+ base both fail as required), then the ENTIRE authorized domain was
-searched: 2,425 sites screened (2,393 lattice + 32 stream), 419 in-band
-LOS-ok, ALL walked fresh-process — **0 of 429 walks reaches ≥2 crossings
-within the frozen LIVE_SECONDS=120** (29 reach exactly 1; 7 of those are
-otherwise fully admissible: LOS > 0, Sun ACTIVE both poses, locals
-≤ 1,024, net > 0). Extended-wall probes: the 2nd crossing lands at
-~300–326 s on 5 sites, all of which then FAIL the Sun-at-suite-pose
-audit (−37.5°..−41°C after 1,800 sim s) — so LIVE_SECONDS is doubly
-blocked. GATE: NO WINNER → STOP per §2(b)/§3; NO harness edit; 1F state
-unchanged (badges [P,P,P,P,F], R3 0.82% green). OPTIONS (all need a
-ruling): (a) rebases ≥ 2 → ≥ 1 — RECOMMENDED, smallest, 7 admissible
-sites (e.g. #2325: Earth 14.42°, LOS 23.0 m, Sun 21.7A/25.5A); (b)
-LIVE_SECONDS → 360+ — not recommended (doubly blocked); (c) domain
-widening; (d) SAT_B retarget; (e) different terrain/scenario. On ruling:
-apply → Node verify → gate (240 s) + regression → report → commit +
-push → STOP at the approval gate.
+**T1 plan** — author `docs/T1-plan.md` for the T1 "playable moon" task (defined
+in `notes/task.md`), following the plan schema there; on completion set the T1
+tracker row's plan status to READY and repoint this line at the first build step.
 
-## MILESTONE LEDGER
+Phase-1 legacy (parked — carries forward unchanged): M1F round-7 ruling still
+PENDING (option menu `notes/reports/M1F.md` §15.7; recommendation (a): rebase
+gate ≥ 2 → ≥ 1, 7 admissible sites); 1G explicitly DEFERRED ("much later").
+Neither is touched without a Lead directive naming it.
+
+## MILESTONE LEDGER (phase 1 — HISTORY; the ACTIVE tracker is notes/task.md)
 | MS | Status | Evidence |
 |----|--------|----------|
 | scaffold | DONE | game/ tree committed (WIP d849d6b); deps pinned per §3.3 (react 18.2.0, three 0.165.0, R3F 8.18.0, zustand ^4.4, TS ~5.4, vite 5.4.21, playwright 1.64.0); `npm run typecheck` + `npm run build` clean |
@@ -31,10 +20,14 @@ push → STOP at the approval gate.
 | 1D | APPROVED | Commit e830759; gate GREEN 5/5 + full 1A/1B/1C regression green ("4 passed (1.5m)"); F11/F12 applied as ruled; erratum + standing rule adopted; authorship verified: v@1000m 264.7 matches corrected derivation, locals max 1022.8 matches 1A structural prediction (1022.67), geo 151 = F12-predicted constant count; report: notes/reports/M1D.md; Lead approval 2026-10-16 |
 | 1E | APPROVED | Commit 4c352dd (gate-green report + ledgers); FINAL: `[Milestone1E] acceptance PASSED` 6/6 (coriolis 0.75 cm west/1.02 s/1-tick plant; vehicleErr 0.0e+0; deorbit landed 22,307; face-walk 0.82° corner/2 changes; slope rows clean, minAGL n/a) + full 1A/1B/1C/1D regression ("5 passed (1.9m)", PLAYWRIGHT_EXIT=0); all nine rulings applied + vindicated (F14 core #1 7947369; F15–F17+$-strip e689d4c; F18 core #2 37a4c9e; F19/F20 7d77e52); report: notes/reports/M1E.md; Lead approval 2026-10-16 |
 | 1F | GATE RUN ×7 — round-7 Track A NODE GATE FAIL (0/429 walks reach ≥2 crossings); STOP per directive, NO harness edit | Rounds 1–6b as below (…; round-6b F1 threshold 45→8: R3 GREEN 0.82%, validated V1–V7, 20156a0/8aa94d1). Round 7 (2026-10-19, Track A re-issue): walk-outcome instrument built + calibrated (fresh-process base = core-diag exactly; contamination found: single-process teleports carry state) + falsified-positive (old spawn, base FAIL as required); exhaustive search — 2,425 screened, 419 in-band LOS-ok, ALL 429 walked: ZERO reach ≥2 crossings in the frozen LIVE (29 ×1; 7 otherwise fully admissible); extended-wall: 2nd crossing ~300–326 s on 5 sites but ALL then Sun-CULLED at suite pose (R2 blocker); corridor slope does not predict walk outcome (no sufficient screen); GATE NO WINNER → STOP, options quantified §15.7 (recommend (a) rebases ≥ 1); evidence notes/reports/evidence/M1F-r7-walks.json; tool diag-m1f-r7.mjs; report M1F.md §15; PARKED AT RULING GATE (option menu) |
-| 1G | NOT STARTED | F2 + hand-applied KCC patch + MANDATORY full 1E re-run; re-grep the §3.5 patch against F14/F18's moved/edited regions |
+| 1G | DEFERRED (Lead 2026-10-19 — "much later") | F2 + hand-applied KCC patch + MANDATORY full 1E re-run; re-grep the §3.5 patch against F14/F18's moved/edited regions; resume ONLY on a Lead directive naming 1G |
 
 ## IN-FLIGHT
-Milestone 1F — ROUND-7 EXECUTED (Track A Node phase), 2026-10-19.
+PHASE 2 (active): T1 "playable moon" on branch `t1-playable-moon` (cut from
+`m1-assembly` @ 3057899, pushed). Plan NOT started — NEXT ACTION above. Tracker:
+`notes/task.md`. No game-code changes in phase 2 yet.
+
+PHASE 1 (parked): Milestone 1F — ROUND-7 EXECUTED (Track A Node phase), 2026-10-19.
 PARKED AT THE RULING GATE with a quantified option menu; NO harness edit
 this round (1F state = round-6b's: badges [P,P,P,P,F], R3 0.82% green,
 R5 the single FAIL).
@@ -150,7 +143,10 @@ milestone, Lead's call. (Evidence: notes/reports/M1F.md §10.5, §11.3.)
 | 2026-10-19 | ROUND-6b DIRECTIVE RECORDED (Lead): R3 ONLY — Track A/R5 intentionally excluded (do not touch spawn/walk/SAT/straddler code); F1 PRIMARY (threshold 45→8, both masks, nothing else) + R3DUMP mv/iv values; EXTENSIVE VALIDATION MANDATORY (V1 threshold curve, V2 rim histograms, V3 fade-band sweep, V4 negative control REQUIRED, V5 ≥3 identical solo runs, V6 stray audit, V7 gate + regression); fallback ladder F2 (curve-chosen threshold) / F3 (1-px dilated sym) / F4 (2x supersample or coverage mask) pre-authorized in order; finalize only with margin (≤1.5% or 0 px), V4 failing, V5 stable; method discipline: switch instruments, never give up; hard stops per §6. |
 | 2026-10-19 | ROUND-6b EXECUTION COMPLETE: F1 applied (20156a0, TSC/BUILD 0 unpiped) → R3 sym 17.78% → 0.82% of the 122-px disk, R3 badge PASS; V1–V7 ALL completed and reported (V1 plateau t∈[2,12] + t=45 reproduces round-6 1:1; V2 mechanism histograms; V3 0.00–4.00% band sweep; V4 control 17.21%/28.69% at 1 px/2 px — not blind; V5 identical ×3, R1 det 0 B, 2.2–2.4 min; V6 43 strays ALL symmetric; V7 rows unchanged elsewhere); F2–F4 NOT NEEDED (t=8 is the V1 optimum); temp V3/V4 patch reverted + grep=0 over dist; finalize criteria ALL hold; worklog §14.8 (parser off-by-one caught pre-report; pkill self-match; tool timeout — no data impact). Gate ["PASS","PASS","PASS","PASS","FAIL"] — R5 the expected excluded FAIL. |
 | 2026-10-19 | ROUND-7 DIRECTIVE RECORDED (Lead, standalone re-issue — this text IS the base Track A directive): ≤40° corridor predicate RETIRED, replaced by the WALK-OUTCOME instrument (≥2 crossings in LIVE, locals ≤1,024, no stall, positive net, LOS > 0 SAT_R=26, Earth 8-22 preferred/5-25 fallback, Sun ACTIVE both poses); domain stays the 0.62 rad cap; selector preference (i) replica-guided / (ii) empirically-calibrated cheap screen / (iii) fixed constant, boot ≤ 2,000 ms; corridor resolution 24 unless proven needed; Node phase gated on ALL checks incl. falsification (old spawn + base must FAIL); STOP and report options on any failure. |
-| 2026-10-19 | ROUND-7 EXECUTION COMPLETE (Node phase): instrument calibrated (fresh base walk = core-diag to the digit; single-process teleport contamination found + fixed); 2,425 screened → 419 in-band LOS-ok → ALL 429 walked fresh-process: 0 reach ≥2 crossings in the frozen LIVE (29 ×1, 7 otherwise fully admissible); extended-wall: 2nd crossing ~300–326 s on 5 sites, all then Sun-CULLED at suite pose (R2 blocker); falsification cases fail as required; corridor slope does not predict walk outcome → selector (ii) inadmissible, (i) boot-prohibitive, (iii) moot; GATE NO WINNER → STOP per the directive, NO harness edit, options quantified (recommendation: rebases ≥ 2 → ≥ 1). |\n## SESSION LOG
+| 2026-10-19 | ROUND-7 EXECUTION COMPLETE (Node phase): instrument calibrated (fresh base walk = core-diag to the digit; single-process teleport contamination found + fixed); 2,425 screened → 419 in-band LOS-ok → ALL 429 walked fresh-process: 0 reach ≥2 crossings in the frozen LIVE (29 ×1, 7 otherwise fully admissible); extended-wall: 2nd crossing ~300–326 s on 5 sites, all then Sun-CULLED at suite pose (R2 blocker); falsification cases fail as required; corridor slope does not predict walk outcome → selector (ii) inadmissible, (i) boot-prohibitive, (iii) moot; GATE NO WINNER → STOP per the directive, NO harness edit, options quantified (recommendation: rebases ≥ 2 → ≥ 1). |
+| 2026-10-19 | PHASE 2 ORDERED (Lead): main development proceeds as TASKS (plan → build) across fresh AI sessions — tracker `notes/task.md` + `docs/<Tn>-plan.md` plans; AGENT_BRIEF.md rewritten for feature builders (assembly brief archived VERBATIM at `notes/archive/AGENT_BRIEF-assembly.md`); `Milestone/*.txt`, `notes/reports/`, `notes/patches/`, `notes/archive/` OFF the reading list — code is the source of truth; `Design_specs/` optional background (code wins); commit+push after every completed step with WHAT/WHY/STATE/NEXT/VERIFIED messages; merge-to-main between tasks (supersedes phase-1 "never push main"); 1F stays parked at its ruling gate, 1G explicitly DEFERRED; T1 = playable moon on `t1-playable-moon`; NEXT ACTION = "T1 plan" |
+
+## SESSION LOG
 | # | Date | Goal | Outcome | Handoff note |
 |---|------|------|---------|--------------|
 | 1 | 2026-10-14 | §9 opening report → scaffold + Milestone 1A | Opening report approved; branch m1-assembly created; game/ scaffolded per §3; extract.mjs written (6/6 blocks 1A); 1A wired, typecheck+build clean, gate PASSED 5/5; report delivered in chat — ended before writing the STATE.md/report files (protocol did not exist yet) | none written — reconciled post-hoc |
@@ -168,6 +164,8 @@ milestone, Lead's call. (Evidence: notes/reports/M1F.md §10.5, §11.3.)
 | 11 | 2026-10-18 | Round-6 addendum execution (Track B step 1) | Repo reconciled clean at 779fcaf — base round-6 directive NOT on record anywhere (Track A blocked, Lead asked to supply it). Track B per the addendum: R3DUMP emission added inside the R3 classification loop (no new renders) + read-only probe diag-m1f-r3dump.mjs (21408a3, TSC/BUILD 0 unpiped); dump captured (16 px, all impostor-lit-only rim shell, SHADING 0, net +16, 14/24 bins span 315°) → classification matches NEITHER defined EDGE route by the letter → NO DEFINED ROUTE → STOPPED before any rung; substance = §11.2 cause-#1 (+0.45 px uniform impostor radius excess at samples:8); fixture-rung arithmetic shows <3% unreachable in one rung (≥5.4%); threshold rung is the mechanism-matched one but gated on SHADING-dominance (0). Report §13 + CHANGES 65–67 + ledgers | M1F awaits the Lead on TWO items: (1) the base round-6 directive text (Track A wholly unspecified on record); (2) a one-line ruling on the gap signature (EDGE-dominant + one-sided + statistically-uniform ring): threshold rung / fixture rung / new rung. On ruling: apply → sym re-measure → <3% gate else STOP → report → commit + push → approval gate. 1G after. |
 | 12 | 2026-10-19 | Round-6b directive execution (R3 only) | Bootstrap clean (9d60c3c = ANCHOR 21408a3 carrier, canon intact). F1 applied + committed (20156a0); validation per mandate: temp patch (R3RAW window dump + V3 sweep + V4 bias hook at the probe-A feed) → capture run → revert → grep=0 verification; offline analysis (8aa94d1, --analyze mode) after fixing an R3RAW parser off-by-one caught before reporting; V1 plateau t∈[2,12] @ sym=1 (0.82%), t=45 reproduces round-6 1:1; V2 mesh dim-limb tail 9..45 vs impostor clean step; V3 0.00–4.00% across the band; V4 control 17.21%/28.69% (not blind); V5 0.82% identical ×3 solo gates (2.2–2.4 min); V6 43 strays all symmetric; V7 regression rows unchanged — 1F badges [P,P,P,P,F] (R3 PASS, R5 expected FAIL); F2–F4 not needed; report §14 + CHANGES 68–70 + ledgers | M1F awaits the Lead's Track A ruling (R5 spawn geometry; base round-6 directive text still not on record — paste or re-issue with the ruling). On ruling: execute → gate + regression → report → commit + push → STOP. 1G after. |
 | 13 | 2026-10-19 | Round-7 Track A Node phase (walk-outcome site search) | Directive re-issue received and recorded (this text = the base Track A directive). Instrument diag-m1f-r7.mjs built and CALIBRATED (fresh-process base walk matches the core diag exactly; single-process teleport contamination discovered and eliminated — every reported walk is one-fresh-process); 2,425 sites screened, 419 in-band LOS-ok, ALL walked = 429 unique clean walks: ZERO reach ≥2 crossings within the frozen LIVE (29 ×1; 7 otherwise fully admissible, e.g. #2325); extended-wall probes show the 2nd crossing at ~300–326 s on 5 sites, all then Sun-culled at the suite pose (R2 blocker); corridor slope does not predict walk outcome; falsification cases fail as required; GATE NO WINNER → STOP per §2(b)/§3, NO harness edit; report §15 + evidence file + CHANGES 71–72 + ledgers | M1F awaits the Lead's ruling on the §15.7 option menu — recommendation (a): rebases ≥ 2 → ≥ 1 (gate-term ruling; 7 admissible sites). On ruling: apply → Node verify → gate + regression → report → commit + push → STOP. 1G after. |
+| 14 | 2026-10-19 | Phase-2 transition: session-tracking upgraded to the task system | Branch `t1-playable-moon` cut from m1-assembly @ 3057899 and pushed; AGENT_BRIEF.md rewritten as the phase-2 builder brief (old brief archived VERBATIM at notes/archive/AGENT_BRIEF-assembly.md, banner prepended, byte-identical otherwise); notes/task.md created (tracker + T1 definition + plan schema + resume protocol); STATE.md repointed (NEXT ACTION = "T1 plan"; milestone ledger relabeled historical; 1G → DEFERRED); REPAIR: the SESSION LOG header mangled into the round-7 approval row as literal "\n## SESSION LOG" restored to a real header line (no row text altered); process docs only — game/, Design_specs/, Milestone/ untouched | NEXT: a fresh session authors docs/T1-plan.md per the notes/task.md schema (NEXT ACTION = "T1 plan"), then the T1 build begins on this branch. 1F/1G stay parked — Lead directive required. |
+
 ## ANCHOR
 07ae8ad768089bebb5715d78fb67bc8a1312effe — round-7 report + ledgers (the wind-down commit; the tool/evidence work commit precedes it;
 STATE.md travels after it; branch state at the 2026-10-19 round-6b stop; branch m1-assembly; chain:
@@ -179,3 +177,14 @@ a commit AFTER those (a file cannot contain its own commit hash); resolve
 the exact carrier with `git log -1 --format=%H -- notes/STATE.md`. Canon
 (Design_specs/, Milestone/) must remain unchanged from ea112ec —
 verified: git diff ea112ec on both trees is empty.
+
+PHASE-2 UPDATE (2026-10-19): the active branch is now `t1-playable-moon` (cut
+from `m1-assembly` @ 3057899; the phase-1 chain above is its ancestry). The
+phase-2 transition commit is this STATE.md's own carrier — resolve it exactly
+with `git log -1 --format=%H -- notes/STATE.md` (ratified fixed-point
+convention; a file cannot contain its own commit hash). That commit touches
+ONLY process docs: AGENT_BRIEF.md (rewritten), notes/archive/
+AGENT_BRIEF-assembly.md (new, verbatim archive), notes/task.md (new),
+notes/STATE.md (this file). Canon (Design_specs/, Milestone/) remains
+byte-identical to ea112ec. Phase-2 truth: the code is the source of truth;
+the active tracker is notes/task.md; NEXT ACTION = "T1 plan".
