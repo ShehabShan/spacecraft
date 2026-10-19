@@ -22,34 +22,145 @@ contain its own hash); current HEAD: `git log -1`.
 ## TASK DEFINITIONS
 
 ### T1 — PLAYABLE MOON
-- Goal: a playable moon surface — the player can WALK on the moon: walkable terrain
-  underfoot, a player controller (input → movement), ground collision (never falls
-  through), and low gravity (the moon's real surface gravity from the catalog).
-- Builds on (existing, verified — read the code, it is the source of truth):
-  - `game/src/core/physics/astronautKCC.ts` — analytic kinematic character
-    controller (walking, slopes, steps, jumps; parallel-transport frame);
-    `sphericalFrame.ts` beside it for the local tangent frame.
-  - `game/src/core/terrain/terrainField.ts` + `game/src/workers/terrainWorker.ts`
-    + `game/src/render/TerrainMeshPool.ts` — the moon terrain heightfield,
-    streaming, and meshing.
-  - `game/src/core/orbit/celestialData.ts` — body catalog incl. the moon's
-    surface gravity (catalog values are final — never re-derive).
-  - `game/src/core/simulation/SimulationCore.ts` + `game/src/store/useGameStore.ts`
-    + `game/src/render/FloatingOriginAdapter.ts` — tick, state, floating origin.
-  - `game/src/test/Milestone1E_TestHarness.tsx` — a WORKING walking-astronaut
-    page (reference for wiring input → KCC → terrain; the harness itself is
-    regression — do not break it, build the game page alongside).
-- Scope IN (to be fixed precisely by the plan): a game page with the astronaut
-  standing and walking on the moon; WASD + jump input; camera that follows the
-  player; terrain streaming around the player; low gravity per the catalog.
-- Scope OUT: Rapier or any physics-engine swap (deferred by design) · EVA/ship
-  boarding · saves (1G-era) · sky/rendering beauty passes · new libraries · any
-  change to ratified constants.
-- Plan: `docs/T1-plan.md` — NOT YET WRITTEN (STATE.md NEXT ACTION = "T1 plan").
-  Planning session(s) author it INCREMENTALLY per the schema below: the first
-  checkpoint-commit creates the file with the empty PLANNING CHECKLIST, sections
-  follow one by one, and on completion the tracker flips to READY and the
-  session STOPS at the LEAD GATE (build only on the Lead's execute order).
+Task type: new game page (the first GAME page, not a test harness). Branch:
+`t1-playable-moon` (cut from `m1-assembly` @ 3057899 — "branch m1-assembly" in
+the source brief refers to that branch point). All work on this branch.
+
+**Product (V1 — free-roam movement playground).** A standalone, playable moon
+game at `/?page=play`, listed in the menu. The player controls a visible
+third-person character on the procedural moon surface and can walk, run/
+sprint, jump, fall, and slide on steep slopes (existing KCC behavior).
+Movement must FEEL like a real game (Unreal/ROBLOX-style third-person) with
+proper movement animation: idle, walk, run, jump launch/rise, fall, landing,
+slope slide. No combat, objectives, inventory, quests, sound, or saves in V1 —
+testing and polish follow the first playable build.
+
+**Verified current state (trust the code over this text; re-verify before
+planning — note discrepancies in the plan).** The repo contains test
+harnesses, not a game shell:
+- Routing: `game/src/main.tsx` static map `m1a..m1f`; one module per page,
+  full page loads (module singletons + THREE prototype patches). `App.tsx`
+  menu lists only m1a–m1d.
+- The closest foundation is `game/src/test/Milestone1F_TestHarness.tsx` and
+  its hidden manual mode `?page=m1f&manual=1` (WASD / Shift sprint / Space
+  jump / C crouch / V cam TP-FP / R reset / P pause, click pointer-lock),
+  which already has: moon terrain params (R = 1364.5, g = 1.62 m/s²,
+  maxTerrainHeight 360), a moon-configured AstronautKCC (walk 3.2, sprint
+  6.5, crouch 1.5, jump 4.2, accelTau 0.15, slope limits, sliding, airborne
+  inertial flight, landing sweep), SimulationCore with frozen sky
+  (`setTimeScale(0)`), FloatingOriginAdapter, TerrainMeshPool streaming
+  (96 meshes, 2 workers) + quadtree LOD, SkyImpostorPool, MultiCameraRig
+  three-pass renderer, and a TP/FP camera driver (boomed camera, 4-sample
+  terrain clearance).
+- The astronaut is a STATIC group of boxes (`buildAstronaut`, ~line 577) —
+  no skeleton, rig, animation system, GLB/FBX assets, or GLTF import.
+- Airborne flight is inertial (no generic air control; ZERO-G RCS is
+  separate). Jump buffering: verify in KCC. Coyote time: does NOT exist.
+
+**Architecture decision the plan must make (recommend ONE after comparing).**
+- Option A — extract a shared moon bootstrap from the M1F harness used by
+  both harness and play page. One source of truth, less drift; risk:
+  touching the acceptance harness can regress the 1F gate.
+- Option B — new play page under `game/src/play/` with a minimal duplicated
+  boot, reusing core/render modules. Zero risk to the harness, fastest path;
+  risk: temporary duplication of world setup.
+Do NOT copy the ~1,800-line harness wholesale: the plan must identify
+exactly which code is reusable, which must be extracted, which rewritten.
+
+**Character + animation (the heart of the task).** V1 character: a
+self-contained articulated astronaut built in-engine (ROBLOX-like block
+proportions) replacing the static box group. The plan must specify:
+- Joint hierarchy with correct pivots: root/feet, pelvis, spine/torso, head,
+  upper/lower arms ×2, upper/lower legs ×2, feet. Materials + scale suited
+  to third-person view; how the rig attaches under the floating-origin
+  render-local hierarchy and composes with the moon spin.
+- A procedural animation state machine driven by KCC telemetry — relSpeed,
+  grounded, vertical velocity (absVel), slopeDeg, input magnitude + sprint,
+  landing events (`integrity.lastLandingRelSpeed`). States + transitions:
+  Idle, Walk, Run, Jump launch, Jump rise, Apex/fall, Land, Slide. How poses
+  blend (crossfade times, weights), stride frequency scaling with speed,
+  practical foot-slide minimization; jump/fall poses: crouch anticipation,
+  extended launch, tucked rise, arms-out fall, landing crouch + recovery.
+- A clean `CharacterAnimator` interface so a future GLB (GLTFLoader from
+  three/examples is in node_modules; AnimationMixer + clips) can replace the
+  procedural rig WITHOUT rewriting the controller. V1 must not depend on
+  obtaining an external asset.
+
+**Controller + game feel.** The plan must cover:
+- Camera-relative WASD: the KCC moves along its own fwd/right — the play
+  layer computes the desired tangent direction from camera yaw, rotates the
+  character toward it, and drives moveF/moveR/turnRate correctly.
+- Third-person camera: mouse orbit, boomed/spring-arm follow, terrain
+  collision + minimum distance, smoothed position/rotation, FP toggle.
+- Jump feel: use the KCC's jump buffering (verify first); add play-layer
+  coyote time; landing recovery; OPTIONAL limited air control — prefer an
+  opt-in KCC config field whose default (0/off) preserves acceptance
+  behavior over changing existing defaults.
+- Sprint behavior + speed tuning; slope behavior + sliding; pause/resume
+  must not advance physics; fixed-step simulation (frame-rate-independent
+  feel); respawn to spawn point.
+- Identify exactly which behaviors belong in the play controller vs the
+  core KCC, and which core changes are acceptance-safe.
+
+**World + presentation.** Scenic, walkable spawn (the existing Earthrise
+spawn is a candidate — evaluate whether its corridor suits free roam); keep
+terrain streaming + floating origin; REMOVE test-only probes, satellites,
+acceptance HUD, autopilot; evaluate reusing MultiCameraRig unchanged (keep
+the three-pass renderer if terrain/sky need it); minimal HUD (controls hint,
+optional speed/coords/FPS, pause overlay, loading state while terrain warms
+up); menu entry + routing; pointer lock + click-to-play overlay; performance:
+smooth at typical desktop frame rates, avoid per-frame allocations.
+
+**Hard constraints (all bind).**
+- Do NOT modify Design_specs/ or Milestone/. Do NOT change M1F acceptance
+  rows, thresholds, or R5/F-09/F-10 behavior (1F is PARKED — its R5 gap is a
+  known test-coverage/ruling issue, not a reason to change the game design).
+- The play page must NOT import Milestone1F_TestHarness.tsx (module
+  singletons + test-only code would execute). Keep the page additive and
+  independently loadable.
+- Reuse core/render modules — never reimplement physics, terrain, sky, or
+  floating origin. Preserve frame-rate-independent physics.
+- Character animation must be visible and driven by real movement state,
+  not a canned loop. V1 free-roam only. Clean GLB-swap path required.
+
+**Required structure of `docs/T1-plan.md`** (in addition to the standard
+schema header + PLANNING CHECKLIST, the finished plan must contain, in
+order): 1 executive summary (recommended architecture + why) · 2 assumptions
+and open questions · 3 current-state findings (verified repo facts) ·
+4 architecture (module/data-flow diagram, text) · 5 file-by-file change plan
+(new + edited files, purpose, key exports/APIs) · 6 world bootstrap plan
+(exact reuse/extraction strategy + exclusions) · 7 character rig
+specification (hierarchy, dimensions, pivots, materials) · 8 animation state
+machine (TABLE: states, entry conditions, exit conditions, pose drivers,
+blend times) · 9 controller + camera plan (input mapping, movement math,
+jump/fall/landing, camera behavior, KCC touchpoints) · 10 game shell + HUD
+plan (route, menu, loading, pointer lock, pause, respawn) · 11 performance
+plan (allocations, terrain/LOD, render passes, budgets) · 12 implementation
+phases (ordered, incremental, each with a playable/verifiable outcome +
+acceptance checks) · 13 verification plan (typecheck, build, manual test
+matrix, optional Playwright smoke, M1F regression check) · 14 risk register
+(risk, impact, mitigation) · 15 first coding step (the single smallest
+change to begin after plan approval). Specific enough that a coding model
+can start file creation without making architectural decisions from scratch
+— include function/class names, data structures, pseudocode where useful;
+do NOT write the full implementation.
+
+**Reference facts.** Verify from `game/`: `npm run typecheck`, `npm run
+build`, `npm run dev`, `npx playwright test e2e/m1f.spec.ts` (do not
+break). Routes: menu `http://localhost:5173/` · existing manual scene
+`?page=m1f&manual=1` · target `?page=play`. 1F-harness line anchors: moon
+setup/KCC config ~100 · spawn search ~170 · terrain LOD/quadtree ~330 ·
+static scene + astronaut ~440–598 · input/camera ~650–780 · layer
+assignment/sky ~840+ · frame loop/manual mode ~1380+ · HUD ~1580+.
+
+**Stage.** Plan: `docs/T1-plan.md` — NOT YET WRITTEN. The planning session:
+read the repository first and verify every path/API/assumption against the
+source (the code wins over this definition on any conflict — note the
+discrepancy in the plan); author the plan INCREMENTALLY per the schema
+below (PLANNING CHECKLIST items; the 15 required sections are the "Steps"
+item's content); NO game-code changes during planning — only the plan
+document + process files; on completion set plan status READY and STOP at
+the LEAD GATE.
 
 ## PLAN FILE SCHEMA (every `docs/<Tn>-plan.md` follows this exactly)
 - Header: task id · branch · stage (PLANNING / READY / BUILDING / DONE) ·
