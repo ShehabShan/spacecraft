@@ -1,13 +1,13 @@
 # SOLARIS — STATE — PHASE 2: TASK DEVELOPMENT (contract: AGENT_BRIEF.md; phase-1 history preserved below)
 
 ## NEXT ACTION
-**T1 plan** — author `docs/T1-plan.md` for the T1 "playable moon" task (defined
-in `notes/task.md` — use the definition AS THE LEAD LAST WROTE IT there),
-INCREMENTALLY per the schema there: the first checkpoint-commit creates the
-file with the empty PLANNING CHECKLIST, then sections are drafted and checked
-off one by one (each commit carries its checkbox + tracker row + this NEXT
-ACTION update). On completion set the T1 tracker row's plan status to READY
-and STOP at the LEAD GATE — building starts only on the Lead's execute order.
+**T1 plan — checklist item "Goal"** in `docs/T1-plan.md` (file created, plan
+IN PROGRESS 0/7). Resume at the FIRST UNCHECKED BOX of its PLANNING CHECKLIST;
+draft sections incrementally per the schema in `notes/task.md` (each commit
+carries its checkbox + tracker row + this NEXT ACTION update). The "Steps"
+item holds the 15 required sections as sub-boxes (§1..§15), one checkpoint
+each. NO game-code changes during planning. On 7/7: plan status READY, STOP at
+the LEAD GATE — building starts only on the Lead's execute order.
 
 Phase-1 legacy (parked — carries forward unchanged): M1F round-7 ruling still
 PENDING (option menu `notes/reports/M1F.md` §15.7; recommendation (a): rebase
@@ -28,7 +28,7 @@ Neither is touched without a Lead directive naming it.
 
 ## IN-FLIGHT
 PHASE 2 (active): T1 "playable moon" on branch `t1-playable-moon` (cut from
-`m1-assembly` @ 3057899, pushed). Plan NOT started — NEXT ACTION above. Tracker:
+`m1-assembly` @ 3057899, pushed). Plan IN PROGRESS (docs/T1-plan.md) — NEXT ACTION above. Tracker:
 `notes/task.md`. No game-code changes in phase 2 yet.
 
 PHASE 1 (parked): Milestone 1F — ROUND-7 EXECUTED (Track A Node phase), 2026-10-19.
@@ -171,7 +171,8 @@ milestone, Lead's call. (Evidence: notes/reports/M1F.md §10.5, §11.3.)
 | 12 | 2026-10-19 | Round-6b directive execution (R3 only) | Bootstrap clean (9d60c3c = ANCHOR 21408a3 carrier, canon intact). F1 applied + committed (20156a0); validation per mandate: temp patch (R3RAW window dump + V3 sweep + V4 bias hook at the probe-A feed) → capture run → revert → grep=0 verification; offline analysis (8aa94d1, --analyze mode) after fixing an R3RAW parser off-by-one caught before reporting; V1 plateau t∈[2,12] @ sym=1 (0.82%), t=45 reproduces round-6 1:1; V2 mesh dim-limb tail 9..45 vs impostor clean step; V3 0.00–4.00% across the band; V4 control 17.21%/28.69% (not blind); V5 0.82% identical ×3 solo gates (2.2–2.4 min); V6 43 strays all symmetric; V7 regression rows unchanged — 1F badges [P,P,P,P,F] (R3 PASS, R5 expected FAIL); F2–F4 not needed; report §14 + CHANGES 68–70 + ledgers | M1F awaits the Lead's Track A ruling (R5 spawn geometry; base round-6 directive text still not on record — paste or re-issue with the ruling). On ruling: execute → gate + regression → report → commit + push → STOP. 1G after. |
 | 13 | 2026-10-19 | Round-7 Track A Node phase (walk-outcome site search) | Directive re-issue received and recorded (this text = the base Track A directive). Instrument diag-m1f-r7.mjs built and CALIBRATED (fresh-process base walk matches the core diag exactly; single-process teleport contamination discovered and eliminated — every reported walk is one-fresh-process); 2,425 sites screened, 419 in-band LOS-ok, ALL walked = 429 unique clean walks: ZERO reach ≥2 crossings within the frozen LIVE (29 ×1; 7 otherwise fully admissible, e.g. #2325); extended-wall probes show the 2nd crossing at ~300–326 s on 5 sites, all then Sun-culled at the suite pose (R2 blocker); corridor slope does not predict walk outcome; falsification cases fail as required; GATE NO WINNER → STOP per §2(b)/§3, NO harness edit; report §15 + evidence file + CHANGES 71–72 + ledgers | M1F awaits the Lead's ruling on the §15.7 option menu — recommendation (a): rebases ≥ 2 → ≥ 1 (gate-term ruling; 7 admissible sites). On ruling: apply → Node verify → gate + regression → report → commit + push → STOP. 1G after. |
 | 14 | 2026-10-19 | Phase-2 transition: session-tracking upgraded to the task system | Branch `t1-playable-moon` cut from m1-assembly @ 3057899 and pushed; AGENT_BRIEF.md rewritten as the phase-2 builder brief (old brief archived VERBATIM at notes/archive/AGENT_BRIEF-assembly.md, banner prepended, byte-identical otherwise); notes/task.md created (tracker + T1 definition + plan schema + resume protocol); STATE.md repointed (NEXT ACTION = "T1 plan"; milestone ledger relabeled historical; 1G → DEFERRED); REPAIR: the SESSION LOG header mangled into the round-7 approval row as literal "\n## SESSION LOG" restored to a real header line (no row text altered); process docs only — game/, Design_specs/, Milestone/ untouched; SAME-SESSION AMENDMENT: planning made incremental (PLANNING CHECKLIST in plan files, multi-session), every commit is a checkpoint (plan checkbox + tracker row + STATE.md NEXT ACTION ride in the same commit; each push = complete resume point), Lead gate added after plan READY (build only on execute order) |
-| 15 | 2026-10-19 | T1 planning attempt (checkpoints 1–2) + Lead-ordered revert | Same session, after "resume": executed T1-plan checkpoints 1–2 (3d8dcb8: docs/T1-plan.md created with the empty PLANNING CHECKLIST; 6c11ca8: Goal/Scope IN–OUT/Affected modules drafted, 4/7, grounded in code recon of the 1E harness wiring + moon catalog values) — Lead ordered STOP ("don't do the t1 yourself": task planning/build is reserved for FRESH sessions) and a clean-slate revert; reverted here: plan file DELETED, tracker row restored to NOT STARTED, NEXT ACTION restored to fresh-start "T1 plan" (the two planning commits remain in history — no force-push; APPROVAL LEDGER row added so no session re-asks) | NEXT: the Lead finalizes the "### T1 — PLAYABLE MOON" definition in notes/task.md; then a FRESH session plans T1 from scratch (NEXT ACTION = "T1 plan"). | NEXT: a fresh session authors docs/T1-plan.md per the notes/task.md schema (NEXT ACTION = "T1 plan"), then the T1 build begins on this branch. 1F/1G stay parked — Lead directive required. |
+| 15 | 2026-10-19 | T1 planning attempt (checkpoints 1–2) + Lead-ordered revert | Same session, after "resume": executed T1-plan checkpoints 1–2 (3d8dcb8: docs/T1-plan.md created with the empty PLANNING CHECKLIST; 6c11ca8: Goal/Scope IN–OUT/Affected modules drafted, 4/7, grounded in code recon of the 1E harness wiring + moon catalog values) — Lead ordered STOP ("don't do the t1 yourself": task planning/build is reserved for FRESH sessions) and a clean-slate revert; reverted here: plan file DELETED, tracker row restored to NOT STARTED, NEXT ACTION restored to fresh-start "T1 plan" (the two planning commits remain in history — no force-push; APPROVAL LEDGER row added so no session re-asks) | NEXT: the Lead finalizes the "### T1 — PLAYABLE MOON" definition in notes/task.md; then a FRESH session plans T1 from scratch (NEXT ACTION = "T1 plan"). |
+| 16 | 2026-10-19 | T1 planning session (fresh session, PromptQL VM) — bootstrap + plan checkpoints | Bootstrap per §5: clone clean at 0c555b3 = origin; tracker NOT STARTED, no docs/ — consistent with the Lead-ordered revert c32514b + definition commit 0c555b3 (no session row existed for 0c555b3 — noted here). REPAIR: row 15 carried two handoff columns (the second a stale copy of row 14's handoff) — stale duplicate removed, no other text altered. Checkpoint 1: docs/T1-plan.md created (header + empty PLANNING CHECKLIST, Steps = 15 sub-boxes). (in progress — handoff note added at session end) | (pending) |
 
 ## ANCHOR
 07ae8ad768089bebb5715d78fb67bc8a1312effe — round-7 report + ledgers (the wind-down commit; the tool/evidence work commit precedes it;
