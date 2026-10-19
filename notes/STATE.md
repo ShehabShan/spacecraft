@@ -153,7 +153,7 @@ milestone, Lead's call. (Evidence: notes/reports/M1F.md §10.5, §11.3.)
 | 12 | 2026-10-19 | Round-6b directive execution (R3 only) | Bootstrap clean (9d60c3c = ANCHOR 21408a3 carrier, canon intact). F1 applied + committed (20156a0); validation per mandate: temp patch (R3RAW window dump + V3 sweep + V4 bias hook at the probe-A feed) → capture run → revert → grep=0 verification; offline analysis (8aa94d1, --analyze mode) after fixing an R3RAW parser off-by-one caught before reporting; V1 plateau t∈[2,12] @ sym=1 (0.82%), t=45 reproduces round-6 1:1; V2 mesh dim-limb tail 9..45 vs impostor clean step; V3 0.00–4.00% across the band; V4 control 17.21%/28.69% (not blind); V5 0.82% identical ×3 solo gates (2.2–2.4 min); V6 43 strays all symmetric; V7 regression rows unchanged — 1F badges [P,P,P,P,F] (R3 PASS, R5 expected FAIL); F2–F4 not needed; report §14 + CHANGES 68–70 + ledgers | M1F awaits the Lead's Track A ruling (R5 spawn geometry; base round-6 directive text still not on record — paste or re-issue with the ruling). On ruling: execute → gate + regression → report → commit + push → STOP. 1G after. |
 ## ANCHOR
 20156a0 — "M1F/round-6b F1" (the last work commit; wind-down
-STATE.md travels after it; branch state at the 2026-10-18 round-5 stop; branch m1-assembly; chain:
+STATE.md travels after it; branch state at the 2026-10-19 round-6b stop; branch m1-assembly; chain:
 ea112ec canon → d849d6b WIP → 2e409c0 protocol → df1e04f M1A → … →
 0b2fae8 round-2 gate → a6de872 round-3 edits → 74875e5 B-1 →
 1c8a2b8/1d76fd0 probes → 9627eee CHANGES → bbeb4f4 round-3 report →
