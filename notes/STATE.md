@@ -1,9 +1,8 @@
 # SOLARIS — STATE — PHASE 2: TASK DEVELOPMENT (contract: AGENT_BRIEF.md; phase-1 history preserved below)
 
 ## NEXT ACTION
-**T1 plan** — resume at PLANNING CHECKLIST item 1 (Goal) in `docs/T1-plan.md`
-(0/7 sections done). Draft one or a few sections per checkpoint-commit
-(each commit carries checkbox + tracker row + this NEXT ACTION update).
+**T1 plan** — resume at PLANNING CHECKLIST item 5 (Steps) in `docs/T1-plan.md`
+(4/7 sections done: Goal, Scope IN/OUT, Affected modules).
 
 Phase-1 legacy (parked — carries forward unchanged): M1F round-7 ruling still
 PENDING (option menu `notes/reports/M1F.md` §15.7; recommendation (a): rebase
