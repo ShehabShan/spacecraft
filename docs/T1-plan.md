@@ -2,7 +2,7 @@
 
 - Task: **T1** (playable moon) — definition: `notes/task.md` § "T1 — PLAYABLE MOON"
 - Branch: `t1-playable-moon`
-- Stage: **PLANNING** — plan status IN PROGRESS (4/7 sections)
+- Stage: **PLANNING** — plan status IN PROGRESS (4/7 sections; Steps 3/15)
 - Last updated: 2026-10-19
 - **Resume at the FIRST UNCHECKED BOX** (planning item or build step).
 - Rules: planning changes NO game code (plan + process files only); each checked
@@ -16,9 +16,9 @@
 - [x] Affected modules
 - [ ] Steps — the 15 required sections (`notes/task.md` "Required structure"),
       drafted in order; each sub-box is its own checkpoint commit:
-  - [ ] §1 Executive summary (recommended architecture + why)
-  - [ ] §2 Assumptions and open questions
-  - [ ] §3 Current-state findings (verified repo facts)
+  - [x] §1 Executive summary (recommended architecture + why)
+  - [x] §2 Assumptions and open questions
+  - [x] §3 Current-state findings (verified repo facts)
   - [ ] §4 Architecture (module/data-flow diagram, text)
   - [ ] §5 File-by-file change plan
   - [ ] §6 World bootstrap plan
@@ -167,3 +167,247 @@ names, exports and APIs.
   `Milestone/`.
 - **Process files** (each checkpoint): `docs/T1-plan.md`, `notes/task.md`,
   `notes/STATE.md`.
+
+## Steps
+The 15 required sections, in order. Each is drafted as its own checkpoint.
+
+### §1 Executive summary
+**Recommendation: Option B.** Build a new play page under `game/src/play/`
+with its own minimal moon boot. It reuses the core/render modules unchanged
+and extracts nothing from the M1F harness in V1.
+
+Why B over A:
+- **The brief forbids importing the harness.** `Milestone1F_TestHarness.tsx`
+  patches THREE `dispose`/`Scene.remove` prototypes at module scope
+  (lines 77–92) and boots its world as module singletons (lines 98–221).
+  Under Option A, any shared bootstrap has to be cut out of that file, which
+  means editing the 1,777-line acceptance harness.
+- **1F is parked at a ruling gate.** Rounds 1–7 were run with "no harness
+  edit" as a standing condition. Option A's extraction would change the
+  harness's boot order and its module-evaluation timing, which risks the
+  1F gate (R3 0.82% green, R5 the single FAIL) while it is awaiting a
+  ruling.
+- **The duplication is small and bounded.** It covers only the boot
+  constants (moon `TerrainParams`, MU, the KCC moon config), the spawn
+  search, and the quadtree LOD controller, which lives inside the harness
+  (lines 274–434) rather than in `render/`. That is roughly 300–400 lines
+  of world setup, reimplemented as clean functions rather than copied.
+  Physics, terrain, sky and floating origin are all reused, not rewritten.
+- **Consolidation can come later.** Once `play` is stable, a follow-up task
+  (subject to a Lead ruling) can make the harness consume the play-world
+  module.
+
+Headline architecture (detailed in §4):
+- `PlayPage` mounts an R3F `Canvas` with `MultiCameraRig`.
+- Its `onFrame` runs one fixed-order frame:
+  1. input;
+  2. `PlayerController`, which writes the KCC input;
+  3. `kcc.update` and `core.advance` (real time, 1/60 fixed steps);
+  4. render extraction (spin group, floating origin, character root);
+  5. `CharacterAnimator.update(telemetry)`;
+  6. `ThirdPersonCamera`, then `setDriverPose`;
+  7. layer assignment;
+  8. LOD plus `pool.pump`.
+- The character is an articulated `AstronautRig` animated by a
+  `ProceduralAnimator`, behind a `CharacterAnimator` interface. A GLB
+  animator can later implement the same interface.
+- Camera-relative movement needs **no core change**. The controller turns
+  the camera-relative stick into the KCC's own frame (`moveF`/`moveR`), and
+  the KCC's existing `autoTurnEnabled` turns the body toward its velocity.
+- Jump buffering lives in the play layer. Coyote time and air control both
+  need a small, opt-in, default-off KCC addition, which needs a Lead ruling
+  (§2 Q2 and Q3).
+
+### §2 Assumptions and open questions
+**Assumptions** (taken as given unless the Lead overrides them):
+- A1. The world is the M1F moon:
+  - `TerrainParams` {radius 1364.5, seed 20240119, continentFreq 2.3 /
+    continentAmp 95, maskFreq 3.7, mountainFreq 6.5 / mountainAmp 230,
+    detailFreq 22 / detailAmp 16};
+  - `MOON_MU = 1.62·R²` and `maxTerrainHeight` 360;
+  - the sky is frozen (`setTimeScale(0)`).
+- A2. The KCC moon config is reused verbatim from M1F (walk 3.2, sprint 6.5,
+  crouch 1.5, jump 4.2, accelTau 0.15, maxWalkSlope 50°, slide 45°, …).
+  Tuning happens through the play page's own config copy, never through KCC
+  defaults.
+- A3. The play page runs at real time (time scale 1), driven by
+  `kcc.update(dt, 5)` and `core.advance(dt)`. M1F's LIVE autopilot ran at
+  `ts = 6` as a test acceleration; play does not use that.
+- A4. Input is desktop keyboard + mouse with pointer lock. There is no
+  gamepad or touch input.
+- A5. One page per full load, as with the harnesses. Module-level singletons
+  (`initTerrainField`, the `MultiCameraRig` cameras) are therefore safe, but
+  the play world is still created lazily from one `createMoonWorld()` call so
+  that nothing boots on import.
+- A6. The character and nearby terrain render on the NEAR layer of the
+  existing three-pass rig. The Earth and sky use the existing MID/FAR
+  passes.
+- A7. The Earthrise spawn is the default spawn, and §6 evaluates whether its
+  surroundings suit free roam. The `?spawn=x,y,z` override is kept as a
+  debug aid.
+- A8. three 0.165's `GLTFLoader` and `AnimationMixer` stay available for the
+  future GLB swap. No asset ships in V1.
+
+**Open questions** (need a Lead ruling; none block planning, and each has a
+default the plan proceeds with):
+- Q1. **Option B** (separate boot) over Option A? Default: B.
+- Q2. **Coyote time** needs the KCC's help: jump is read only in
+  `_groundedTick`, so a press after walking off a ledge cannot fire. Two
+  options:
+  - (a) an opt-in field `coyoteTime` (default 0) on `AstronautConfig`, where
+    the KCC remembers the last grounded tick and the surface normal it had;
+  - (b) a play-layer velocity kick through `teleportAbs`.
+  Default: (a), as an additive, acceptance-safe change. (b) bypasses the
+  KCC's F18 spin-phase composition.
+- Q3. **Air control**: add an opt-in `airControl` field (default 0)? Default:
+  yes, small (≈0.3 of the grounded response), on the play page only.
+- Q4. **Crouch**: does V1 animate a crouch pose? Default: a simple crouch
+  blend pose (cheap), with no separate crouch-walk cycle.
+- Q5. **Jump-buffer comment**: the F14 comment in `astronautKCC.ts`
+  (lines 478–483) claims "airborne presses buffer to the landing tick", but
+  the code does not do this (see F10). Default: leave the core untouched,
+  implement buffering in the play layer, and record the discrepancy here.
+  The Lead decides whether the comment or the behaviour should be fixed in
+  core.
+- Q6. **Playwright smoke** `e2e/play.spec.ts` (page loads, canvas renders,
+  no console errors, the character moves on a W press)? Default: yes, as an
+  optional final phase.
+- Q7. **Menu**: add only `play` (default), or also list the missing m1e/m1f
+  entries? Default: `play` only.
+
+### §3 Current-state findings
+These were verified against `game/src` at `8f70131` (game code unchanged
+since `0c555b3`). `npm ci`, `npm run typecheck` and `npm run build` all exit
+0. Line numbers are approximate anchors.
+
+**Routing and shell**
+- F1. `main.tsx` has a static `pages` map `m1a`..`m1f` of dynamic imports,
+  selected by `?page=`. With no match it renders the `App` menu. There is no
+  StrictMode, deliberately: the harness singletons break under a double
+  mount.
+- F2. `App.tsx` `PAGES` lists only m1a–m1d (m1e and m1f are reachable by URL
+  only). Links are plain `<a href>`, so every navigation is a full load.
+
+**M1F harness: what is reusable and what is test-only**
+- F3. Section map of `Milestone1F_TestHarness.tsx`:
+
+  | Lines | Section | Test-only items |
+  |---|---|---|
+  | 75 | Dev patches: THREE prototype counters (77–92) | all of it |
+  | 98 | Boot singletons: `MOON` (100), `initTerrainField`, `SimulationCore` + `setTimeScale(0)`, adapter, `TerrainMeshPool`, `SkyImpostorPool`, KCC config (126–135), entity registration | — |
+  | 141 | Earth and Sun directions from the frozen rails | — |
+  | 157–221 | Earthrise spawn search, then `kcc.teleportSurface` | — |
+  | 223 | Walk direction + satellites | test-only |
+  | 274–434 | Quadtree + LOD controller (MAX_LEVEL 4, SPLIT_K 2.0, MERGE_K 1.45, GRACE 45, 3 activations per frame, in-flight cap 24, HORIZON_MARGIN 150) | — |
+  | 435 | Static scene: `sceneRoot` ⊃ `spinGroup` + `skyGroup`, lights, Earth hero mesh (471), probes (515, test-only), glow/stars (569), static astronaut (575) | probes |
+  | 602 | Handoff state machine | test-only |
+  | 650 | Input + TP/FP camera driver (697) | — |
+  | 791 | Layer assignment + sky update (`applyRenderState`, `assignObject*`, `CAT_BODIES`; probe slots 9/10 are test-only) | probe slots |
+  | 936–1384 | Stores, metrics, suite | test-only |
+  | 1385 | Script phases + frame loop | test-only phases |
+  | 1565 | Scene component | — |
+  | 1595 | HUD | acceptance HUD |
+  | 1709 | Root: click calls `requestPointerLock`, then `Canvas` | — |
+
+- F4. The **LOD controller is not a module**. It is harness code: 6 faces ×
+  341 `QNode`s, split/merge with grace frames, driven by the camera position
+  in the planet frame, computed by spin-conjugating `kcc.absPos`. The play
+  page needs its own `MoonLod` (see §6).
+- F5. **Spawn search**: 24,000 `mulberry32(0x7f1a)` samples jittered around
+  the Earthrise base direction, scored as `slope·40 + max height deviation`,
+  stopping early when the score drops below 0.35. It is deterministic.
+- F6. **The harness's manual-mode frame**, in order:
+  1. look input;
+  2. `kcc.update(dt, 5)` and `core.advance(dt)` (skipped while paused);
+  3. `spinGroup` gets position = −origin and quaternion = `spinQuat(kcc.spinPhase)`;
+  4. `adapter.update()`;
+  5. the astronaut gets `localPosF32` and `spin ∘ frameQuat`;
+  6. `computeDriverPose`, `setDriverPose` and `applyRenderState`;
+  7. LOD plus `pool.pump()` (skipped while paused).
+  The camera boom works like this:
+  - start from −fwd, yawed by `cam.yawOffset` about up, then pitched;
+  - clamp against the terrain with 4 samples (0.4 m clearance, minimum
+    distance 1.2 m);
+  - look at the character at up × 1.4.
+  First person uses `kcc.lookYawDelta`. There is no smoothing. One
+  per-frame object literal (`drvLocal`) is allocated.
+- F7. **Pause gaps**: the harness pause (`P`) skips `kcc.update`,
+  `core.advance` and LOD. Nothing resets the KCC or core accumulators on
+  resume. Both cap `dt` at 0.25 s, so the first frame after resuming can run
+  up to 5 catch-up ticks. The play page must zero its frame `dt` on resume.
+
+**AstronautKCC (`core/physics/astronautKCC.ts`)**
+- F8. `update(dtReal, maxSubsteps = 5)` keeps its **own** 1/60 accumulator,
+  separate from `SimulationCore.advance`'s accumulator (`FIXED_DT` 1/60,
+  `MAX_SUBSTEPS` 5, `MAX_ADVANCE_DT` 0.25). Both are driven with the same
+  `dt`, as in the harness. Physics is frame-rate independent. `update`
+  applies `lookYawDelta` once per frame and writes position and velocity
+  through to the registered entity (`attachWriteThrough`).
+- F9. **Grounded movement** (around line 548):
+  - speed is crouch, sprint or walk;
+  - `vDes = (fwd·moveF + right·moveR)·speed`, normalised to ≤ 1;
+  - the velocity responds with an exact exponential (`accelTau`);
+  - `turnRate` rotates `fwd`;
+  - `autoTurnEnabled` (default true) rotates `fwd` toward the control
+    velocity at a rate capped by `autoTurnRate` (6 rad/s), reported as
+    `telemetry.turnApplied`.
+
+  So camera-relative movement maps onto the existing inputs with no core
+  change: project the camera-relative direction onto the KCC frame
+  (fwd/right) as `moveF`/`moveR`, and let auto-turn face the body.
+- F10. **No jump buffer** (DISCREPANCY with the brief and with the F14
+  comment):
+  - jump is read only in `_groundedTick` (line 590, `jump && !crouch`,
+    along the surface normal; the launch tick continues inertially at 608);
+  - `input.jump` is cleared after **every** `integrateTick` (line 483),
+    airborne ticks included;
+  - so an airborne press is discarded after one flight tick, unless the
+    landing happens in that same tick.
+  A press made on a frame where `update` ran 0 substeps carries over to the
+  next frame.
+- F11. **No coyote time**: there is no grace window, and nothing in
+  `_flightTick` reads jump.
+- F12. **No air control**: `_flightTick` (line 807) reads only the RCS axes
+  and the ZERO-G `turnRate`. Surface-airborne flight is purely inertial.
+- F13. **Signals for the animation state machine**:
+  - telemetry: `grounded`, `relSpeed`, `slideSpeed` (line 1076), `slopeDeg`,
+    `altAGL`, `crouched`, `eyeHeight`, `mode`, `turnApplied`;
+  - vertical velocity, derived as the dot product of `absVel` minus the
+    transport velocity with `up`;
+  - landing events, from the change in `integrity.landings` (`_landAt`,
+    line 970; increment at 1019), with impact speed from
+    `integrity.lastLandingRelSpeed`.
+  There is no landing callback; polling the counter is enough.
+- F14. KCC module scratch is non-reentrant (one active controller per tick).
+  That is fine for a single player.
+
+**Render modules**
+- F15. `MultiCameraRig`:
+  - the near, mid and far cameras are module singletons;
+  - the component's `useFrame` (priority 1) calls `onFrame(delta, gl, scene)`
+    and then `executePasses`, and it sets `gl.autoClear = false`;
+  - layers are NEAR/MID/FAR bits split at 2400 m and 300 km;
+  - `setDriverPose` and `layerMaskFor` are exported.
+  It is reusable unchanged.
+- F16. The other render modules:
+  - `FloatingOriginAdapter`: `bind`, `unbind`, `update`, `copyOriginInto`;
+  - `TerrainMeshPool`: `attach`, `primeAll`, `unprimeAll`, `release`,
+    `pump`, `disposeAll`; it creates its workers in the constructor
+    (line 163);
+  - `SkyImpostorPool(starCount, starRadius)`: `mesh`, `bodies`, `stars`,
+    `material`.
+- F17. `store/useGameStore.ts` is test-oriented (`TestId`, `TestResult`).
+  Its `createTelemetryPublisher(minIntervalMs)` is reusable for throttled
+  HUD updates.
+
+**Brief vs code**
+- F18. The brief's line anchors match the code to within a few lines:
+  - astronaut at 575 (the brief says ~577);
+  - input/camera at 650–790;
+  - frame loop at 1385;
+  - HUD at 1595.
+- F19. `GLTFLoader` exists at
+  `node_modules/three/examples/jsm/loaders/GLTFLoader.js` only after
+  `npm ci` (node_modules is gitignored).
+- F20. The "use the KCC's jump buffering" premise does not hold (F10).
+  Coyote time needs a core hook (F11, §2 Q2).
