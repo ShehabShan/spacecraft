@@ -1209,3 +1209,176 @@ PER THE ADDENDUM'S OWN TABLE. TRACK A: BLOCKED — base round-6 directive
 not on record in this session.** Harness carries only the verdict-neutral
 R3DUMP emission (21408a3); the suite state is otherwise exactly round-5's
 (samples:8; gate [P,P,F,P,F]; R3 17.78%). 1G not started.
+
+---
+
+# 14. ROUND 6b — F1 APPLIED (threshold 45 → 8): R3 silhouette PASSES at 0.82% with full validation; V1–V7 complete; F2–F4 not needed; R5 intentionally excluded (2026-10-19)
+
+Directive: R3 only (Track A/R5 explicitly excluded — spawn/walk/SAT/straddler
+code untouched). Build on 9d60c3c. Commits: 20156a0 (F1 threshold + dump
+values), 8aa94d1 (validation tooling), plus this report's ledger commit.
+**R3 badge: PASS (sym 0.82% of the 122-px disk, identical across three solo
+gate runs). Finalize criteria ALL hold.**
+
+## 14.0 F1 — the edit (commit 20156a0)
+
+`Milestone1F_TestHarness.tsx` lines 1211-1212: `meshOnly[i] > 45 ? 1 : 0`
+→ `> 8`, `impOnly[i] > 45 ? 1 : 0` → `> 8`. Nothing else: <3% criterion,
+±80 px window, 232 km fixture, masks, poses, samples:8, hysteresis
+clauses, R1/R2/R4/R5 untouched. R3DUMP per-pixel line extended with the
+pixel's raw byte values (`mv=`/`iv=`); probe parser updated. TSC_EXIT=0,
+BUILD_EXIT=0 (unpiped).
+
+## 14.1 V1 — threshold curve @232 km (from the R3RAW window dump, offline)
+
+```
+  t   sym  totA   nA   nB  M-only I-only  symPct
+  2     1   122  122  123      0       1  0.82
+  4     1   122  122  123      0       1  0.82
+  8     1   122  122  123      0       1  0.82
+ 12     1   122  122  123      0       1  0.82
+ 16     6   117  117  123      0       6  5.13
+ 24     7   116  116  123      0       7  6.03
+ 32    12   109  109  121      0      12  11.01
+ 45    16    90   90  106      0      16  17.78
+```
+- A stable plateau t ∈ [2, 12] at sym=1 (0.82%); degradation begins at
+  t=16 and reproduces the round-6 signature exactly at t=45 (16 px,
+  17.78%, all I-only — matching the round-6 dump 1:1).
+- The curve JUSTIFIES t=8 by data: 8 is the largest integer below the
+  mesh's own dim-limb shading band (9..45 — see V2), i.e. the deepest
+  threshold with headroom above the 0-value background. F2 (re-choosing
+  from the curve) is unnecessary — the Lead's chosen 8 IS the curve's
+  optimum; not cherry-picked.
+
+## 14.2 V2 — rim histograms (annulus |r − 6.23| ≤ 2 px, r_disk = √(nA@t8/π))
+
+```
+annulus px=156 · mesh: min=0 med=0 max=137 · <=8: 134 · 9..45: 12 · >45: 10
+              · imp : min=0 med=0 max=225 · <=8: 133 · 9..45: 0  · >45: 23
+bin(range)     mesh  impostor
+  0- 15       139      133   <— t=8
+ 16- 31         4        0
+ 32- 47         4        0   <— t=45
+ 48- 63         0       10
+ 64- 79         4        0
+ 80- 95         1        0
+ 96-111         1        0
+112-127         1        4
+128-143         2        0
+160-175         0        6
+224-239         0        3
+```
+Documentary mechanism evidence: the MESH has a soft dim-limb shading tail
+(12 annulus px in 9..45 — interpolated per-vertex normals), the IMPOSTOR
+has none (0 px in 9..45 — its analytic disk steps from ~full brightness
+to background). The old t=45 sat INSIDE the mesh's tail: 16 px of the
+mesh's own dim limb fell below 45 while the impostor's clean edge stayed
+lit → the one-sided +16 px excess. At t=8 both masks' lit sets match to
+1 px. (The 10 mesh px >45 vs 23 impostor px >45 in the annulus are the
+rim positions where each representation's edge sits; at t=8 the
+difference collapses to a single pixel.)
+
+## 14.3 V3 — distance sweep (threshold 8, whole fade band; criterion stays at 232)
+
+```
+R3SWEEP d=225 t=8 sym=5 totA=125 nA=125 nB=128 symPct=4.00
+R3SWEEP d=228 t=8 sym=0 totA=120 nA=120 nB=120 symPct=0.00
+R3SWEEP d=230 t=8 sym=0 totA=120 nA=120 nB=120 symPct=0.00
+R3SWEEP d=232 t=8 sym=1 totA=122 nA=122 nB=123 symPct=0.82
+R3SWEEP d=235 t=8 sym=4 totA=118 nA=118 nB=122 symPct=3.39
+R3SWEEP d=236 t=8 sym=3 totA=117 nA=117 nB=120 symPct=2.56
+```
+Stable across the band (0–4%), an order of magnitude below the 17.78%
+the old threshold produced; the criterion point itself (232) has 3.7×
+margin. Reported exactly as observed — the band-edge values (4.00% at
+225, 3.39% at 235) are sub-pixel phase at the smallest disk radii and
+are NOT criterion points.
+
+## 14.4 V4 — negative control (falsification; REQUIRED and PASSED)
+
+A diag-only bias (TEMP patch, reverted, absent from dist — grep=0 over
+the built bundle) rotated the impostor's observer-relative direction by
+b·(1/599.14 rad) ≈ b px at 232 km:
+
+```
+R3BIAS px=1 t=8 sym=21 totA=122 nA=122 nB=123 symPct=17.21
+R3BIAS px=2 t=8 sym=35 totA=122 nA=122 nB=129 symPct=28.69
+```
+The modified check FAILS loudly at both the 1-px and 2-px biases
+(17.21% / 28.69% ≥ 3%) — the meter demonstrably still detects genuine
+misalignment; it is not blind at t=8.
+
+## 14.5 V5 — repeatability (3 solo gate runs at the final committed state)
+
+| run | badges | R3 sym | R1 determinism | wall |
+|---|---|---|---|---|
+| 1 | [P,P,P,P,F] | 0.82% of 122 | 0 differing bytes | 2.4m |
+| 2 | [P,P,P,P,F] | 0.82% of 122 | 0 differing bytes | 2.2m |
+| 3 | [P,P,P,P,F] | 0.82% of 122 | 0 differing bytes | 2.2m |
+
+sym% identical across runs; wall time well inside the 240 s budget.
+
+## 14.6 V6 — stray-pixel audit @t=8 (r > r_disk + 2 = 8.23 px)
+
+43 lit pixels outside the disk, **ALL 43 SYMMETRIC** (byte-identical in
+both masks — background stars/glow rendered identically in the A and B
+passes), 0 asymmetric → zero contribution to sym. They DO inflate totA
+(the denominator counts mesh-lit pixels including these): totA 122 ≈
+disk (~79) + strays (43) — a conservative dilution that only lowers
+sym% (disk-only sym would be 1/79 = 1.27%, still <3%). Semantics of
+totA unchanged from canon; noted for the record.
+
+## 14.7 V7 — solo gate + full regression (verbatim)
+
+Solo gate (final state; also V5 run 1):
+```
+[m1f gate] acceptance line: [Milestone1F] acceptance FAILED
+[m1f gate] badges: ["PASS","PASS","PASS","PASS","FAIL"]
+  PLAYWRIGHT_EXIT=1   (R5 FAIL is the expected, excluded state)
+```
+Full regression (pinned config):
+```
+[m1a] PASSED — ["PASS","PASS","PASS","PASS","PASS"]
+[m1b] PASSED in 24.6 ms — ["PASS","PASS","PASS","PASS","PASS"]
+[m1c] PASSED — geo=145 — ["PASS","PASS","PASS","PASS"]
+[m1d] FAILED — v@1000m=264.7 maxDv=10.30 rebases=8 recv=46 geo=151 burnHeap=0B — ["PASS","FAIL","PASS","PASS","PASS"]   (row-2 env-soft per E-1; numbers match the approved gate)
+[m1e] PASSED — ["PASS","PASS","PASS","PASS","PASS","PASS"]
+[m1f] FAILED — ["PASS","PASS","PASS","PASS","FAIL"]   (R3 PASS via F1; R5 excluded per the directive)
+  2 failed
+  4 passed (4.2m)
+PLAYWRIGHT_EXIT=1
+```
+
+## 14.8 Decision log + worklog (every failed method/experiment)
+
+1. **F1 chosen and finalised.** F2 unnecessary (V1: t=8 is the curve's
+   optimum — largest threshold below the mesh's 9..45 shading band).
+   F3/F4 unnecessary (0.82% with margin; no stacking needed).
+2. **FAILED METHOD (caught before reporting):** the first R3RAW parser
+   used `l[7]` for the M/I label — off by one (label at col 6) — which
+   silently parsed every mesh row into the impostor buffer (V1 showed
+   totA=0/100% nonsense). Fixed to `l[6]`, and the analysis re-run
+   OFFLINE from the captured raw log (--analyze mode added to the probe)
+   — no re-render needed, numbers above are from the same capture.
+3. **TOOLING FRICTION (no data impact):** a `pkill -f "vite preview"`
+   matched its own shell's command line and killed the compound command
+   (empty output with EXIT=0); switched to the `[v]ite` bracket pattern.
+   A 10-minute tool timeout killed the first V5 loop after run 1; runs
+   2–3 were executed as individual commands. All three runs completed
+   and are reported above.
+4. **V4 control code hygiene:** the bias hook + sweep IIFE lived in the
+   harness ONLY for the capture run (git checkout revert + rebuild +
+   grep=0 verification over dist before any commit). The committed
+   harness carries ONLY the F1 threshold + the verdict-neutral R3DUMP
+   values.
+
+## Status
+
+**R3 SILHOUETTE: PASS (0.82%, margin 3.7×) — F1 APPLIED AND FULLY
+VALIDATED (V1–V7). R5 FAILS AS EXPECTED (Track A excluded by the
+directive). GATE LINE STILL READS FAILED — per the directive, that is
+not a reason to continue.** Finalize criteria: sym 0.82% ≤ 1.5% ✓ · V4
+control fails at 1 px and 2 px ✓ · V5 identical across 3 runs ✓ · V7
+rows unchanged elsewhere ✓. NEXT: the R5 spawn geometry still awaits its
+ruling (Track A). 1G not started.

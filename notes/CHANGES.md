@@ -994,3 +994,49 @@ Observations (NO change made — recorded for the Lead):
     signature; ANCHOR → 21408a3. · Lead addendum (applies whether or not
     round-6 work has started) + §10.2. · Evidence: STATE.md. · Source:
     Lead round-6 addendum + §10 protocol.
+
+68. 2026-10-19 · 1F/round-6b-F1 · game/src/test/Milestone1F_TestHarness.tsx ·
+    F1 APPLIED (Lead-chosen primary fix): R3 silhouette classification
+    threshold 45 → 8 on both masks (meshOnly[i] > 8 / impOnly[i] > 8) —
+    the >45 cutoff sat inside the mesh's own dim-limb shading band
+    (9..45) while the impostor's analytic edge steps cleanly to
+    background, producing the one-sided 16-px rim excess; nothing else
+    changed (<3% criterion, ±80 px window, 232 km fixture, masks, poses,
+    samples:8, hysteresis clauses, R1/R2/R4/R5 untouched). R3DUMP
+    per-pixel line extended with the pixel's raw byte values mv=/iv=
+    (verdict-neutral, diag-only) + probe parser updated. TSC_EXIT=0
+    BUILD_EXIT=0 unpiped. Evidence: R3 sym 17.78% → 0.82% of the 122-px
+    disk; R3 badge PASS in three solo gate runs; V1 curve, V2 histograms,
+    V3 sweep, V4 control, V5 repeatability, V6 stray audit, V7 gate +
+    regression in M1F.md §14. · Lead round-6b directive §2. · Evidence:
+    M1F.md §14.1–14.7. · Source: Lead round-6b directive item 2 (F1).
+
+69. 2026-10-19 · 1F/tools · game/tools/diag-m1f-r3val.mjs (created) ·
+    Validation tooling for the directive's extensive-testing mandate:
+    captures a full m1f suite run's R3RAW (per-window byte dump for V1/
+    V2/V6) + R3SWEEP (V3 fade-band sweep) + R3BIAS (V4 negative control)
+    lines to /tmp/r3val-raw.log and classifies offline (--analyze mode);
+    V3/V4 emitters lived in a TEMP harness patch for the capture run
+    ONLY (bias hook at the probe-A sky.setBody feed rotating the
+    observer-relative direction by b/599.14 rad; sweep over the 6 fade-
+    band distances) — REVERTED before commit, absent from dist
+    (grep=0). Results: V1 plateau t∈[2,12] at sym=1 (0.82%), degradation
+    from t=16, t=45 reproduces round-6's 17.78% 1:1; V2 — mesh has a
+    12-px dim-limb tail in 9..45, impostor 0 (mechanism documentary);
+    V3 — 0.00–4.00% across the whole fade band; V4 — 1 px bias →
+    17.21%, 2 px → 28.69% (meter NOT blind); V6 — 43 strays ALL
+    symmetric (zero sym contribution, conservative totA dilution).
+    Worklog of failed methods (parser off-by-one caught pre-report;
+    pkill self-match; tool timeout) in M1F.md §14.8. · Read-only diag
+    tooling, user-pre-authorized 2026-10-15 + this directive's §3/§5. ·
+    Evidence: M1F.md §14.1–14.6, §14.8. · Source: Lead round-6b
+    directive §3 (V1–V6) + §5 (method discipline).
+
+70. 2026-10-19 · 1F/bookkeeping · notes/STATE.md · B-5 APPLIED: 1F ledger
+    row → round 6b (R3 GREEN via F1, fully validated; R5 excluded/
+    awaiting Track A ruling); IN-FLIGHT rewritten; Approval Ledger rows
+    — round-6b directive RECORDED + execution row; SESSION LOG row 12 +
+    handoff; NEXT ACTION = Lead ruling on Track A (R5 spawn geometry;
+    round-6 base directive text still not on record); ANCHOR → 20156a0.
+    · Lead round-6b directive §6. · Evidence: STATE.md. · Source: Lead
+    round-6b directive item 6 + §10.2.
