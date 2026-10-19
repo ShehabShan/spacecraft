@@ -1,13 +1,9 @@
 # SOLARIS — STATE — PHASE 2: TASK DEVELOPMENT (contract: AGENT_BRIEF.md; phase-1 history preserved below)
 
 ## NEXT ACTION
-**T1 plan** — author `docs/T1-plan.md` for the T1 "playable moon" task (defined
-in `notes/task.md`), INCREMENTALLY per the schema there: the first
-checkpoint-commit creates the file with the empty PLANNING CHECKLIST, then
-sections are drafted and checked off one by one (each commit carries its
-checkbox + tracker row + this NEXT ACTION update). On completion set the T1
-tracker row's plan status to READY and STOP at the LEAD GATE — building starts
-only on the Lead's execute order.
+**T1 plan** — resume at PLANNING CHECKLIST item 1 (Goal) in `docs/T1-plan.md`
+(0/7 sections done). Draft one or a few sections per checkpoint-commit
+(each commit carries checkbox + tracker row + this NEXT ACTION update).
 
 Phase-1 legacy (parked — carries forward unchanged): M1F round-7 ruling still
 PENDING (option menu `notes/reports/M1F.md` §15.7; recommendation (a): rebase
