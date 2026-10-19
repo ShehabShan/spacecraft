@@ -8,7 +8,7 @@ starting point.
 ## TRACKER
 | Task | Branch | Plan status | Build status | Step progress | Last commit | Blockers |
 |------|--------|-------------|--------------|---------------|-------------|----------|
-| T1 playable moon | `t1-playable-moon` | IN PROGRESS (0/7 sections) — `docs/T1-plan.md` created | NOT STARTED | plan 0/7 · next: Goal | 0c555b3 | none |
+| T1 playable moon | `t1-playable-moon` | IN PROGRESS (4/7 sections) — `docs/T1-plan.md` | NOT STARTED | plan 4/7 · next: Steps §1 Executive summary | e787bcf | none |
 
 Note: "Last commit" = the commit BEFORE the newest checkpoint (a file cannot
 contain its own hash); current HEAD: `git log -1`.
