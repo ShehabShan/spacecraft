@@ -37,7 +37,9 @@ const px = dump
     const dy = Number(l.match(/dy=(-?[\d.]+)/)[1])
     const r = Number(l.match(/r=([\d.]+)/)[1])
     const side = l.match(/side=([MI])/)[1]
-    return { dx, dy, r, side }
+    const mv = Number(l.match(/mv=(\d+)/)?.[1] ?? NaN)
+    const iv = Number(l.match(/iv=(\d+)/)?.[1] ?? NaN)
+    return { dx, dy, r, side, mv, iv }
   })
 
 if (px.length === 0) {

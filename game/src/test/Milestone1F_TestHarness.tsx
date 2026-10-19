@@ -1208,16 +1208,17 @@ function runSuite(gl: THREE.WebGLRenderer, scene: THREE.Scene): void {
       const sx = Math.floor(_proj.px) - win + x, sy = Math.floor(_proj.py) - win + y;
       if (sx < 0 || sy < 0 || sx >= AB_W || sy >= AB_H) continue;
       const i = (sy * AB_W + sx) * 4;
-      const a = meshOnly[i] > 45 ? 1 : 0;
-      const b = impOnly[i] > 45 ? 1 : 0;
+      const a = meshOnly[i] > 8 ? 1 : 0;
+      const b = impOnly[i] > 8 ? 1 : 0;
       inA[y * 2 * win + x] = a; inB[y * 2 * win + x] = b;
       totA += a;
       if (a !== b) {
         sym++;
         // Round-6 addendum (Lead): per-differing-pixel dump from WITHIN the
         // classification loop — no new renders, emitted before the restore.
+        // Round-6b (Lead): the line also carries this pixel's raw byte values.
         const dx = sx - _proj.px, dy = sy - _proj.py;
-        console.log(`R3DUMP px dx=${dx.toFixed(2)} dy=${dy.toFixed(2)} r=${Math.hypot(dx, dy).toFixed(2)} side=${a === 1 ? 'M' : 'I'}`);
+        console.log(`R3DUMP px dx=${dx.toFixed(2)} dy=${dy.toFixed(2)} r=${Math.hypot(dx, dy).toFixed(2)} side=${a === 1 ? 'M' : 'I'} mv=${meshOnly[i]} iv=${impOnly[i]}`);
       }
     }
     // disk radii measured from the A/B masks (area-derived + max-lit radius)
