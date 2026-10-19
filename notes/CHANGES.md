@@ -1040,3 +1040,38 @@ Observations (NO change made — recorded for the Lead):
     round-6 base directive text still not on record); ANCHOR → 20156a0.
     · Lead round-6b directive §6. · Evidence: STATE.md. · Source: Lead
     round-6b directive item 6 + §10.2.
+
+71. 2026-10-19 · 1F/tools · game/tools/diag-m1f-r7.mjs (created),
+    notes/reports/evidence/M1F-r7-walks.json (created) · Round-7 Track A
+    Node instrument per the Lead directive: staged walk-outcome site
+    search (A screen 2,425 sites over the 0.62 rad cap + old-stream
+    top-up; B/C ranked-pool + 0.5° refinement walks; D calibration
+    ladder; E/F falsification + selector cost; T per-10 s trace; W
+    fresh-process single walk; X extended-wall; GATE merge + verdict).
+    Walk replica = verbatim harness driver (teleportSurface, 3.5 s
+    warmup, LIVE 120 wall s ts=6/5 substeps sprint-to-SAT_B autopilot).
+    INSTRUMENT FINDINGS: (1) back-to-back teleports in one process
+    contaminate walks (fixed: one walk per fresh process; calibrated —
+    fresh base walk reproduces the core diag exactly: locals 656.3,
+    dist 996.5, net 788.2, LOS −10.6 m @ f0.025, Sun 29.9A/−2.9A);
+    (2) avgV is commanded speed, not progress. RESULT: 0 of 429 unique
+    admissible-site walks reaches ≥2 crossings within the frozen LIVE
+    (29 reach exactly 1; 7 otherwise fully admissible); extended-wall
+    probes put the 2nd crossing at ~300–326 s on 5 sites, all of which
+    then fail the Sun-at-suite-pose audit (−37.5°..−41°C after 1,800
+    sim s); falsification cases (old spawn, base) FAIL as required;
+    corridor slope does not predict walk outcome (no sufficient screen —
+    §2(c)(ii) inadmissible; (i) boot-prohibitive; (iii) moot). GATE: NO
+    WINNER → STOP per §2(b)/§3, NO harness edit. Options quantified in
+    M1F.md §15.7 (recommendation: rebases ≥ 2 → ≥ 1, a gate-term ruling).
+    · Read-only diag tooling + evidence file. · Evidence: M1F.md §15.1–
+    §15.7. · Source: Lead round-7 directive (Track A re-issue) §2–§3.
+
+72. 2026-10-19 · 1F/bookkeeping · notes/STATE.md · B-6 APPLIED: 1F ledger
+    row → round 7 (Track A Node gate FAIL 0/429, STOP, options routed);
+    IN-FLIGHT rewritten; Approval Ledger rows — round-7 directive
+    RECORDED (base Track A text satisfied by the re-issue) + execution
+    row; SESSION LOG row 13 + handoff; NEXT ACTION = Lead ruling on the
+    R5 option menu (recommendation (a): rebases ≥ 1 with 7 admissible
+    sites); ANCHOR → the ledger commit. · Lead round-7 directive §6 +
+    §10.2. · Evidence: STATE.md. · Source: Lead round-7 directive §6.

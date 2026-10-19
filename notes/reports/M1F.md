@@ -1382,3 +1382,141 @@ not a reason to continue.** Finalize criteria: sym 0.82% ≤ 1.5% ✓ · V4
 control fails at 1 px and 2 px ✓ · V5 identical across 3 runs ✓ · V7
 rows unchanged elsewhere ✓. NEXT: the R5 spawn geometry still awaits its
 ruling (Track A). 1G not started.
+
+---
+
+# 15. ROUND 7 — Track A (R5 spawn geometry, walk-outcome site search): NODE GATE FAILS — 0 of 429 admissible sites reaches ≥2 crossings within the frozen LIVE; STOP per the directive; option menu quantified (2026-10-19)
+
+The round-7 directive (this text IS the base Track A directive) was
+executed through its Node phase. The ≤40° corridor predicate was retired
+as ruled and replaced by the WALK-OUTCOME instrument; the entire
+authorized domain was searched exhaustively; **no site passes, so no
+harness edit was made** — R5's row stands exactly as at the round-6b
+stop. Commits: the diag tool + evidence + this report (ledger commit).
+Tool: game/tools/diag-m1f-r7.mjs (stages A/B/C/D/E/F/T/W/X/GATE; walks
+stored per-shard, merged at GATE). Full walk evidence persisted:
+notes/reports/evidence/M1F-r7-walks.json (429 records).
+
+## 15.1 Instrument + calibration (before any result was trusted)
+
+- The walk replica is the verbatim harness driver (teleportSurface →
+  3.5 s warmup at moveF 0.3/turn 0.4 → LIVE 120 wall s at ts=6, 5
+  substeps, sprint toward SAT_B with the exact autopilot gains;
+  crossings = rebaseCount deltas during LIVE; locals = max |abs−O|
+  component per frame; stall = wall seconds with |v| < 0.5).
+- **CONTAMINATION FOUND AND FIXED:** walking several sites back-to-back
+  in ONE process carries entity state across teleports (stage-B numbers
+  disagreed with the core diag; net > path rows were impossible). Fix:
+  ONE walk per fresh Node process (stage W). CALIBRATED: the fresh-process
+  base-fallback walk reproduces the round-4/5 core-diag numbers EXACTLY —
+  locals 656.3, dist 996.5, net 788.2, crossings 0, LOS FAIL −10.6 m at
+  f=0.025, corridor 65.7°@150°, Sun 29.9°A/−2.9°A. All results below are
+  fresh-process numbers.
+- Second instrument lesson: avgV (the write-through velocity) is the
+  KCC's COMMANDED speed, not progress — real progress is the per-frame
+  |ΔabsPos| sum (dist). Sites with avgV 6.3 sometimes grind 950 m while
+  others genuinely walk 4,000 m.
+
+## 15.2 The search (directive §3, executed in full)
+
+- Screen: 2,425 sites (2,393-site lattice over the full 0.62 rad cap at
+  ~4.4 px resolution + 32 top candidates of the old 24,000 stream) →
+  1,275 in the 5°..25° Earthrise band (1,003 in 8°..22°), 419 in-band
+  with straddle-ray LOS clear (SAT_R = 26). Best corridor slope in-band:
+  47.8° (at 23.23° from base, Earth 10.72°) — consistent with F30x's
+  surveys.
+- Walks: ALL 419 admissible sites walked (8-way parallel fresh-process
+  sweep) + the 24 slope-ranked pool + 12 dense 0.5° refinements around
+  the best walkers + the two falsification cases = **429 unique clean
+  walks** (evidence file).
+- **RESULT: 0 sites reach ≥2 crossings within LIVE_SECONDS=120.**
+  29 sites reach exactly 1; 409 reach none. Of the 29, **7 satisfy every
+  OTHER acceptance precondition** (LOS > 0, Sun ACTIVE both audit poses,
+  locals ≤ 1,024, net > 0, Earth in band) — e.g. #2234 (Earth 16.74°,
+  corridor 64°@?, LOS 4.8 m, Sun 20.2A/14.6A), #2325 (14.42°, 62.1°,
+  LOS 23.0 m, Sun 21.7A/25.5A), #2368 (16.68°, 65.2°, LOS 15.3 m, Sun
+  19.5A/27.6A). The corridor-slope rank predicted nothing (the best
+  walkers sit at 58–72° corridors; the flattest 47.8° corridor walks
+  1,069 m and never crosses).
+
+## 15.3 Why the acceptance is unmeetable (mechanism)
+
+A 2nd crossing needs ~900 m of NEW component drift after the 1st rebase
+(locals reset to ≤128 post-rebase), i.e. ~1,950 m of directed axial
+progress within 600 sim s. The verbatim autopilot (steer toward SAT_B,
+turnRate clamp ±2, sprint) yields either (a) climb-limited progress at
+~1.6-3.7 m/s on steep corridors (too slow), or (b) fast contour walking
+that ORBITS the target — the #582 trace shows sustained 6.5-7 m/s while
+distToSATB plateaus at ~1,650 m (the steering saturates against walls).
+Directedness caps net progress below the 2-crossing line everywhere in
+the domain.
+
+## 15.4 Extended-wall probe (the LIVE_SECONDS option, quantified)
+
+8 best walkers continued to 360 wall s (R7_WALL=360, stage X):
+```
+EXT #1225 wall=360s crossings=2 at [32.9, 325.9] s
+EXT #1133 wall=360s crossings=2 at [36.9, 326.5] s
+EXT #1224 wall=360s crossings=2 at [37.5, 326.3] s
+EXT #988  wall=360s crossings=2 at [38.1, 316.4] s
+EXT #680  wall=360s crossings=2 at [52.4, 300.5] s
+EXT #2281 wall=360s crossings=1 at [66.7] s
+EXT #1958 wall=360s crossings=1 at [75.3] s
+EXT #433  wall=360s crossings=1 at [95.2] s
+```
+The 2nd crossing always lands at ~300–326 s. BUT all five 2-crossing
+sites then fail the Sun audit at the suite pose (Sun elev −37.5°..−41°C —
+CULLED — after 1,800 sim s the Sun has orbited below the horizon at the
+walk's end pose), which R2 depends on. LIVE_SECONDS → 360 is therefore
+doubly blocked (Playwright budget AND R2's Sun-activity precondition).
+
+## 15.5 Falsification (required; both cases FAIL as required)
+
+- OLD spawn (0.32059, −0.03683, 0.94650): 0 crossings, LOS FAIL −5.7 m
+  at f=0.199 → WALK-FAIL ✓
+- BASE fallback (0.42311, 0.00000, 0.90608): 0 crossings, LOS FAIL
+  −10.6 m at f=0.025 → WALK-FAIL ✓ (and its full numbers match the
+  round-4/5 core diag to the digit — instrument validated)
+- The calibration-ladder/steepened case is MOOT: with zero passers there
+  is no screen bound to calibrate and no selector (ii) to validate.
+
+## 15.6 NODE GATE (formal)
+
+```
+GATE: merged 9 store file(s), 429 unique walks
+GATE: 0 WALK-PASS candidates of 429 walked
+GATE: NO WINNER — STOP per the directive
+```
+Selector feasibility (§2(c)): (i) replica-guided selection is boot-cost
+prohibitive regardless (one walk ≈ 15–20 s ≫ 2,000 ms); (ii) no
+sufficient screen exists — corridor slope demonstrably does not predict
+walk outcome (15.2); (iii) a fixed constant is pointless with no site
+passing. Per §2(b) and §3: **STOP, no harness edit, report options.**
+
+## 15.7 OPTIONS FOR THE LEAD (all require a new ruling; none applied)
+
+(a) **Relax `rebases >= 2` → `>= 1`** (a gate term; §1 froze the numbers
+— needs this ruling). Smallest change; 7 fully-admissible 1-crossing
+sites exist (§15.2), e.g. #2325 (Earth 14.42°, LOS 23.0 m, Sun 21.7A/
+25.5A, locals ≤ 1,024, net > 0). R5's row then passes with every other
+term and all frozen numbers intact; R5's detail text ("N origin shifts…")
+remains truthful at N=1.
+(b) **LIVE_SECONDS → 360+** (gate infrastructure): NOT RECOMMENDED —
+doubly blocked (§15.4): the Playwright budget must roughly double AND
+the Sun culls at the suite pose on every candidate (R2 would fail).
+(c) **Widen the search domain beyond the 0.62 rad cap** (out of scope
+this round by the directive; the 110.3°/49.7° site remains uncharacterized
+as a walker).
+(d) **SAT_B retarget / straddle-distance reduction** (changes the R5 A/B
+geometry at 2,400 m — the byte-zero demand's site).
+(e) **A different 1F terrain field/scenario** (largest change; invalidates
+prior 1F evidence).
+
+## Status
+
+**TRACK A NODE GATE: FAIL — 0/429 (STOP per the directive; NO harness
+edit; R5 unchanged from the round-6b state: 1F badges
+[P,P,P,P,F], R3 0.82% green).** The walk-outcome instrument is calibrated
+(base walk = core-diag numbers to the digit) and falsified-positive (both
+required cases fail). The option menu is quantified above; recommendation
+(a) is the minimal ruled change that can make R5 pass. 1G not started.
