@@ -2,7 +2,7 @@
 
 - Task: **T1** (playable moon) — definition: `notes/task.md` § "T1 — PLAYABLE MOON"
 - Branch: `t1-playable-moon`
-- Stage: **PLANNING** — plan status IN PROGRESS (4/7 sections; Steps 5/15)
+- Stage: **PLANNING** — plan status IN PROGRESS (4/7 sections; Steps 6/15)
 - Last updated: 2026-10-19
 - **Resume at the FIRST UNCHECKED BOX** (planning item or build step).
 - Rules: planning changes NO game code (plan + process files only); each checked
@@ -21,7 +21,7 @@
   - [x] §3 Current-state findings (verified repo facts)
   - [x] §4 Architecture (module/data-flow diagram, text)
   - [x] §5 File-by-file change plan
-  - [ ] §6 World bootstrap plan
+  - [x] §6 World bootstrap plan
   - [ ] §7 Character rig specification
   - [ ] §8 Animation state machine (table)
   - [ ] §9 Controller + camera plan
@@ -274,6 +274,10 @@ default the plan proceeds with):
   optional final phase.
 - Q7. **Menu**: add only `play` (default), or also list the missing m1e/m1f
   entries? Default: `play` only.
+- Q8. **Moon spin in play**: keep the harness `spinOmega` 0.0005 rad/s
+  (3.49 h day; the spawn reaches sunset 21 min after load and stays dark
+  for ~105 min), or set it to 0 so the Earthrise light holds? Default: keep
+  (A2, KCC config verbatim). Evidence in §6.1.
 
 ### §3 Current-state findings
 These were verified against `game/src` at `8f70131` (game code unchanged
@@ -876,3 +880,89 @@ additive, acceptance-safe):
 **5.4 Process files** (every checkpoint): `docs/T1-plan.md`, `notes/task.md`,
 `notes/STATE.md`, plus a `notes/CHANGES.md` entry for every code change in
 the build stage.
+### §6 World bootstrap plan
+This section settles where the player spawns, which harness code the play world ports (and which it drops), and the exact boot and teardown order of `createMoonWorld()`. Harness line numbers refer to `game/src/test/Milestone1F_TestHarness.tsx` (1777 lines, last changed in `3057899`). Every ported block is a by-value copy. The harness file itself is never edited or imported (§4.1).
+
+**6.1 Spawn evaluation (A7)**
+
+Evidence comes from a read-only Node probe. It ran the shipped `findSpawn` verbatim against the real `terrainField` and `SimulationCore` rails, using the M1F moon params. The probe was a scratch run and is not committed. A committed equivalent arrives as a §13 build test.
+
+| Measure | Result |
+|---|---|
+| Spawn direction (planet frame) | (0.320588, −0.036825, 0.946503) — deterministic, mulberry32(0x7f1a) |
+| Search | score 16.505; never reaches the 0.35 early break, so it runs all 24,000 iterations; **159 ms** in Node (boot only, inside LOADING) |
+| Spawn point | height −2.31 m, slope 0.41° |
+| Sky at t = 0 | Earth elevation 8.67° (Earthrise), Sun elevation 36.41° |
+| Connected walkable patch | the ≤45° (no-slide) region flood-filled from the spawn on a 2 m grid covers ≥14.9 ha and reaches ≥424 m. It hit the ±300 m probe box, so the true size is larger. |
+| Ring walkability, ≤45° (≤50° = max walk) | 10 m 89% (100%) · 25 m 56% (64%) · 50 m 76% (88%) · 100 m 60% (69%) · 200 m 58% (63%) · 400 m 38% (46%) · 800 m 60% (64%) |
+| Relief | ring max slopes reach 80°+ (cliffs); heights span −58 … +190 m within 800 m |
+| Global context | 51.7% of the moon is ≤45° (20,000 uniform samples) |
+
+**Decision: keep the shipped Earthrise spawn.** It is flat at the start point, the walkable patch around it is large and connected, and the terrain beyond is varied (slopes, cliffs, relief) for free roam. Cliffs over 45° are handled by the KCC's existing slide behaviour, and R (respawn) is the escape hatch.
+- `world/spawn.ts` ports harness lines 157–221 (`slopeFromNormal` + the `findSpawn` body) **verbatim**. The search is deterministic, so play and M1F spawn at the same site.
+- The `?spawn=x,y,z` parse moves out into `parseSpawnOverride()`, with its warning prefix changed from `[M1F]` to `[play]`.
+- The rejected F30x corridor/LOS gate (`tools/diag-m1f-core.mjs`, commit `439f4d5`) is satellite-specific and was never shipped. It is **not** ported.
+- A build test pins the result to the direction above (tolerance 1e-9), so any terrain or rail drift fails loudly instead of silently moving the spawn.
+- If the Lead prefers no boot search, the fallback is to replace the search with that constant. This is a one-line change, and the test already holds the value.
+
+**Initial facing.** After `teleportSurface`, `ThirdPersonCamera.reset()` sets `heading` to Earth's tangential projection at the spawn. That is `earthDir` rotated into the planet frame by the conjugate of `spinQuatInto(kcc.spinPhase)`, then projected ⊥ `kcc.up`, falling back to `kcc.fwd` if the projection is degenerate. As a result, the first CLICK_TO_PLAY frame shows the Earthrise behind the astronaut. `respawnPlayer()` repeats this with the *current* spin phase.
+
+**Day/night finding.** The core's `timeScale` stays 0, so the Sun and Earth are inertially fixed. The KCC still spins the moon under them at `spinOmega` 0.0005 rad/s, which gives a period of **3.49 h**. At the spawn:
+- 10 min: Earth 25.9°, Sun 19.2°;
+- 21.3 min: **sunset**;
+- 30 min: Earth 60.2°, Sun −15.1°;
+- 99.8 min: Earth sets;
+- 126.0 min: sunrise;
+- 204.4 min: Earth rises.
+
+A player who stays in one place therefore spends about 105 min in Earth-light (0.28) plus ambient light (0.5) only. This becomes open question **Q8** (§2). The default keeps the harness value, per A2.
+
+**6.2 Port map** (harness range → play destination)
+
+| Harness lines | Content | Play destination | Disposition |
+|---|---|---|---|
+| 100–108 | `MOON` params, `R`, `MOON_MU`, `MAX_TERRAIN_H` 360, `HEIGHT_SLACK` 420 | `world/moonConfig.ts` | PORT (name → `'Play Moon'`; every other value identical) |
+| 109 | `initTerrainField(MOON)` | `createMoonWorld` step 1 | PORT (moved from module scope into the function) |
+| 112–113 | `SimulationCore` + `setTimeScale(0)`, `FloatingOriginAdapter` | step 2–3 | PORT |
+| 116–120 | `TerrainMeshPool` 96/2/96/6/12, `new SkyImpostorPool()` | step 4–5 | PORT (pool opts → `PLAY_POOL_OPTS`; sky uses its 1400/9700 defaults) |
+| 123–137 | KCC config, `registerEntity(dynamic:false)`, `setFocusEntity`, `attachWriteThrough` | `MOON_ASTRONAUT` + step 6 | PORT (entity id → `'play-astronaut'`) |
+| 141–154 | `earthVec`/`earthDist`/`earthDir`/`sunDir` from frozen rails | step 7 → `MoonWorld.earthDir/sunDir` | PORT |
+| 157–222 | `slopeFromNormal`, `findSpawn`, `teleportSurface` | `world/spawn.ts` + step 8 | PORT (6.1) |
+| 224–260 | `walkFwd` autopilot direction | — | EXCLUDE (test-only) |
+| 261–272 | `surfacePoint` | — | EXCLUDE (used only by satellites/probes) |
+| 274–434 | quadtree nodes + `updateLOD` | `world/MoonLod.ts` | PORT as a class (module globals `camPlanet`, `camU*`, `horizonDot`, `cand*`, `FACE_NODES` → instance fields); algorithm byte-for-byte |
+| 435–453 | `sceneRoot` ⊃ `spinGroup` + `skyGroup`; Sun light 0xfff1de 2.2 @ `sunDir`·8000; Earth light 0x8fb4e8 0.28; ambient 0x2a3850 0.5; core shell R−MAX_H−40 (40×28, 0x0d1118) | step 9 | PORT |
+| ~455–469 | satellites A/B/C | — | EXCLUDE |
+| 471–513 | Earth hero mesh (`EARTH_R` 5000, Lambert+rim `ShaderMaterial`) | step 9 | PORT |
+| ~515–568 | probe pair (materials, meshes, `PROBE_DIR`) | — | EXCLUDE |
+| ~569–572 | glow quad + `sky.stars`, `sky.mesh` | step 9 | PORT |
+| ~574–600 | M1E box astronaut | — | REPLACE with `AstronautRig` (§7) under `characterRoot` |
+| 629–668 | `updateProbes` | — | EXCLUDE |
+| 650–696 | key/mouse listeners, `readUserInput` | — | REPLACE (`InputState` + `PlayerController`, §5/§9) |
+| 697–790 | `computeDriverPose` + quat helpers | `camera/ThirdPersonCamera.ts` | REWRITE (§9). `lookAtQuatInto` and the boom terrain clamp are reused; the frame mixing is fixed per the §4.4 erratum. |
+| 810–914 | `applyRenderState` | `world/skyState.ts` `applySkyState` | PORT minus probe slots 9/10, probe meshes, satellites, `RIG.maskOverride`, `RIG.stats` |
+| 915–927 | `assignObject`, `assignObjectMesh` | `world/skyState.ts` (module-private) | PORT (drop the `maskOverride` line) |
+| 929–932 | `assignSpinObject` | — | EXCLUDE (satellites only) |
+| 950–1398 | telemetry/suite/A-B render machinery | — | EXCLUDE (acceptance harness) |
+| 1399–1567 | `onFrame` | `frame/playFrame.ts` | REWRITE as the §4.3 pipeline |
+
+**Port gotcha (`applySkyState`).** The harness calls `spinQuatInto(kcc.spinPhase, _qS)` inside the *satellites* block (around line 888). The terrain-record loop that follows depends on `_qS`. When the satellites are removed, that one call must stay, placed just before the terrain loop. Otherwise chunk layer masks are computed with a stale rotation. A build test checks this: after 60 s of spin, every resident chunk near the player carries `NEAR_BIT`.
+
+**6.3 `createMoonWorld()` boot sequence** (called once from `PlayPage`'s `useMemo`; nothing runs at import)
+
+| # | Step | Notes |
+|---|---|---|
+| 1 | `initTerrainField(MOON_PARAMS)` | A module singleton, so one world per page load (main.tsx full-load rule) |
+| 2 | `core = new SimulationCore(); core.setTimeScale(0)` | Frozen rails (A3) |
+| 3 | `adapter = new FloatingOriginAdapter(core)` | |
+| 4 | `pool = new TerrainMeshPool({...PLAY_POOL_OPTS, params: MOON_PARAMS})` | Workers spawn here |
+| 5 | `sky = new SkyImpostorPool()`; `setBody` for slots 0–8 from `PLAY_BODIES` | |
+| 6 | `kcc = new AstronautKCC(MOON_ASTRONAUT)`; `registerEntity('play-astronaut', {dynamic:false})`; `setFocusEntity`; `kcc.attachWriteThrough(...)` | |
+| 7 | Earth/Sun directions from `getCelestialState('earth'|'moon')` | Throws if the rails are missing (harness behaviour) |
+| 8 | `spawn = parseSpawnOverride(location.search) ?? findEarthriseSpawn(earthDir)`; `kcc.teleportSurface(spawn.dir)` | About 159 ms (6.1) |
+| 9 | Scene graph: lights, shell, Earth mesh, glow, stars, `characterRoot`; `lod = new MoonLod(pool, MOON_R)` | All allocation happens here, boot only |
+| 10 | In `PlayPage`, after R3F mounts: `pool.attach(scene)` | Copies the harness `Scene()` effect (line 1568) exactly, including its `primeAll`/`unprimeAll` usage, which is verified line by line when porting |
+
+The phase goes LOADING → CLICK_TO_PLAY when `lod.residentAround(spawn.dir, …)` is true, or after the §10 timeout. The radius and timeout are set in §10.
+
+**6.4 Teardown** (`MoonWorld.dispose()`, run on `PlayPage` unmount): `pool.disposeAll()` (workers and meshes), dispose the sky material/geometry, the Earth/shell/glow geometries and materials, and the rig (`disposeAstronautRig`). After that, `core.unregister` if the API exists, otherwise nothing. `terrainField` is a module singleton and is never reset. That is why leaving the page is a full navigation (`<a href>`), matching every harness page.
