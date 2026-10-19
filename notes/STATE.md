@@ -1,23 +1,25 @@
 # SOLARIS — ASSEMBLY STATE (see AGENT_BRIEF.md §10)
 
 ## NEXT ACTION
-AWAITING LEAD RULING on Track A — the R5 spawn geometry (round-6b
-directive intentionally EXCLUDED it; everything else about 1F is now
-green). Round-6b executed in full: F1 applied (R3 threshold 45 → 8) and
-VALIDATED per the mandate — V1 curve (plateau t∈[2,12] at sym=1/0.82%,
-t=45 reproduces round-6's 17.78% 1:1), V2 rim histograms (mesh dim-limb
-tail 9..45 vs impostor clean step — the mechanism, documented), V3 fade-
-band sweep (0.00–4.00% across 225–236 km), V4 negative control (1 px
-bias → 17.21%, 2 px → 28.69% — meter not blind), V5 repeatability
-(0.82% identical ×3, R1 det 0 B, 2.2–2.4 min < 240 s), V6 stray audit
-(43 strays ALL symmetric, zero sym contribution), V7 gate + regression
-(1F badges ["PASS","PASS","PASS","PASS","FAIL"] — R3 PASS, R5 the
-expected excluded FAIL; 1A/1B/1C/1E green; 1D row-2 env-soft per E-1).
-F2–F4 not needed (V1 shows t=8 is the curve optimum). NOTE: the base
-round-6 directive text was never on record in any session I have seen —
-Track A's rules are unknown here; the Lead should paste them (or re-
-issue) with the ruling. On ruling: execute Track A → gate (240 s) +
-regression → report → commit + push → STOP at the approval gate.
+AWAITING LEAD RULING on the round-7 Track A option menu (M1F.md §15.7).
+The walk-outcome instrument was built, CALIBRATED (fresh-process base
+walk = core-diag numbers to the digit) and falsified-positive (old spawn
++ base both fail as required), then the ENTIRE authorized domain was
+searched: 2,425 sites screened (2,393 lattice + 32 stream), 419 in-band
+LOS-ok, ALL walked fresh-process — **0 of 429 walks reaches ≥2 crossings
+within the frozen LIVE_SECONDS=120** (29 reach exactly 1; 7 of those are
+otherwise fully admissible: LOS > 0, Sun ACTIVE both poses, locals
+≤ 1,024, net > 0). Extended-wall probes: the 2nd crossing lands at
+~300–326 s on 5 sites, all of which then FAIL the Sun-at-suite-pose
+audit (−37.5°..−41°C after 1,800 sim s) — so LIVE_SECONDS is doubly
+blocked. GATE: NO WINNER → STOP per §2(b)/§3; NO harness edit; 1F state
+unchanged (badges [P,P,P,P,F], R3 0.82% green). OPTIONS (all need a
+ruling): (a) rebases ≥ 2 → ≥ 1 — RECOMMENDED, smallest, 7 admissible
+sites (e.g. #2325: Earth 14.42°, LOS 23.0 m, Sun 21.7A/25.5A); (b)
+LIVE_SECONDS → 360+ — not recommended (doubly blocked); (c) domain
+widening; (d) SAT_B retarget; (e) different terrain/scenario. On ruling:
+apply → Node verify → gate (240 s) + regression → report → commit +
+push → STOP at the approval gate.
 
 ## MILESTONE LEDGER
 | MS | Status | Evidence |
@@ -28,37 +30,45 @@ regression → report → commit + push → STOP at the approval gate.
 | 1C | APPROVED | Gate GREEN 4/4 + 1A/1B regression 5/5 ("3 passed (1.2m)"); F10a/F10b verified against all four ruling requirements; final commit a86ce94; report: notes/reports/M1C.md; Lead approval 2026-10-15 |
 | 1D | APPROVED | Commit e830759; gate GREEN 5/5 + full 1A/1B/1C regression green ("4 passed (1.5m)"); F11/F12 applied as ruled; erratum + standing rule adopted; authorship verified: v@1000m 264.7 matches corrected derivation, locals max 1022.8 matches 1A structural prediction (1022.67), geo 151 = F12-predicted constant count; report: notes/reports/M1D.md; Lead approval 2026-10-16 |
 | 1E | APPROVED | Commit 4c352dd (gate-green report + ledgers); FINAL: `[Milestone1E] acceptance PASSED` 6/6 (coriolis 0.75 cm west/1.02 s/1-tick plant; vehicleErr 0.0e+0; deorbit landed 22,307; face-walk 0.82° corner/2 changes; slope rows clean, minAGL n/a) + full 1A/1B/1C/1D regression ("5 passed (1.9m)", PLAYWRIGHT_EXIT=0); all nine rulings applied + vindicated (F14 core #1 7947369; F15–F17+$-strip e689d4c; F18 core #2 37a4c9e; F19/F20 7d77e52); report: notes/reports/M1E.md; Lead approval 2026-10-16 |
-| 1F | GATE RUN ×6 — R3 GREEN via round-6b F1 (fully validated); R5 excluded, awaiting Track A | Rounds 1–5 as below (extraction+F3/F21 5a17673; F22–F26 0b2fae8; F27/F28/F25d a6de872; F30 diag 5c6336b + F31 20c8a5e; F30x hard stop + F32 MSAA ladder 439f4d5/8289c81/a8b25fa; round-6 Track B dump 21408a3 + gap-stop 9d60c3c). Round 6b (2026-10-19, Lead directive — R3 ONLY, Track A/R5 excluded): F1 threshold 45 → 8 applied (20156a0; TSC/BUILD 0 unpiped) → R3 sym 17.78% → 0.82% of 122 px, badge PASS ×3 solo runs; validation V1–V7 complete (V1 plateau/curve, V2 mechanism histograms, V3 band sweep 0–4%, V4 control fails at 1 px/2 px as required, V5 identical ×3, V6 43 strays all symmetric, V7 regression rows unchanged; 8aa94d1 tooling; temp V3/V4 patch reverted, absent from dist); F2–F4 not needed; gate ["PASS","PASS","PASS","PASS","FAIL"] — R5 FAIL expected (Track A excluded); report: notes/reports/M1F.md §14; PARKED AT RULING GATE (Track A) |
+| 1F | GATE RUN ×7 — round-7 Track A NODE GATE FAIL (0/429 walks reach ≥2 crossings); STOP per directive, NO harness edit | Rounds 1–6b as below (…; round-6b F1 threshold 45→8: R3 GREEN 0.82%, validated V1–V7, 20156a0/8aa94d1). Round 7 (2026-10-19, Track A re-issue): walk-outcome instrument built + calibrated (fresh-process base = core-diag exactly; contamination found: single-process teleports carry state) + falsified-positive (old spawn, base FAIL as required); exhaustive search — 2,425 screened, 419 in-band LOS-ok, ALL 429 walked: ZERO reach ≥2 crossings in the frozen LIVE (29 ×1; 7 otherwise fully admissible); extended-wall: 2nd crossing ~300–326 s on 5 sites but ALL then Sun-CULLED at suite pose (R2 blocker); corridor slope does not predict walk outcome (no sufficient screen); GATE NO WINNER → STOP, options quantified §15.7 (recommend (a) rebases ≥ 1); evidence notes/reports/evidence/M1F-r7-walks.json; tool diag-m1f-r7.mjs; report M1F.md §15; PARKED AT RULING GATE (option menu) |
 | 1G | NOT STARTED | F2 + hand-applied KCC patch + MANDATORY full 1E re-run; re-grep the §3.5 patch against F14/F18's moved/edited regions |
 
 ## IN-FLIGHT
-Milestone 1F — ROUND-6B COMPLETE (2026-10-19): R3 silhouette GREEN and
-fully validated; R5 intentionally excluded by the directive; parked at
-the ruling gate for Track A.
-- F1 applied (20156a0): R3 classification threshold 45 → 8 on both
-  masks — the >45 cutoff sat inside the mesh's own dim-limb shading
-  band (9..45) while the impostor's analytic edge steps cleanly to
-  background (V2 histograms document it: mesh 12 annulus px in 9..45,
-  impostor 0). Nothing else changed.
-- Validation (M1F.md §14, tooling 8aa94d1): V1 threshold curve —
-  plateau t∈[2,12] at sym=1 (0.82% of 122 px), degradation from t=16,
-  t=45 reproduces round-6's 17.78% 1:1; V3 fade-band sweep 0.00–4.00%
-  across 225–236 km; V4 negative control — 1 px bias → 17.21%, 2 px →
-  28.69% (meter detects real misalignment); V5 — 0.82% identical across
-  3 solo gate runs, R1 determinism 0 B each, 2.2–2.4 min < 240 s; V6 —
-  43 strays outside the disk ALL symmetric (zero sym contribution;
-  conservative totA dilution noted); V7 — regression rows unchanged
-  (1A/1B/1C/1E green; 1D row-2 env-soft per E-1; 1F [P,P,P,P,F] with
-  R5 the expected excluded FAIL). F2–F4 not needed (V1 shows t=8 is the
-  curve's optimum — largest threshold under the 9..45 band).
-- Method worklog (§14.8): R3RAW parser off-by-one (l[7] → l[6]) caught
-  BEFORE any numbers were reported — analysis re-run offline from the
-  captured raw log; a pkill self-match and a 10-min tool timeout cost
-  time but no data; the TEMP V3/V4 harness patch was reverted and is
-  absent from dist (grep=0).
-- Track A (R5 spawn geometry) remains blocked: the base round-6
-  directive text has never been on record in any session I have seen —
-  the Lead should paste or re-issue it with the ruling. 1G not started.
+Milestone 1F — ROUND-7 EXECUTED (Track A Node phase), 2026-10-19.
+PARKED AT THE RULING GATE with a quantified option menu; NO harness edit
+this round (1F state = round-6b's: badges [P,P,P,P,F], R3 0.82% green,
+R5 the single FAIL).
+- Instrument: diag-m1f-r7.mjs — verbatim KCC walk replica (teleport,
+  3.5 s warmup, LIVE 120 wall s, ts=6/5 substeps, sprint-to-SAT_B
+  autopilot) + corridorFor parameterized by azimuth resolution +
+  straddle-ray LOS (SAT_R=26) + Sun/Earth audits. CALIBRATED: the
+  fresh-process base walk reproduces the round-4/5 core-diag numbers to
+  the digit (locals 656.3, dist 996.5, net 788.2, LOS −10.6 m @ f0.025,
+  Sun 29.9A/−2.9A). CONTAMINATION LESSON: back-to-back teleports in one
+  process carry state — every reported walk is one-fresh-process.
+  avgV is COMMANDED speed, not progress (dist is real).
+- Search (directive §3, complete): 2,425 sites screened (2,393 lattice
+  over the full 0.62 rad cap + 32 old-stream tops) → 1,275 in the 5-25
+  band (1,003 in 8-22), 419 in-band LOS-ok → ALL walked = 429 unique
+  clean walks. RESULT: 0 reach ≥2 crossings within the frozen LIVE;
+  29 reach exactly 1; 7 otherwise fully admissible (#2234/#2325/#2088/
+  #2368/#2089/#2276 + 1 more; e.g. #2325: Earth 14.42°, corridor 62.1°,
+  LOS 23.0 m, Sun 21.7A/25.5A).
+- Mechanism: the 2nd crossing needs ~900 m of new component drift after
+  the 1st rebase (~1,950 m directed axial in 600 sim s); the verbatim
+  autopilot either climb-limits (~1.6-3.7 m/s) or ORBITS the target
+  (#582 trace: 6.5-7 m/s with distToSATB plateaued at ~1,650 m).
+- Extended-wall (LIVE_SECONDS option): 2nd crossing at ~300-326 s on 5
+  sites — but ALL then Sun-CULLED at the suite pose (−37.5..−41°C after
+  1,800 sim s) → R2 blocker; option doubly blocked.
+- Falsification ✓ (old spawn 0 crossings/LOS −5.7 m; base 0 crossings/
+  LOS −10.6 m). Ladder/steepened case MOOT (no passer → no bound).
+- Selector: (i) boot-prohibitive (walk ≈ 15-20 s ≫ 2,000 ms); (ii)
+  inadmissible (corridor slope does not predict walk outcome); (iii)
+  moot. GATE: NO WINNER → STOP per §2(b)/§3. Options in M1F.md §15.7;
+  recommendation (a) rebases ≥ 2 → ≥ 1 (gate-term ruling; 7 sites).
+- Evidence: notes/reports/evidence/M1F-r7-walks.json (429 records).
+1G not started.
 
 ## 1D FPS BACKLOG (Lead-ordered note — do NOT fix now)
 The 1D dive integrates `flight.update(dt·4, 6)` with dt = REAL frame
@@ -134,7 +144,8 @@ milestone, Lead's call. (Evidence: notes/reports/M1F.md §10.5, §11.3.)
 
 | 2026-10-19 | ROUND-6b DIRECTIVE RECORDED (Lead): R3 ONLY — Track A/R5 intentionally excluded (do not touch spawn/walk/SAT/straddler code); F1 PRIMARY (threshold 45→8, both masks, nothing else) + R3DUMP mv/iv values; EXTENSIVE VALIDATION MANDATORY (V1 threshold curve, V2 rim histograms, V3 fade-band sweep, V4 negative control REQUIRED, V5 ≥3 identical solo runs, V6 stray audit, V7 gate + regression); fallback ladder F2 (curve-chosen threshold) / F3 (1-px dilated sym) / F4 (2x supersample or coverage mask) pre-authorized in order; finalize only with margin (≤1.5% or 0 px), V4 failing, V5 stable; method discipline: switch instruments, never give up; hard stops per §6. |
 | 2026-10-19 | ROUND-6b EXECUTION COMPLETE: F1 applied (20156a0, TSC/BUILD 0 unpiped) → R3 sym 17.78% → 0.82% of the 122-px disk, R3 badge PASS; V1–V7 ALL completed and reported (V1 plateau t∈[2,12] + t=45 reproduces round-6 1:1; V2 mechanism histograms; V3 0.00–4.00% band sweep; V4 control 17.21%/28.69% at 1 px/2 px — not blind; V5 identical ×3, R1 det 0 B, 2.2–2.4 min; V6 43 strays ALL symmetric; V7 rows unchanged elsewhere); F2–F4 NOT NEEDED (t=8 is the V1 optimum); temp V3/V4 patch reverted + grep=0 over dist; finalize criteria ALL hold; worklog §14.8 (parser off-by-one caught pre-report; pkill self-match; tool timeout — no data impact). Gate ["PASS","PASS","PASS","PASS","FAIL"] — R5 the expected excluded FAIL. |
-## SESSION LOG
+| 2026-10-19 | ROUND-7 DIRECTIVE RECORDED (Lead, standalone re-issue — this text IS the base Track A directive): ≤40° corridor predicate RETIRED, replaced by the WALK-OUTCOME instrument (≥2 crossings in LIVE, locals ≤1,024, no stall, positive net, LOS > 0 SAT_R=26, Earth 8-22 preferred/5-25 fallback, Sun ACTIVE both poses); domain stays the 0.62 rad cap; selector preference (i) replica-guided / (ii) empirically-calibrated cheap screen / (iii) fixed constant, boot ≤ 2,000 ms; corridor resolution 24 unless proven needed; Node phase gated on ALL checks incl. falsification (old spawn + base must FAIL); STOP and report options on any failure. |
+| 2026-10-19 | ROUND-7 EXECUTION COMPLETE (Node phase): instrument calibrated (fresh base walk = core-diag to the digit; single-process teleport contamination found + fixed); 2,425 screened → 419 in-band LOS-ok → ALL 429 walked fresh-process: 0 reach ≥2 crossings in the frozen LIVE (29 ×1, 7 otherwise fully admissible); extended-wall: 2nd crossing ~300–326 s on 5 sites, all then Sun-CULLED at suite pose (R2 blocker); falsification cases fail as required; corridor slope does not predict walk outcome → selector (ii) inadmissible, (i) boot-prohibitive, (iii) moot; GATE NO WINNER → STOP per the directive, NO harness edit, options quantified (recommendation: rebases ≥ 2 → ≥ 1). |\n## SESSION LOG
 | # | Date | Goal | Outcome | Handoff note |
 |---|------|------|---------|--------------|
 | 1 | 2026-10-14 | §9 opening report → scaffold + Milestone 1A | Opening report approved; branch m1-assembly created; game/ scaffolded per §3; extract.mjs written (6/6 blocks 1A); 1A wired, typecheck+build clean, gate PASSED 5/5; report delivered in chat — ended before writing the STATE.md/report files (protocol did not exist yet) | none written — reconciled post-hoc |
@@ -151,13 +162,14 @@ milestone, Lead's call. (Evidence: notes/reports/M1F.md §10.5, §11.3.)
 
 | 11 | 2026-10-18 | Round-6 addendum execution (Track B step 1) | Repo reconciled clean at 779fcaf — base round-6 directive NOT on record anywhere (Track A blocked, Lead asked to supply it). Track B per the addendum: R3DUMP emission added inside the R3 classification loop (no new renders) + read-only probe diag-m1f-r3dump.mjs (21408a3, TSC/BUILD 0 unpiped); dump captured (16 px, all impostor-lit-only rim shell, SHADING 0, net +16, 14/24 bins span 315°) → classification matches NEITHER defined EDGE route by the letter → NO DEFINED ROUTE → STOPPED before any rung; substance = §11.2 cause-#1 (+0.45 px uniform impostor radius excess at samples:8); fixture-rung arithmetic shows <3% unreachable in one rung (≥5.4%); threshold rung is the mechanism-matched one but gated on SHADING-dominance (0). Report §13 + CHANGES 65–67 + ledgers | M1F awaits the Lead on TWO items: (1) the base round-6 directive text (Track A wholly unspecified on record); (2) a one-line ruling on the gap signature (EDGE-dominant + one-sided + statistically-uniform ring): threshold rung / fixture rung / new rung. On ruling: apply → sym re-measure → <3% gate else STOP → report → commit + push → approval gate. 1G after. |
 | 12 | 2026-10-19 | Round-6b directive execution (R3 only) | Bootstrap clean (9d60c3c = ANCHOR 21408a3 carrier, canon intact). F1 applied + committed (20156a0); validation per mandate: temp patch (R3RAW window dump + V3 sweep + V4 bias hook at the probe-A feed) → capture run → revert → grep=0 verification; offline analysis (8aa94d1, --analyze mode) after fixing an R3RAW parser off-by-one caught before reporting; V1 plateau t∈[2,12] @ sym=1 (0.82%), t=45 reproduces round-6 1:1; V2 mesh dim-limb tail 9..45 vs impostor clean step; V3 0.00–4.00% across the band; V4 control 17.21%/28.69% (not blind); V5 0.82% identical ×3 solo gates (2.2–2.4 min); V6 43 strays all symmetric; V7 regression rows unchanged — 1F badges [P,P,P,P,F] (R3 PASS, R5 expected FAIL); F2–F4 not needed; report §14 + CHANGES 68–70 + ledgers | M1F awaits the Lead's Track A ruling (R5 spawn geometry; base round-6 directive text still not on record — paste or re-issue with the ruling). On ruling: execute → gate + regression → report → commit + push → STOP. 1G after. |
+| 13 | 2026-10-19 | Round-7 Track A Node phase (walk-outcome site search) | Directive re-issue received and recorded (this text = the base Track A directive). Instrument diag-m1f-r7.mjs built and CALIBRATED (fresh-process base walk matches the core diag exactly; single-process teleport contamination discovered and eliminated — every reported walk is one-fresh-process); 2,425 sites screened, 419 in-band LOS-ok, ALL walked = 429 unique clean walks: ZERO reach ≥2 crossings within the frozen LIVE (29 ×1; 7 otherwise fully admissible, e.g. #2325); extended-wall probes show the 2nd crossing at ~300–326 s on 5 sites, all then Sun-culled at the suite pose (R2 blocker); corridor slope does not predict walk outcome; falsification cases fail as required; GATE NO WINNER → STOP per §2(b)/§3, NO harness edit; report §15 + evidence file + CHANGES 71–72 + ledgers | M1F awaits the Lead's ruling on the §15.7 option menu — recommendation (a): rebases ≥ 2 → ≥ 1 (gate-term ruling; 7 admissible sites). On ruling: apply → Node verify → gate + regression → report → commit + push → STOP. 1G after. |
 ## ANCHOR
-20156a0 — "M1F/round-6b F1" (the last work commit; wind-down
+ROUN7LEDGER — round-7 report + ledgers (the wind-down commit; the tool/evidence work commit precedes it;
 STATE.md travels after it; branch state at the 2026-10-19 round-6b stop; branch m1-assembly; chain:
 ea112ec canon → d849d6b WIP → 2e409c0 protocol → df1e04f M1A → … →
 0b2fae8 round-2 gate → a6de872 round-3 edits → 74875e5 B-1 →
 1c8a2b8/1d76fd0 probes → 9627eee CHANGES → bbeb4f4 round-3 report →
-5c6336b F30 diag/F30x → 20c8a5e F31 → 439f4d5 F30x diag/hard-stop → 8289c81 F32 rung 1 → a8b25fa F32 rung 2 → 779fcaf round-5 report → 21408a3 round-6 Track B dump → 9d60c3c round-6 report → 20156a0 round-6b F1 → 8aa94d1 validation tooling). This wind-down STATE.md travels in
+5c6336b F30 diag/F30x → 20c8a5e F31 → 439f4d5 F30x diag/hard-stop → 8289c81 F32 rung 1 → a8b25fa F32 rung 2 → 779fcaf round-5 report → 21408a3 round-6 Track B dump → 9d60c3c round-6 report → 20156a0 round-6b F1 → 20156a0 round-6b F1 → 8aa94d1 validation tooling → c13aa26 round-6b report → df6f064 anchor fix → ROUN7LEDGER round-7 report). This wind-down STATE.md travels in
 a commit AFTER those (a file cannot contain its own commit hash); resolve
 the exact carrier with `git log -1 --format=%H -- notes/STATE.md`. Canon
 (Design_specs/, Milestone/) must remain unchanged from ea112ec —
