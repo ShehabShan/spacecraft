@@ -12,8 +12,10 @@ alone.
 ## 1. READING ORDER (a fresh session reads exactly this, in order)
 1. This brief (all of it — it is short).
 2. `notes/task.md` — task tracker + task definitions; find the ACTIVE task.
-3. The active task's plan `docs/<Tn>-plan.md` — the first UNCHECKED step is your
-   starting point (if no plan file exists yet, the task is at its PLAN stage).
+3. The active task's plan `docs/<Tn>-plan.md` — the FIRST UNCHECKED BOX is your
+   starting point: a planning-checklist item while the plan is being authored,
+   a build step once building has started (no plan file yet = the task is at
+   its PLAN stage, first commit).
 4. `notes/STATE.md` — NEXT ACTION (the binding pointer) and the SESSION LOG tail.
 5. The code you are about to touch, under `game/src`.
 
@@ -61,11 +63,18 @@ The engine is unusual BY DESIGN. When code looks odd, assume there is a reason
 ## 4. THE TASK SYSTEM
 - Work is organized as TASKS (T1, T2, …) defined in `notes/task.md`. Each task
   has: one branch, one plan file `docs/<Tn>-plan.md`, and one tracker row.
-- Two stages: PLAN (author the plan file; set the tracker's plan status READY),
-  then BUILD (execute the plan's steps in order). Plan schema: `notes/task.md`.
-- A STEP is the unit of work AND the unit of commit: small, independently
-  verifiable, checked off in the plan only when its verification passed and its
-  commit is pushed.
+- Two stages — BOTH incremental and multi-session:
+  - PLAN: author `docs/<Tn>-plan.md` section by section, per the PLANNING
+    CHECKLIST at the top of the plan file (schema in `notes/task.md`). The file
+    is created on the FIRST planning commit (header + empty checklist), then
+    sections are drafted, checked off, committed, pushed — a few per commit.
+    Plan status lifecycle: NOT STARTED → IN PROGRESS (n/m sections) → READY.
+  - BUILD: execute the plan's steps in order.
+  - LEAD GATE: when the plan checklist completes, set plan status READY, update
+    tracker + STATE.md, and STOP — building starts ONLY on the Lead's execute
+    order ("execute the <Tn> plan"), never automatically.
+- A STEP (build) or CHECKLIST ITEM (plan) is the unit of work AND the unit of
+  commit: small, independently verifiable, checkpointed per §6.
 - Tracker columns (update as you go): task · branch · plan status · build status ·
   step progress (done/total + next step) · last commit · blockers.
 - Branch/merge: one branch per task (`<tn>-<slug>`, e.g. `t1-playable-moon`) cut
@@ -85,14 +94,23 @@ The engine is unusual BY DESIGN. When code looks odd, assume there is a reason
 3. Report ≤5 sentences: current state, exact next step, discrepancies.
 4. Continue at NEXT ACTION (the first unchecked plan step). Never redo completed
    steps; never re-ask decisions recorded in STATE.md's APPROVAL LEDGER.
-5. Before ending a session: update the tracker row + plan checkboxes + STATE.md
-   (NEXT ACTION = the next unchecked step; SESSION LOG handoff note), commit,
-   push. A session that ends without a handoff note violates protocol.
+5. Before ending a session: the per-commit checkpoints (§6) have already left
+   the repo fully resumable; session end only ADDS the SESSION LOG handoff row
+   (what was accomplished, what is next, anything the successor must know) and
+   commits it. A session that ends without a handoff note violates protocol.
 
 ## 6. COMMIT & PUSH POLICY
-- Commit AND PUSH after every completed step/segment: a plan step done, a bug
-  verified fixed, a tracker/state checkpoint, a session wind-down. Frequency is
-  the point — it is what makes mid-task resume possible.
+- Commit AND PUSH frequently — after every good committable amount of VERIFIED
+  work: a plan section drafted, a build step done, a bug verified fixed.
+  Frequency is the point — it is what makes mid-task resume possible.
+- EVERY commit is a CHECKPOINT, in BOTH stages: before committing, update the
+  progress system and INCLUDE those updates in the SAME commit — check off the
+  finished plan-checklist item and/or build step in `docs/<Tn>-plan.md`, update
+  the tracker row in `notes/task.md` (plan/build status, step progress, last
+  commit), and repoint `notes/STATE.md` NEXT ACTION at the next unchecked box.
+  After the push the repo is a COMPLETE resume point: if the session dies
+  immediately after, a fresh session loses nothing. Never leave finished work
+  or progress updates sitting uncommitted.
 - Message format — a fresh session must understand the change from `git log`
   ALONE. First line `<area>: <one-line purpose>`; body covers:
   - WHAT: files / functions / behavior changed;
@@ -133,3 +151,9 @@ about whether a change is allowed — STOP, write the options, ask the Lead.
   `notes/patches/`, `notes/archive/` moved off the reading list;
   `Design_specs/` = optional background, code wins; 1F parked, 1G explicitly
   deferred; NEXT ACTION = "T1 plan".
+- 2026-10-19 Amendment (Lead, same day): planning is NOT one-shot — plan files
+  carry a PLANNING CHECKLIST and are authored section by section across
+  sessions, exactly like the build. EVERY commit (planning or building) is a
+  checkpoint: the plan checkbox, tracker row, and STATE.md NEXT ACTION updates
+  ride in the SAME commit, so each push is a complete resume point. Lead gate
+  added between plan READY and build start: execute only on the Lead's order.

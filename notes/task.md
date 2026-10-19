@@ -2,7 +2,8 @@
 
 Single source of truth for WHAT is being built and WHERE it stands. A fresh session
 resumes from: this file + the active task's `docs/<Tn>-plan.md` + `notes/STATE.md`
-NEXT ACTION. The first UNCHECKED plan step is always the starting point.
+NEXT ACTION. The first UNCHECKED BOX (planning item or build step) is always the
+starting point.
 
 ## TRACKER
 | Task | Branch | Plan status | Build status | Step progress | Last commit | Blockers |
@@ -42,28 +43,44 @@ NEXT ACTION. The first UNCHECKED plan step is always the starting point.
   boarding · saves (1G-era) · sky/rendering beauty passes · new libraries · any
   change to ratified constants.
 - Plan: `docs/T1-plan.md` — NOT YET WRITTEN (STATE.md NEXT ACTION = "T1 plan").
-  The planning session authors it per the schema below, sets this row's plan
-  status to READY, and repoints NEXT ACTION at the first build step.
+  Planning session(s) author it INCREMENTALLY per the schema below: the first
+  checkpoint-commit creates the file with the empty PLANNING CHECKLIST, sections
+  follow one by one, and on completion the tracker flips to READY and the
+  session STOPS at the LEAD GATE (build only on the Lead's execute order).
 
 ## PLAN FILE SCHEMA (every `docs/<Tn>-plan.md` follows this exactly)
-- Header: task id · branch · status (PLANNING / BUILDING / DONE) · last-updated
-  date · "resume at first unchecked step".
+- Header: task id · branch · stage (PLANNING / READY / BUILDING / DONE) ·
+  last-updated date · "resume at the FIRST UNCHECKED BOX (planning item or
+  build step)".
+- PLANNING CHECKLIST — at the top of the file, created on the FIRST planning
+  commit (file starts as header + empty checklist):
+  [ ] Goal · [ ] Scope IN · [ ] Scope OUT · [ ] Affected modules · [ ] Steps ·
+  [ ] Verification per step · [ ] Risks & open decisions.
+  Sections are then drafted, checked off, committed, pushed — planning is
+  INCREMENTAL and multi-session, exactly like building. Status lifecycle:
+  NOT STARTED → IN PROGRESS (n/m sections) → READY. On completion: set plan
+  status READY, repoint STATE.md NEXT ACTION, and STOP at the LEAD GATE
+  (AGENT_BRIEF.md §4).
 - Goal: 1–3 sentences.
 - Scope IN / Scope OUT: bulleted, concrete.
 - Affected modules: file paths.
 - Steps: an ORDERED checklist; each step is small enough to verify and commit in
   one segment, and states its own verification (command + expected evidence).
 - Risks & open decisions: anything needing a Lead ruling.
-- A step is DONE when: box checked + verification passed + committed AND pushed.
-  A step is the commit unit (AGENT_BRIEF.md §4).
+- A box is DONE when: checked + verification passed (where applicable) + the
+  commit that carries it — which ALSO carries the tracker row + STATE.md NEXT
+  ACTION update — is pushed. A box is the commit unit (AGENT_BRIEF.md §4/§6).
 
 ## HOW TO RESUME A TASK MIDWAY (fresh session — full procedure in AGENT_BRIEF.md §5)
 1. Read `AGENT_BRIEF.md` (the phase-2 contract above all else).
-2. Here: find the ACTIVE task row (the one whose build status is not DONE).
-3. Open its `docs/<Tn>-plan.md`: the first UNCHECKED step is the starting point.
+2. Here: find the ACTIVE task row (any row whose stage is not DONE).
+3. Open its `docs/<Tn>-plan.md`: the FIRST UNCHECKED BOX is the starting point —
+   a planning-checklist item while the plan is IN PROGRESS, a build step once
+   building (if the plan is READY but no execute order is on record, you are at
+   the LEAD GATE — do not build; report and wait).
 4. `notes/STATE.md` NEXT ACTION confirms or overrides (it binds).
 5. Reconcile `git log --oneline -15` + `git status` vs tracker; evidence wins;
    repair drift and note the repair in the SESSION LOG.
-6. Continue the build; commit+push per completed step; before ending the session
-   update: tracker row + plan checkboxes + STATE.md (NEXT ACTION + SESSION LOG
-   handoff note).
+6. Continue (planning or building); commit+push per completed segment — each
+   commit carries its checkbox + tracker row + STATE.md NEXT ACTION update
+   (AGENT_BRIEF.md §6); session end adds the SESSION LOG handoff note.
