@@ -2,7 +2,7 @@
 
 - Task: **T1** (playable moon) — definition: `notes/task.md` § "T1 — PLAYABLE MOON"
 - Branch: `t1-playable-moon`
-- Stage: **PLANNING** — plan status IN PROGRESS (4/7 sections; Steps 3/15)
+- Stage: **PLANNING** — plan status IN PROGRESS (4/7 sections; Steps 4/15)
 - Last updated: 2026-10-19
 - **Resume at the FIRST UNCHECKED BOX** (planning item or build step).
 - Rules: planning changes NO game code (plan + process files only); each checked
@@ -19,7 +19,7 @@
   - [x] §1 Executive summary (recommended architecture + why)
   - [x] §2 Assumptions and open questions
   - [x] §3 Current-state findings (verified repo facts)
-  - [ ] §4 Architecture (module/data-flow diagram, text)
+  - [x] §4 Architecture (module/data-flow diagram, text)
   - [ ] §5 File-by-file change plan
   - [ ] §6 World bootstrap plan
   - [ ] §7 Character rig specification
@@ -411,3 +411,163 @@ since `0c555b3`). `npm ci`, `npm run typecheck` and `npm run build` all exit
   `npm ci` (node_modules is gitignored).
 - F20. The "use the KCC's jump buffering" premise does not hold (F10).
   Coyote time needs a core hook (F11, §2 Q2).
+### §4 Architecture
+Option B (§1): one new module tree, `game/src/play/`, loaded only by
+`?page=play`. It imports core/render modules read-only and nothing from
+`src/test/**`. The names below are binding for §5, which adds exports and
+signatures.
+
+**4.1 Module graph (imports point downward; no cycles)**
+```
+main.tsx ──(?page=play, dynamic import, full load)──▶ play/PlayPage.tsx
+PlayPage.tsx            React root: <Canvas> + <MultiCameraRig onFrame> + <PlayShell>
+ ├─ world/moonWorld.ts   createMoonWorld(): MoonWorld        (boot, once)
+ │    ├─ world/moonConfig.ts   MOON params, MOON_MU, KCC moon config (A1/A2)
+ │    ├─ world/spawn.ts        findEarthriseSpawn() (deterministic, F5)
+ │    ├─ world/MoonLod.ts      quadtree split/merge → pool.attach/release (F4)
+ │    ├─ world/skyState.ts     applySkyState(): impostors + layer masks (no probes)
+ │    └─ core/* + render/*     SimulationCore, AstronautKCC, terrainField,
+ │                             FloatingOriginAdapter, TerrainMeshPool,
+ │                             SkyImpostorPool, MultiCameraRig exports
+ ├─ input/InputState.ts        DOM listeners → plain fields (keys, mouse dx/dy,
+ │                             edges, pointer-lock flag); no React
+ ├─ controller/PlayerController.ts   InputState + camera heading → kcc.input;
+ │                             jump buffer, coyote (Q2), respawn, pause gate
+ ├─ character/CharacterTelemetry.ts  sampleTelemetry(kcc, ctrl, out) — KCC → anim signals
+ ├─ character/CharacterAnimator.ts   interface (THE GLB seam)
+ │    └─ character/ProceduralAnimator.ts  implements it
+ │         ├─ character/AstronautRig.ts       joint hierarchy + meshes (§7)
+ │         └─ character/animStateMachine.ts   states/transitions/blends (§8)
+ ├─ camera/ThirdPersonCamera.ts orbit + spring arm + clearance + FP → driver pose
+ ├─ frame/playFrame.ts          the ordered per-frame pipeline (4.3)
+ └─ ui/ (PlayShell, Hud, overlays) + ui/playStore.ts (zustand, throttled)
+```
+Rules:
+- `play/**` never imports `src/test/**`. From `store/useGameStore.ts` it may
+  import only `createTelemetryPublisher`, never the test types.
+- Nothing boots on import. Every singleton is created inside
+  `createMoonWorld()` (A5).
+- The pure core stays pure. Play-layer math uses plain `{x,y,z}` scratch
+  objects and the `sphericalFrame.ts` helpers, and converts to THREE only at
+  the render-extraction stage.
+
+**4.2 Ownership and data contracts**
+- **`MoonWorld`** is returned by `createMoonWorld`, boot-allocated, and owned
+  by `PlayPage` for its lifetime. Fields:
+  - `core`, `adapter`, `pool`, `sky`, `kcc`;
+  - `astroState` (the registered entity);
+  - `sceneRoot`, which contains `spinGroup` (moon-fixed: terrain, core
+    shell), `skyGroup` (Earth hero, glow, stars), `characterRoot` and the
+    lights;
+  - `lod: MoonLod`;
+  - `spawn: {dir, absPos}`;
+  - `dispose()`.
+- **`PlayInput`** (the `InputState` fields):
+  - `moveX`/`moveY` ∈ [-1, 1] from WASD;
+  - `sprint` and `crouch`;
+  - `jumpPressed` (an edge, latched until consumed);
+  - `lookDX`/`lookDY` (accumulated mouse pixels, zeroed on read);
+  - edges for `toggleCam`, `respawn` and `pause`;
+  - `pointerLocked`.
+- **Camera heading.** `ThirdPersonCamera` owns a planet-frame unit vector
+  `heading` (tangent to `kcc.up`), plus `pitch` and `distance`. Each frame
+  it re-projects `heading` onto the new up plane, renormalises it (parallel
+  transport, never an Euler accumulator — §3 invariant), then yaws it by
+  mouse X. `heading` is NOT stored relative to `kcc.fwd`: the harness's
+  `yawOffset` approach would feed back into auto-turn and spin the
+  character.
+- **`kcc.input` has a single writer**, `PlayerController`:
+  - `moveF`/`moveR`: the heading-relative stick projected onto `kcc.fwd`
+    and right;
+  - `sprint`, `crouch` and `jump`;
+  - `turnRate` = 0 in third person; first person uses `lookYawDelta`.
+- **`CharacterTelemetry`** is one boot-allocated struct, refreshed each
+  frame:
+  - `grounded`;
+  - `speed` (`relSpeed`);
+  - `vertSpeed` ((`absVel` − transport) · up);
+  - `slopeDeg`;
+  - `sliding` (`slideSpeed` > ε);
+  - `sprint`, `crouch`, `inputMag`;
+  - `jumped` (the controller issued a jump that launched this frame);
+  - `landed` + `landingSpeed` (from the change in `integrity.landings` and
+    `lastLandingRelSpeed`);
+  - `airTime` and `dt`.
+- **`CharacterAnimator`** (the interface):
+  - members: `readonly root: THREE.Object3D`,
+    `update(t: CharacterTelemetry, dt: number): void`, `setVisible(v)` and
+    `dispose()`;
+  - `characterRoot` holds `animator.root`;
+  - the root's local origin is the feet contact point, +Y is character up,
+    and −Z is facing (three.js forward);
+  - a future `GltfAnimator` implements the same four members.
+- **`ui/playStore`** holds:
+  - `phase`: `LOADING`, `CLICK_TO_PLAY`, `PLAYING` or `PAUSED`;
+  - `loadProgress`;
+  - a HUD snapshot (speed, state name, grounded, FPS, coordinates),
+    published at ≤10 Hz through `createTelemetryPublisher`.
+
+  React reads the store; the frame loop never reads React state.
+
+**4.3 Per-frame pipeline**
+`playFrame(world, delta)` is the `onFrame` passed to `MultiCameraRig`. It
+runs before `executePasses`, in this fixed order:
+1. **Clock**: `dt = (phase !== PLAYING || resumedThisFrame) ? 0 :
+   min(delta, MAX_ADVANCE_DT)`. A zero `dt` on resume removes the F7
+   catch-up burst.
+2. **Input**: drain `lookDX`/`lookDY` and handle the edges (camera toggle,
+   respawn, pause).
+3. **Camera pre-step**: transport `heading` and apply yaw and pitch (reads
+   `kcc.up`).
+4. **Controller**: write `kcc.input` (needs `heading` and `kcc.fwd`/`up`),
+   and do the jump-buffer and coyote bookkeeping.
+5. **Simulate**: `kcc.update(dt, 5)`, then `core.advance(dt)`. These are the
+   two fixed 1/60 accumulators, driven with the same `dt` exactly as in the
+   harness (F8). They do nothing while not PLAYING, because `dt` is 0.
+6. **Render extraction**:
+   - `spinGroup` gets position −origin and quaternion
+     `spinQuat(kcc.spinPhase)`;
+   - `adapter.update()`;
+   - `characterRoot` gets `astroState.localPosF32` and spin ∘
+     `kcc.frameQuatInto`.
+7. **Telemetry + animation**: `sampleTelemetry`, then
+   `animator.update(t, dt)`. Animation uses the same `dt`, so pausing the
+   game freezes the pose.
+8. **Camera post-step**: spring-arm boom from the character's render-local
+   pivot, terrain clearance and smoothing, then `setDriverPose(...)`. This
+   uses boot scratch, with no `drvLocal` literal (F6).
+9. **Sky + layers**: `applySkyState(driver pose)` updates the impostors and
+   the Earth/glow, and sets the layer masks for every scene object,
+   including `characterRoot` on NEAR.
+10. **LOD + streaming**: `lod.update(camera planet-frame pos)` and
+    `pool.pump()`. This runs in every phase, including LOADING and PAUSED,
+    so terrain keeps warming while the simulation is frozen.
+11. **HUD**: the throttled publish and the loading-progress check.
+
+`MultiCameraRig` then runs `executePasses` (the unchanged three-pass
+render).
+
+**4.4 Coordinate frames** (who uses which)
+- **Planet frame** (moon-fixed, f64): KCC `absPos`/`up`/`fwd`, `heading`,
+  the spawn, the LOD inputs, and the terrain sampling for camera clearance.
+- **Render-local** (f32, origin-relative): `localPosF32`, the driver pose
+  and `characterRoot`. Always Float64 subtraction, then narrowing.
+- **Spin**: planet to scene via `spinQuat(kcc.spinPhase)`. The character and
+  the camera each compose spin exactly once (stages 6 and 8), mirroring the
+  harness.
+- **Rig-local**: joint pivots in metres relative to `characterRoot` (§7).
+
+**4.5 Lifecycle**
+- **Boot**:
+  1. `PlayPage` mounts and calls `createMoonWorld()`: terrain init, the core
+     with `setTimeScale(0)`, the pool and its workers, the KCC teleport to
+     spawn, the scene graph and the animator.
+  2. The phase is LOADING. When the LOD reports the spawn neighbourhood
+     resident (the §10 criterion), the phase becomes CLICK_TO_PLAY.
+  3. A click requests pointer lock and the phase becomes PLAYING.
+  4. Losing pointer lock, or pressing `Esc`/`P`, gives PAUSED.
+- **Teardown** (on unmount only, which full page loads make rare): remove
+  the DOM listeners, call `pool.disposeAll()` and `animator.dispose()`, and
+  unregister the entity.
+- **Hot path**: stages 1–11 allocate nothing. All vectors, quaternions and
+  telemetry structs are boot-allocated module or `MoonWorld` fields (§11).
