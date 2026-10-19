@@ -1075,3 +1075,22 @@ Observations (NO change made — recorded for the Lead):
     R5 option menu (recommendation (a): rebases ≥ 1 with 7 admissible
     sites); ANCHOR → the ledger commit. · Lead round-7 directive §6 +
     §10.2. · Evidence: STATE.md. · Source: Lead round-7 directive §6.
+
+73. 2026-10-19 · 1F/manual-testing · game/src/test/Milestone1F_TestHarness.tsx ·
+    Lead-approved manual-observation overrides (verdict-neutral when
+    absent): (1) `?manual=1` — the phase machine starts at DONE instead
+    of WARMUP, so readUserInput (WASD/Shift/Space/V) is live from page
+    load and the WARMUP/LIVE autopilot phases + the suite never run (no
+    acceptance console line; badges stay ·····); (2) `?spawn=x,y,z` — a
+    normalized moon-fixed direction replacing the findSpawn result (the
+    24,000-candidate search is skipped when present; invalid input
+    warns and falls back to the search). NOTHING else touched: the
+    autopilot, physics, KCC, SAT_A/B/C derivation, walkFwd, and every
+    acceptance row are byte-identical when the params are absent
+    (verified live: default page still boots into WARMUP). Purpose: the
+    Lead walks the terrain by hand to understand the R5 autopilot stall;
+    not an acceptance path. TSC_EXIT=0 BUILD_EXIT=0 unpiped; live
+    verified (manual=1 → SEQUENCE DONE, no suite line; default →
+    WARMUP). · Lead approval in chat 2026-10-19. · Evidence: this
+    entry + live probe. · Source: Lead directive (manual-testing
+    overrides).

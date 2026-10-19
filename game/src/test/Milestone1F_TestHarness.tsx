@@ -164,6 +164,18 @@ function slopeFromNormal(d: Vec3): number {
 
 
 const SPAWN_DIR: Vec3 = (function findSpawn(): Vec3 {
+  // Round-7 manual-testing override (Lead-approved): ?spawn=x,y,z — a
+  // moon-fixed direction replacing the search result (normalized). Absent
+  // the param, the derivation below runs exactly as shipped.
+  const spawnParam = new URLSearchParams(window.location.search).get('spawn');
+  if (spawnParam !== null) {
+    const parts = spawnParam.split(',').map(Number);
+    const l = parts.length === 3 ? Math.hypot(parts[0], parts[1], parts[2]) : 0;
+    if (parts.every((v) => Number.isFinite(v)) && l > 0) {
+      return { x: parts[0] / l, y: parts[1] / l, z: parts[2] / l };
+    }
+    console.warn(`[M1F] ?spawn="${spawnParam}" invalid — falling back to the search spawn`);
+  }
   // Rotate the Earth direction 75° toward the sun side: Earth near horizon.
   let ax = earthDir.y * sunDir.z - earthDir.z * sunDir.y;
   let ay = earthDir.z * sunDir.x - earthDir.x * sunDir.z;
@@ -1364,7 +1376,12 @@ import { executePasses as RIGexecutePasses } from '../render/MultiCameraRig';
  * 10. SCRIPT PHASES + FRAME LOOP
  * ==========================================================================*/
 type Phase = 'WARMUP' | 'LIVE' | 'HEADLESS' | 'DONE';
-const script = { phase: 'WARMUP' as Phase, warm: 0, live: 0, armed: false };
+// Round-7 manual-testing override (Lead-approved): ?manual=1 starts the
+// phase machine at DONE — readUserInput (WASD/Shift/Space/V) is live from
+// page load and the WARMUP/LIVE autopilot phases + the suite never run.
+// Absent the param, the machine starts at WARMUP exactly as shipped.
+const MANUAL = new URLSearchParams(window.location.search).get('manual') === '1';
+const script = { phase: (MANUAL ? 'DONE' : 'WARMUP') as Phase, warm: 0, live: 0, armed: false };
 const LIVE_SECONDS = 120;
 const frameStats = { frames: 0, ms: 0 };
 

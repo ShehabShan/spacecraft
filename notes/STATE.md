@@ -69,6 +69,11 @@ R5 the single FAIL).
   recommendation (a) rebases ≥ 2 → ≥ 1 (gate-term ruling; 7 sites).
 - Evidence: notes/reports/evidence/M1F-r7-walks.json (429 records).
 1G not started.
+- MANUAL-TESTING OVERRIDES (Lead-approved 2026-10-19, CHANGES 73):
+  ?manual=1 (phase machine starts at DONE — WASD live from load, suite
+  never runs) and ?spawn=x,y,z (normalized moon-fixed spawn override,
+  search skipped). Verdict-neutral when absent (verified live). The Lead
+  is walking the R5 terrain by hand on the dev server (localhost:5173).
 
 ## 1D FPS BACKLOG (Lead-ordered note — do NOT fix now)
 The 1D dive integrates `flight.update(dt·4, 6)` with dt = REAL frame
