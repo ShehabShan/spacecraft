@@ -2,7 +2,7 @@
 
 - Task: **T1** (playable moon) — definition: `notes/task.md` § "T1 — PLAYABLE MOON"
 - Branch: `t1-playable-moon`
-- Stage: **PLANNING** — plan status IN PROGRESS (4/7 sections; Steps 11/15)
+- Stage: **PLANNING** — plan status IN PROGRESS (4/7 sections; Steps 12/15)
 - Last updated: 2026-10-20
 - **Resume at the FIRST UNCHECKED BOX** (planning item or build step).
 - Rules: planning changes NO game code (plan + process files only); each checked
@@ -27,7 +27,7 @@
   - [x] §9 Controller + camera plan
   - [x] §10 Game shell + HUD plan
   - [x] §11 Performance plan
-  - [ ] §12 Implementation phases (= the ordered BUILD steps)
+  - [x] §12 Implementation phases (= the ordered BUILD steps)
   - [ ] §13 Verification plan
   - [ ] §14 Risk register
   - [ ] §15 First coding step
@@ -1736,3 +1736,230 @@ post-processing in V1.
   machine (to be named by the Lead).
 - **Pool health.** `freeCount()` never drops below 6 during the walk.
   `inFlightTotal()` stays ≤ 24 (2 workers × 12).
+
+### §12 Implementation phases
+These are the ordered BUILD steps. Building starts only on the Lead's execute
+order (LEAD GATE, AGENT_BRIEF.md §4). Each step below is ONE commit and one
+checkpoint: the step box, the tracker row, the STATE.md NEXT ACTION and a
+`notes/CHANGES.md` entry ride in the same commit (§6). Steps are never merged
+or reordered. A step that fails its checks is not committed as done.
+
+**Rules for every step**
+- **V0 base check** (every step, exit codes UNPIPED):
+  `cd game && npm run typecheck; echo TSC_EXIT=$?` → 0;
+  `npm run build; echo BUILD_EXIT=$?` → 0;
+  `git diff --quiet ea112ec -- Design_specs Milestone; echo CANON_EXIT=$?` → 0.
+- **Additive only.** Until B11, no file outside `src/play/**`, `src/main.tsx`,
+  `src/App.tsx`, `tools/test-play-*.mjs` and the process files changes.
+  `git diff --quiet <step-base> -- src/core src/render src/workers src/test`
+  must exit 0 in B1–B10. That is what makes skipping the M1A–M1F regression
+  pages legitimate before B11 (§3 invariant: regression is required only when
+  shared modules are touched).
+- **Node checks** are new scripts `game/tools/test-play-<area>.mjs`. They use
+  the existing loader pattern (`register('./ts-resolve-loader.mjs',
+  import.meta.url)`, as in `tools/diag-m1f-core.mjs` line 2), import only
+  `src/play/**` + `src/core/**` (no DOM, no WebGL), print one line
+  `[test-play-<area>] PASS n/n` or the failing assertions, and exit non-zero
+  on any failure. Each is run as `node tools/test-play-<area>.mjs; echo
+  NODE_EXIT=$?`. Modules that need THREE objects (rig, animator) use three's
+  pure math/scene classes, which run in Node without a renderer.
+- **Manual checks** are run on `npm run dev` at `http://localhost:5173/?page=play`
+  and recorded in the commit's VERIFIED block as observed facts.
+- **Anchors** (grep-verified at planning time, HEAD 6e17fd0):
+  `main.tsx` 11–17 (`pages` map) · `App.tsx` 1 (`PAGES`) · harness
+  `findSpawn` 167, `updateLOD` 360, `buildAstronaut` 577,
+  `computeDriverPose` 697, `applyRenderState` 810, `onFrame` 1399,
+  `pool.attach` 1572 / `primeAll` 1574 / `unprimeAll` 1581,
+  `<MultiCameraRig onFrame>` 1588 · `astronautKCC.ts` `input.jump` 65,
+  `telemetry` 238, `attachWriteThrough` 285, `teleportSurface` 347,
+  `resetIntegrityStats` 373, jump clear 483, jump read 590 ·
+  `MultiCameraRig.tsx` `NEAR_BIT` 41. If an anchor has drifted when a step
+  starts, re-grep it and note the new line in the commit; the code wins.
+
+**12.1 Step overview**
+
+| Step | Content (files, §5 names) | Playable / verifiable outcome | Node check |
+|---|---|---|---|
+| B1 | route + menu + `PlayPage` stub | `/?page=play` loads, menu lists PLAY first | — |
+| B2 | `world/moonConfig.ts`, `world/spawn.ts` | spawn pinned in Node | `test-play-spawn` |
+| B3 | `world/MoonLod.ts` | quadtree selection verified in Node | `test-play-lod` |
+| B4 | `world/skyState.ts`, `world/moonWorld.ts`, `ThirdPersonCamera.reset/pose`, `frame/playFrame.ts` (stages 6, 8-static, 9, 10) | **static moon**: terrain streams, Earthrise visible | — |
+| B5 | `ui/playStore.ts`, `input/InputState.ts`, `ui/Overlays.tsx`, `ui/PlayShell.tsx`, playFrame stages 1, 2, 11 | LOADING → CLICK_TO_PLAY → PLAYING ⇄ PAUSED | `test-play-shell` |
+| B6 | `character/AstronautRig.ts`, `CharacterAnimator.ts` (+ `RestAnimator`) | articulated astronaut stands at the spawn | `test-play-rig` |
+| B7 | `controller/PlayerController.ts`, `CharacterTelemetry.ts`, camera completed, stages 3–5, 7 | **FIRST PLAYABLE**: walk/run/jump/fall/slide, orbit camera | `test-play-controller` |
+| B8 | `character/animStateMachine.ts` (+ `legDrop`) | state sequences verified in Node | `test-play-anim` |
+| B9 | `character/ProceduralAnimator.ts`, wired | **ANIMATED**: all 8 states visible in play | `test-play-anim` (full) |
+| B10 | `ui/Hud.tsx`, publisher, `H` toggle; perf pass | HUD + zero-allocation proof | `test-play-perf` |
+| B11 | CONDITIONAL (Q2/Q3): `astronautKCC.ts` `coyoteTime`/`airControl` | coyote jump + air control; acceptance unchanged | `test-play-controller` (+core) |
+| B12 | OPTIONAL (Q6): `e2e/play.spec.ts` | automated smoke | Playwright |
+| B13 | close-out | T1 DONE, ready for Lead acceptance + merge | full §13 matrix |
+
+**12.2 Build steps** (resume at the first unchecked box)
+
+- [ ] **B1 — Route stub.**
+  - Files: `src/main.tsx` (add `play: () => import('./play/PlayPage')` to the
+    `pages` map, lines 11–17; keep the no-StrictMode comment), `src/App.tsx`
+    (first `PAGES` row `{ id: 'play', label: 'PLAY — Playable Moon (T1)' }`,
+    title per §5.1), `src/play/PlayPage.tsx` (default export: a full-window
+    div with "SOLARIS — PLAY (booting…)" and a `← menu` `<a href="/">`; no
+    world, no Canvas yet).
+  - Outcome: the route exists and is its own Vite chunk.
+  - Checks: V0; build output lists a separate `PlayPage-*.js` chunk; manual —
+    the menu shows PLAY first and the m1a–m1d links unchanged, `/?page=play`
+    renders the stub with no console errors, `/?page=m1a` still loads.
+
+- [ ] **B2 — Moon constants + spawn.**
+  - Files: `src/play/world/moonConfig.ts` (`MOON_PARAMS`, `MOON_R`, `MOON_MU`,
+    `MAX_TERRAIN_H`, `HEIGHT_SLACK`, `MOON_SPIN_OMEGA`, `MOON_ASTRONAUT`,
+    `PLAY_POOL_OPTS`, `PLAY_TUNING` incl. `readyRadiusM` 300 / `loadTimeoutS`
+    15; values by value from harness 100–137, each with a `// WHY:` source
+    line), `src/play/world/spawn.ts` (`slopeFromNormal` + `findEarthriseSpawn`
+    = harness 157–221 verbatim; `parseSpawnOverride`, prefix `[play]`).
+  - Outcome: the play world's numbers exist with zero runtime effect.
+  - Checks: V0; `test-play-spawn` asserts the A1/A2 literals field by field,
+    `findEarthriseSpawn(earthDir)` = (0.320588, −0.036825, 0.946503) to 1e-6
+    (the step pins the full-precision value it observes as the 1e-9 constant,
+    §6.1), spawn slope < 1°, Earth elevation 8.67° ± 0.01°, Sun 36.41° ± 0.01°,
+    and `parseSpawnOverride('?spawn=1,0,0')` = (1, 0, 0) / garbage → `null`.
+
+- [ ] **B3 — LOD controller.**
+  - Files: `src/play/world/MoonLod.ts` (class port of harness 274–434: module
+    globals → fields, algorithm byte-for-byte, plus the new
+    `residentAround(dir, radiusM)` of §10.3).
+  - Outcome: the quadtree runs headless.
+  - Checks: V0; `test-play-lod` with a fake pool: 341 nodes/face, 2,046 total;
+    at the spawn pose at 1.4 m AGL the finest selected level is `MAX_LEVEL` 4
+    and the leaf set is identical over 100 repeated `update` calls
+    (hysteresis, §11.4); ±0.5 m camera jitter changes 0 leaves;
+    `residentAround` = 0 on an empty pool and 1 when every request is
+    answered; heap delta ≈ 0 over 1,000 updates.
+
+- [ ] **B4 — Static world on screen.**
+  - Files: `src/play/world/skyState.ts` (`applySkyState` = harness 810–914
+    minus probes/satellites/`maskOverride`/`RIG.stats`; keep the
+    `spinQuatInto(kcc.spinPhase, _qS)` call per the §6.2 gotcha),
+    `src/play/world/moonWorld.ts` (`createMoonWorld` §6.3 steps 1–9,
+    `dispose` §6.4, `respawnPlayer`), `src/play/camera/ThirdPersonCamera.ts`
+    (ONLY `reset(kcc)` and the static pose: heading = Earth tangent, pitch
+    `camPitchDefault`, boom `camDistance`; the rest lands in B7),
+    `src/play/frame/playFrame.ts` (stages 6, 8 static, 9, 10), `PlayPage.tsx`
+    (Canvas + `<primitive object={world.sceneRoot}/>` + `MultiCameraRig
+    onFrame`; `pool.attach`/`primeAll`/`unprimeAll` copied from harness
+    1568–1581 line by line).
+  - Outcome: **a static moon** — terrain tiles stream in around the spawn,
+    Earth sits ~8.7° above the horizon toward the camera's view, stars and
+    Sun light render; nothing moves.
+  - Checks: V0; manual — terrain fills within ~15 s with no holes in the near
+    field, Earth visible, no console errors or worker errors; navigating to
+    `/?page=m1f` afterwards (full load) shows the 1F harness unaffected.
+
+- [ ] **B5 — Game shell.**
+  - Files: `src/play/ui/playStore.ts` (phases incl. `ERROR`),
+    `src/play/input/InputState.ts` (§9.1 map, held sets, edges, `blur`
+    clear, `attach/detach`), `src/play/ui/Overlays.tsx` + `PlayShell.tsx`
+    (loading bar, click-to-play, pause with the 1.0 s re-lock cool-down,
+    error + Reload), playFrame stages 1, 2 and 11 (clock, edges, loading-gate
+    publish).
+  - Outcome: LOADING → CLICK_TO_PLAY → (click) PLAYING; Esc/P → PAUSED;
+    hidden tab → PAUSED.
+  - Checks: V0; `test-play-shell` = §10.7 phase machine (every 10.2 row hit,
+    nothing else reachable, one `dt = 0` frame per resume) + loading gate
+    (0.5→1.0→1.0 and the 15 s timeout); manual — the overlays appear in that
+    order, pointer lock engages on click, Esc pauses, Resume is disabled for
+    ~1 s then works.
+
+- [ ] **B6 — Articulated rig.**
+  - Files: `src/play/character/CharacterAnimator.ts` (interface, §5.2) +
+    `RestAnimator` (identity pose; the B6–B8 placeholder),
+    `src/play/character/AstronautRig.ts` (§7.2 hierarchy, §7.3 3 geometries /
+    4 materials / 20 meshes on NEAR, `disposeAstronautRig`), mounted under
+    `characterRoot`, placed by stage 6.
+  - Outcome: the block astronaut stands on the terrain at the spawn, feet on
+    the ground, visor facing away from the camera (toward Earth).
+  - Checks: V0; `test-play-rig` = every §7.6 assertion; manual — soles touch
+    the terrain (no float, no sink > 2 cm), rig visible at both near and far
+    boom distances.
+
+- [ ] **B7 — Controller + camera (FIRST PLAYABLE).**
+  - Files: `src/play/controller/PlayerController.ts` (sole writer of
+    `kcc.input`; §9.2 math, §9.3 play-layer jump buffer + respawn),
+    `src/play/character/CharacterTelemetry.ts` (§5.2 fields from
+    `kcc.telemetry` (238) and `integrity`), `ThirdPersonCamera.ts` completed
+    (§9.4 orbit, spring arm, 4-sample clearance, FP toggle, zoom), playFrame
+    stages 3–5 and 7 (`kcc.update(dt, 5)` + `core.advance(dt)`).
+  - Outcome: **the moon is playable** — WASD camera-relative walk, Shift
+    sprint, Space jump, C crouch, R respawn, V first person, mouse orbit; the
+    rig moves and turns but holds its rest pose.
+  - Checks: V0; `test-play-controller` = §9.6 Mapping, Facing, Buffer, Pause,
+    Frame-rate independence, Camera clearance, Rebase continuity (the core
+    default-path item waits for B11); manual — walk/sprint speeds read
+    ~3.2 / ~6.5 m/s (temporary `console.debug` removed before commit, or the
+    B10 HUD), a jump lands, walking off a crater rim falls, a >45° slope
+    slides, the camera never clips into terrain on a full orbit, P freezes
+    everything.
+
+- [ ] **B8 — Animation state machine.**
+  - Files: `src/play/character/animStateMachine.ts` (§8.2 table, timers,
+    hysteresis; `legDrop` §8.1). Pure TS: no THREE.
+  - Outcome: the machine is verified in isolation; nothing on screen changes.
+  - Checks: V0; `test-play-anim` = §8.7 scripted sequences, hysteresis,
+    solver table to 0.1°, quaternion integrity, heap ≈ 0 over 10k steps.
+
+- [ ] **B9 — Procedural animator (ANIMATED).**
+  - Files: `src/play/character/ProceduralAnimator.ts` (§8.3–§8.6 poses,
+    `PoseBuffer` crossfade, stride scaling), swapped in for `RestAnimator`
+    in `PlayPage`.
+  - Outcome: **movement animates**: idle sway, walk and run cycles that
+    scale with speed, jump crouch → extension → tuck, arms-out fall, landing
+    absorb + recovery, slide pose, crouch blend.
+  - Checks: V0; `test-play-anim` extended with §8.7 foot slide (< 1 cm at
+    v ∈ {1, 2, 4, 8}) and interrupt (< 5° per frame); manual matrix — each of
+    Idle, Walk, Run, JumpLaunch, JumpRise, Fall, Land, Slide observed at least
+    once in a 2-minute session, no visible pops at transitions.
+
+- [ ] **B10 — HUD + performance pass.**
+  - Files: `src/play/ui/Hud.tsx`, `createTelemetryPublisher(100)` wiring,
+    the `H` toggle; any allocation fixes the perf check reveals.
+  - Outcome: the controls hint + speed/state/FPS/coords HUD; the play layer
+    proven allocation-free.
+  - Checks: V0; `test-play-perf` = §11.5 zero allocation (10,000 `playFrame`
+    calls on fakes, `--expose-gc`, heap delta ≈ 0, no trend) + §10.7 HUD
+    (≤ 10 publishes per simulated second at 144 Hz); manual — DevTools
+    allocation timeline over 30 s shows only terrain envelopes, HUD FPS ≥ 58,
+    `freeCount()` ≥ 6 throughout a 60 s walk/sprint.
+
+- [ ] **B11 — CONDITIONAL core edit (only on a Lead ruling for Q2 and/or Q3).**
+  - Files: `src/core/physics/astronautKCC.ts` (§5.3: optional `coyoteTime` /
+    `airControl`, default 0, branch skipped at 0; re-read the F14 jump clear
+    at 483 and the read at 590 before editing), `MOON_ASTRONAUT` enables the
+    ruled values, `PlayerController` drops nothing (the buffer stays in play).
+  - Outcome: a jump pressed ≤ `coyoteTime` after walking off a ledge fires;
+    limited air steering.
+  - Checks: V0; `test-play-controller` + the §9.6 core default-path item
+    (integrity trace byte-equal with both fields at 0); REGRESSION
+    `npx playwright test e2e/m1e.spec.ts e2e/m1f.spec.ts; echo PW_EXIT=$?` →
+    m1e 6/6 PASS, m1f badges exactly [PASS,PASS,PASS,PASS,FAIL] (R5 the parked
+    FAIL). With no ruling on record, this box is checked as **SKIPPED (no
+    ruling)** with that reason in the commit, and no core file changes.
+
+- [ ] **B12 — OPTIONAL Playwright smoke (Q6).**
+  - Files: `e2e/play.spec.ts` (+ `?autoplay=1` test mode in `PlayShell`,
+    inert without the parameter).
+  - Checks: V0; `npx playwright test e2e/play.spec.ts; echo PW_EXIT=$?` → 0
+    (CLICK_TO_PLAY ≤ 20 s, no console errors, non-blank canvas, HUD speed > 0
+    after W). Checked as SKIPPED if the Lead declines Q6.
+
+- [ ] **B13 — Close-out.**
+  - Run the full §13 verification matrix once on the final tree; record
+    every result in the commit.
+  - Tracker: build status DONE (pending Lead acceptance); STATE.md NEXT
+    ACTION → "Lead acceptance of T1, then merge `t1-playable-moon` → `main`"
+    (§4: merge only once DONE and verified; never force-push).
+  - Plan header stage → DONE after the Lead accepts.
+
+**12.3 Not a step** (excluded from every build step)
+- No edit to `Milestone1F_TestHarness.tsx` or any `src/test/**` file; no
+  harness consolidation (Option A follow-up is a separate task, §1).
+- No GLB asset, no sound, no saves (1G), no Design_specs/Milestone staging.
+- No KCC default change in any step; B11 is the only core touch and only on
+  a ruling.

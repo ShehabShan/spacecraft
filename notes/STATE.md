@@ -1,15 +1,18 @@
 # SOLARIS — STATE — PHASE 2: TASK DEVELOPMENT (contract: AGENT_BRIEF.md; phase-1 history preserved below)
 
 ## NEXT ACTION
-**T1 plan — checklist item "Steps" → sub-box §12 Implementation phases (= the
-ordered BUILD steps)** in `docs/T1-plan.md` (plan IN PROGRESS 4/7; Steps 11/15:
-§1–§10 as before; §11 Performance plan done — code-anchored cost table (pool
-96/2 workers, GRID_N 32 → ≤2,312 tris/chunk, ≤222k terrain tris, 2,046 LOD
-nodes, 3-pass rig), per-stage CPU budget ≤3 ms, allocation rules, LOD notes,
-perf checks). §12 must give ordered incremental phases, each with a
-playable/verifiable outcome + acceptance checks. Audit note: §8–§10 cite few
-code lines; §12/§13 should anchor to code like §3/§6/§11. Q1–Q8 await a Lead ruling but do not block
-planning; proceed with the stated defaults. Resume at the FIRST UNCHECKED BOX of its PLANNING CHECKLIST;
+**T1 plan — checklist item "Steps" → sub-box §13 Verification plan** in
+`docs/T1-plan.md` (plan IN PROGRESS 4/7; Steps 12/15: §1–§11 as before; §12
+Implementation phases done — 13 ordered build steps B1–B13 as checkboxes in
+12.2, each with files, a playable/verifiable outcome and checks; base check V0
+= typecheck + build exit 0 unpiped + canon diff; Node checks are new
+`game/tools/test-play-*.mjs` (spawn, lod, shell, rig, controller, anim, perf);
+B11 conditional on Q2/Q3, B12 optional on Q6). §13 must turn the §7.6/§8.7/
+§9.6/§10.7/§11.5 check lists and the 12.2 per-step checks into ONE matrix
+(typecheck, build, each test-play script with its PASS line, manual test
+matrix, optional Playwright smoke, M1F regression badges
+[PASS,PASS,PASS,PASS,FAIL]), anchored to code like §11/§12. Q1–Q8 await a Lead
+ruling but do not block planning; proceed with the stated defaults. Resume at the FIRST UNCHECKED BOX of its PLANNING CHECKLIST;
 draft sections incrementally per the schema in `notes/task.md` (each commit
 carries its checkbox + tracker row + this NEXT ACTION update). The "Steps"
 item holds the 15 required sections as sub-boxes (§1..§15), one checkpoint
@@ -187,6 +190,7 @@ milestone, Lead's call. (Evidence: notes/reports/M1F.md §10.5, §11.3.)
 | 21 | 2026-10-20 | T1 plan §10 Game shell + HUD | Same VM session (no drift at 745fbff); drafted §10 (10.1 route/menu, 10.2 phase table + pointer-lock rules, 10.3 loading gate 300 m / 15 s — sets the §6.3 criterion, 10.4 pause overlay, 10.5 HUD, 10.6 teardown, 10.7 checks); additive §5 amendments: PlayPhase ERROR, PLAY_TUNING readyRadiusM/loadTimeoutS, InputState toggleHud; NEXT = §11 Performance plan. |
 | 22 | 2026-10-20 | T1 plan §11 Performance plan | Same VM session (no drift at ba05413); quality audit vs checkpoints 1–6: format/process match, but §8–§10 had little code anchoring, so §11 cites code lines for every reused cost (harness 117–120/278/294/374, terrainField.ts 33–35, TerrainMeshPool.ts 17–20, MultiCameraRig.tsx 6–18/31/48–49, SkyImpostorPool.ts 145) and VERIFIED greps them; drafted 11.1 cost table, 11.2 stage budget, 11.3 allocation rules, 11.4 LOD, 11.5 checks; NEXT = §12 Implementation phases. |
 | 23 | 2026-10-20 | T1 plan consistency fix §8–§11 | Review of §8–§11 for errors/contradictions (budget too low for §12). Fixed: §5 InputState + §4.2 PlayInput edges and §9.1 key map lacked the H `toggleHud` edge that §10.5 and row 21 claimed; §4.2 phase list lacked ERROR; §11.1 spawn-search ref → §6.1. No section rewritten; NEXT unchanged = §12 Implementation phases. |
+| 24 | 2026-10-20 | T1 plan §12 Implementation phases | Fresh session (new VM; shallow clone `--depth 30` because a full clone stalled); §5 bootstrap reconciliation clean — HEAD 6e17fd0, tree clean, plan boxes §1–§11 checked, tracker last-commit f6a735f = the commit before the newest (convention), no drift. Drafted §12: rules + V0 base check, code-anchor list (grep-verified), 12.1 step table, 12.2 build steps B1–B13 as checkboxes (route stub → constants/spawn → LOD → static world → shell → rig → FIRST PLAYABLE B7 → state machine → ANIMATED B9 → HUD/perf → conditional core B11 → optional Playwright B12 → close-out B13), 12.3 non-steps. `node_modules` not installed in this VM session (no `npm ci`; planning only); canon check run as `git diff --quiet HEAD -- Design_specs Milestone` because `ea112ec` is outside the shallow history. NEXT = §13 Verification plan. |
 
 ## ANCHOR
 07ae8ad768089bebb5715d78fb67bc8a1312effe — round-7 report + ledgers (the wind-down commit; the tool/evidence work commit precedes it;
