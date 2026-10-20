@@ -2,8 +2,8 @@
 
 - Task: **T1** (playable moon) — definition: `notes/task.md` § "T1 — PLAYABLE MOON"
 - Branch: `t1-playable-moon`
-- Stage: **PLANNING** — plan status IN PROGRESS (4/7 sections; Steps 6/15)
-- Last updated: 2026-10-19
+- Stage: **PLANNING** — plan status IN PROGRESS (4/7 sections; Steps 7/15)
+- Last updated: 2026-10-20
 - **Resume at the FIRST UNCHECKED BOX** (planning item or build step).
 - Rules: planning changes NO game code (plan + process files only); each checked
   box rides in the same commit as the tracker row + `notes/STATE.md` NEXT ACTION
@@ -22,7 +22,7 @@
   - [x] §4 Architecture (module/data-flow diagram, text)
   - [x] §5 File-by-file change plan
   - [x] §6 World bootstrap plan
-  - [ ] §7 Character rig specification
+  - [x] §7 Character rig specification
   - [ ] §8 Animation state machine (table)
   - [ ] §9 Controller + camera plan
   - [ ] §10 Game shell + HUD plan
@@ -966,3 +966,209 @@ A player who stays in one place therefore spends about 105 min in Earth-light (0
 The phase goes LOADING → CLICK_TO_PLAY when `lod.residentAround(spawn.dir, …)` is true, or after the §10 timeout. The radius and timeout are set in §10.
 
 **6.4 Teardown** (`MoonWorld.dispose()`, run on `PlayPage` unmount): `pool.disposeAll()` (workers and meshes), dispose the sky material/geometry, the Earth/shell/glow geometries and materials, and the rig (`disposeAstronautRig`). After that, `core.unregister` if the API exists, otherwise nothing. `terrainField` is a module singleton and is never reset. That is why leaving the page is a full navigation (`<a href>`), matching every harness page.
+
+### §7 Character rig specification
+`character/AstronautRig.ts` builds the V1 character in code: a ROBLOX-like
+blocky astronaut about 1.87 m tall, made of 17 pivot groups with box meshes
+hanging below them. It has no skeleton, no skinning and no asset. Every
+number below is binding for the build. The only exception is the colour
+values, which are tunable within the listed palette.
+
+**Additions to §5 (additive, binding):**
+- `export const RIG_DIMS` (7.2). §8's pose and IK math reads it, and no
+  literal may be duplicated elsewhere.
+- `buildAstronautRig(groundClearance = 0.02)`, which takes an optional
+  parameter (7.4). `moonWorld` passes `MOON_ASTRONAUT.groundClearance`.
+
+**7.1 Axes, facing and rotation sign conventions** (checked numerically
+against `sphericalFrame.ts` and `astronautKCC.ts`)
+- **Rig-local axes** (three.js convention): +Y is up, −Z is facing, and +X
+  is the character's right, because (−Z)×(+Y) = +X.
+- **KCC frame.** `kcc.frameQuatInto` is `quatFromFrameInto(fwd, up)`
+  (`astronautKCC.ts` 367). Its matrix columns are X = `fwd`, Y = `up` and
+  Z = `fwd×up`. Z is exactly the KCC's own `_right` (line 555). So the
+  local +X of `characterRoot` is the KCC's forward. That is why the harness
+  box astronaut was modelled facing +X.
+- **Facing fix.** `rig.root` carries a constant yaw of **Ry(−π/2)**, set
+  once at boot. It maps rig −Z (facing) to +X (`kcc.fwd`), and rig +X
+  (right) to +Z (`kcc` right). This is a proper rotation, so there is no
+  mirroring: D strafes right and the visor faces the direction of travel.
+  The animator never writes `rig.root.quaternion` after boot.
+- **Rest pose = identity.** Every joint's rest quaternion is the identity,
+  with the legs straight and the arms hanging straight down at the sides.
+  A `PoseBuffer` filled with identity quaternions is therefore the rest
+  pose, and every pose quaternion in §8 is a rest-relative delta (which is
+  also how a retargeted GLB clip is expressed; see 7.5).
+- **Sign table.** For a joint whose segment hangs along −Y at rest:
+
+  | Motion | Axis/sign | Check |
+  |---|---|---|
+  | Hip or shoulder flexion (limb swings forward) | +X | Rx(+0.5)·(0,−1,0) = (0, −0.878, −0.479): toward −Z |
+  | Knee flexion (shin swings back) | −X | the opposite of flexion |
+  | Elbow flexion (forearm swings forward) | +X | the same as shoulder flexion |
+  | Spine/chest lean forward (the segment points +Y) | −X | Rx(t)·(0,1,0) = (0, cos t, sin t), so the top moves toward −Z when t < 0 |
+  | Ankle dorsiflexion (toes up) | +X | the toe at −Z rises when rotated +X about the ankle |
+  | Right-side abduction (limb out to +X) | +Z | Rz(+0.5)·(0,−1,0) = (+0.479, −0.878, 0) |
+  | Left-side abduction | −Z | mirror |
+
+- **Mirror rule.** Pose functions author ONE side and take
+  `side = +1 (R) / −1 (L)`. X components (flexion) keep their sign, and Y
+  and Z components are multiplied by `side`. A gait offsets the left side
+  by half a cycle (phase + 0.5).
+
+**7.2 Joint hierarchy, pivots and segments** (metres; "rest Y" is the
+pivot height above the sole in rig space)
+
+| Joint | Parent | Pivot offset from parent | Rest Y | Segment mesh(es) below the pivot: size w×h×d, centre offset, material |
+|---|---|---|---|---|
+| `hips` | `rig.root` | (0, 0.92, 0) | 0.92 | pelvis 0.36×0.18×0.24 @ (0, 0, 0), dark |
+| `spine` | hips | (0, 0.08, 0) | 1.00 | abdomen 0.34×0.20×0.24 @ (0, 0.10, 0), suit |
+| `chest` | spine | (0, 0.20, 0) | 1.20 | torso 0.46×0.34×0.28 @ (0, 0.15, 0), suit; chest panel 0.20×0.12×0.02 @ (0, 0.18, −0.15), accent; backpack 0.38×0.46×0.18 @ (0, 0.13, +0.23), dark |
+| `neck` | chest | (0, 0.32, 0) | 1.52 | neck ring (cylinder r 0.09, h 0.06) @ (0, 0.03, 0), dark |
+| `head` | neck | (0, 0.06, 0) | 1.58 | helmet (sphere r 0.21) @ (0, 0.08, 0), suit; visor 0.26×0.14×0.06 @ (0, 0.09, −0.19), visor |
+| `upperArmR` / `L` | chest | (±0.30, 0.28, 0) | 1.48 | upper arm 0.14×0.30×0.14 @ (0, −0.15, 0), suit |
+| `lowerArmR` / `L` | upperArm | (0, −0.30, 0) | 1.18 | forearm 0.13×0.26×0.13 @ (0, −0.13, 0), suit |
+| `handR` / `L` | lowerArm | (0, −0.26, 0) | 0.92 | glove 0.12×0.12×0.12 @ (0, −0.06, 0), dark |
+| `upperLegR` / `L` | hips | (±0.11, −0.06, 0) | 0.86 | thigh 0.17×0.40×0.19 @ (0, −0.20, 0), suit |
+| `lowerLegR` / `L` | upperLeg | (0, −0.40, 0) | 0.46 | shin 0.16×0.40×0.18 @ (0, −0.20, 0), suit |
+| `footR` / `L` | lowerLeg | (0, −0.40, 0) | 0.06 (ankle) | boot 0.16×0.08×0.28 @ (0, −0.02, −0.05), dark: the sole sits at y = 0, the toe at z −0.19 and the heel at z +0.09 |
+
+Notes:
+- **R is +X, L is −X** (7.1). `JOINTS` order and names are exactly the §5
+  list. `joints[name]` is the pivot `THREE.Group`.
+- **Derived extents.**
+  - The helmet top is at 1.87 m and the visor centre at 1.67 m. That is
+    within 5 cm of the KCC `eyeHeight` of 1.62, which keeps the FP camera
+    inside the helmet sphere.
+  - The hands reach 0.80 m (mid-thigh). The shoulder outer edge is at
+    x = 0.37.
+  - The backpack spans z +0.14…+0.32, so it reads as behind the character
+    from a trailing camera.
+- **Leg chain.** The hip pivot is at 0.86, with L1 = L2 = 0.40 and the ankle
+  at 0.06. The two-bone law of cosines gives (computed): a pelvis drop of
+  0.05 / 0.15 / 0.30 m needs hip flexion 20.4° / 35.7° / 51.3°, knee
+  flexion 40.7° / 71.3° / 102.6°, and ankle compensation equal to hip
+  flexion, so the foot stays flat. §8's crouch, landing and stance-IK poses
+  use this solver on `RIG_DIMS`.
+
+```ts
+export const RIG_DIMS = {
+  height: 1.87, eyeY: 1.67, hipsY: 0.92,
+  hipX: 0.11, hipDrop: 0.06, upperLeg: 0.40, lowerLeg: 0.40, ankleY: 0.06,
+  toeZ: -0.19, heelZ: 0.09,
+  shoulderX: 0.30, shoulderY: 0.28 /* from chest */, upperArm: 0.30, lowerArm: 0.26, hand: 0.12,
+} as const;  // restHipsY === RIG_DIMS.hipsY
+```
+
+**7.3 Geometry, materials and render flags**
+- **Geometries: three in total**, shared across all meshes and sized
+  through `mesh.scale`:
+  - a unit `BoxGeometry(1, 1, 1)` for all 18 boxes;
+  - `SphereGeometry(1, 20, 14)` for the helmet;
+  - `CylinderGeometry(1, 1, 1, 16)` for the neck ring.
+
+  `rig.geometries` holds exactly these three.
+- **Materials: four** `MeshStandardMaterial`s, with the harness palette
+  kept for continuity:
+  - `suit`: 0xe8ecef, roughness 0.85;
+  - `dark`: 0x3a4652, roughness 0.7 (pelvis, backpack, neck ring, gloves
+    and boots — dark extremities make the gait readable against bright
+    regolith);
+  - `visor`: 0x7fd4ff, emissive 0x1e7fb8 × 0.9, roughness 0.2,
+    metalness 0.1;
+  - `accent`: 0xd9822b, roughness 0.6 (the chest panel, which signals
+    facing in third person).
+- **Mesh count: 20.** That is 8 trunk/head meshes (pelvis, abdomen, torso,
+  chest panel, backpack, neck ring, helmet, visor), 6 arm meshes and 6 leg
+  meshes. These are 20 small draw calls on the NEAR pass (§11 budget).
+- **Scale is 1.0, in true metres.** KCC collision is a point at
+  `groundClearance` with no capsule, so the visual size never affects
+  physics. The scale is kept at 1 so that stride and foot-plant math in §8
+  stays metric.
+- **Layers.** After building, `rig.root.traverse(o => o.layers.mask =
+  NEAR_BIT)`. three.js tests layers per object, not per parent, so every
+  mesh must carry the bit. Default layer 0 already equals `NEAR_BIT`; the
+  explicit traverse documents the requirement and guards against a future
+  layer-bit change. `applySkyState` sets only `characterRoot` (§5).
+- **No shadows.** The rig enables no `shadowMap` (F15). A contact blob
+  shadow is a post-V1 polish item, not V1.
+- `frustumCulled` stays at its default. Static meshes call `updateMatrix()`
+  once and set `matrixAutoUpdate = false`. Joint groups keep auto-update
+  (they are animated).
+- `disposeAstronautRig(r)` removes `r.root` from its parent and disposes the
+  three geometries and four materials. It is teardown only.
+
+**7.4 Attachment under the floating-origin hierarchy and moon spin**
+```
+sceneRoot
+ ├─ spinGroup      pos −origin, quat spinQuat(θ)     terrain, shell (moon-fixed)
+ ├─ skyGroup       Earth hero, glow, stars, impostors
+ ├─ lights
+ └─ characterRoot  pos localPosF32, quat spin∘frame  (owned by stage 6, §4.3)
+     └─ rig.root   pos (0, −groundClearance, 0), quat Ry(−π/2)   (boot-constant)
+         └─ hips → … (17 joint groups; animator writes their quaternions + hips.position.y)
+```
+- `characterRoot` is a direct child of `sceneRoot`, NOT of `spinGroup`.
+  This mirrors the harness (`sceneRoot.add(astroMesh)`, line 598). Its
+  position comes from the core's render-local f32 copy of the INERTIAL
+  `absPos`, so spin must not be applied a second time through the parent.
+- In `PlayPage`'s mount effect, `characterRoot` is bound to the adapter with
+  `adapter.bind('play-astronaut', characterRoot)`, as in harness line 1573.
+  Stage 6 still sets `position` from `astroState.localPosF32` explicitly
+  (harness 1480–1481). The orientation is `quatMulInto(spinQuat, frameQuat,
+  scratch)`, using the exported helper (`sphericalFrame.ts` 194) instead of
+  the harness-private `quatMulF64`. It is computed in f64 scratch and
+  narrowed once with `quaternion.set`. Spin is composed exactly once.
+- **Why the `−groundClearance` offset.** The KCC rests the body at
+  R + h + `groundClearance` (`astronautKCC.ts` 353/976). Without the offset,
+  the boots float 2 cm above the terrain.
+- **Ownership split.**
+  - Stage 6 owns `characterRoot`.
+  - The animator owns everything below `rig.root`: joint quaternions plus
+    `hips.position.y` (bob, crouch and landing drop).
+  - Slope and lean tilts are applied on `hips` or `spine`, never on
+    `rig.root` or `characterRoot`. So the KCC heading is never contradicted
+    by the visual.
+- **Up vector caveat.** `characterRoot`'s +Y is `kcc.up`, a blend of radial
+  and surface normal (`upBlendWeight` 0.65), not the terrain normal. On a
+  slope, flat feet are off by up to (footLen/2)·tan(slope residual), about
+  4–8 cm at 30°. §8 owns the mitigation (ankle pitch from `slopeDeg`, plus
+  stance-foot IK if it is cheap). V1 accepts the residual.
+- **First person.** `animator.setVisible(false)` sets `rig.root.visible =
+  false`. This is the harness rule `astroMesh.visible = !camFirstPerson`.
+  The NEAR plane (0.1 m) would clip the helmet anyway.
+
+**7.5 GLB swap compatibility** (documented here; nothing is exported for it
+in V1)
+- **Bone map** to the conventional Mixamo names, for a future
+  `GltfAnimator`:
+  - `hips`→`Hips`, `spine`→`Spine`, `chest`→`Spine2`, `neck`→`Neck`,
+    `head`→`Head`;
+  - `upperArm*`→`*Arm`, `lowerArm*`→`*ForeArm`, `hand*`→`*Hand`;
+  - `upperLeg*`→`*UpLeg`, `lowerLeg*`→`*Leg`, `foot*`→`*Foot`;
+  - `*` is `Left`/`Right`, with the `mixamorig` prefix stripped.
+- **Facing correction.** glTF assets face **+Z** (glTF 2.0 convention), but
+  the rig contract is −Z. A `GltfAnimator` therefore wraps the loaded scene
+  in a group with Ry(π), placed under its own root (which carries the same
+  Ry(−π/2) and −groundClearance as `rig.root`). It normalises height to
+  `RIG_DIMS.height` with the soles at y = 0.
+- The `CharacterAnimator` contract (§5) is unchanged:
+  - `root`: feet contact at the origin, +Y up, −Z facing;
+  - `update(telemetry, dt)`, `setVisible`, `dispose`, `stateName`.
+
+  The controller, camera and frame pipeline never see joints.
+
+**7.6 Rig build checks** (these feed §13; a Node script, no browser)
+- `Object.keys(joints)` equals `JOINTS` in order, 17 entries, with the
+  parent of each joint as listed in 7.2.
+- At rest (identity pose), the world pivot positions match the "Rest Y"
+  column and the ±X offsets to 1e-6.
+- The minimum Y of the boot meshes' world bounding boxes is 0 to 1e-6, so
+  the soles are on the contact plane. `rig.root.position.y ===
+  −groundClearance`.
+- `rig.root.quaternion` maps (0, 0, −1) to (1, 0, 0) and (1, 0, 0) to
+  (0, 0, 1), each to 1e-9. The visor centre has rig z < 0.
+- A pose of Rx(+0.5) on `upperLegR` moves the right boot toward rig −Z
+  (the sign-table spot check).
+- The rig has 20 meshes, `geometries.length === 3`,
+  `materials.length === 4`, and every mesh has `layers.mask === NEAR_BIT`.
