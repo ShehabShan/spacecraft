@@ -35,6 +35,8 @@ export const PLAY_ENTITY_ID = 'play-astronaut';
 
 export interface MoonWorld extends SkyCtx {
   adapter: FloatingOriginAdapter;
+  /** The KCC's core entity (render-local `localPosF32` after adapter.update). */
+  astroState: ReturnType<SimulationCore['registerEntity']>;
   pool: PlayPool;
   lod: MoonLod;
   sceneRoot: THREE.Group;
@@ -113,7 +115,7 @@ export function createMoonWorld(opts: MoonWorldOptions): MoonWorld {
   const lod = new MoonLod(pool, MOON_R);
 
   const world: MoonWorld = {
-    core, adapter, kcc, sky, pool, lod, moonAbs: moonState.absPos, earthVec, earthDist,
+    core, adapter, astroState, kcc, sky, pool, lod, moonAbs: moonState.absPos, earthVec, earthDist,
     earthMesh, glow, characterRoot, sceneRoot, spinGroup, skyGroup, earthDir, sunDir, spawnDir,
     respawnPlayer() { kcc.teleportSurface(spawnDir.x, spawnDir.y, spawnDir.z); },
     dispose() {

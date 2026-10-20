@@ -1173,3 +1173,17 @@ Observations (NO change made — recorded for the Lead):
     Sun active, heap 16 KB/1,000 calls, respawn 0 m); test-play-lod 40/40;
     test-play-spawn 70/70; TSC/BUILD exit 0; K10 grep clean.
     · Source: Lead execute order.
+
+81. 2026-10-21 · T1/B4b · game/src/play/camera/ThirdPersonCamera.ts (new),
+    game/src/play/frame/playFrame.ts (new), game/tools/test-play-frame.mjs
+    (new), game/src/play/world/moonWorld.ts (astroState exposed) · static
+    third-person camera (reset(kcc, toward), planet-frame boom with the
+    harness 4-sample terrain clamp + height clamp, harness lookAtQuatInto)
+    and createPlayFrame stages 6/8/9/10 (spin composed once, setDriverPose
+    with boot scratch, applySkyState, lod.update + pool.pump every frame).
+    No runtime effect (not imported by PlayPage yet). · WHY: T1 plan §12.2
+    B4 → B4b, §4.3, §9.4, K1. · Evidence: test-play-frame PASS (finite unit
+    driver pose, boom 7.000 m, Earth in front hemisphere 28.9° off-axis, Sun
+    active, lod/pump 60/60, residentAround 1, heap < 64 KB / 10,000 frames);
+    test-play-world 23/23; TSC/BUILD exit 0; K10 grep clean.
+    · Source: Lead execute order.

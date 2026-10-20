@@ -2,7 +2,7 @@
 
 - Task: **T1** (playable moon) — definition: `notes/task.md` § "T1 — PLAYABLE MOON"
 - Branch: `t1-playable-moon`
-- Stage: **BUILDING** — plan READY (7/7); Lead execute order recorded 2026-10-20; build B3/13 done + B4a (of B4a–B4c), next B4b
+- Stage: **BUILDING** — plan READY (7/7); Lead execute order recorded 2026-10-20; build B3/13 done + B4a–B4b (of B4a–B4c), next B4c
 - Last updated: 2026-10-20
 - **Resume at the FIRST UNCHECKED BOX** (planning item or build step).
 - Rules: planning changes NO game code (plan + process files only); each checked
@@ -1950,7 +1950,7 @@ or reordered. A step that fails its checks is not committed as done.
         `MultiCameraRig.tsx`, which Node type-stripping cannot load) and stubs
         `document` for `makeGlowQuad`'s CanvasTexture. Heap tolerance 64 KB
         over 1,000 calls (observed 16 KB: V8 noise, no per-call objects).
-  - [ ] **B4b — Static camera + frame stages.**
+  - [x] **B4b — Static camera + frame stages.**
     - Files: `src/play/camera/ThirdPersonCamera.ts` (only `reset(kcc)` and
       the static pose: heading = Earth tangent, pitch `camPitchDefault`, boom
       `camDistance`), `src/play/frame/playFrame.ts` (stages 6, 8 static, 9
@@ -1964,6 +1964,27 @@ or reordered. A step that fails its checks is not committed as done.
         composition);
       - `lod.update` and `pool.pump` run on every frame;
       - the heap delta is ≈ 0 over 1,000 frames.
+    - **Build notes (B4b, 2026-10-21, independent decisions — later steps use these).**
+      - `ThirdPersonCamera.reset(kcc, toward)` takes the look-toward direction
+        (the plan said `reset(kcc)`); the static pose faces the Earth tangent,
+        so PlayPage/respawn pass `world.earthDir`.
+      - `poseInto(kcc)` works in the PLANET frame (K1) and writes
+        `offsetPlanet` (camera − feet) and `quatPlanet`; `boomLen` is the
+        clamped boom. B7 adds orbit input, spring-arm regrowth, smoothing, FP.
+      - `lookAtQuatInto` is exported from `ThirdPersonCamera.ts` (harness
+        verbatim, F27 basis); `quatMulInto` from `playFrame.ts`.
+      - `createPlayFrame(world, cam)` returns the `onFrame(delta)`; stage 6
+        composes the spin once, stage 8 rotates the planet offset/quat by it
+        and calls `setDriverPose` with boot scratch (no `drvLocal` literal),
+        stage 10 feeds `lod.update` the CAMERA position in the planet frame.
+      - `MoonWorld.astroState` (the core entity) is exposed for
+        `localPosF32`.
+      - Heap row: warm 2,000 frames, measure 10,000 (< 64 KB). V8 warm-up
+        retains ~30–70 KB over the first ~1,000 frames that does not grow
+        with N (1k → 31 KB, 10k → 18 KB, 50k → 2.8 KB).
+      - Observed at spawn: boom 7.000 m, camera–character 7.595 m,
+        fwd·earth 0.876, Earth 28.9° off the view axis (inside the 31° half
+        FOV; B7 tuning may lower the pitch to centre it).
   - [ ] **B4c — PlayPage wiring (static moon on screen).**
     - Files: `src/play/PlayPage.tsx` (Canvas + `<primitive
       object={world.sceneRoot}/>` + `MultiCameraRig onFrame`;
