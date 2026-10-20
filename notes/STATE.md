@@ -6,8 +6,9 @@ required sections, "Verification per step" (B1–B13 → checks table) and
 "Risks & open decisions" (§14 K1–K13 by reference + Q1–Q8 decision table with
 defaults and the step each is needed before). DO NOT BUILD until the Lead's
 execute order ("execute the T1 plan") is recorded in the APPROVAL LEDGER.
-On that order: build step **B1 — Route stub** (§12.2, §15). An execute order
-without a ruling on a Q accepts that Q's default. Each build commit carries
+On that order: build step **B1 — Route stub** (§12.2, §15). Q1–Q8 are RULED
+(APPROVAL LEDGER 2026-10-20; plan "Rulings" table): B11 (coyoteTime +
+airControl) and B12 (Playwright smoke) are IN scope; play `spinOmega` = 0. Each build commit carries
 its step box + tracker row + this NEXT ACTION update + a CHANGES.md entry.
 
 Phase-1 legacy (parked — carries forward unchanged): M1F round-7 ruling still
@@ -153,6 +154,7 @@ milestone, Lead's call. (Evidence: notes/reports/M1F.md §10.5, §11.3.)
 | 2026-10-19 | PHASE-2 AMENDMENTS (Lead): planning is INCREMENTAL and multi-session (plan files carry a PLANNING CHECKLIST; drafted section by section with checkpoint commits — NOT one-shot); EVERY commit in either stage is a checkpoint: plan checkbox + tracker row + STATE.md NEXT ACTION ride in the SAME commit so each push is a complete resume point; LEAD GATE between plan READY and build start — execute only on the Lead's order |
 | 2026-10-19 | TASK EXECUTION RESERVED FOR FRESH SESSIONS (Lead): the session that builds/maintains the process must not plan or build tasks itself; its T1-planning checkpoints (3d8dcb8, 6c11ca8) REVERTED by Lead order (clean slate — the Lead is editing the T1 definition in notes/task.md before a planning session starts) |
 | 2026-10-20 | R5 WAIVER (Lead): the M1F R5 FAIL is deferred to later work and counts as PASS in every task verification/regression check (T1 §13.5, B11). Not a blocker, not a regression; record as `R5 WAIVED`. No harness/spec/row/threshold change; every other FAIL still blocks. |
+| 2026-10-20 | T1 OPEN QUESTIONS RULED (Lead; Q2/Q5/Q8 delegated to the bot): Q1 Option B; Q2 (a) opt-in KCC `coyoteTime` default 0, play 0.10 s; Q3 yes, `airControl` 0.3 default 0; Q4 crouch blend pose; Q5 core untouched, jump buffer in the play layer; Q6 yes (Playwright runnable in the VM); Q7 `play` only; Q8 play `MOON_ASTRONAUT.spinOmega` = 0 (harness/KCC defaults unchanged). B11 + B12 now IN scope. NOT an execute order — build still awaits "execute the T1 plan". |
 
 ## SESSION LOG
 | # | Date | Goal | Outcome | Handoff note |
@@ -187,6 +189,7 @@ milestone, Lead's call. (Evidence: notes/reports/M1F.md §10.5, §11.3.)
 | 26 | 2026-10-20 | Lead directive: R5 waiver | Recorded the R5 waiver (R5 FAIL = PASS for verification) in AGENT_BRIEF.md §8 + §10, notes/task.md T1 constraints, APPROVAL LEDGER, and T1 plan §12 B11 + §13 (erratum, 13.5 table and pass rule). Docs only; no code. Plan unchanged at Steps 13/15; NEXT unchanged = §14 Risk register. |
 | 27 | 2026-10-20 | T1 plan §14 Risk register | Fresh session (new VM, full clone of `t1-playable-moon` OK); §5 bootstrap reconciliation clean — HEAD 3b5e98a, tree clean, plan boxes §1–§13 checked, no drift; tracker last-commit e063c7c was one checkpoint stale (R5-waiver commit 3b5e98a is newer) → repaired to 3b5e98a. Drafted §14: 14.1 register K1–K13 (all nine NEXT-ACTION risks + harness leakage, warm-up hang, jump-buffer Q5, GLB-swap rot), each with likelihood, a proving check and an owner step; 14.2 Q→risk map; 14.3 stop triggers. Commits authored as the repo owner (ShehabShan). Then drafted §15 First coding step (B1 route stub spec; §10.1 label corrected to §5.1) and checked "Steps" 15/15 → plan 5/7. Plain `git push` works once the user approves it in chat (the earlier "hang" was an unattended approval). NEXT = Verification per step. |
 | 28 | 2026-10-20 | T1 plan: Verification per step + Risks & open decisions | Fresh session (new VM, full clone of `t1-playable-moon` OK); §5 bootstrap reconciliation clean — HEAD 6283bdc, tree clean, plan boxes through "Steps" 15/15 checked, tracker last-commit bf7bc6c = the commit before the newest (convention), no drift. Drafted "Verification per step" (B1–B13 → §13.2/§13.3/§13.5/§14 table, reference only) → plan 6/7 (9cb9abb). Drafted "Risks & open decisions" (§14 by reference + Q1–Q8 table: default, needed-before step, risk moved) → plan 7/7 READY, stopped at the LEAD GATE. Push: `git push` through the integration proxy and the git-data API both block until the user approves the request in chat — retry while the user is present. NEXT = Lead execute order, then B1. |
+| 29 | 2026-10-20 | Record Q1–Q8 rulings | Same VM session (no drift at 1cb9894). Lead ruled Q1/Q3/Q4/Q6/Q7 and delegated Q2/Q5/Q8; recorded the choices + reasons in plan "Rulings", B2/B11/B12 notes, APPROVAL LEDGER. `npm ci` CI_EXIT=0; Playwright verified runnable (Chrome 152; m1a badges [P,P,P,P,F] — row 5 frame time = the known env-soft row). Plan stays READY; still at the LEAD GATE. NEXT = execute order → B1. |
 
 ## ANCHOR
 07ae8ad768089bebb5715d78fb67bc8a1312effe — round-7 report + ledgers (the wind-down commit; the tool/evidence work commit precedes it;

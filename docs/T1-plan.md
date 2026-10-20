@@ -1821,6 +1821,9 @@ or reordered. A step that fails its checks is not committed as done.
     (the step pins the full-precision value it observes as the 1e-9 constant,
     §6.1), spawn slope < 1°, Earth elevation 8.67° ± 0.01°, Sun 36.41° ± 0.01°,
     and `parseSpawnOverride('?spawn=1,0,0')` = (1, 0, 0) / garbage → `null`.
+  - **Q8 ruling (2026-10-20):** `MOON_ASTRONAUT.spinOmega` = 0 (play config
+    copy only; the harness and KCC defaults are untouched), with a `// WHY:`
+    line citing Q8. `test-play-spawn` pins `spinOmega === 0`.
 
 - [ ] **B3 — LOD controller.**
   - Files: `src/play/world/MoonLod.ts` (class port of harness 274–434: module
@@ -1929,6 +1932,9 @@ or reordered. A step that fails its checks is not committed as done.
     `freeCount()` ≥ 6 throughout a 60 s walk/sprint.
 
 - [ ] **B11 — CONDITIONAL core edit (only on a Lead ruling for Q2 and/or Q3).**
+  - **Ruled IN (2026-10-20): Q2 = (a) and Q3 = yes.** B11 is applied, not
+    skipped: both opt-in fields, default 0, play values `coyoteTime` 0.10 s
+    and `airControl` 0.3. The baseline-first m1e/m1f regression is mandatory.
   - Files: `src/core/physics/astronautKCC.ts` (§5.3: optional `coyoteTime` /
     `airControl`, default 0, branch skipped at 0; re-read the F14 jump clear
     at 483 and the read at 590 before editing), `MOON_ASTRONAUT` enables the
@@ -1944,6 +1950,8 @@ or reordered. A step that fails its checks is not committed as done.
     ruling)** with that reason in the commit, and no core file changes.
 
 - [ ] **B12 — OPTIONAL Playwright smoke (Q6).**
+  - **Ruled IN (2026-10-20): Q6 = yes**, because Playwright runs in the build
+    VM (verified: Chrome 152 installed, `e2e/m1a.spec.ts` ran to its badges).
   - Files: `e2e/play.spec.ts` (+ `?autoplay=1` test mode in `PlayShell`,
     inert without the parameter).
   - Checks: V0; `npx playwright test e2e/play.spec.ts; echo PW_EXIT=$?` → 0
@@ -2281,6 +2289,25 @@ leakage (B1–B10). Every one has a proving check in the B1–B13 table above.
 | Q6 | Playwright smoke `e2e/play.spec.ts` | yes, optional final step | B12 | adds an automated K10/K11 guard | "no" = B12 SKIPPED |
 | Q7 | Menu entries | add `play` only | B1 | — | also listing m1e/m1f = two extra `PAGES` rows in B1 |
 | Q8 | Moon spin in play | keep `spinOmega` 0.0005 rad/s (sunset ~21 min after load) | B2 | K6 | `spinOmega` 0 (or slower) = one field in `moonConfig.ts`, pinned by `test-play-spawn` |
+
+**Rulings (Lead, 2026-10-20)** — these replace the defaults above. Q2, Q5 and
+Q8 were delegated to the bot ("choose the best one"); the choice and the
+reason are recorded here.
+
+| Q | Ruling | Reason (delegated items) | Effect on the steps |
+|---|---|---|---|
+| Q1 | **Option B** | — | as planned |
+| Q2 | **(a)** opt-in KCC field `coyoteTime`, default 0, play value 0.10 s *(delegated)* | (b) teleports velocity and bypasses the F18 spin-phase launch compose; (a) is default-off, so acceptance behaviour cannot change | B11 applied |
+| Q3 | **yes**, `airControl` 0.3, default 0 | — | B11 applied |
+| Q4 | **yes**, simple crouch blend pose | — | as planned (B9) |
+| Q5 | **core untouched; buffer in the play layer** *(delegated)* | the F14 lines are a ratified core edit and are flagged for the 1G §3.5 re-grep; changing comment or behaviour there gains the play page nothing. The comment/behaviour mismatch stays recorded (§2 Q5, K12) for a later core task | as planned (B7) |
+| Q6 | **yes** — Playwright runs in this environment | — | B12 applied |
+| Q7 | **`play` only** | — | as planned (B1) |
+| Q8 | **`spinOmega` = 0** in the play page's `MOON_ASTRONAUT` copy *(delegated)* | at 0.0005 rad/s the spawn goes dark 21 min after load for ~105 min (§6.1), which reads as a rendering fault in a free-roam V1. With 0 the Earthrise light holds, and Earth stays fixed in the sky, as it does on the real (tidally locked) Moon. Harness and KCC defaults are unchanged. | B2 sets and pins 0; K6 retired. K1 still applies: the play layer keeps composing `spinQuatInto(kcc.spinPhase)`, and `test-play-controller` runs its K1 case with a nonzero test spin |
+
+With Q2 and Q3 ruled in, B11 is a real core edit (K8). Its baseline-first
+m1e/m1f regression (§13.5) is mandatory, and B13 re-runs m1e and m1f on the
+final tree.
 
 **Lead gate.** With this item checked the plan is READY. Building starts
 only on the Lead's execute order ("execute the T1 plan", AGENT_BRIEF.md §4).
