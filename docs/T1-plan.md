@@ -2,7 +2,7 @@
 
 - Task: **T1** (playable moon) — definition: `notes/task.md` § "T1 — PLAYABLE MOON"
 - Branch: `t1-playable-moon`
-- Stage: **PLANNING** — plan status IN PROGRESS (4/7 sections; Steps 12/15)
+- Stage: **PLANNING** — plan status IN PROGRESS (4/7 sections; Steps 13/15)
 - Last updated: 2026-10-20
 - **Resume at the FIRST UNCHECKED BOX** (planning item or build step).
 - Rules: planning changes NO game code (plan + process files only); each checked
@@ -28,7 +28,7 @@
   - [x] §10 Game shell + HUD plan
   - [x] §11 Performance plan
   - [x] §12 Implementation phases (= the ordered BUILD steps)
-  - [ ] §13 Verification plan
+  - [x] §13 Verification plan
   - [ ] §14 Risk register
   - [ ] §15 First coding step
 - [ ] Verification per step
@@ -1939,7 +1939,7 @@ or reordered. A step that fails its checks is not committed as done.
     (integrity trace byte-equal with both fields at 0); REGRESSION
     `npx playwright test e2e/m1e.spec.ts e2e/m1f.spec.ts; echo PW_EXIT=$?` →
     m1e 6/6 PASS, m1f badges exactly [PASS,PASS,PASS,PASS,FAIL] (R5 the parked
-    FAIL). With no ruling on record, this box is checked as **SKIPPED (no
+    FAIL; `PW_EXIT` is therefore 1 by design, so judge by the badges, §13.5). With no ruling on record, this box is checked as **SKIPPED (no
     ruling)** with that reason in the commit, and no core file changes.
 
 - [ ] **B12 — OPTIONAL Playwright smoke (Q6).**
@@ -1963,3 +1963,128 @@ or reordered. A step that fails its checks is not committed as done.
 - No GLB asset, no sound, no saves (1G), no Design_specs/Milestone staging.
 - No KCC default change in any step; B11 is the only core touch and only on
   a ruling.
+
+### §13 Verification plan
+This section turns every check list in the plan into one matrix:
+§6.1, §7.6, §8.7, §9.6, §10.7, §11.5 and the 12.2 per-step checks. Each build
+step runs the subset its 12.2 box names. B13 runs everything once, on the
+final tree. A "clean" or "PASS" claim needs an observed, UNPIPED exit code
+(standing rule, approval ledger 2026-10-15).
+
+**Erratum to 12.2 B11** (verified at HEAD e063c7c, `game/e2e/m1f.spec.ts`):
+- The m1f spec asserts `not.toContain('FAIL')` on the joined badges ("no FAIL
+  badge may remain").
+- R5 is the parked FAIL, so `npx playwright test e2e/m1f.spec.ts` **exits 1
+  by design**.
+- The regression criterion is therefore the badge vector the spec logs
+  (`[m1f gate] badges: …`), not the exit code. B11's text is corrected in place.
+
+**13.1 Base commands (V0, every step)** — run from `game/`:
+
+| # | Command | Pass evidence |
+|---|---|---|
+| V0.1 | `npm ci; echo CI_EXIT=$?` (once per fresh VM/session) | `CI_EXIT=0` |
+| V0.2 | `npm run typecheck; echo TSC_EXIT=$?` | `TSC_EXIT=0` |
+| V0.3 | `npm run build; echo BUILD_EXIT=$?` | `BUILD_EXIT=0`, plus a `PlayPage-*.js` chunk from B1 on |
+| V0.4 | `git diff --quiet ea112ec -- Design_specs Milestone; echo CANON_EXIT=$?` | `CANON_EXIT=0`. In a shallow clone without `ea112ec`, use `HEAD` and say so |
+| V0.5 | `git diff --quiet <step-base> -- src/core src/render src/workers src/test; echo SHARED_EXIT=$?` (B1–B10) | `SHARED_EXIT=0`. A non-zero result means a shared module was touched, so §13.5 regression becomes mandatory for that step |
+
+**13.2 Node test matrix** — `node [--expose-gc] tools/test-play-<area>.mjs;
+echo NODE_EXIT=$?`.
+- Each script registers `./ts-resolve-loader.mjs`, as `tools/diag-m1f-core.mjs`
+  does.
+- Each script prints `[test-play-<area>] PASS n/n` and exits non-zero on any
+  failed assertion.
+- A script, once introduced, stays green in every later step. B13 runs all
+  seven.
+
+| Script | From | Assertions (source) |
+|---|---|---|
+| `test-play-spawn` | B2 | A1/A2 literals field by field; spawn dir (0.320588, −0.036825, 0.946503) pinned (1e-9 after B2 fixes it); slope < 1°; Earth 8.67° / Sun 36.41° ± 0.01°; `parseSpawnOverride` valid → vector, garbage → `null` (§6.1, B2) |
+| `test-play-lod` | B3 | 341 nodes/face and 2,046 total; `MAX_LEVEL` 4 at the spawn pose; leaf set stable over 100 updates; ±0.5 m jitter changes 0 leaves; `residentAround` 0 → 1; heap ≈ 0 over 1,000 updates (§11.1, §11.4, §10.3) |
+| `test-play-shell` | B5 | every §10.2 row hit and nothing else reachable; one `dt = 0` frame per resume; loading gate 0.5 → 1.0 → 1.0 and the 15 s ± 1 frame timeout; a hidden tab pauses with an unchanged tick count (§10.7) |
+| `test-play-rig` | B6 | the 17 joints in order with their parents; rest pivots to 1e-6; sole min-Y 0; root quaternion axis maps; visor z < 0; the Rx(+0.5) sign check; 20 meshes / 3 geometries / 4 materials, all `NEAR_BIT` (§7.6) |
+| `test-play-controller` | B7 (+B11) | Mapping, Facing, Buffer (0.10 s fires / 0.20 s does not), Pause bit-identical over 120 frames, frame-rate independence 30/60/144 Hz ≤ 1 cm, camera clearance ≥ terrain + 0.35 and boom ≥ 1.2 m, rebase continuity ≤ 1 mm (§9.6); from B11, also the core default-path trace |
+| `test-play-anim` | B8 (B9 full) | scripted state sequences; ±0.2 m/s hysteresis gives 0 transitions; coyote bump gives no air state; `legDrop` table to 0.1°; sole·up > 0.9999; unit quaternions; heap ≈ 0 over 10k; from B9, also foot slide < 1 cm at v ∈ {1, 2, 4, 8} and interrupt < 5°/frame (§8.7) |
+| `test-play-perf` | B10 | `--expose-gc`: 10,000 `playFrame` calls on fakes, heap delta ≈ 0 with no trend; HUD ≤ 10 publishes per simulated second at 144 Hz (§11.5, §10.7) |
+
+"Heap ≈ 0" means a `process.memoryUsage().heapUsed` delta after a final
+`gc()` of less than 64 KiB, with no monotonic growth across 10 equal chunks.
+
+**13.3 Manual test matrix** — `npm run dev`, Chrome, hardware WebGL,
+`http://localhost:5173/?page=play`.
+- Each row is recorded in the step's VERIFIED block as `MTn ✓ <observed>`,
+  or `MTn ✗ <observed>`, which blocks the step.
+- "From" is the first step whose commit must record the row. B13 records all
+  of them.
+
+| Row | From | Action | Expected |
+|---|---|---|---|
+| MT1 | B1 | open `/` | PLAY listed first; m1a–m1d links unchanged; `/?page=m1a` still loads |
+| MT2 | B4 | load `/?page=play` | terrain streams around the spawn with no near-field holes; Earth ~8.7° up in view; no console or worker errors |
+| MT3 | B5 | wait, then click | loading bar → "Click to play" within 15 s (or the timeout note); a click engages pointer lock → PLAYING |
+| MT4 | B5 | Esc, then P, then switch tabs | each one → PAUSED; Resume disabled for ~1 s, then works; no lurch on resume |
+| MT5 | B6 | stand at the spawn | rig on the ground (no float, sink ≤ 2 cm), visor away from the camera |
+| MT6 | B7 | W / A / S / D, mouse orbit | camera-relative movement; body turns toward its motion; diagonal speed not faster |
+| MT7 | B7 | hold Shift; hold C | ≈ 6.5 m/s sprint; ≈ 1.5 m/s crouch; Space does nothing while crouched |
+| MT8 | B7 | Space on flat ground; Space ~0.1 s before landing | the jump lands; the buffered press re-launches on touchdown |
+| MT9 | B7 | walk off a crater rim | falls, lands, keeps control |
+| MT10 | B7 | climb a > 45° slope | slides down; can walk out at the bottom |
+| MT11 | B7 | full 360° orbit at both pitch limits; wheel | camera never inside terrain; zoom clamps to 1.2 … 12 m |
+| MT12 | B7 | V, then V; R | FP and back; respawn at the spawn with zero velocity |
+| MT13 | B7 | walk/sprint more than 1,100 m from the spawn | an origin rebase happens (local > 1,024 m) with no visible camera or character jump |
+| MT14 | B9 | a 2-minute session through every state | Idle, Walk, Run, JumpLaunch, JumpRise, Fall, Land, Slide each seen at least once; stride scales with speed; no pops at transitions; pause freezes the pose |
+| MT15 | B10 | H; a 60 s walk + sprint | HUD toggles; FPS EMA ≥ 58; DevTools allocation timeline shows only terrain envelopes; `freeCount()` ≥ 6 |
+| MT16 | B4 | `← menu`, then `/?page=m1f` (full load) | the 1F harness boots and runs unaffected by the play page |
+
+**13.4 Playwright smoke (optional, B12 / Q6)**
+- `npx playwright test e2e/play.spec.ts; echo PW_EXIT=$?` → `PW_EXIT=0`.
+- The spec checks, as listed in B12:
+  - CLICK_TO_PLAY within 20 s;
+  - no console errors;
+  - a non-blank canvas;
+  - HUD speed > 0 after W in `?autoplay=1`.
+- It inherits `playwright.config.ts`: Chrome channel, preview server on
+  :4173, `workers: 1`.
+- If Chrome is not installed where the step runs, the row is recorded as
+  NOT RUN with the reason. It is never recorded as passed.
+
+**13.5 Milestone regression (when shared modules are touched)**
+- **When it is required.**
+  - It is mandatory at B11.
+  - It is mandatory at any step whose V0.5 is non-zero.
+  - It is not required for B1–B10 when V0.5 = 0. The page is additive, and
+    AGENT_BRIEF.md §3 requires regression only when shared modules change.
+- **Baseline first.** Before the B11 edit, run the suites on the unedited
+  tree and record the badges. After the edit, the result must equal that
+  baseline. This separates environment noise from a regression.
+- **Command.** `npx playwright test e2e/<spec>.ts; echo PW_EXIT=$?`.
+  - `astronautKCC.ts` (B11) → `m1e`, `m1f`.
+  - Any other `src/core/**` change → all of `m1a`…`m1f`.
+- **Expected outcomes** (from the STATE.md ledger):
+
+| Suite | Expected | Known environment-soft rows |
+|---|---|---|
+| m1a | 5/5 PASS | row 5 (frame time, machine-dependent) |
+| m1b | 5/5 PASS | — |
+| m1c | 4/4 PASS | — |
+| m1d | 5/5 PASS on hardware WebGL | row 2 (dive misses grounding under SwiftShader; FPS backlog) |
+| m1e | 6/6 PASS, `PW_EXIT=0` | — |
+| m1f | badges exactly `["PASS","PASS","PASS","PASS","FAIL"]`; `PW_EXIT=1` by design (R5 parked) | — |
+
+- **Pass rule.** Each suite's badges must match its baseline exactly. An
+  environment-soft row may differ only if it also differed in the baseline.
+- **Stop rule.** Any other difference is a regression. Fix it before
+  reporting, or STOP (AGENT_BRIEF.md §9).
+
+**13.6 Evidence format** (the VERIFIED block of every build commit)
+- **Exit codes.** One line per command, with the exit token: `TSC_EXIT=0`,
+  `BUILD_EXIT=0`, `CANON_EXIT=0`, `SHARED_EXIT=0`.
+- **Node checks.** One line per script: the PASS line plus `NODE_EXIT=0`.
+- **Manual checks.** One line per manual row that the step introduces or
+  re-checks, with the observed value. For example: `MT7 ✓ sprint 6.4–6.5 m/s
+  (HUD)`.
+- **Regression.** Where regression was run, the baseline and post-edit
+  badges side by side.
+- **Not run.** Anything not run is written as NOT RUN with the reason. A step
+  whose required checks were not run is not checked off.
