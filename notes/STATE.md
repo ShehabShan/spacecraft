@@ -1,19 +1,19 @@
 # SOLARIS — STATE — PHASE 2: TASK DEVELOPMENT (contract: AGENT_BRIEF.md; phase-1 history preserved below)
 
 ## NEXT ACTION
-**T1 BUILDING — next build step B5 — Game shell** (`docs/T1-plan.md` §12.2
-B5): `src/play/ui/playStore.ts` (phases incl. `ERROR`),
-`src/play/input/InputState.ts` (§9.1 map, held sets, edges, `blur` clear,
-`attach/detach`), `src/play/ui/Overlays.tsx` + `PlayShell.tsx` (loading bar,
-click-to-play, pause with the 1.0 s re-lock cool-down, error + Reload),
-playFrame stages 1, 2 and 11 — read the full B5 entry in the plan first and
-split it per the oversized-step rule if it will not fit one session. B1–B4
-are DONE — read the B4a/B4b/B4c build notes (B4c: boot entity sync; run
-Node tests with `node --expose-gc`; `tools/check-play-b4.mjs` automates
-MT2/MT16 against `vite preview --port 4173`). The Lead's execute order is
-in the APPROVAL LEDGER (2026-10-20); Q1–Q8 rulings apply. Each build commit
-carries its step box, the tracker row, this NEXT ACTION update and a
-CHANGES.md entry. Known benign: the `/favicon.ico` 404 console error.
+**T1 BUILDING — next build step B5a — Store + input** (`docs/T1-plan.md`
+§12.2 B5 → B5a): `src/play/ui/playStore.ts` (phases incl. `ERROR`, pure
+`nextPhase` for the §10.2 table), `src/play/input/InputState.ts` (§9.1 map,
+held sets, edges, `blur` clear, lock-change first-delta drop, `attach/detach`)
+and `tools/test-play-shell.mjs` part 1. B5 was split into B5a–B5c
+(2026-10-21); B5b = playFrame stages 1/2/11 + loading gate, B5c = overlays +
+PlayShell + PlayPage wiring. B1–B4 are DONE — read the B4a/B4b/B4c build
+notes (B4c: boot entity sync; run Node tests with `node --expose-gc`;
+`tools/check-play-b4.mjs` automates MT2/MT16 against `vite preview --port
+4173`). The Lead's execute order is in the APPROVAL LEDGER (2026-10-20);
+Q1–Q8 rulings apply. Each build commit carries its step box, the tracker
+row, this NEXT ACTION update and a CHANGES.md entry. Known benign: the
+`/favicon.ico` 404 console error.
 
 Phase-1 legacy (parked — carries forward unchanged): M1F round-7 ruling still
 PENDING (option menu `notes/reports/M1F.md` §15.7; recommendation (a): rebase

@@ -2,7 +2,7 @@
 
 - Task: **T1** (playable moon) — definition: `notes/task.md` § "T1 — PLAYABLE MOON"
 - Branch: `t1-playable-moon`
-- Stage: **BUILDING** — plan READY (7/7); Lead execute order recorded 2026-10-20; build B4/13 done (B4 = B4a–B4c), next B5
+- Stage: **BUILDING** — plan READY (7/7); Lead execute order recorded 2026-10-20; build B4/13 done (B4 = B4a–B4c), next B5a (B5 = B5a–B5c)
 - Last updated: 2026-10-21
 - **Resume at the FIRST UNCHECKED BOX** (planning item or build step).
 - Rules: planning changes NO game code (plan + process files only); each checked
@@ -2027,6 +2027,52 @@ or reordered. A step that fails its checks is not committed as done.
     (0.5→1.0→1.0 and the 15 s timeout); manual — the overlays appear in that
     order, pointer lock engages on click, Esc pauses, Resume is disabled for
     ~1 s then works.
+  - **Split (2026-10-21, oversized-step rule).** B5 touches four new files,
+    playFrame and PlayPage and needs headless + browser checks — too big for
+    one commit. Intent unchanged; B5 is checked when B5c is.
+  - [ ] **B5a — Store + input (headless).**
+    - Files: `src/play/ui/playStore.ts` (`PlayPhase` incl. `ERROR`,
+      `PlayHud`, `usePlayStore` with `setPhase`/`setLoad`/`setHud`, and the
+      pure `nextPhase(phase, event)` that encodes the §10.2 table),
+      `src/play/input/InputState.ts` (§5.2 class + §9.1 map + `zoomDelta`,
+      held sets, repeat-ignored edges, `blur` → `clearHeld`, lock-change
+      handling with the first-delta drop + per-event clamp (K3),
+      `attach/detach`, `requestLock`, `clearEdges`),
+      `tools/test-play-shell.mjs` (new).
+    - Outcome: no runtime effect (nothing imports them yet).
+    - Checks: V0; `test-play-shell` part 1 — every §10.2 row hit and no
+      other transition reachable; InputState with a fake element/document:
+      WASD/Shift/C held → `moveX/moveY/sprint/crouch`, one edge per physical
+      press (repeat ignored), keys ignored while unlocked, `blur` clears
+      held, lock change clears held + drops the first mouse delta,
+      `detach` removes every listener.
+  - [ ] **B5b — Frame stages 1, 2, 11 + loading gate (headless).**
+    - Files: `src/play/frame/playFrame.ts` (stage 1 clock with
+      `resumedThisFrame`, stage 2 edges — `pause` → `exitPointerLock` +
+      PAUSED, `respawn` (respawnPlayer, dt = 0), `toggleHud` —, stage 11
+      loading gate (two consecutive `residentAround = 1.0` or
+      `loadTimeoutS`, ≤10 Hz `setLoad`)), `src/play/ui/shellRuntime.ts`
+      (DOM-event → `nextPhase` glue: `pointerlockchange`,
+      `pointerlockerror`, `visibilitychange`, `webglcontextlost`, worker
+      `error`), `tools/test-play-shell.mjs` part 2.
+    - Outcome: the frame loop owns `dt` gating; still no UI.
+    - Checks: V0; loading gate 0.5 → 1.0 → 1.0 gives CLICK_TO_PLAY on the
+      second 1.0, a stuck 0.9 gives it at 15 s ± 1 frame with the streaming
+      note; exactly one `dt = 0` frame per resume; hidden tab → PAUSED with
+      `dt = 0` on the next frame; test-play-frame still green.
+  - [ ] **B5c — Overlays + PlayShell + PlayPage wiring (browser).**
+    - Files: `src/play/ui/Overlays.tsx` (`LoadingOverlay`,
+      `ClickToPlayOverlay`, `PauseOverlay` with the 1.0 s Resume cool-down,
+      `ErrorOverlay` + Reload), `src/play/ui/PlayShell.tsx`,
+      `src/play/PlayPage.tsx` (InputState attach on the canvas, shell
+      runtime, the B4 `← menu` link moves into the pause overlay),
+      `tools/check-play-b5.mjs` (new; extends check-play-b4).
+    - Outcome: LOADING → CLICK_TO_PLAY → (click) PLAYING; Esc/P → PAUSED;
+      hidden tab → PAUSED.
+    - Checks: V0; check-play-b5 — the loading overlay then "Click to play"
+      within 20 s, no non-favicon errors, m1f&manual=1 still boots; manual
+      MT3/MT4 (overlays in order, lock on click, Esc pauses, Resume disabled
+      ~1 s then works). Closing: check B5c **and** B5.
 
 - [ ] **B6 — Articulated rig.**
   - Files: `src/play/character/CharacterAnimator.ts` (interface, §5.2) +
