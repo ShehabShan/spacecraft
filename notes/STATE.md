@@ -1,15 +1,15 @@
 # SOLARIS — STATE — PHASE 2: TASK DEVELOPMENT (contract: AGENT_BRIEF.md; phase-1 history preserved below)
 
 ## NEXT ACTION
-**T1 plan — checklist item "Steps" → sub-box §9 Controller + camera plan** in
-`docs/T1-plan.md` (plan IN PROGRESS 4/7; Steps 8/15: §1–§7 as before; §8
-Animation state machine done — 8-state table with top-down priority,
-hysteresis + coyote grace, blend times + `snap` interrupt buffer, two-bone
-`legDrop` solver, no-slide gait (cadence/amplitude/stance-fraction law),
-launch/tuck/arms-out/land/slide poses, slope-foot ankle pitch+roll via new
-telemetry `slopeFwdDeg`/`slopeSideDeg` (additive §5 amendment)). §9 must
-cover controller + camera AND decide the §8.4 caveat: optional ~70 ms
-jump-impulse delay for a true crouch anticipation (default: no delay). Q1–Q8 await a Lead ruling but do not block
+**T1 plan — checklist item "Steps" → sub-box §10 Game shell + HUD plan** in
+`docs/T1-plan.md` (plan IN PROGRESS 4/7; Steps 9/15: §1–§8 as before; §9
+Controller + camera done — input map, camera-relative moveF/moveR math
+(c = h × up = KCC right), orient-to-movement via autoTurn, play-layer jump
+buffer, coyote/air-control only via opt-in default-0 KCC fields (Q2a/Q3),
+§8.4 jump-delay DECIDED = no delay, hard-landing recovery, respawn/pause dt=0,
+orbit/boom/4-sample clearance/spring arm smoothed in the PLANET frame, FP
+toggle, KCC touchpoint table, checks). §10 must cover route, menu, loading,
+pointer lock + click-to-play, pause, respawn UI, HUD (§4.2 playStore). Q1–Q8 await a Lead ruling but do not block
 planning; proceed with the stated defaults. Resume at the FIRST UNCHECKED BOX of its PLANNING CHECKLIST;
 draft sections incrementally per the schema in `notes/task.md` (each commit
 carries its checkbox + tracker row + this NEXT ACTION update). The "Steps"
@@ -184,6 +184,7 @@ milestone, Lead's call. (Evidence: notes/reports/M1F.md §10.5, §11.3.)
 | 17 | 2026-10-20 | T1 planning (fresh session, PromptQL VM) — bootstrap + plan checkpoints | Bootstrap per §5: clone clean at 089b157 = origin; tracker/STATE/plan checkboxes agree. REPAIR: row 16 handoff was "(pending)" — filled from evidence. Checkpoint 4: Steps §4 Architecture drafted (Steps 4/15). Checkpoint 5: Steps §5 File-by-file change plan drafted (Steps 5/15) + §4.4 erratum. Push was blocked (PromptQL `__github` integration not enabled) until the user connected it; c1926d1 + 77b0318 were then pushed together (the 77b0318 message line "Push still blocked" is stale). Checkpoint 6: Steps §6 World bootstrap plan drafted (Steps 6/15) + Q8 added. | (not written at session end — REPAIRED by session 18: session 17 stopped after checkpoint 6 `550c4a0`; state = plan 4/7, Steps 6/15, §1–§6 done; next = §7 Character rig specification) |
 | 18 | 2026-10-20 | T1 planning (fresh session, PromptQL VM) — bootstrap + plan checkpoints | Bootstrap per §5: clone clean at 550c4a0 = origin; tracker/STATE/plan checkboxes agree. REPAIR: row 17 handoff was "(in progress)" — filled from evidence. Checkpoint 7: Steps §7 Character rig specification drafted (Steps 7/15) — rig axes/sign conventions verified numerically against quatFromFrameInto (X=fwd, Y=up, Z=fwd×up) and the KCC right vector; two additive amendments to the §5 AstronautRig.ts API: `RIG_DIMS` export + optional `buildAstronautRig(groundClearance = 0.02)`. | Next: §8 Animation state machine (table) — the first unchecked box; Q1–Q8 still await the Lead (non-blocking). |
 | 19 | 2026-10-20 | T1 plan §8 Animation state machine | Bootstrapped per §5 (fresh VM clone; git log/status/filesystem agree with tracker + STATE.md at 31c6b0a, no drift, .DS_Store untracked and never staged); drafted §8 (8.1 solver, 8.2 table, 8.3 no-slide gait, 8.4 air/land poses, 8.5 slide, 8.6 slope residual, 8.7 checks) + additive §5 telemetry amendment; plan Steps 8/15; NEXT = §9 Controller + camera plan (must rule on the §8.4 jump-impulse-delay caveat). Session ended deliberately after one checkpoint (user OLU budget). |
+| 20 | 2026-10-20 | T1 plan §9 Controller + camera | Same VM session (no drift at 964623a); drafted §9 (9.1 input map, 9.2 movement math, 9.3 jump/coyote/air/landing/respawn/pause, 9.4 camera, 9.5 KCC touchpoints, 9.6 checks); DECIDED the §8.4 caveat (no jump-impulse delay; `jumpDelayS` 0 reserved); additive §5 PLAY_TUNING fields; REPAIR: §8 used KCC class-default speeds (walk 4/sprint 8/crouch 1.8/jump 5) — corrected to MOON_ASTRONAUT (3.2/6.5/1.5/4.2), thresholds unchanged and still valid; NEXT = §10 Game shell + HUD plan. Push tip: `git -c http.version=HTTP/1.1 push` (default HTTP/2 push stalled through the integration proxy). |
 
 ## ANCHOR
 07ae8ad768089bebb5715d78fb67bc8a1312effe — round-7 report + ledgers (the wind-down commit; the tool/evidence work commit precedes it;

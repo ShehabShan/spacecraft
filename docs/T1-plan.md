@@ -2,7 +2,7 @@
 
 - Task: **T1** (playable moon) — definition: `notes/task.md` § "T1 — PLAYABLE MOON"
 - Branch: `t1-playable-moon`
-- Stage: **PLANNING** — plan status IN PROGRESS (4/7 sections; Steps 8/15)
+- Stage: **PLANNING** — plan status IN PROGRESS (4/7 sections; Steps 9/15)
 - Last updated: 2026-10-20
 - **Resume at the FIRST UNCHECKED BOX** (planning item or build step).
 - Rules: planning changes NO game code (plan + process files only); each checked
@@ -24,7 +24,7 @@
   - [x] §6 World bootstrap plan
   - [x] §7 Character rig specification
   - [x] §8 Animation state machine (table)
-  - [ ] §9 Controller + camera plan
+  - [x] §9 Controller + camera plan
   - [ ] §10 Game shell + HUD plan
   - [ ] §11 Performance plan
   - [ ] §12 Implementation phases (= the ordered BUILD steps)
@@ -621,6 +621,9 @@ export const PLAY_TUNING: {
   jumpBufferS: number;         // 0.12
   coyoteS: number;             // 0.10 (used only if Q2(a) is ruled in)
   airControl: number;          // 0.3 (used only if Q3 is ruled in)
+  camBoomTau: number;          // 0.30 s boom regrowth (§9.4 amendment)
+  hardLandingSpeed: number; landRecoverScale: number; // 4.5 m/s / 0.5 (§9.3 amendment)
+  jumpDelayS: number;          // 0 — §9.3 decision; only if the Lead overrides
 };
 ```
 
@@ -1220,7 +1223,7 @@ whose entry holds wins, subject to the exit rule of the current state)
 
 Rules:
 - **Hysteresis.** Walk/Run uses 5.0/4.5 m/s, which falls between `walkSpeed`
-  4 and `sprintSpeed` 8. Idle/Walk uses 0.30/0.15 m/s. Crouch speed (1.8)
+  3.2 and `sprintSpeed` 6.5 (`MOON_ASTRONAUT`, A2). Idle/Walk uses 0.30/0.15 m/s. Crouch speed (1.5)
   stays in Walk.
 - **Coyote grace.** If the character leaves the ground without `jumped`
   (bumps, crests) and `airTime` < 0.15 s, the ground state is held.
@@ -1303,7 +1306,7 @@ Rules:
   - The drop eases out to `D` over the first 30 % of `T_land`, then recovers
     with a smoothstep.
   - Chest −X `0.6·D/0.30`, arm flexion +0.3 for balance.
-  - A full-height jump (`landingSpeed` ≈ 5) gives D = 0.20 and T_land = 0.30 s.
+  - A flat full-height jump (`landingSpeed` ≈ 4.2) gives D ≈ 0.17 and T_land ≈ 0.27 s.
 
 **8.5 Slide pose**
 - The stride phase is frozen and the legs are at `legDrop(0.15)`.
@@ -1341,3 +1344,193 @@ Rules:
   any joint by < 5° between frames.
 - **Integrity.** Every quaternion is unit to 1e-6. The heap delta over 10k
   `update` calls is about 0, so there is zero allocation.
+
+### §9 Controller + camera plan
+
+The play controller (`controller/PlayerController.ts`) and the camera
+(`camera/ThirdPersonCamera.ts`) are play-layer modules. The KCC stays the
+physics authority. All vector math is in the **planet frame** (moon-fixed,
+f64). Render-local values are produced only at the stage-6 and stage-8
+extraction points (§4.3), each of which composes spin exactly once. Speeds
+are the `MOON_ASTRONAUT` values (A2, verbatim):
+
+| Parameter | Value |
+|---|---|
+| walk | 3.2 |
+| sprint | 6.5 |
+| crouch | 1.5 |
+| jump | 4.2 |
+| `accelTau` | 0.15 s |
+| `autoTurnRate` | 6 rad/s |
+| moon g | 1.62 m/s² |
+
+**9.1 Input mapping** (`input/InputState.ts`; look and keys are read only
+while `pointerLocked`, and §10 owns the click-to-play overlay)
+
+| Input | Field | Effect |
+|---|---|---|
+| W / S | `moveY` +1 / −1 | forward / back, relative to the camera |
+| D / A | `moveX` +1 / −1 | strafe right / left, relative to the camera |
+| Shift (hold) | `sprint` | sprint speed. It is ignored while crouching (the KCC already gives crouch priority) |
+| Space (press) | `jumpPressed` edge | jump, through the 9.3 buffer |
+| C (hold) | `crouch` | crouch speed and the §8 crouch weight. Jumping is blocked while crouched (KCC `jump && !crouch`) |
+| Mouse X / Y | `lookDX` / `lookDY` | orbit yaw / pitch (9.4). In FP: body yaw / look pitch |
+| Wheel | `zoomDelta` (additive field) | boom distance, clamped to [1.2, 12] |
+| V | `toggleCam` edge | TP ↔ FP (9.4) |
+| R | `respawn` edge | respawn (9.3) |
+| P / Esc | `pause` edge | pause. Esc also releases pointer lock, which also pauses (§10) |
+
+Keys are tracked as held sets. `keydown` repeat events are ignored, so an
+edge fires once per physical press. A `blur` clears every held key, so no
+stuck keys after an alt-tab.
+
+**9.2 Movement math** (stage 4)
+- Let `h` be the camera `heading` (unit, ⊥ `kcc.up`). The camera's right is
+  `c = h × up`, which is the KCC's own right convention (`_right = fwd × up`,
+  `astronautKCC.ts` ~555).
+- The desired direction is `d = h·moveY + c·moveX`. When |d| > 1 it is
+  normalised, so diagonals are not faster.
+- The controller writes `moveF = d·kcc.fwd` and `moveR = d·(kcc.fwd × up)`.
+  The KCC rebuilds `vDes = (fwd·moveF + right·moveR)·speed`. Because `fwd`
+  and `right` span the same tangent plane as `h` and `c`, `vDes` is exactly
+  `d·speed`. The movement direction depends only on the camera and never on
+  the body's facing, so there is no feedback loop.
+- **Facing ("orient to movement").** In TP, `turnRate = 0` and
+  `autoTurnEnabled = true`. The KCC turns `fwd` toward the control velocity
+  with `step = a·(1 − e^{−8dt})`, capped at 6 rad/s. A 180° reversal therefore
+  turns in about 0.5 s while the velocity swings through `accelTau`.
+  Strafing (A/D only) turns the body sideways, as in Unreal/ROBLOX.
+  `telemetry.turnApplied` is NOT fed back into the camera, because `heading`
+  is not stored relative to `fwd` (§4.2).
+- **Sprint.** Sprint is forwarded only while `inputMag > 0.5`, so it never
+  fires from standing. The 0 → 6.5 m/s ramp follows `accelTau`: 95 % in
+  about 0.45 s, which is a deliberately weighty lunar feel. No change to
+  `accelTau`.
+- **Slopes and sliding** are KCC-owned (`maxWalkSlopeDeg` and `slideAngleDeg`
+  in `MOON_ASTRONAUT`, verbatim). The controller adds nothing. While
+  `sliding`, input still steers `vCtl` on top of `vSlide`, which is the
+  existing KCC behaviour.
+- **Fixed step.** The KCC's own 1/60 accumulator (`update(dt, 5)`, F8) and
+  `core.advance(dt)` make the physics frame-rate independent. The controller
+  is evaluated once per frame. Its inputs are levels (held keys) plus the
+  buffered jump edge, so a frame that runs 0 or 5 substeps loses nothing.
+  The F10 note applies: a press made on a 0-substep frame carries over.
+
+**9.3 Jump, fall, landing and respawn** (the controller vs KCC split)
+- **Jump buffer** (play layer, F10/Q5). A press sets `buffer = jumpBufferS`
+  (0.12 s). While `buffer > 0` and the KCC can launch, the controller sets
+  `kcc.input.jump = true`. `postSimulate` detects the launch (grounded →
+  airborne with `vertSpeed` > 0.5), clears the buffer and raises
+  `jumpedThisFrame`. The result: a press up to 0.12 s before touchdown jumps
+  on the landing tick.
+- **Coyote time.**
+  - Under Q2(a): the opt-in KCC field `coyoteTime` (default 0, so acceptance
+    behaviour is unchanged) lets `_flightTick` honour `jump` within
+    `coyoteS` = 0.10 s of leaving the ground without a jump. It launches along
+    the remembered normal, with the F18 spin-phase composition reused.
+  - Without the ruling, V1 has the buffer only. That is documented, and it is
+    not emulated by teleport (Q2(b) breaks F18).
+- **The §8.4 caveat is DECIDED here: no jump-impulse delay.** The impulse
+  lands on the press tick, so responsiveness wins. The crouch anticipation
+  stays visual-only (compressed to about 50 ms). The Lead may override this
+  with a single `jumpDelayS` tuning field (default 0).
+- **Air control.**
+  - Under Q3: the opt-in `airControl` field (default 0; play value 0.3) adds,
+    in `_flightTick`, a tangential acceleration of `airControl·(d·walk −
+    v_tan)/accelTau`. It acts only on the tangential part, never along up.
+  - Without the ruling, flight is purely inertial, as now.
+  - Q3's default is yes.
+- **Landing recovery.** A soft landing (`landingSpeed` ≤ 4.5 m/s, which is
+  above a flat full-height jump of about 4.2) has no gameplay penalty; it is
+  only the §8 Land pose. A hard landing (> 4.5, for example off a crater
+  rim) scales `moveF`/`moveR` by `landRecoverScale` = 0.5 for the §8
+  `T_land`, so the absorb reads as weight. This is play layer only, and
+  there is no fall damage in V1.
+- **Respawn (R).** The character is placed at the §6 boot spawn through the
+  same KCC placement call boot uses. The controller then clears the buffer
+  and edges and calls `cam.reset(kcc)` (heading = `kcc.fwd`, default pitch
+  and distance). The respawn frame runs with `dt = 0` (the same rule as
+  resume) so no catch-up ticks run on the new pose.
+- **Pause.** Stage 1 forces `dt = 0` while not PLAYING and on the resume
+  frame (F7), so physics, animation and camera smoothing all freeze.
+  Streaming continues (§4.3 stage 10).
+
+**9.4 Camera** (pre-step at stage 3, post-step at stage 8)
+- **Orbit.**
+  - Each frame `heading` is re-projected onto the current `up` plane and
+    renormalised (parallel transport, §4.2).
+  - It is then rotated about `up` by `a = −lookDX·lookSens` (0.0022 rad/px).
+    By Rodrigues, a mouse move to the right (dx > 0) turns `heading` toward
+    `c` (computed check in VERIFIED).
+  - `pitch = clamp(pitch + lookDY·lookSens, −1.2, 1.2)` (default 0.35; >0
+    means above the character, looking down; mouse-down raises the camera
+    — the conventional non-inverted orbit).
+  - Mouse look is applied **raw** (unsmoothed); `camRotTau` = 0 is reserved.
+- **Boom.**
+  - The pivot is `P = charPos + up·pivotHeight` (1.4 m).
+  - The desired camera is `C = P − h·cos(pitch)·dist + up·sin(pitch)·dist`.
+- **Terrain collision** (the harness pattern, F6, extended):
+  - The terrain is sampled (planet frame, CPU height function) at 4 points:
+    0.25, 0.5, 0.75 and 1.0 of the boom.
+  - The boom length is cut to the first sample where `boomHeight <
+    terrain + camClearance` (0.4 m). It is clamped to ≥ 1.2 m.
+  - The camera height is also clamped to `terrain(C) + 0.4`.
+  - Spring arm: the length **shrinks instantly** (never clips) and **regrows**
+    with `camBoomTau` = 0.30 s (an additive `PLAY_TUNING` field).
+- **Follow smoothing.** The pivot lags the character with `camPosTau` = 0.08 s,
+  using `k = 1 − e^{−dt/τ}`. **Smoothing runs in the planet frame**, as a lag
+  offset relative to the true pivot. Render-local positions jump on every
+  floating-origin rebase, so smoothing them would visibly lurch. The spin
+  phase is composed only at extraction.
+- **Look-at** is the smoothed pivot. `setDriverPose` gets a boot-scratch pose
+  (no `drvLocal` literal, F6).
+- **First person (V).**
+  - On enter: `lookYawDelta = signedAngle(fwd, heading)` once, so the body
+    faces where the camera looked. Then `autoTurnEnabled = false`, mouse X
+    drives `kcc.lookYawDelta`, and `heading` tracks `kcc.fwd`.
+  - The camera sits at `charPos + up·eyeHeight` (1.62) with the pitch
+    applied, and `animator.setVisible(false)`.
+  - On exit: `heading = kcc.fwd` and `autoTurnEnabled = true`.
+  - The minimum TP distance (1.2 m) keeps the helmet outside the 0.1 m near
+    plane.
+- **Recentering.** There is no auto-recenter behind the character (PC
+  convention). Respawn and FP exit realign it.
+
+**9.5 KCC touchpoints**
+
+| Direction | Members | Owner |
+|---|---|---|
+| Write (each frame) | `input.moveF/moveR/sprint/crouch/jump`, `input.turnRate` (=0), `lookYawDelta` (FP), `autoTurnEnabled` | PlayerController only |
+| Write (events) | the spawn placement call (boot, respawn) | PlayerController.reset / moonWorld |
+| Read | `grounded`, `up`, `fwd`, `mode`, `spinPhase`, `frameQuatInto`, `telemetry.relSpeed/slideSpeed/turnApplied`, `integrity.landings/lastLandingRelSpeed`, `crouched`, `eyeHeight` | controller, camera, telemetry |
+| Core change (only on a ruling) | `coyoteTime` (Q2a), `airControl` (Q3); optional `jumpDelayS` (9.3) | `astronautKCC.ts`, every default 0 |
+
+Acceptance safety:
+- Every core field defaults to 0, and the 0 path must execute the existing
+  code unchanged (guarded `if (cfg.x > 0)` blocks only).
+- Any such edit triggers the full 1A–1E regression before merge (§13).
+- No existing default changes.
+
+**9.6 Controller and camera checks** (these feed §13; a Node script with the
+real KCC on a flat or synthetic patch)
+- **Mapping.**
+  - With heading = fwd: W gives moveF = 1, D gives moveR = +1 and moves
+    toward `fwd × up`.
+  - With heading 90° from fwd: W moves along heading to 1e-6 once `vCtl` has
+    settled.
+  - Diagonal |d| = 1.
+- **Facing.** With W held and heading reversed, `fwd` converges to within 2°
+  of heading in ≤ 0.8 s with no overshoot.
+- **Buffer.** A press 0.10 s before touchdown launches within 1 tick of
+  landing. A press 0.20 s before touchdown does not launch.
+- **Pause.** 120 frames in PAUSED leave `absPos`, `absVel` and the pose
+  bit-identical, and the resume frame runs 0 substeps.
+- **Frame-rate independence.** The same 5 s input script at 30, 60 and 144 Hz
+  ends within 1 cm and with the same tick count.
+- **Camera clearance.** A scripted 360° orbit at pitch −1.2…1.2 over a
+  crater rim never puts the camera below terrain + 0.35. The boom is never
+  shorter than 1.2 m.
+- **Rebase continuity.** Across a forced origin rebase, the camera
+  render-world step equals the character's step to 1 mm (no lurch).
+- **Core default path.** With `coyoteTime` = `airControl` = 0, the 1E/1F KCC
+  acceptance traces are unchanged (run only if the core is edited).
