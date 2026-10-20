@@ -1,18 +1,19 @@
 # SOLARIS — STATE — PHASE 2: TASK DEVELOPMENT (contract: AGENT_BRIEF.md; phase-1 history preserved below)
 
 ## NEXT ACTION
-**T1 BUILDING — next build step B4c — PlayPage wiring (static moon on screen)**
-(`docs/T1-plan.md` §12.2 B4 → B4c): `src/play/PlayPage.tsx` — Canvas +
-`<primitive object={world.sceneRoot}/>` + `MultiCameraRig onFrame`;
-`pool.attach`/`primeAll`/`unprimeAll` copied from harness 1568–1581 line by
-line; world from `createMoonWorld({ spawnOverride: parseSpawnOverride(location.search) })`
-in a `useMemo`, `cam.reset(world.kcc, world.earthDir)`, `onFrame =
-createPlayFrame(world, cam)`, `world.dispose()` on unmount. Then the B4 manual
-checks (MT2, MT16) in headless Chrome. Close B4c AND B4. B4a/B4b are DONE —
-read their build notes in the plan. The Lead's execute order is in the
-APPROVAL LEDGER (2026-10-20); Q1–Q8 rulings apply. Each build commit carries
-its step box, the tracker row, this NEXT ACTION update and a CHANGES.md
-entry. Known benign: the `/favicon.ico` 404 console error.
+**T1 BUILDING — next build step B5 — Game shell** (`docs/T1-plan.md` §12.2
+B5): `src/play/ui/playStore.ts` (phases incl. `ERROR`),
+`src/play/input/InputState.ts` (§9.1 map, held sets, edges, `blur` clear,
+`attach/detach`), `src/play/ui/Overlays.tsx` + `PlayShell.tsx` (loading bar,
+click-to-play, pause with the 1.0 s re-lock cool-down, error + Reload),
+playFrame stages 1, 2 and 11 — read the full B5 entry in the plan first and
+split it per the oversized-step rule if it will not fit one session. B1–B4
+are DONE — read the B4a/B4b/B4c build notes (B4c: boot entity sync; run
+Node tests with `node --expose-gc`; `tools/check-play-b4.mjs` automates
+MT2/MT16 against `vite preview --port 4173`). The Lead's execute order is
+in the APPROVAL LEDGER (2026-10-20); Q1–Q8 rulings apply. Each build commit
+carries its step box, the tracker row, this NEXT ACTION update and a
+CHANGES.md entry. Known benign: the `/favicon.ico` 404 console error.
 
 Phase-1 legacy (parked — carries forward unchanged): M1F round-7 ruling still
 PENDING (option menu `notes/reports/M1F.md` §15.7; recommendation (a): rebase
@@ -33,7 +34,7 @@ Neither is touched without a Lead directive naming it.
 
 ## IN-FLIGHT
 PHASE 2 (active): T1 "playable moon" on branch `t1-playable-moon` (cut from
-`m1-assembly` @ 3057899, pushed). Plan READY (docs/T1-plan.md, 7/7); BUILDING since the 2026-10-20 execute order — B1–B3 done, NEXT ACTION above. Tracker:
+`m1-assembly` @ 3057899, pushed). Plan READY (docs/T1-plan.md, 7/7); BUILDING since the 2026-10-20 execute order — B1–B4 done, NEXT ACTION above. Tracker:
 `notes/task.md`. Phase-2 game code so far: B1 route stub (`src/play/PlayPage.tsx`, `main.tsx` route, `App.tsx` menu); B2 `src/play/world/moonConfig.ts` + `spawn.ts` + `tools/test-play-spawn.mjs`; B3 `src/play/world/MoonLod.ts` + `tools/test-play-lod.mjs`.
 
 PHASE 1 (parked): Milestone 1F — ROUND-7 EXECUTED (Track A Node phase), 2026-10-19.
@@ -198,6 +199,7 @@ milestone, Lead's call. (Evidence: notes/reports/M1F.md §10.5, §11.3.)
 | 31 | 2026-10-20 | T1 build: B3 (same budget, continued on the Lead's "continue") | Same VM; repo clean at 3238bb7, no drift. B3 LOD controller DONE (this commit): `MoonLod` class port of harness 274–434 (K2: 134/157 lines verbatim, no algorithm line differs) + `residentAround` fraction + `isSelectedLeaf`; `test-play-lod` PASS 40/40 (`node --expose-gc`), `test-play-spawn` PASS 70/70, V0 green. | NEXT = B4 static world on screen — split into sub-steps first. Push and commit mechanics as in row 30. |
 | 32 | 2026-10-21 | T1 build: B4 (budget 50 OLU) | Fresh session (new VM v2, full clone OK, `npm ci` CI_EXIT=0); §5 bootstrap reconciliation clean — HEAD 246276c, tree clean, build 3/13, tracker last-commit 3238bb7 = the commit before the newest (convention), no drift; execute order already in the APPROVAL LEDGER. Read the harness port sources for B4 (scene 437–453, Earth 471–513, applyRenderState 790–935, Scene() 1568–1590). Split B4 into B4a/B4b/B4c in the plan (this commit). Stopped before any B4 code: the context-heavy bootstrap used ~36 OLU, which reached the ~40 wrap-up threshold. | NEXT = B4a. Budget lesson: the bootstrap reads (STATE.md is ~30 KB) cost most of the budget, so read only the NEXT ACTION and the SESSION LOG tail, plus the plan step being built. Measure OLU from the VM with a GraphQL `olu_usage_aggregate` on `thread_id = $PROMPTQL_THREAD_ID` at `$PROMPTQL_PLATFORM_API_URL/v1/graphql`. Push and commit mechanics are as in row 30. |
 | 33 | 2026-10-21 | T1 build: B4a (budget 50 OLU, wrap-up moved to ~45 by the Lead) | Fresh session (VM v2, clone + `npm ci` CI_EXIT=0); §5 reconciliation clean — HEAD 9e294d2, tree clean, no drift; execute order already in the APPROVAL LEDGER (not re-recorded). B4a DONE (this commit): `skyState.ts` (`PLAY_BODIES`, `applySkyState`, `skyStats`), `moonWorld.ts` (`createMoonWorld` §6.3 1–9, `dispose`, `respawnPlayer`), `tools/test-play-world.mjs` PASS 23/23; test-play-lod 40/40, test-play-spawn 70/70, TSC/BUILD exit 0, K10 grep clean. B4b DONE (second commit): `camera/ThirdPersonCamera.ts` (reset + static pose), `frame/playFrame.ts` (`createPlayFrame`, stages 6/8/9/10), `tools/test-play-frame.mjs` PASS; world 23/23 re-run. Stopped at ~38 OLU (wrap-up ~45): B4c needs a browser check, too large for the remainder. Bootstrap cost ~17 OLU, B4a ~10, B4b ~11. | NEXT = B4c. OLU query: the sum field is `olus` (row 32 wrote `olu`): `{ olu_usage_aggregate(where:{thread_id:{_eq:"<id>"}}){ aggregate { sum { olus } } } }`. Node tests importing render/*.tsx must use the esbuild bundle pattern of test-play-world. Push and commit mechanics as in row 30. |
+| 34 | 2026-10-21 | T1 build: B4c (budget 50 OLU) | Fresh session (VM v2, clone + `npm ci`); §5 reconciliation clean — HEAD afe1335, tree clean, no drift; execute order already in the APPROVAL LEDGER (not re-recorded). B4c DONE: `PlayPage.tsx` (Canvas + Scene: pool attach/prime/unprime per harness 1568–1581, `createMoonWorld` + `ThirdPersonCamera.reset` + `createPlayFrame` in useMemo, dispose on unmount); first MT2 run rendered only stars + Earth — root cause: the core entity was never synced from the KCC (write-through runs only in `kcc.update`), so the origin never rebased and the camera sat inside the moon; fixed with a boot entity sync + one `core.tick()` in `createMoonWorld`/`respawnPlayer`. MT2 PASS (terrain + Earth on screen, 0 errors), MT16 PASS (m1f boots after). B4 closed. Stopped at ~27 OLU after the push: B5 is a multi-file shell step, started fresh next session. | NEXT = B5 (split it first if oversized). Run `node --expose-gc` for the Node tests. MT2/MT16: `npx vite build && npx vite preview --port 4173 &` then `node tools/check-play-b4.mjs`. Artifact upload from the VM needs `X-PromptQL-Artifact-File-Name`. Push and commit mechanics as in row 30. |
 
 ## ANCHOR
 07ae8ad768089bebb5715d78fb67bc8a1312effe — round-7 report + ledgers (the wind-down commit; the tool/evidence work commit precedes it;

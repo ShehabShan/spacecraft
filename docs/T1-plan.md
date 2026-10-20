@@ -2,8 +2,8 @@
 
 - Task: **T1** (playable moon) — definition: `notes/task.md` § "T1 — PLAYABLE MOON"
 - Branch: `t1-playable-moon`
-- Stage: **BUILDING** — plan READY (7/7); Lead execute order recorded 2026-10-20; build B3/13 done + B4a–B4b (of B4a–B4c), next B4c
-- Last updated: 2026-10-20
+- Stage: **BUILDING** — plan READY (7/7); Lead execute order recorded 2026-10-20; build B4/13 done (B4 = B4a–B4c), next B5
+- Last updated: 2026-10-21
 - **Resume at the FIRST UNCHECKED BOX** (planning item or build step).
 - Rules: planning changes NO game code (plan + process files only); each checked
   box rides in the same commit as the tracker row + `notes/STATE.md` NEXT ACTION
@@ -1885,7 +1885,7 @@ or reordered. A step that fails its checks is not committed as done.
       algorithm line differs. Observed at spawn: 125 selected leaves, ready
       after 10 answered frames; heap delta −6.5 KB over 1,000 updates.
 
-- [ ] **B4 — Static world on screen.**
+- [x] **B4 — Static world on screen.**
   - Files: `src/play/world/skyState.ts` (`applySkyState` = harness 810–914
     minus probes/satellites/`maskOverride`/`RIG.stats`; keep the
     `spinQuatInto(kcc.spinPhase, _qS)` call per the §6.2 gotcha),
@@ -1985,12 +1985,33 @@ or reordered. A step that fails its checks is not committed as done.
       - Observed at spawn: boom 7.000 m, camera–character 7.595 m,
         fwd·earth 0.876, Earth 28.9° off the view axis (inside the 31° half
         FOV; B7 tuning may lower the pitch to centre it).
-  - [ ] **B4c — PlayPage wiring (static moon on screen).**
+  - [x] **B4c — PlayPage wiring (static moon on screen).**
     - Files: `src/play/PlayPage.tsx` (Canvas + `<primitive
       object={world.sceneRoot}/>` + `MultiCameraRig onFrame`;
       `pool.attach`/`primeAll`/`unprimeAll` copied from harness 1568–1581).
     - Outcome and checks: exactly the B4 outcome and manual checks above.
     - Closing: check B4c **and** B4.
+    - **Build notes (B4c, 2026-10-21, independent decisions — later steps use these).**
+      - Entity sync fix: the KCC write-through into the core entity runs only
+        inside `kcc.update()`, and nothing updates the KCC before B5, so the
+        entity sat at (0,0,0), the origin never rebased and the camera was
+        inside the moon (first MT2 run: stars + Earth only). `createMoonWorld`
+        now seeds `astroState.absPos/velocity` from the KCC after
+        `teleportSurface` and runs one `core.tick()` (time scale 0): the tick
+        rebases to the spawn's 256 m lattice and extracts `localPosF32`.
+        `respawnPlayer` does the same. Once B5's controller stage calls
+        `kcc.update` every frame the write-through takes over; the boot sync
+        stays (it covers frame 0). test-play-world gains 4 rows (27/27).
+      - `PlayPool` adds `attach | primeAll | unprimeAll`. No `adapter.bind`:
+        playFrame stage 6 writes `characterRoot` from `localPosF32` itself.
+      - Canvas props are the harness's (dpr [1,1.75], fov 62, near 0.1,
+        far 3000); a `← menu` link sits top-left until B5's shell.
+      - `tools/check-play-b4.mjs` automates MT2 + MT16 (headless Chrome,
+        SwiftShader; needs `vite preview` on :4173): exit 0 iff no non-favicon
+        console/page/worker errors on `/?page=play` (15 s) and on a following
+        full load of `/?page=m1f&manual=1`. Screenshots go to /tmp.
+      - Node tests must run as `node --expose-gc tools/test-play-*.mjs`
+        (the heap rows fail without it).
 
 - [ ] **B5 — Game shell.**
   - Files: `src/play/ui/playStore.ts` (phases incl. `ERROR`),

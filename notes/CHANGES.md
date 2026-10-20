@@ -1187,3 +1187,21 @@ Observations (NO change made — recorded for the Lead):
     active, lod/pump 60/60, residentAround 1, heap < 64 KB / 10,000 frames);
     test-play-world 23/23; TSC/BUILD exit 0; K10 grep clean.
     · Source: Lead execute order.
+
+82. 2026-10-21 · T1/B4c · game/src/play/PlayPage.tsx (rewritten from the B1
+    stub), game/src/play/world/moonWorld.ts, game/tools/test-play-world.mjs,
+    game/tools/check-play-b4.mjs (new) · PlayPage mounts the world: Canvas
+    (harness props) + Scene (pool attach/primeAll, unprimeAll after 2
+    frames, `<primitive sceneRoot>`, `MultiCameraRig onFrame`); world/camera/
+    frame built once in useMemo, `world.dispose()` on unmount. `PlayPool`
+    gains attach/primeAll/unprimeAll. Boot entity sync in `createMoonWorld`
+    and `respawnPlayer` (copy KCC abs pos/vel into the core entity, one
+    `core.tick()` at time scale 0 → origin on the spawn lattice).
+    · Why: plan §12.2 B4 → B4c; the KCC write-through only runs in
+    `kcc.update`, which nothing calls before B5, so the entity stayed at the
+    moon centre and the camera rendered from inside the moon. · Evidence:
+    MT2 via check-play-b4 — terrain streams around the spawn, Earth in view,
+    0 non-favicon errors; MT16 — m1f&manual=1 boots, 0 errors; test-play-world
+    27/27 (4 new sync rows), frame 12/12, lod 40/40, spawn 70/70 (all with
+    --expose-gc); TSC/BUILD exit 0; K10 grep 0 hits. · Source: Lead execute
+    order.

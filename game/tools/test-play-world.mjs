@@ -115,12 +115,21 @@ if (typeof globalThis.gc === 'function') {
   ok(Math.abs(heapDelta) < 64 * 1024, `heap delta ${heapDelta} B over 1,000 applySkyState`)
 } else fails.push('run with node --expose-gc (heap row)')
 
+// ---- entity sync (B4c fix): the core entity mirrors the KCC at boot, the
+// origin sits on the spawn's 256 m lattice and the render-local stays ≤ 1,024 m
+const eAbs = w.astroState.absPos, kAbs = w.kcc.absPos, org = w.core.getOrigin()
+ok(Math.hypot(eAbs.x - kAbs.x, eAbs.y - kAbs.y, eAbs.z - kAbs.z) < 1e-9, `entity ${JSON.stringify(eAbs)} not at KCC ${JSON.stringify(kAbs)}`)
+ok(org.x % 256 === 0 && org.y % 256 === 0 && org.z % 256 === 0 && Math.hypot(org.x, org.y, org.z) > 0, `origin ${JSON.stringify(org)} not rebased to the spawn lattice`)
+const lp = w.astroState.localPosF32
+ok(Math.max(Math.abs(lp[0]), Math.abs(lp[1]), Math.abs(lp[2])) <= 1024 && Math.abs(lp[0] - (kAbs.x - org.x)) < 1e-3, `localPosF32 ${Array.from(lp)} wrong`)
+
 // ---- respawn + dispose ------------------------------------------------------
 w.kcc.teleportSurface(0, 1, 0)
 ok(Math.abs(w.kcc.absPos.y / Math.hypot(w.kcc.absPos.x, w.kcc.absPos.y, w.kcc.absPos.z) - 1) < 1e-9, 'teleport away failed')
 w.respawnPlayer()
 const b = w.kcc.absPos
 ok(Math.hypot(b.x - a.x, b.y - a.y, b.z - a.z) < 1e-6, `respawn off by ${Math.hypot(b.x - a.x, b.y - a.y, b.z - a.z)} m`)
+ok(Math.hypot(eAbs.x - b.x, eAbs.y - b.y, eAbs.z - b.z) < 1e-9, 'respawn did not resync the entity')
 w.dispose()
 ok(fp.disposed, 'dispose did not reach pool.disposeAll')
 

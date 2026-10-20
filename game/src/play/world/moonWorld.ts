@@ -19,7 +19,10 @@ import { MoonLod, type LodPool } from './MoonLod';
 import { EARTH_R, PLAY_BODIES, type SkyCtx } from './skyState';
 
 /** The pool surface the play world uses: the LOD subset + frame/teardown. */
-export type PlayPool = LodPool & Pick<TerrainMeshPool, 'pump' | 'disposeAll'> & {
+// WHY (B4c): attach/primeAll/unprimeAll join the surface because PlayPage
+// mounts and primes the pool exactly as the harness Scene() does (1568–1581).
+export type PlayPool = LodPool
+  & Pick<TerrainMeshPool, 'pump' | 'disposeAll' | 'attach' | 'primeAll' | 'unprimeAll'> & {
   readonly records: ChunkRecord[];
 };
 
@@ -85,6 +88,18 @@ export function createMoonWorld(opts: MoonWorldOptions): MoonWorld {
   const sd = opts.spawnOverride ?? findEarthriseSpawn(earthDir, sunDir).dir;
   const spawnDir = { x: sd.x, y: sd.y, z: sd.z };
   kcc.teleportSurface(spawnDir.x, spawnDir.y, spawnDir.z);
+  // WHY (B4c fix): the KCC write-through into the entity only runs inside
+  // kcc.update(), and nothing ticks before B5's controller stage — so the
+  // entity stayed at (0,0,0) and the origin never rebased (camera inside the
+  // moon). Seed the entity from the KCC and tick once: the tick (time scale 0)
+  // rebases to the spawn's 256 m lattice and extracts localPosF32 (§3 order kept).
+  const syncEntity = (): void => {
+    const a = astroState.absPos, v = astroState.velocity;
+    a.x = kcc.absPos.x; a.y = kcc.absPos.y; a.z = kcc.absPos.z;
+    v.x = kcc.absVel.x; v.y = kcc.absVel.y; v.z = kcc.absVel.z;
+    core.tick();
+  };
+  syncEntity();
 
   // 9. scene graph (harness 435–453, 471–513, 569–572) — boot-only allocation
   const sceneRoot = new THREE.Group();
@@ -117,7 +132,7 @@ export function createMoonWorld(opts: MoonWorldOptions): MoonWorld {
   const world: MoonWorld = {
     core, adapter, astroState, kcc, sky, pool, lod, moonAbs: moonState.absPos, earthVec, earthDist,
     earthMesh, glow, characterRoot, sceneRoot, spinGroup, skyGroup, earthDir, sunDir, spawnDir,
-    respawnPlayer() { kcc.teleportSurface(spawnDir.x, spawnDir.y, spawnDir.z); },
+    respawnPlayer() { kcc.teleportSurface(spawnDir.x, spawnDir.y, spawnDir.z); syncEntity(); },
     dispose() {
       pool.disposeAll();
       disposeMesh(sky.mesh); disposeMesh(sky.stars);
