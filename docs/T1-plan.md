@@ -1904,6 +1904,54 @@ or reordered. A step that fails its checks is not committed as done.
     field, Earth visible, no console errors or worker errors; navigating to
     `/?page=m1f` afterwards (full load) shows the 1F harness unaffected.
 
+  - **Split (2026-10-21, independent decision).** B4 covers five files and a
+    manual browser check, which is more than one session can finish. It is
+    split into B4a–B4c below. Each sub-step has its own files, outcome and
+    check, and is one commit. B4 is checked once B4c is done. The intent is
+    unchanged: a static moon on screen.
+    `TerrainMeshPool` spawns Web Workers in its constructor, so it cannot be
+    built in Node. `createMoonWorld` therefore takes an optional `makePool`
+    factory: the real pool by default, a fake `LodPool` in Node tests. This
+    adds no runtime behaviour.
+  - [ ] **B4a — World bootstrap (headless).**
+    - Files: `src/play/world/skyState.ts` (`PLAY_BODIES` = harness slots
+      0–8; `applySkyState` + module-private `assignObject`/`assignObjectMesh`
+      per the B4 bullet above, keeping `spinQuatInto(kcc.spinPhase, _qS)`
+      just before the terrain loop), `src/play/world/moonWorld.ts`
+      (`createMoonWorld({ spawnOverride, makePool? })` §6.3 steps 1–9,
+      `dispose` §6.4, `respawnPlayer`), `tools/test-play-world.mjs`.
+    - Outcome: the full play world, minus the pool's workers, builds and
+      updates in Node.
+    - Checks: V0; `test-play-world` asserts:
+      - the spawn equals the B2 pin to 1e-9 and the KCC sits at it;
+      - the scene graph holds the lights, shell, Earth, glow, stars and
+        `characterRoot`;
+      - after `applySkyState` at the spawn eye pose, `characterRoot` has
+        `NEAR_BIT`, the Earth mask is non-zero, Sun slot 0 is active, and
+        every resident fake record within 300 m has `NEAR_BIT`;
+      - the heap delta is ≈ 0 over 1,000 `applySkyState` calls;
+      - `respawnPlayer` returns the KCC to the spawn.
+  - [ ] **B4b — Static camera + frame stages.**
+    - Files: `src/play/camera/ThirdPersonCamera.ts` (only `reset(kcc)` and
+      the static pose: heading = Earth tangent, pitch `camPitchDefault`, boom
+      `camDistance`), `src/play/frame/playFrame.ts` (stages 6, 8 static, 9
+      and 10, with stages 1–5/7/11 as no-op slots), `tools/test-play-frame.mjs`.
+    - Outcome: one frame call produces a valid driver pose, sky state and LOD
+      request in Node.
+    - Checks: V0; `test-play-frame` asserts:
+      - the driver pose is finite and the boom length is `camDistance` ± the
+        terrain clearance;
+      - Earth lies in the camera's front hemisphere (the Earthrise
+        composition);
+      - `lod.update` and `pool.pump` run on every frame;
+      - the heap delta is ≈ 0 over 1,000 frames.
+  - [ ] **B4c — PlayPage wiring (static moon on screen).**
+    - Files: `src/play/PlayPage.tsx` (Canvas + `<primitive
+      object={world.sceneRoot}/>` + `MultiCameraRig onFrame`;
+      `pool.attach`/`primeAll`/`unprimeAll` copied from harness 1568–1581).
+    - Outcome and checks: exactly the B4 outcome and manual checks above.
+    - Closing: check B4c **and** B4.
+
 - [ ] **B5 — Game shell.**
   - Files: `src/play/ui/playStore.ts` (phases incl. `ERROR`),
     `src/play/input/InputState.ts` (§9.1 map, held sets, edges, `blur`
