@@ -2,7 +2,7 @@
 
 - Task: **T1** (playable moon) — definition: `notes/task.md` § "T1 — PLAYABLE MOON"
 - Branch: `t1-playable-moon`
-- Stage: **PLANNING** — plan status IN PROGRESS (4/7 sections; Steps 10/15)
+- Stage: **PLANNING** — plan status IN PROGRESS (4/7 sections; Steps 11/15)
 - Last updated: 2026-10-20
 - **Resume at the FIRST UNCHECKED BOX** (planning item or build step).
 - Rules: planning changes NO game code (plan + process files only); each checked
@@ -26,7 +26,7 @@
   - [x] §8 Animation state machine (table)
   - [x] §9 Controller + camera plan
   - [x] §10 Game shell + HUD plan
-  - [ ] §11 Performance plan
+  - [x] §11 Performance plan
   - [ ] §12 Implementation phases (= the ordered BUILD steps)
   - [ ] §13 Verification plan
   - [ ] §14 Risk register
@@ -1655,3 +1655,83 @@ canvas keeps every click)
   frame pause, and the KCC tick count stays unchanged.
 - **Playwright (Q6, optional).** `/?page=play` reaches CLICK_TO_PLAY within
   20 s with no console errors and a non-blank canvas. The menu link exists.
+
+### §11 Performance plan
+
+The target is smooth play at typical desktop rates (60 Hz, and higher on
+high-refresh displays) with **no per-frame allocation in the play layer**.
+Every number below was read from the code at `ba05413` (line anchors given)
+or derived from those values, and the derivations are re-checked by the
+commit's VERIFIED script.
+
+**11.1 What the existing modules already cost** (reused unchanged)
+
+| Item | Value | Source |
+|---|---|---|
+| Terrain mesh pool | `meshCount` 96, `workerCount` 2, `workerPoolSets` 96, `maxBatch` 6, `inFlightPerWorker` 12 | `Milestone1F_TestHarness.tsx` 117–120 |
+| Chunk grid | `GRID_N` 32 quads per side, `GRID_W` 35 padded (1 skirt ring), `CHUNK_VERTS` 1225 | `terrainField.ts` 33–35 |
+| Triangles per chunk | ≤ (35 − 1)² · 2 = 2,312, skirt included | derived |
+| Terrain triangles, worst case | 96 · 2,312 ≈ 222k | derived |
+| Quadtree | 341 nodes per face (levels 0–4: 1 + 4 + 16 + 64 + 256), 6 faces = 2,046 nodes, boot-allocated | harness 294 |
+| Finest chunk | face arc πR/2 ≈ 2,143 m / 16 ≈ 134 m, so ≈ 4.2 m vertex spacing | derived (R = 1364.5) |
+| LOD hysteresis | `SPLIT_K` 2.0, `MERGE_K` 1.45, `GRACE_FRAMES` 45; eviction pressure when `freeCount() < 6` | harness 278, 374–411 |
+| Streaming allocation | `pump()` allocates only the `postMessage` envelopes, < ~150 B/frame amortized (the 1C analysis) | `TerrainMeshPool.ts` 17–20, 276 |
+| Render passes | 3 passes: FAR, then a depth clear, MID, a depth clear, NEAR; `executePasses()` allocates nothing | `MultiCameraRig.tsx` 6–18, 31 |
+| Layer split | NEAR [0.1, 3000] / MID [2000, 3e5]; `NEAR_MID_THRESHOLD` 2400, `MID_FAR_LIMIT` 300000 | `MultiCameraRig.tsx` 6, 48–49 |
+| Sky | 1 `InstancedMesh` (capacity 24) + a 1,400-star `Points` cloud | `SkyImpostorPool.ts` 6, 145, 169 |
+| Spawn search | 159 ms, boot only, inside LOADING | §6.1 |
+
+**11.2 Frame budget** (a mid-range desktop at 60 Hz, 16.7 ms per frame)
+
+| Stage (§4.3) | Budget | Notes |
+|---|---|---|
+| 1–4 clock, input, camera pre-step, controller | ≤ 0.1 ms | scalar math on boot scratch |
+| 5 simulate | ≤ 1.0 ms | ≤ 5 KCC substeps (F8) plus `core.advance`; one substep per frame at 60 Hz |
+| 6 render extraction | ≤ 0.1 ms | one spin compose, `adapter.update()` |
+| 7 telemetry + animator | ≤ 0.3 ms | 8-state machine, two `PoseBuffer`s, per-joint `slerpFlat` (§8) |
+| 8 camera post-step | ≤ 0.2 ms | 4 terrain height samples (§9.4) |
+| 9 sky + layers | ≤ 0.2 ms | the existing `applySkyState` work |
+| 10 LOD + streaming | ≤ 1.0 ms | a walk over ≤ 2,046 nodes plus `pump()`; the meshing itself runs in the 2 workers |
+| 11 HUD | ≤ 0.05 ms | the 10 Hz publish (§10.5) |
+| **Play-layer CPU total** | **≤ 3 ms** | leaves ≥ 13 ms for three.js submission and the GPU |
+
+GPU: ≤ 222k terrain triangles plus the §7 rig primitives and the sky, which
+is the same load M1F already renders. There are no shadows and no
+post-processing in V1.
+
+**11.3 Allocation rules** (the §4.5 hot-path rule made concrete)
+- **Boot-allocated.** All vectors, quaternions, the `PoseBuffer`s (§8),
+  the two `PlayHud` buffers (§10.5), the camera scratch and the driver pose
+  (no `drvLocal` literal, F6) are fields of `MoonWorld` or module scratch.
+- **Forbidden in stages 1–11:**
+  - `new`, object or array literals, closures and `Array` methods that
+    return arrays (`map`, `filter`, `slice`);
+  - template strings (state names are module constants);
+  - `three.js` helpers that allocate (`clone()`, `Vector3.toArray()` without
+    a target).
+- **The one accepted exception** is the terrain `postMessage` envelopes
+  (< ~150 B/frame, the existing M1C/M1F budget).
+- **React** re-renders only on `setPhase` and the ≤ 10 Hz HUD publish. The
+  canvas tree never re-renders during play.
+
+**11.4 Terrain and LOD in play**
+- **The same pool settings as M1F** (11.1), with no tuning in V1. The play
+  camera moves at most 6.5 m/s (sprint), which is far slower than the M1F
+  flight tests the pool was sized for.
+- **Loading gate** (§10.3). 300 m around the spawn is roughly 2–3 finest
+  chunks in every direction.
+- **Pressure.** `freeCount() < 6` already evicts before the pool runs dry.
+  §13 asserts that pressure never fires during a 60 s walk at the spawn.
+
+**11.5 Performance checks** (these feed §13)
+- **Zero allocation.** In Node with `--expose-gc`, 10,000 `playFrame` calls
+  on fakes (a stub pool and LOD, the real KCC, the animator and the
+  controller) give a `process.memoryUsage().heapUsed` delta of about 0 after
+  a final GC, with no growth trend over the run.
+- **Browser.** A Chrome DevTools allocation timeline over a 30 s walk shows
+  no play-layer allocation sites, only the terrain envelopes.
+- **Frame time.** A scripted 60 s walk and sprint from the spawn gives a p99
+  frame time ≤ 20 ms at 60 Hz. The HUD FPS EMA stays ≥ 58 on the reference
+  machine (to be named by the Lead).
+- **Pool health.** `freeCount()` never drops below 6 during the walk.
+  `inFlightTotal()` stays ≤ 24 (2 workers × 12).
