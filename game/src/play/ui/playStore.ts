@@ -55,18 +55,20 @@ export interface PlayStoreState {
   lockHint: boolean;        // last resume attempt hit pointerlockerror
   pausedAtMs: number;       // performance.now() when PAUSED was entered (1.0 s Resume cool-down)
   errorText: string;
+  hudVisible: boolean;      // H toggles the HUD (§10.5; B5b)
   hud: PlayHud;
   /** Applies one §10.2 event; returns the resulting phase. */
   dispatch(e: PlayEvent, nowMs?: number, detail?: string): PlayPhase;
   setPhase(p: PlayPhase): void;
   setLoad(p: number): void;
   setHud(h: PlayHud): void;
+  toggleHud(): void;
   reset(): void;
 }
 
 const INITIAL = {
   phase: 'LOADING' as PlayPhase, loadProgress: 0, loadTimedOut: false, lockHint: false,
-  pausedAtMs: 0, errorText: '',
+  pausedAtMs: 0, errorText: '', hudVisible: true,
 };
 
 export const usePlayStore = create<PlayStoreState>((set, get) => ({
@@ -90,5 +92,6 @@ export const usePlayStore = create<PlayStoreState>((set, get) => ({
   setPhase(p) { if (get().phase !== p) set({ phase: p }); },
   setLoad(p) { if (get().loadProgress !== p) set({ loadProgress: p }); },
   setHud(h) { set({ hud: h }); },
+  toggleHud() { set({ hudVisible: !get().hudVisible }); },
   reset() { set({ ...INITIAL, hud: makeHud() }); },
 }));

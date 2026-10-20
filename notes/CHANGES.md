@@ -1219,3 +1219,21 @@ Observations (NO change made — recorded for the Lead):
     0 after detach, heap < 64 KB over 300,000 events); world 27/27, frame
     12/12, lod 40/40, spawn 70/70; TSC/BUILD exit 0; K10 grep 0 hits.
     · Source: Lead execute order.
+
+84. 2026-10-21 · T1/B5b · game/src/play/frame/shellStages.ts (new),
+    game/src/play/ui/shellRuntime.ts (new), game/src/play/frame/playFrame.ts,
+    game/src/play/ui/playStore.ts, game/tools/test-play-shell.mjs · stage 1
+    clock (dt = 0 unless PLAYING, one dt = 0 frame per resume, 0.1 s clamp),
+    stage 2 edges (P → pauseKey + exitLock, R → respawnPlayer dt = 0, H →
+    toggleHud), stage 11 loading gate (two consecutive residentAround = 1.0
+    or 15 s real-time timeout, ≤10 Hz setLoad, 0.25 s per-frame hitch cap);
+    shell runtime maps pointerlockchange/pointerlockerror/visibilitychange/
+    webglcontextlost/worker error to dispatch; store gains hudVisible. Shell
+    stages run only when createPlayFrame gets the optional shell arg, so
+    PlayPage is unchanged until B5c. · WHY: T1 plan §12.2 B5 → B5b, §4.3,
+    §10.2, §10.3, K3, K11. · Evidence: test-play-shell PASS 101/101 (gate
+    0.5→1.0→1.0 ready on the 2nd 1.0; stuck 0.9 → timeout at 15.0000 s;
+    one dt = 0 per resume; hidden → PAUSED + exitLock; 5 listeners / 0 after
+    detach; shell frame heap < 64 KB over 10,000 frames); frame 12/12, world
+    27/27, lod 40/40, spawn 70/70; TSC/BUILD exit 0; K10 grep 0 hits.
+    · Source: Lead execute order.

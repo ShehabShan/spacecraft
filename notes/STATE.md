@@ -1,17 +1,18 @@
 # SOLARIS — STATE — PHASE 2: TASK DEVELOPMENT (contract: AGENT_BRIEF.md; phase-1 history preserved below)
 
 ## NEXT ACTION
-**T1 BUILDING — next build step B5b — Frame stages 1, 2, 11 + loading gate**
-(`docs/T1-plan.md` §12.2 B5 → B5b): `src/play/frame/playFrame.ts` stage 1
-(clock: `dt = 0` unless PLAYING, one `dt = 0` frame per resume via
-`resumedThisFrame`), stage 2 (edges: `pause` → `exitLock` + PAUSED,
-`respawn`, `toggleHud`), stage 11 (loading gate: two consecutive
-`residentAround = 1.0` or `loadTimeoutS`, ≤10 Hz `setLoad`), plus
-`src/play/ui/shellRuntime.ts` (pointerlockchange/pointerlockerror/
-visibilitychange/context-loss/worker-error → `usePlayStore.dispatch`) and
-`tools/test-play-shell.mjs` part 2. B5a is DONE — read its build notes
-(dispatch API, InputState attach targets, `lockChanged`). B5c = overlays +
-PlayShell + PlayPage wiring. Run Node tests with `node --expose-gc`;
+**T1 BUILDING — next build step B5c — Overlays + PlayShell + PlayPage wiring (browser)**
+(`docs/T1-plan.md` §12.2 B5 → B5c): `src/play/ui/Overlays.tsx`
+(LoadingOverlay with `loadProgress`, ClickToPlayOverlay + `loadTimedOut`
+note, PauseOverlay with the 1.0 s Resume cool-down from `pausedAtMs` and the
+`lockHint`, ErrorOverlay + Reload), `src/play/ui/PlayShell.tsx`,
+`src/play/PlayPage.tsx` (InputState.attach on the canvas,
+`attachShellRuntime`, pass `{ input, store: usePlayStore }` as the 3rd arg of
+`createPlayFrame`; the `← menu` link moves into the pause overlay),
+`tools/check-play-b5.mjs` (extends check-play-b4). B5a + B5b are DONE — read
+their build notes in the plan (dispatch API, InputState attach targets,
+`createPlayFrame(w, cam, shell?)`, `.clock/.gate`, worker-hook decision left
+to B5c). Closing B5c also checks B5. Run Node tests with `node --expose-gc`;
 `tools/check-play-b4.mjs` automates MT2/MT16 against `vite preview --port
 4173`. The Lead's execute order is in the APPROVAL LEDGER (2026-10-20);
 Q1–Q8 rulings apply. Each build commit carries its step box, the tracker
@@ -227,3 +228,4 @@ AGENT_BRIEF-assembly.md (new, verbatim archive), notes/task.md (new),
 notes/STATE.md (this file). Canon (Design_specs/, Milestone/) remains
 byte-identical to ea112ec. Phase-2 truth: the code is the source of truth;
 the active tracker is notes/task.md; NEXT ACTION = "T1 plan".
+| 36 | 2026-10-21 | T1 build: B5b (budget 50 OLU, wrap-up ~40) | Fresh session (VM v2, clone + `npm ci` CI_EXIT=0); §5 reconciliation clean — HEAD 4ab8443, tree clean, no drift; execute order already in the APPROVAL LEDGER (not re-recorded). B5b DONE (this commit): `frame/shellStages.ts` (PlayClock, LoadingGate), `ui/shellRuntime.ts` (lock/lockerror/visibility/context-loss/worker-error → dispatch), playFrame stages 1/2/11 behind an optional shell arg, store `hudVisible`/`toggleHud`; test-play-shell PASS 101/101; spawn 70/70, lod 40/40, world 27/27, frame 12/12; TSC/BUILD exit 0; K10 grep 0 hits. Stopped at ~30 OLU: B5c needs a browser check, too large for the remainder under the ~40 wrap-up. Bootstrap cost ~21 OLU (reading STATE.md in full is the main cost). | NEXT = B5c (STATE.md NEXT ACTION). Read only NEXT ACTION + SESSION LOG tail of STATE.md (e.g. `sed -n 1,25p` and `tail -4`), not the whole file. Push and commit mechanics as in row 30. |

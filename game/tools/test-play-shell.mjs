@@ -10,12 +10,20 @@ const game = path.resolve(here, '..')
 const out = path.join(game, 'node_modules', '.cache', 'test-play-shell.bundle.mjs')
 await build({
   stdin: {
-    contents: `export * from './play/ui/playStore'; export * from './play/input/InputState';`,
+    contents: `export * from './play/ui/playStore'; export * from './play/input/InputState';
+      export * from './play/frame/shellStages'; export * from './play/ui/shellRuntime';
+      export * from './play/frame/playFrame'; export * from './play/world/moonWorld';
+      export * from './play/camera/ThirdPersonCamera'; export * as cfg from './play/world/moonConfig';`,
     resolveDir: path.join(game, 'src'), loader: 'ts',
   },
-  bundle: true, platform: 'node', format: 'esm', outfile: out,
+  bundle: true, platform: 'node', format: 'esm', outfile: out, jsx: 'automatic',
   external: ['three', 'react', 'react-dom', '@react-three/fiber', 'zustand'], logLevel: 'error',
 })
+// WHY: moonWorld builds canvas textures at import/boot — same stub as test-play-frame.
+const noop2d = new Proxy({}, { get: (_t, k) => (k === 'canvas' ? undefined
+  : (..._a) => ({ addColorStop() {} })), set: () => true })
+globalThis.document ??= { createElement: () => ({ width: 0, height: 0, style: {},
+  getContext: () => noop2d, addEventListener() {}, removeEventListener() {} }) }
 const M = await import(pathToFileURL(out).href)
 
 const fails = []; let n = 0
@@ -145,6 +153,111 @@ if (globalThis.gc) {
   globalThis.gc(); const dh = process.memoryUsage().heapUsed - h0
   ok(dh < 64 * 1024, `heap delta ${dh} B over 300,000 events`)
 } else ok(false, 'run with node --expose-gc (heap row)')
+
+// ---- part 2a: stage 1 clock (B5b) ----
+{
+  const C = new M.PlayClock()
+  const seq = [['LOADING', 1 / 60], ['CLICK_TO_PLAY', 1 / 60], ['PLAYING', 1 / 60], ['PLAYING', 1 / 60],
+    ['PLAYING', 1 / 60], ['PAUSED', 1 / 60], ['PAUSED', 1 / 60], ['PLAYING', 1 / 60], ['PLAYING', 1 / 60], ['PLAYING', 5]]
+  const dts = seq.map(([p, d]) => C.step(p, d))
+  ok(dts[0] === 0 && dts[1] === 0 && dts[5] === 0 && dts[6] === 0, `dt = 0 unless PLAYING (${dts})`)
+  ok(dts[2] === 0 && dts[3] > 0 && dts[7] === 0 && dts[8] > 0, `exactly one dt = 0 frame per resume (${dts})`)
+  ok(dts.filter((d, i) => d === 0 && seq[i][0] === 'PLAYING').length === 2, 'two resumes → two zero frames')
+  ok(dts[9] === M.MAX_FRAME_DT, `stall clamped to ${M.MAX_FRAME_DT} (${dts[9]})`)
+}
+// ---- part 2b: stage 11 loading gate ----
+{
+  const T = M.cfg.PLAY_TUNING
+  const G = new M.LoadingGate(T.loadTimeoutS)
+  ok(G.step(1 / 60, 0.5) === null && G.step(1 / 60, 1) === null, 'gate: 0.5, 1.0 → still loading')
+  ok(G.step(1 / 60, 1) === 'ready', 'gate: second consecutive 1.0 → ready')
+  const G2 = new M.LoadingGate(T.loadTimeoutS)
+  G2.step(1 / 60, 1); G2.step(1 / 60, 0.9)
+  ok(G2.step(1 / 60, 1) === null, 'gate: 1.0, 0.9, 1.0 is not consecutive')
+  const G3 = new M.LoadingGate(T.loadTimeoutS); let f = 0, ev = null, pubs = 0
+  while (!ev && f < 2000) { ev = G3.step(1 / 60, 0.9); if (G3.publishDue()) pubs++; f++ }
+  const tAt = f / 60
+  ok(ev === 'timeout' && Math.abs(tAt - T.loadTimeoutS) <= 1 / 60 + 1e-9, `stuck 0.9 → timeout at ${tAt.toFixed(4)} s (${f} frames)`)
+  ok(pubs <= Math.ceil(tAt * 10) + 1, `setLoad publish ≤ 10 Hz (${pubs} in ${tAt.toFixed(2)} s)`)
+  ok(G3.step(1 / 60, 1) === null, 'gate fires once')
+  const G4 = new M.LoadingGate(T.loadTimeoutS)
+  ok(G4.step(30, 0.2) === null, 'one 30 s hitch does not time out by itself')
+}
+// ---- part 2c: shell runtime on a fake DOM ----
+{
+  const S2 = M.usePlayStore; S2.getState().reset()
+  const cv = target(); const dc = target(); const wk = target()
+  dc.pointerLockElement = null; dc.visibilityState = 'visible'
+  let exits = 0; const inp = { exitLock() { exits++ } }
+  const off = M.attachShellRuntime({ canvas: cv, doc: dc, workers: [wk] }, inp, S2, () => 42)
+  ok(cv.count() + dc.count() + wk.count() === 5, 'runtime registers 5 listeners')
+  S2.getState().dispatch('ready', 0)
+  dc.pointerLockElement = cv; dc.fire('pointerlockchange')
+  ok(S2.getState().phase === 'PLAYING', 'pointerlockchange (canvas) → PLAYING')
+  dc.visibilityState = 'hidden'; dc.fire('visibilitychange')
+  ok(S2.getState().phase === 'PAUSED' && S2.getState().pausedAtMs === 42 && exits === 1, 'hidden → PAUSED + exitLock')
+  dc.pointerLockElement = null; dc.fire('pointerlockchange')
+  ok(S2.getState().phase === 'PAUSED', 'lockLost from PAUSED is a no-op')
+  dc.fire('pointerlockerror')
+  ok(S2.getState().lockHint, 'pointerlockerror → hint')
+  dc.visibilityState = 'visible'; dc.pointerLockElement = cv; dc.fire('pointerlockchange')
+  ok(S2.getState().phase === 'PLAYING', 'resume via lock')
+  dc.pointerLockElement = null; dc.fire('pointerlockchange')
+  ok(S2.getState().phase === 'PAUSED', 'Esc (lockLost) → PAUSED')
+  wk.fire('error', { message: 'boom' })
+  ok(S2.getState().phase === 'ERROR' && /worker/.test(S2.getState().errorText), 'worker error → ERROR')
+  S2.getState().reset(); let prevented = false
+  cv.fire('webglcontextlost', { preventDefault() { prevented = true } })
+  ok(S2.getState().phase === 'ERROR' && prevented, 'context lost → ERROR')
+  off()
+  ok(cv.count() + dc.count() + wk.count() === 0, 'runtime detach removes every listener')
+}
+// ---- part 2d: playFrame wiring (stages 1, 2, 11) with a fake pool ----
+{
+  function fakePool(meshCount) {
+    const records = []
+    for (let i = 0; i < meshCount; i++) records.push({ state: 0, unwanted: 0, owner: null, level: 0,
+      originX: 0, originY: 0, originZ: 0, mesh: { visible: false, layers: { mask: 0 } } })
+    return { records,
+      acquire(face, level, ix, iy, ox, oy, oz) { for (let i = 0; i < records.length; i++) { const r = records[i]
+        if (r.state === 0) { Object.assign(r, { state: 1, unwanted: 0, owner: null, level, originX: ox, originY: oy, originZ: oz }); return i } } return -1 },
+      release(i) { records[i].state = 0; records[i].mesh.visible = false },
+      freeCount() { return records.filter((r) => r.state === 0).length },
+      inFlightTotal() { return records.filter((r) => r.state === 1).length },
+      pump() { for (const r of records) if (r.state === 1) { r.state = 2; r.mesh.visible = true } },
+      disposeAll() {} }
+  }
+  const S3 = M.usePlayStore; S3.getState().reset()
+  const w = M.createMoonWorld({ spawnOverride: null, makePool: () => fakePool(M.cfg.PLAY_POOL_OPTS.meshCount) })
+  const cam = new M.ThirdPersonCamera(); cam.reset(w.kcc, w.earthDir)
+  let exits = 0, respawns = 0
+  const inp = { pauseEdge: false, respawnEdge: false, toggleHudEdge: false,
+    exitLock() { exits++ }, clearEdges() { this.pauseEdge = this.respawnEdge = this.toggleHudEdge = false } }
+  const rs = w.respawnPlayer; w.respawnPlayer = () => { respawns++; rs() }
+  const frame = M.createPlayFrame(w, cam, { input: inp, store: S3, now: () => 7 })
+  let k = 0; while (S3.getState().phase === 'LOADING' && k < 120) { frame(1 / 60); k++ }
+  ok(S3.getState().phase === 'CLICK_TO_PLAY' && !S3.getState().loadTimedOut && k <= 60, `playFrame gate → CLICK_TO_PLAY after ${k} frames`)
+  ok(S3.getState().loadProgress === 1, `loadProgress published (${S3.getState().loadProgress})`)
+  S3.getState().dispatch('lockAcquired', 8)
+  frame(1 / 60); const d0 = frame.clock.dt; frame(1 / 60); const d1 = frame.clock.dt
+  ok(d0 === 0 && d1 > 0, `resume frame dt ${d0}, next ${d1}`)
+  inp.respawnEdge = true; frame(1 / 60)
+  ok(respawns === 1 && frame.clock.dt === 0 && !inp.respawnEdge, 'R edge → respawnPlayer, dt = 0, edge cleared')
+  inp.toggleHudEdge = true; frame(1 / 60)
+  ok(S3.getState().hudVisible === false, 'H edge toggles hudVisible')
+  inp.pauseEdge = true; frame(1 / 60)
+  ok(S3.getState().phase === 'PAUSED' && exits === 1 && frame.clock.dt === 0 && S3.getState().pausedAtMs === 7, 'P edge → PAUSED + exitLock, dt = 0')
+  frame(1 / 60)
+  ok(frame.clock.dt === 0, 'PAUSED frame dt = 0')
+  if (globalThis.gc) {
+    S3.getState().dispatch('lockAcquired', 9)
+    for (let i = 0; i < 2000; i++) frame(1 / 60)
+    globalThis.gc(); const h0 = process.memoryUsage().heapUsed
+    for (let i = 0; i < 10000; i++) frame(1 / 60)
+    globalThis.gc(); const dh = process.memoryUsage().heapUsed - h0
+    ok(Math.abs(dh) < 64 * 1024, `shell frame heap delta ${dh} B over 10,000 frames`)
+  }
+}
 
 if (fails.length) { console.log(`test-play-shell FAIL ${fails.length}/${n}`); for (const f of fails) console.log('  ✗ ' + f); process.exit(1) }
 console.log(`test-play-shell PASS ${n}/${n}`)

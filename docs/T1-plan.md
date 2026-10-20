@@ -2,7 +2,7 @@
 
 - Task: **T1** (playable moon) — definition: `notes/task.md` § "T1 — PLAYABLE MOON"
 - Branch: `t1-playable-moon`
-- Stage: **BUILDING** — plan READY (7/7); Lead execute order recorded 2026-10-20; build B4/13 done (B4 = B4a–B4c), next B5b (B5 = B5a–B5c; B5a done)
+- Stage: **BUILDING** — plan READY (7/7); Lead execute order recorded 2026-10-20; build B4/13 done (B4 = B4a–B4c), next B5c (B5 = B5a–B5c; B5a, B5b done)
 - Last updated: 2026-10-21
 - **Resume at the FIRST UNCHECKED BOX** (planning item or build step).
 - Rules: planning changes NO game code (plan + process files only); each checked
@@ -2066,7 +2066,7 @@ or reordered. A step that fails its checks is not committed as done.
       - `pointerlockerror`, `visibilitychange`, `webglcontextlost` and worker
         `error` are NOT in InputState; B5b's `shellRuntime.ts` maps them to
         `dispatch`.
-  - [ ] **B5b — Frame stages 1, 2, 11 + loading gate (headless).**
+  - [x] **B5b — Frame stages 1, 2, 11 + loading gate (headless).**
     - Files: `src/play/frame/playFrame.ts` (stage 1 clock with
       `resumedThisFrame`, stage 2 edges — `pause` → `exitPointerLock` +
       PAUSED, `respawn` (respawnPlayer, dt = 0), `toggleHud` —, stage 11
@@ -2080,6 +2080,28 @@ or reordered. A step that fails its checks is not committed as done.
       second 1.0, a stuck 0.9 gives it at 15 s ± 1 frame with the streaming
       note; exactly one `dt = 0` frame per resume; hidden tab → PAUSED with
       `dt = 0` on the next frame; test-play-frame still green.
+    - **Build notes (B5b, 2026-10-21, independent decisions — later steps use these).**
+      - Stages 1 and 11 live as DOM-free classes in `src/play/frame/shellStages.ts`
+        (`PlayClock`, `LoadingGate`) so they are unit-tested headless;
+        `createPlayFrame(w, cam, shell?)` runs stages 1/2/11 only when a
+        `{ input, store, now? }` shell is passed (B4's static loop and
+        test-play-frame are unchanged). The returned function exposes
+        `.clock` (B7 reads `clock.dt`) and `.gate`.
+      - Clock: `dt` is clamped to `MAX_FRAME_DT` = 0.1 s (a GC/tab stall must
+        not inject a huge step; B7's fixed-step accumulator sits below it).
+      - Loading gate counts REAL time (the rig delta), each frame capped at
+        0.25 s so a single shader-compile hitch cannot fire the 15 s timeout;
+        `setLoad` is published at ≤ 10 Hz plus once on the deciding frame.
+      - Stage 2: P → `dispatch('pauseKey')` then `input.exitLock()` (the
+        resulting lockLost is a no-op from PAUSED); R → `respawnPlayer()` with
+        `dt = 0`; H → store `toggleHud()` (new `hudVisible` field, default
+        true). `input.clearEdges()` runs at the end of stage 11.
+      - `attachShellRuntime({ canvas, doc, workers? }, input, store, now?)`
+        returns its detach function. Hidden tab, context loss and worker
+        error also call `input.exitLock()` so every resume goes through the
+        click → lock path. B5c must pass the pool's workers (TerrainMeshPool
+        keeps them private — expose a read-only getter there or skip the
+        worker hook; decide in B5c).
   - [ ] **B5c — Overlays + PlayShell + PlayPage wiring (browser).**
     - Files: `src/play/ui/Overlays.tsx` (`LoadingOverlay`,
       `ClickToPlayOverlay`, `PauseOverlay` with the 1.0 s Resume cool-down,

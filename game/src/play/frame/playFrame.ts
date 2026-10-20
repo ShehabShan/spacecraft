@@ -1,5 +1,7 @@
-// T1 per-frame pipeline (plan §4.3, B4b): stages 6, 8 (static camera), 9, 10.
-// Stages 1–5, 7 and 11 are empty slots filled by B5–B8. Zero allocation per
+// T1 per-frame pipeline (plan §4.3). B4b: stages 6, 8 (static camera), 9, 10.
+// B5b: stages 1 (clock), 2 (edges) and 11 (loading gate) — active only when a
+// `shell` is passed (PlayPage, B5c); without it the frame is B4's static loop
+// (test-play-frame). Stages 3–5 and 7 are filled by B6–B8. Zero allocation per
 // frame: all scratch is created once in createPlayFrame.
 import {
   rotateByQuatConjInto, rotateByQuatInto, spinQuatInto, type Quat, type Vec3,
@@ -8,6 +10,10 @@ import { setDriverPose } from '../../render/MultiCameraRig';
 import type { MoonWorld } from '../world/moonWorld';
 import { applySkyState } from '../world/skyState';
 import type { ThirdPersonCamera } from '../camera/ThirdPersonCamera';
+import type { InputState } from '../input/InputState';
+import type { PlayStoreLike } from '../ui/shellRuntime';
+import { PLAY_TUNING } from '../world/moonConfig';
+import { LoadingGate, PlayClock } from './shellStages';
 
 export function quatMulInto(a: Quat, b: Quat, out: Quat): Quat {
   const w = a.w * b.w - a.x * b.x - a.y * b.y - a.z * b.z;
@@ -18,16 +24,49 @@ export function quatMulInto(a: Quat, b: Quat, out: Quat): Quat {
   return out;
 }
 
+export interface PlayShellCtx {
+  input: InputState;
+  store: PlayStoreLike;
+  now?: () => number;
+}
+
+export interface PlayFrameFn {
+  (delta: number): void;
+  /** Stage 1 clock (inspected by test-play-shell; B7 reads clock.dt). */
+  readonly clock: PlayClock;
+  /** Stage 11 loading gate. */
+  readonly gate: LoadingGate;
+}
+
 /** Builds the MultiCameraRig onFrame callback for one world. */
-export function createPlayFrame(w: MoonWorld, cam: ThirdPersonCamera): (delta: number) => void {
+export function createPlayFrame(w: MoonWorld, cam: ThirdPersonCamera, shell?: PlayShellCtx): PlayFrameFn {
   const qS: Quat = { x: 0, y: 0, z: 0, w: 1 };
   const qF: Quat = { x: 0, y: 0, z: 0, w: 1 };
   const qW: Quat = { x: 0, y: 0, z: 0, w: 1 };
   const off: Vec3 = { x: 0, y: 0, z: 0 };
   const camP: Vec3 = { x: 0, y: 0, z: 0 };
-  return function playFrame(_delta: number): void {
+  const clock = new PlayClock();
+  const gate = new LoadingGate(PLAY_TUNING.loadTimeoutS);
+  const now = shell?.now ?? (() => performance.now());
+  const fn = function playFrame(delta: number): void {
     const { core, kcc } = w;
-    // 1 clock · 2 input · 3 camera pre-step · 4 controller · 5 simulate — B5/B7
+    if (shell) {
+      const { input, store } = shell;
+      const st = store.getState();
+      // 1. clock — dt = 0 unless PLAYING, and on the first PLAYING frame
+      clock.step(st.phase, delta);
+      // 2. edges (InputState only sets them while locked = PLAYING)
+      if (input.pauseEdge) {
+        // WHY: P pauses through the store first, then releases the lock; the
+        // resulting lockLost is a no-op from PAUSED (§10.2).
+        st.dispatch('pauseKey', now());
+        input.exitLock();
+        clock.forceZero();
+      }
+      if (input.respawnEdge) { w.respawnPlayer(); clock.forceZero(); }
+      if (input.toggleHudEdge) st.toggleHud();
+    }
+    // 3 camera pre-step · 4 controller · 5 simulate (clock.dt) — B7
     // 6. render extraction (spin composed ONCE here, §4.4 / K1)
     const o = core.getOrigin();
     spinQuatInto(kcc.spinPhase, qS);
@@ -52,6 +91,20 @@ export function createPlayFrame(w: MoonWorld, cam: ThirdPersonCamera): (delta: n
     rotateByQuatConjInto(qS, kcc.absPos.x + off.x, kcc.absPos.y + off.y, kcc.absPos.z + off.z, camP);
     w.lod.update(camP.x, camP.y, camP.z);
     w.pool.pump();
-    // 11 HUD — B5
-  };
+    // 11. loading gate (HUD publish arrives in B10)
+    if (shell) {
+      const st = shell.store.getState();
+      if (st.phase === 'LOADING' && !gate.done) {
+        // WHY: real delta, not clock.dt — loading time is wall time (§10.3).
+        const s = w.spawnDir;
+        const ev = gate.step(delta, w.lod.residentAround(s.x, s.y, s.z, PLAY_TUNING.readyRadiusM));
+        if (gate.publishDue()) st.setLoad(gate.progress);
+        if (ev) st.dispatch(ev, now());
+      }
+      shell.input.clearEdges();
+    }
+  } as PlayFrameFn;
+  (fn as { clock: PlayClock }).clock = clock;
+  (fn as { gate: LoadingGate }).gate = gate;
+  return fn;
 }
