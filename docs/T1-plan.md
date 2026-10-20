@@ -2,7 +2,7 @@
 
 - Task: **T1** (playable moon) — definition: `notes/task.md` § "T1 — PLAYABLE MOON"
 - Branch: `t1-playable-moon`
-- Stage: **PLANNING** — plan status IN PROGRESS (6/7 sections; Steps 15/15)
+- Stage: **READY** — plan status READY (7/7 sections; Steps 15/15); at the LEAD GATE, awaiting the Lead's execute order
 - Last updated: 2026-10-20
 - **Resume at the FIRST UNCHECKED BOX** (planning item or build step).
 - Rules: planning changes NO game code (plan + process files only); each checked
@@ -32,7 +32,7 @@
   - [x] §14 Risk register
   - [x] §15 First coding step
 - [x] Verification per step
-- [ ] Risks & open decisions
+- [x] Risks & open decisions
 
 <!-- Sections are appended below as they are drafted. -->
 
@@ -2257,3 +2257,32 @@ for its own checks, §13 defines every command, script and manual row, and
 | B11 | controller + core default-path trace | MT8, MT9 re-check | **mandatory**, baseline first: m1e, m1f (R5 WAIVED) | V0.5 non-zero by design; integrity trace byte-equal at 0 (K8); no ruling → SKIPPED, no core change |
 | B12 | — | — | not required | §13.4 `PW_EXIT=0`, or SKIPPED (Q6 declined) / NOT RUN (no Chrome) |
 | B13 | all seven | MT1–MT16 | m1e + m1f re-run on the final tree if B11 was applied; otherwise not required | full §13 matrix on the final tree; §13.6 evidence |
+
+### Risks & open decisions
+The risks are registered in §14 (K1–K13, each with its mitigation, proving
+check and owner step) and are not repeated here. The decisions that need a
+Lead ruling are §2 Q1–Q8. None of them blocks the execute order: each has a
+default, and the plan builds on the defaults until a ruling replaces them.
+A ruling is needed only before the step that first depends on it.
+
+**Highest-impact risks** (§14.1): K1 KCC frame mixing (B4, B7), K4 rebase
+lurch (B7), K8 core regression (B11, only on a Q2/Q3 ruling) and K10 harness
+leakage (B1–B10). Every one has a proving check in the B1–B13 table above.
+
+**Open decisions**
+
+| Q | Decision (§2) | Default the plan uses | Needed before | Risk moved (§14.2) | Effect of a different ruling |
+|---|---|---|---|---|---|
+| Q1 | Boot strategy | Option B — separate boot under `src/play/` | B1 | none retired; Option A adds K2-class drift to the 1F harness | Option A = a re-plan of §5/§6 before B1 |
+| Q2 | Coyote time | (a) opt-in KCC field `coyoteTime`, default 0 | B11 | K8 | (b) play-layer velocity kick = rejected by the plan (bypasses F18); "no" = B11 SKIPPED for coyote |
+| Q3 | Air control | opt-in KCC field `airControl` ≈ 0.3, default 0 | B11 | K8 | "no" = B11 SKIPPED for air control; with Q2 also "no", B11 SKIPPED and no core file changes |
+| Q4 | Crouch pose | simple crouch blend pose, no crouch-walk cycle | B9 | — | a crouch-walk cycle adds one §8 state and its B8/B9 checks |
+| Q5 | F14 jump-buffer comment vs code | core untouched; buffer in the play layer | B7 | K12 | a core fix must remove the play-layer buffer in the same commit (K12) |
+| Q6 | Playwright smoke `e2e/play.spec.ts` | yes, optional final step | B12 | adds an automated K10/K11 guard | "no" = B12 SKIPPED |
+| Q7 | Menu entries | add `play` only | B1 | — | also listing m1e/m1f = two extra `PAGES` rows in B1 |
+| Q8 | Moon spin in play | keep `spinOmega` 0.0005 rad/s (sunset ~21 min after load) | B2 | K6 | `spinOmega` 0 (or slower) = one field in `moonConfig.ts`, pinned by `test-play-spawn` |
+
+**Lead gate.** With this item checked the plan is READY. Building starts
+only on the Lead's execute order ("execute the T1 plan", AGENT_BRIEF.md §4).
+An execute order without a ruling on a question means that question's
+default is accepted. Rulings are recorded in STATE.md's APPROVAL LEDGER.
