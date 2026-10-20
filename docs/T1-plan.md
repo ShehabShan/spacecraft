@@ -2,7 +2,7 @@
 
 - Task: **T1** (playable moon) — definition: `notes/task.md` § "T1 — PLAYABLE MOON"
 - Branch: `t1-playable-moon`
-- Stage: **BUILDING** — plan READY (7/7); Lead execute order recorded 2026-10-20; build B3/13 done, next B4
+- Stage: **BUILDING** — plan READY (7/7); Lead execute order recorded 2026-10-20; build B3/13 done + B4a (of B4a–B4c), next B4b
 - Last updated: 2026-10-20
 - **Resume at the FIRST UNCHECKED BOX** (planning item or build step).
 - Rules: planning changes NO game code (plan + process files only); each checked
@@ -1913,7 +1913,7 @@ or reordered. A step that fails its checks is not committed as done.
     built in Node. `createMoonWorld` therefore takes an optional `makePool`
     factory: the real pool by default, a fake `LodPool` in Node tests. This
     adds no runtime behaviour.
-  - [ ] **B4a — World bootstrap (headless).**
+  - [x] **B4a — World bootstrap (headless).**
     - Files: `src/play/world/skyState.ts` (`PLAY_BODIES` = harness slots
       0–8; `applySkyState` + module-private `assignObject`/`assignObjectMesh`
       per the B4 bullet above, keeping `spinQuatInto(kcc.spinPhase, _qS)`
@@ -1931,6 +1931,25 @@ or reordered. A step that fails its checks is not committed as done.
         every resident fake record within 300 m has `NEAR_BIT`;
       - the heap delta is ≈ 0 over 1,000 `applySkyState` calls;
       - `respawnPlayer` returns the KCC to the spawn.
+    - **Build notes (B4a, 2026-10-21, independent decisions — later steps use these).**
+      - `applySkyState(ctx, px, py, pz, qx, qy, qz, qw)` takes a `SkyCtx`
+        (`core, kcc, sky, pool, moonAbs, earthVec, earthDist, earthMesh, glow,
+        characterRoot`); `MoonWorld` extends `SkyCtx`, so B4b calls
+        `applySkyState(world, …)`. Layer counts go to the exported
+        `skyStats { near, mid, written }` instead of `RIG.stats`.
+      - The harness allocated `{x,y,z,w} as Quat` per call for the Sun camera
+        rotation; the port uses a module scratch `_qCam` (zero-GC, §3).
+      - `characterRoot` is a plain `Group` directly under `sceneRoot`
+        (render-local, mask `NEAR_BIT`); B6 mounts the rig under it.
+      - `MoonWorld.dispose()` calls `core.unregisterEntity('play-astronaut')`
+        (the §6.4 "`core.unregister` if it exists" is `unregisterEntity`).
+      - `PlayPool = LodPool & Pick<TerrainMeshPool, 'pump' | 'disposeAll'>`;
+        `createMoonWorld({ spawnOverride, makePool? })`, spawn search gets
+        `(earthDir, sunDir)` per the B2 note.
+      - `test-play-world` bundles the TS with esbuild (skyState imports
+        `MultiCameraRig.tsx`, which Node type-stripping cannot load) and stubs
+        `document` for `makeGlowQuad`'s CanvasTexture. Heap tolerance 64 KB
+        over 1,000 calls (observed 16 KB: V8 noise, no per-call objects).
   - [ ] **B4b — Static camera + frame stages.**
     - Files: `src/play/camera/ThirdPersonCamera.ts` (only `reset(kcc)` and
       the static pose: heading = Earth tangent, pitch `camPitchDefault`, boom

@@ -1159,3 +1159,17 @@ Observations (NO change made — recorded for the Lead):
     jitter, residentAround 0 → 1, heap −6,552 B over 1,000 updates);
     test-play-spawn PASS 70/70; TSC/BUILD/CANON/SHARED exit 0; K10 grep
     exit 1; K2 diff 134/157 verbatim. · Source: Lead execute order.
+
+80. 2026-10-21 · T1/B4a · game/src/play/world/skyState.ts (new),
+    game/src/play/world/moonWorld.ts (new), game/tools/test-play-world.mjs
+    (new) · applySkyState = harness applyRenderState (810–914) minus probes,
+    satellites, RIG.maskOverride/RIG.stats, spinQuatInto kept before the
+    terrain loop (§6.2 gotcha), per-call Quat literal → module scratch;
+    createMoonWorld §6.3 steps 1–9 (optional makePool for Node), dispose
+    §6.4, respawnPlayer. No runtime effect (not imported by PlayPage yet).
+    · WHY: T1 plan §12.2 B4 → B4a, §6.2–§6.4. · Evidence: test-play-world
+    PASS 23/23 (spawn pin 1e-9, KCC at surface, scene graph, NEAR_BIT on
+    characterRoot + all 20 resident records within 300 m, Earth mask ≠ 0,
+    Sun active, heap 16 KB/1,000 calls, respawn 0 m); test-play-lod 40/40;
+    test-play-spawn 70/70; TSC/BUILD exit 0; K10 grep clean.
+    · Source: Lead execute order.

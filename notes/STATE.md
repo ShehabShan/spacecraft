@@ -1,19 +1,17 @@
 # SOLARIS — STATE — PHASE 2: TASK DEVELOPMENT (contract: AGENT_BRIEF.md; phase-1 history preserved below)
 
 ## NEXT ACTION
-**T1 BUILDING — next build step B4a — World bootstrap (headless)**
-(`docs/T1-plan.md` §12.2 B4 → B4a): `src/play/world/skyState.ts`,
-`src/play/world/moonWorld.ts` (`createMoonWorld` takes an optional `makePool`
-factory, because `TerrainMeshPool` spawns Workers and cannot be built in
-Node), `tools/test-play-world.mjs`. B4 was split into B4a/B4b/B4c on
-2026-10-21; the breakdown is committed and B4 is checked only after B4c.
-B1–B3 are DONE — read their build notes in the plan
-(`findEarthriseSpawn(earthDir, sunDir)`; `PLAY_POOL_OPTS` omits `params`;
-`MoonLod.residentAround` returns a fraction; `update()` does not pump;
-`initTerrainField` before `new MoonLod`). The Lead's execute order is in the
-APPROVAL LEDGER (2026-10-20); Q1–Q8 rulings apply. Each build commit carries
-its step box, the tracker row, this NEXT ACTION update and a CHANGES.md
-entry. Known benign: the `/favicon.ico` 404 console error.
+**T1 BUILDING — next build step B4b — Static camera + frame stages**
+(`docs/T1-plan.md` §12.2 B4 → B4b): `src/play/camera/ThirdPersonCamera.ts`
+(only `reset(kcc)` + the static pose), `src/play/frame/playFrame.ts` (stages
+6, 8 static, 9, 10; others no-op slots), `tools/test-play-frame.mjs`. B4a is
+DONE — read its build notes in the plan (`applySkyState(world, …)` takes the
+`SkyCtx`; `skyStats` replaces `RIG.stats`; `createMoonWorld({ spawnOverride,
+makePool })`; Node tests bundle with esbuild + stub `document`, see
+`tools/test-play-world.mjs`). B4 is checked only after B4c. The Lead's execute
+order is in the APPROVAL LEDGER (2026-10-20); Q1–Q8 rulings apply. Each build
+commit carries its step box, the tracker row, this NEXT ACTION update and a
+CHANGES.md entry. Known benign: the `/favicon.ico` 404 console error.
 
 Phase-1 legacy (parked — carries forward unchanged): M1F round-7 ruling still
 PENDING (option menu `notes/reports/M1F.md` §15.7; recommendation (a): rebase
@@ -198,6 +196,7 @@ milestone, Lead's call. (Evidence: notes/reports/M1F.md §10.5, §11.3.)
 | 30 | 2026-10-20 | T1 build: execute order → B1, B2 (budget 50 OLU) | Fresh session (new VM, full clone OK, `npm ci` CI_EXIT=0); §5 bootstrap reconciliation clean — HEAD cac7525, tree clean, plan READY 7/7, build 0/13, tracker last-commit 1cb9894 = the commit before the newest (convention), no drift. Recorded the Lead's execute order in the APPROVAL LEDGER. B1 route stub DONE (61cf88b). B2 moon constants + spawn DONE (this commit; `test-play-spawn` PASS 70/70). Stopped after B2 to stay inside the 50-OLU budget (wrap-up threshold ~40). | NEXT = B3 LOD controller. Push: plain `git push origin` has no credentials in the VM; push via the GitHub integration proxy works (`git -c http.extraHeader="Authorization: Bearer $PROMPTQL_USER_JWT" push "$PROMPTQL_PLATFORM_API_URL/v1/integration/__github/github.com/ShehabShan/spacecraft.git" t1-playable-moon`), verify with `git ls-remote` on the same URL. Commit as `ShehabShan <mdshehabsarar@gmail.com>` (git user config is empty in a fresh VM). Manual checks: `npx vite --port 5173 --strictPort` in the background + headless Chrome via `game/node_modules/playwright`. `/favicon.ico` 404 is the only console error and is pre-existing. |
 | 31 | 2026-10-20 | T1 build: B3 (same budget, continued on the Lead's "continue") | Same VM; repo clean at 3238bb7, no drift. B3 LOD controller DONE (this commit): `MoonLod` class port of harness 274–434 (K2: 134/157 lines verbatim, no algorithm line differs) + `residentAround` fraction + `isSelectedLeaf`; `test-play-lod` PASS 40/40 (`node --expose-gc`), `test-play-spawn` PASS 70/70, V0 green. | NEXT = B4 static world on screen — split into sub-steps first. Push and commit mechanics as in row 30. |
 | 32 | 2026-10-21 | T1 build: B4 (budget 50 OLU) | Fresh session (new VM v2, full clone OK, `npm ci` CI_EXIT=0); §5 bootstrap reconciliation clean — HEAD 246276c, tree clean, build 3/13, tracker last-commit 3238bb7 = the commit before the newest (convention), no drift; execute order already in the APPROVAL LEDGER. Read the harness port sources for B4 (scene 437–453, Earth 471–513, applyRenderState 790–935, Scene() 1568–1590). Split B4 into B4a/B4b/B4c in the plan (this commit). Stopped before any B4 code: the context-heavy bootstrap used ~36 OLU, which reached the ~40 wrap-up threshold. | NEXT = B4a. Budget lesson: the bootstrap reads (STATE.md is ~30 KB) cost most of the budget, so read only the NEXT ACTION and the SESSION LOG tail, plus the plan step being built. Measure OLU from the VM with a GraphQL `olu_usage_aggregate` on `thread_id = $PROMPTQL_THREAD_ID` at `$PROMPTQL_PLATFORM_API_URL/v1/graphql`. Push and commit mechanics are as in row 30. |
+| 33 | 2026-10-21 | T1 build: B4a (budget 50 OLU, wrap-up moved to ~45 by the Lead) | Fresh session (VM v2, clone + `npm ci` CI_EXIT=0); §5 reconciliation clean — HEAD 9e294d2, tree clean, no drift; execute order already in the APPROVAL LEDGER (not re-recorded). B4a DONE (this commit): `skyState.ts` (`PLAY_BODIES`, `applySkyState`, `skyStats`), `moonWorld.ts` (`createMoonWorld` §6.3 1–9, `dispose`, `respawnPlayer`), `tools/test-play-world.mjs` PASS 23/23; test-play-lod 40/40, test-play-spawn 70/70, TSC/BUILD exit 0, K10 grep clean. Bootstrap cost ~17 OLU, B4a ~10. | NEXT = B4b. OLU query: the sum field is `olus` (row 32 wrote `olu`): `{ olu_usage_aggregate(where:{thread_id:{_eq:"<id>"}}){ aggregate { sum { olus } } } }`. Node tests importing render/*.tsx must use the esbuild bundle pattern of test-play-world. Push and commit mechanics as in row 30. |
 
 ## ANCHOR
 07ae8ad768089bebb5715d78fb67bc8a1312effe — round-7 report + ledgers (the wind-down commit; the tool/evidence work commit precedes it;
