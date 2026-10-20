@@ -1,4 +1,5 @@
 const PAGES: Array<{ id: string; label: string }> = [
+  { id: 'play', label: 'PLAY — Playable Moon (T1)' },
   { id: 'm1a', label: 'M1A — Core F64 Skeleton & Floating Origin' },
   { id: 'm1b', label: 'M1B — Kepler Rails & Two-Tier Time' },
   { id: 'm1c', label: 'M1C — Web Worker Terrain & Zero-GC Pool' },
@@ -20,7 +21,7 @@ export default function App() {
       }}
     >
       <h1 style={{ color: '#7fd4ff', letterSpacing: '0.08em', fontSize: 18 }}>
-        SOLARIS ENGINE — MILESTONE HARNESSES
+        SOLARIS — PLAY / MILESTONE HARNESSES
       </h1>
       <p style={{ color: '#587187', fontSize: 12.5 }}>
         Each harness runs on its own page (full load; one module singleton per page).

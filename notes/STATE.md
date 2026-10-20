@@ -1,15 +1,15 @@
 # SOLARIS — STATE — PHASE 2: TASK DEVELOPMENT (contract: AGENT_BRIEF.md; phase-1 history preserved below)
 
 ## NEXT ACTION
-**LEAD GATE — T1 plan READY (7/7).** `docs/T1-plan.md` is complete: all 15
-required sections, "Verification per step" (B1–B13 → checks table) and
-"Risks & open decisions" (§14 K1–K13 by reference + Q1–Q8 decision table with
-defaults and the step each is needed before). DO NOT BUILD until the Lead's
-execute order ("execute the T1 plan") is recorded in the APPROVAL LEDGER.
-On that order: build step **B1 — Route stub** (§12.2, §15). Q1–Q8 are RULED
-(APPROVAL LEDGER 2026-10-20; plan "Rulings" table): B11 (coyoteTime +
-airControl) and B12 (Playwright smoke) are IN scope; play `spinOmega` = 0. Each build commit carries
-its step box + tracker row + this NEXT ACTION update + a CHANGES.md entry.
+**T1 BUILDING — next build step B2 — Moon constants + spawn** (`docs/T1-plan.md`
+§12.2 B2: `src/play/world/moonConfig.ts` + `src/play/world/spawn.ts` +
+`tools/test-play-spawn.mjs`; values by value from harness ~100–137, spawn
+~157–221 verbatim; `MOON_ASTRONAUT.spinOmega` = 0 per Q8). B1 (route stub) is
+DONE. The Lead's execute order is recorded in the APPROVAL LEDGER (2026-10-20);
+Q1–Q8 rulings apply (B11 coyoteTime + airControl and B12 Playwright smoke IN
+scope). Each build commit carries its step box + tracker row + this NEXT
+ACTION update + a CHANGES.md entry. Known benign: `/favicon.ico` 404 console
+error (pre-existing, see plan B1 build note).
 
 Phase-1 legacy (parked — carries forward unchanged): M1F round-7 ruling still
 PENDING (option menu `notes/reports/M1F.md` §15.7; recommendation (a): rebase
@@ -30,8 +30,8 @@ Neither is touched without a Lead directive naming it.
 
 ## IN-FLIGHT
 PHASE 2 (active): T1 "playable moon" on branch `t1-playable-moon` (cut from
-`m1-assembly` @ 3057899, pushed). Plan READY (docs/T1-plan.md, 7/7) — at the LEAD GATE, NEXT ACTION above. Tracker:
-`notes/task.md`. No game-code changes in phase 2 yet.
+`m1-assembly` @ 3057899, pushed). Plan READY (docs/T1-plan.md, 7/7); BUILDING since the 2026-10-20 execute order — B1 done, NEXT ACTION above. Tracker:
+`notes/task.md`. Phase-2 game code so far: B1 route stub (`src/play/PlayPage.tsx`, `main.tsx` route, `App.tsx` menu).
 
 PHASE 1 (parked): Milestone 1F — ROUND-7 EXECUTED (Track A Node phase), 2026-10-19.
 PARKED AT THE RULING GATE with a quantified option menu; NO harness edit
@@ -155,6 +155,7 @@ milestone, Lead's call. (Evidence: notes/reports/M1F.md §10.5, §11.3.)
 | 2026-10-19 | TASK EXECUTION RESERVED FOR FRESH SESSIONS (Lead): the session that builds/maintains the process must not plan or build tasks itself; its T1-planning checkpoints (3d8dcb8, 6c11ca8) REVERTED by Lead order (clean slate — the Lead is editing the T1 definition in notes/task.md before a planning session starts) |
 | 2026-10-20 | R5 WAIVER (Lead): the M1F R5 FAIL is deferred to later work and counts as PASS in every task verification/regression check (T1 §13.5, B11). Not a blocker, not a regression; record as `R5 WAIVED`. No harness/spec/row/threshold change; every other FAIL still blocks. |
 | 2026-10-20 | T1 OPEN QUESTIONS RULED (Lead; Q2/Q5/Q8 delegated to the bot): Q1 Option B; Q2 (a) opt-in KCC `coyoteTime` default 0, play 0.10 s; Q3 yes, `airControl` 0.3 default 0; Q4 crouch blend pose; Q5 core untouched, jump buffer in the play layer; Q6 yes (Playwright runnable in the VM); Q7 `play` only; Q8 play `MOON_ASTRONAUT.spinOmega` = 0 (harness/KCC defaults unchanged). B11 + B12 now IN scope. NOT an execute order — build still awaits "execute the T1 plan". |
+| 2026-10-20 | EXECUTE ORDER (Lead): "execute the T1 plan" — LEAD GATE passed; build B1–B13 in order. Session budget 50 OLU (wrap-up at ~40); §9 relaxed for routine technical decisions (decide without asking, record each decision + reason in the commit message and, where it affects later steps, in `docs/T1-plan.md`); §3 invariants, §8 parked items and the rest of §9 stay binding; oversized steps are split into sub-steps in the plan (own files/outcome/check, intent preserved, breakdown committed first). |
 
 ## SESSION LOG
 | # | Date | Goal | Outcome | Handoff note |

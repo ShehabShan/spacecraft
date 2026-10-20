@@ -2,7 +2,7 @@
 
 - Task: **T1** (playable moon) — definition: `notes/task.md` § "T1 — PLAYABLE MOON"
 - Branch: `t1-playable-moon`
-- Stage: **READY** — plan status READY (7/7 sections; Steps 15/15); at the LEAD GATE, awaiting the Lead's execute order
+- Stage: **BUILDING** — plan READY (7/7); Lead execute order recorded 2026-10-20; build B1/13 done, next B2
 - Last updated: 2026-10-20
 - **Resume at the FIRST UNCHECKED BOX** (planning item or build step).
 - Rules: planning changes NO game code (plan + process files only); each checked
@@ -1796,7 +1796,7 @@ or reordered. A step that fails its checks is not committed as done.
 
 **12.2 Build steps** (resume at the first unchecked box)
 
-- [ ] **B1 — Route stub.**
+- [x] **B1 — Route stub.**
   - Files: `src/main.tsx` (add `play: () => import('./play/PlayPage')` to the
     `pages` map, lines 11–17; keep the no-StrictMode comment), `src/App.tsx`
     (first `PAGES` row `{ id: 'play', label: 'PLAY — Playable Moon (T1)' }`,
@@ -1807,6 +1807,12 @@ or reordered. A step that fails its checks is not committed as done.
   - Checks: V0; build output lists a separate `PlayPage-*.js` chunk; manual —
     the menu shows PLAY first and the m1a–m1d links unchanged, `/?page=play`
     renders the stub with no console errors, `/?page=m1a` still loads.
+  - **Build note (B1, 2026-10-20, independent decision).** The only console
+    error seen on `/?page=play` is the browser's automatic `GET /favicon.ico`
+    → 404. It is pre-existing: `index.html` declares no icon and the unchanged
+    menu `/` logs the same error. It is not a B1 defect and no favicon is
+    added (out of scope). Every later "no console errors" check (MT1, B12
+    smoke) ignores exactly this `/favicon.ico` 404 and nothing else.
 
 - [ ] **B2 — Moon constants + spawn.**
   - Files: `src/play/world/moonConfig.ts` (`MOON_PARAMS`, `MOON_R`, `MOON_MU`,

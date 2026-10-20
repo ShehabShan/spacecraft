@@ -1129,3 +1129,11 @@ Observations (NO change made — recorded for the Lead):
     409→400 zero-crossing (400+29=429), 7→6 admissible 1-crossing sites under
     the coded `net>200` filter (7 matches `net>0` and includes legacy #1454;
     6 fresh). · Notes-only. · F-11.
+77. 2026-10-20 · T1/B1 · game/src/main.tsx, game/src/App.tsx,
+    game/src/play/PlayPage.tsx (new) · Route stub: `play` entry in the
+    static `pages` map (own Vite chunk); menu gets PLAY as the first row,
+    title `SOLARIS — PLAY / MILESTONE HARNESSES`; PlayPage = stub (no three,
+    no Canvas). · WHY: T1 plan §12 B1/§15 — first build step after the
+    execute order. · Evidence: TSC_EXIT=0, BUILD_EXIT=0, CANON_EXIT=0,
+    SHARED_EXIT=0, 1 PlayPage-*.js chunk, K10 grep exit 1, headless-Chrome
+    manual pass (menu/stub/back-link/m1a). · Source: Lead execute order.
