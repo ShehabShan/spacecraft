@@ -1,15 +1,14 @@
 # SOLARIS — STATE — PHASE 2: TASK DEVELOPMENT (contract: AGENT_BRIEF.md; phase-1 history preserved below)
 
 ## NEXT ACTION
-**T1 plan — checklist item "Steps" → sub-box §10 Game shell + HUD plan** in
-`docs/T1-plan.md` (plan IN PROGRESS 4/7; Steps 9/15: §1–§8 as before; §9
-Controller + camera done — input map, camera-relative moveF/moveR math
-(c = h × up = KCC right), orient-to-movement via autoTurn, play-layer jump
-buffer, coyote/air-control only via opt-in default-0 KCC fields (Q2a/Q3),
-§8.4 jump-delay DECIDED = no delay, hard-landing recovery, respawn/pause dt=0,
-orbit/boom/4-sample clearance/spring arm smoothed in the PLANET frame, FP
-toggle, KCC touchpoint table, checks). §10 must cover route, menu, loading,
-pointer lock + click-to-play, pause, respawn UI, HUD (§4.2 playStore). Q1–Q8 await a Lead ruling but do not block
+**T1 plan — checklist item "Steps" → sub-box §11 Performance plan** in
+`docs/T1-plan.md` (plan IN PROGRESS 4/7; Steps 10/15: §1–§9 as before; §10
+Game shell + HUD done — `?page=play` route + first menu entry, phase table
+(LOADING/CLICK_TO_PLAY/PLAYING/PAUSED + additive ERROR), pointer-lock rules
+(gesture, ~1 s re-lock cool-down, visibilitychange pauses), loading gate
+`residentAround(spawn.dir, 300 m)` = 1.0 twice or 15 s timeout, pause overlay
+(resume/respawn/controls/menu), HUD with double-buffered zero-alloc 10 Hz
+publish, teardown, checks). Q1–Q8 await a Lead ruling but do not block
 planning; proceed with the stated defaults. Resume at the FIRST UNCHECKED BOX of its PLANNING CHECKLIST;
 draft sections incrementally per the schema in `notes/task.md` (each commit
 carries its checkbox + tracker row + this NEXT ACTION update). The "Steps"
@@ -185,6 +184,7 @@ milestone, Lead's call. (Evidence: notes/reports/M1F.md §10.5, §11.3.)
 | 18 | 2026-10-20 | T1 planning (fresh session, PromptQL VM) — bootstrap + plan checkpoints | Bootstrap per §5: clone clean at 550c4a0 = origin; tracker/STATE/plan checkboxes agree. REPAIR: row 17 handoff was "(in progress)" — filled from evidence. Checkpoint 7: Steps §7 Character rig specification drafted (Steps 7/15) — rig axes/sign conventions verified numerically against quatFromFrameInto (X=fwd, Y=up, Z=fwd×up) and the KCC right vector; two additive amendments to the §5 AstronautRig.ts API: `RIG_DIMS` export + optional `buildAstronautRig(groundClearance = 0.02)`. | Next: §8 Animation state machine (table) — the first unchecked box; Q1–Q8 still await the Lead (non-blocking). |
 | 19 | 2026-10-20 | T1 plan §8 Animation state machine | Bootstrapped per §5 (fresh VM clone; git log/status/filesystem agree with tracker + STATE.md at 31c6b0a, no drift, .DS_Store untracked and never staged); drafted §8 (8.1 solver, 8.2 table, 8.3 no-slide gait, 8.4 air/land poses, 8.5 slide, 8.6 slope residual, 8.7 checks) + additive §5 telemetry amendment; plan Steps 8/15; NEXT = §9 Controller + camera plan (must rule on the §8.4 jump-impulse-delay caveat). Session ended deliberately after one checkpoint (user OLU budget). |
 | 20 | 2026-10-20 | T1 plan §9 Controller + camera | Same VM session (no drift at 964623a); drafted §9 (9.1 input map, 9.2 movement math, 9.3 jump/coyote/air/landing/respawn/pause, 9.4 camera, 9.5 KCC touchpoints, 9.6 checks); DECIDED the §8.4 caveat (no jump-impulse delay; `jumpDelayS` 0 reserved); additive §5 PLAY_TUNING fields; REPAIR: §8 used KCC class-default speeds (walk 4/sprint 8/crouch 1.8/jump 5) — corrected to MOON_ASTRONAUT (3.2/6.5/1.5/4.2), thresholds unchanged and still valid; NEXT = §10 Game shell + HUD plan. Push tip: `git -c http.version=HTTP/1.1 push` (default HTTP/2 push stalled through the integration proxy). |
+| 21 | 2026-10-20 | T1 plan §10 Game shell + HUD | Same VM session (no drift at 745fbff); drafted §10 (10.1 route/menu, 10.2 phase table + pointer-lock rules, 10.3 loading gate 300 m / 15 s — sets the §6.3 criterion, 10.4 pause overlay, 10.5 HUD, 10.6 teardown, 10.7 checks); additive §5 amendments: PlayPhase ERROR, PLAY_TUNING readyRadiusM/loadTimeoutS, InputState toggleHud; NEXT = §11 Performance plan. |
 
 ## ANCHOR
 07ae8ad768089bebb5715d78fb67bc8a1312effe — round-7 report + ledgers (the wind-down commit; the tool/evidence work commit precedes it;

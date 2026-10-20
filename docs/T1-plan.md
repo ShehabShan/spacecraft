@@ -2,7 +2,7 @@
 
 - Task: **T1** (playable moon) — definition: `notes/task.md` § "T1 — PLAYABLE MOON"
 - Branch: `t1-playable-moon`
-- Stage: **PLANNING** — plan status IN PROGRESS (4/7 sections; Steps 9/15)
+- Stage: **PLANNING** — plan status IN PROGRESS (4/7 sections; Steps 10/15)
 - Last updated: 2026-10-20
 - **Resume at the FIRST UNCHECKED BOX** (planning item or build step).
 - Rules: planning changes NO game code (plan + process files only); each checked
@@ -25,7 +25,7 @@
   - [x] §7 Character rig specification
   - [x] §8 Animation state machine (table)
   - [x] §9 Controller + camera plan
-  - [ ] §10 Game shell + HUD plan
+  - [x] §10 Game shell + HUD plan
   - [ ] §11 Performance plan
   - [ ] §12 Implementation phases (= the ordered BUILD steps)
   - [ ] §13 Verification plan
@@ -624,6 +624,7 @@ export const PLAY_TUNING: {
   camBoomTau: number;          // 0.30 s boom regrowth (§9.4 amendment)
   hardLandingSpeed: number; landRecoverScale: number; // 4.5 m/s / 0.5 (§9.3 amendment)
   jumpDelayS: number;          // 0 — §9.3 decision; only if the Lead overrides
+  readyRadiusM: number; loadTimeoutS: number; // 300 m / 15 s loading gate (§10.3 amendment)
 };
 ```
 
@@ -840,7 +841,7 @@ export function createPlayFrame(rt: PlayRuntime):
 
 `ui/playStore.ts`:
 ```ts
-export type PlayPhase = 'LOADING' | 'CLICK_TO_PLAY' | 'PLAYING' | 'PAUSED';
+export type PlayPhase = 'LOADING' | 'CLICK_TO_PLAY' | 'PLAYING' | 'PAUSED' | 'ERROR'; // ERROR: §10.2 amendment
 export interface PlayHud { speed: number; state: string; grounded: boolean; fps: number;
   lat: number; lon: number; altAGL: number; }
 export const usePlayStore: UseBoundStore<StoreApi<{ phase: PlayPhase; loadProgress: number;
@@ -1534,3 +1535,123 @@ real KCC on a flat or synthetic patch)
   render-world step equals the character's step to 1 mm (no lurch).
 - **Core default path.** With `coyoteTime` = `airControl` = 0, the 1E/1F KCC
   acceptance traces are unchanged (run only if the core is edited).
+
+### §10 Game shell + HUD plan
+
+The shell is everything around the frame loop: the route, the menu entry, the
+loading gate, pointer lock, pause, the respawn UI and the HUD. It is React DOM
+on top of the canvas. React only **reads** `ui/playStore` (§4.2). The frame
+loop writes the store through `usePlayStore.getState()` and never reads React
+state. Every navigation is a full page load (F1/F2).
+
+**10.1 Route and menu**
+- **Route.** `main.tsx` gets `play: () => import('./play/PlayPage')` in
+  `pages`, so `/?page=play` loads it as its own Vite chunk. The
+  no-StrictMode comment is kept, because the KCC and rig singletons break
+  under a double mount (F1).
+- **Menu.** `App.tsx` `PAGES` gets `{ id: 'play', label: 'T1 — Playable Moon' }`
+  as the **first** entry, so the game sits above the test harnesses. Only
+  `play` is added (Q7 default). m1e and m1f stay URL-only.
+- **Back to menu.** This is a plain `<a href="/">` in the pause overlay. The
+  full load runs `MoonWorld.dispose()` through the unmount path (§6.4), but
+  correctness does not depend on it.
+
+**10.2 Phase machine** (`ui/playStore.phase`; `setPhase` is the only
+unthrottled store write)
+
+| From | Event | To | Side effects |
+|---|---|---|---|
+| (mount) | `createMoonWorld()` returns | LOADING | the frame loop runs with `dt = 0`; LOD and streaming run (§4.3 stage 10) |
+| LOADING | ready (10.3) or `loadTimeoutS` | CLICK_TO_PLAY | the overlay shows "Click to play" (plus "terrain still streaming" on timeout) |
+| CLICK_TO_PLAY / PAUSED | click on the overlay or the canvas | (unchanged until lock) | `canvas.requestPointerLock()`. This is called inside the click handler, because browsers need a user gesture |
+| CLICK_TO_PLAY / PAUSED | `pointerlockchange` with lock = canvas | PLAYING | `resumedThisFrame = true`, so the next frame runs `dt = 0` (F7); held keys are cleared |
+| PLAYING | `pointerlockchange` with lock lost (Esc, alt-tab, browser UI) | PAUSED | `input.clearHeld()` |
+| PLAYING | `P` edge | PAUSED | `document.exitPointerLock()` |
+| PLAYING | `visibilitychange` to hidden | PAUSED | the same as a lock loss. A hidden tab must never simulate |
+| PAUSED | `pointerlockerror` | PAUSED | an overlay hint: "Click again to resume" |
+| any | WebGL `webglcontextlost`, or a worker `error` | ERROR (additive phase) | an error overlay with a Reload link. No recovery is attempted in V1 |
+
+Rules:
+- **Re-lock cool-down.** After the user presses Esc, Chrome refuses an
+  immediate `requestPointerLock` (about 1 s) and fires `pointerlockerror`.
+  The pause overlay therefore disables its Resume button for 1.0 s after
+  entering PAUSED, which avoids a dead click.
+- **`P` and Esc are equivalent.** Both end in PAUSED with the lock released.
+  Esc cannot be intercepted while locked, so it is never bound to anything
+  else.
+- **`ERROR` is additive.** `PlayPhase` gains `'ERROR'`, which is a §5 type
+  amendment.
+
+**10.3 Loading gate** (sets the criterion that §6.3 leaves to §10)
+- **Criterion.** `lod.residentAround(spawn.dir, readyRadiusM)` returns the
+  fraction in [0, 1] of the currently selected LOD leaves within the
+  angular radius `readyRadiusM / R` of the spawn that have a resident mesh.
+  The world is ready at 1.0 on two consecutive frames.
+- **Values** (additive `PLAY_TUNING` fields):
+  - `readyRadiusM` = 300 m. On R = 1364.5 m that is about 12.6° of arc,
+    which covers the boom (≤ 12 m), the near layer, and a few seconds of
+    sprinting in any direction.
+  - `loadTimeoutS` = 15 s. The overlay then offers play anyway. Streaming
+    continues and the LOD shows lower-detail tiles until the high-detail
+    ones arrive, which is the existing M1F behaviour.
+- **Progress.** `setLoad(fraction)` is throttled to ≤10 Hz through the same
+  publisher. The overlay shows a bar and a percentage.
+- **Physics during loading.** It is frozen (`dt = 0`), so the character
+  cannot fall through tiles that are not yet resident. The camera is posed
+  once by `cam.reset(kcc)` so the backdrop is the spawn view.
+
+**10.4 Pause overlay** (`ui/Overlays.tsx` `PauseOverlay`)
+- **Resume.** A button that calls `requestPointerLock` (respecting the 10.2
+  cool-down). A click anywhere on the dimmed canvas does the same.
+- **Respawn.** Sets the `respawn` edge. The §9.3 placement runs on the next
+  frame with `dt = 0`, and the phase stays PAUSED, so the user sees the new
+  spot before resuming.
+- **Controls.** The full key list from §9.1.
+- **Back to menu.** 10.1.
+- **No settings in V1.** Mouse sensitivity and invert-Y are fixed
+  `PLAY_TUNING` values.
+
+**10.5 HUD** (`ui/Hud.tsx`; every element is `pointer-events: none` so the
+canvas keeps every click)
+- **Controls hint**, bottom centre: "WASD move · Shift sprint · Space jump ·
+  C crouch · V camera · R respawn · P pause". It fades out after 8 s of
+  PLAYING or after the first 20 m walked, whichever comes first. It comes
+  back on the pause overlay only.
+- **Status**, bottom left: speed in m/s (1 decimal), the §8 state name, and a
+  grounded / airborne indicator.
+- **Debug readout**, top right, toggled by `H` (an additive `toggleHud`
+  edge in `InputState`; default ON in dev builds and OFF in production):
+  - FPS as an exponential average with τ = 0.5 s, computed in stage 11 from
+    the raw frame `delta`, so it still reads during PAUSED and LOADING;
+  - latitude and longitude in degrees, from `kcc.up` in the planet frame;
+  - `altAGL` in metres.
+- **Zero allocation at 10 Hz.** Two boot-allocated `PlayHud` objects are
+  used **alternately** (double buffer). Each publish fills the idle buffer
+  and calls `setHud(buf)`, so zustand sees a new reference without anything
+  being allocated (§4.5 hot-path rule). State names are module string
+  constants.
+- **No crosshair in V1.** There is no aiming. FP shows a 4 px centre dot
+  only.
+
+**10.6 Teardown and robustness**
+- **Unmount** runs `input.detach()` (all listeners from 10.2 plus
+  `visibilitychange` and context loss) and then `MoonWorld.dispose()` (§6.4).
+  The page then calls `document.exitPointerLock()` if the lock is held.
+- **Resize** is handled by R3F. The three-pass camera aspect follows the
+  existing `MultiCameraRig` behaviour (F15, unchanged).
+- **Focus.** The canvas gets `tabIndex = 0` and focus on the first click, so
+  key events never go to the page body.
+
+**10.7 Shell checks** (these feed §13)
+- **Phase machine.** A store-only Node test drives the 10.2 events with a
+  fake `document`. Every row of the table is hit, and no other transition is
+  reachable. A resume always produces exactly one `dt = 0` frame.
+- **Loading gate.** A fake LOD that reports 0.5 → 1.0 → 1.0 gives
+  CLICK_TO_PLAY on the second 1.0. A fake LOD that stays at 0.9 gives
+  CLICK_TO_PLAY at 15 s ± 1 frame, with the streaming note.
+- **HUD.** 1,000 frames at 144 Hz produce ≤ 10 publishes per simulated
+  second, and the heap delta is about 0.
+- **Hidden tab.** `visibilitychange` to hidden during PLAYING makes the next
+  frame pause, and the KCC tick count stays unchanged.
+- **Playwright (Q6, optional).** `/?page=play` reaches CLICK_TO_PLAY within
+  20 s with no console errors and a non-blank canvas. The menu link exists.
