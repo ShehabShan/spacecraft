@@ -114,7 +114,8 @@ smooth at typical desktop frame rates, avoid per-frame allocations.
 **Hard constraints (all bind).**
 - Do NOT modify Design_specs/ or Milestone/. Do NOT change M1F acceptance
   rows, thresholds, or R5/F-09/F-10 behavior (1F is PARKED — its R5 gap is a
-  known test-coverage/ruling issue, not a reason to change the game design).
+  known test-coverage/ruling issue, not a reason to change the game design;
+  R5 FAIL is WAIVED = PASS in T1 verification, Lead directive 2026-10-20).
 - The play page must NOT import Milestone1F_TestHarness.tsx (module
   singletons + test-only code would execute). Keep the page additive and
   independently loadable.

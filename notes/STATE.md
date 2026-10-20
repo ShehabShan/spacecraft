@@ -5,8 +5,8 @@
 `docs/T1-plan.md` (plan IN PROGRESS 4/7; Steps 13/15: §1–§12 as before; §13
 Verification plan done — V0 base commands, 7-script Node matrix, 16-row manual
 matrix MT1–MT16, optional Playwright smoke, regression with baseline-first rule
-and env-soft rows; erratum: e2e/m1f.spec.ts exits 1 by design (R5), judge by
-badges). §14 must be a table (risk, impact, likelihood, mitigation, owner step)
+and env-soft rows; R5 WAIVED = PASS per Lead directive 2026-10-20; an m1f spec exit 1 caused
+only by R5 is expected). §14 must be a table (risk, impact, likelihood, mitigation, owner step)
 covering at least: KCC frame mixing (§4.4 erratum), LOD port drift, pointer-lock
 quirks, rebase lurch, foot slide on slopes (§8.6), day/night Q8, perf budget,
 B11 core regression, shallow-clone/proxy push friction. Then §15 first coding
@@ -160,6 +160,7 @@ milestone, Lead's call. (Evidence: notes/reports/M1F.md §10.5, §11.3.)
 | 2026-10-19 | PHASE 2 ORDERED (Lead): main development proceeds as TASKS (plan → build) across fresh AI sessions — tracker `notes/task.md` + `docs/<Tn>-plan.md` plans; AGENT_BRIEF.md rewritten for feature builders (assembly brief archived VERBATIM at `notes/archive/AGENT_BRIEF-assembly.md`); `Milestone/*.txt`, `notes/reports/`, `notes/patches/`, `notes/archive/` OFF the reading list — code is the source of truth; `Design_specs/` optional background (code wins); commit+push after every completed step with WHAT/WHY/STATE/NEXT/VERIFIED messages; merge-to-main between tasks (supersedes phase-1 "never push main"); 1F stays parked at its ruling gate, 1G explicitly DEFERRED; T1 = playable moon on `t1-playable-moon`; NEXT ACTION = "T1 plan" |
 | 2026-10-19 | PHASE-2 AMENDMENTS (Lead): planning is INCREMENTAL and multi-session (plan files carry a PLANNING CHECKLIST; drafted section by section with checkpoint commits — NOT one-shot); EVERY commit in either stage is a checkpoint: plan checkbox + tracker row + STATE.md NEXT ACTION ride in the SAME commit so each push is a complete resume point; LEAD GATE between plan READY and build start — execute only on the Lead's order |
 | 2026-10-19 | TASK EXECUTION RESERVED FOR FRESH SESSIONS (Lead): the session that builds/maintains the process must not plan or build tasks itself; its T1-planning checkpoints (3d8dcb8, 6c11ca8) REVERTED by Lead order (clean slate — the Lead is editing the T1 definition in notes/task.md before a planning session starts) |
+| 2026-10-20 | R5 WAIVER (Lead): the M1F R5 FAIL is deferred to later work and counts as PASS in every task verification/regression check (T1 §13.5, B11). Not a blocker, not a regression; record as `R5 WAIVED`. No harness/spec/row/threshold change; every other FAIL still blocks. |
 
 ## SESSION LOG
 | # | Date | Goal | Outcome | Handoff note |
@@ -191,6 +192,7 @@ milestone, Lead's call. (Evidence: notes/reports/M1F.md §10.5, §11.3.)
 | 23 | 2026-10-20 | T1 plan consistency fix §8–§11 | Review of §8–§11 for errors/contradictions (budget too low for §12). Fixed: §5 InputState + §4.2 PlayInput edges and §9.1 key map lacked the H `toggleHud` edge that §10.5 and row 21 claimed; §4.2 phase list lacked ERROR; §11.1 spawn-search ref → §6.1. No section rewritten; NEXT unchanged = §12 Implementation phases. |
 | 24 | 2026-10-20 | T1 plan §12 Implementation phases | Fresh session (new VM; shallow clone `--depth 30` because a full clone stalled); §5 bootstrap reconciliation clean — HEAD 6e17fd0, tree clean, plan boxes §1–§11 checked, tracker last-commit f6a735f = the commit before the newest (convention), no drift. Drafted §12: rules + V0 base check, code-anchor list (grep-verified), 12.1 step table, 12.2 build steps B1–B13 as checkboxes (route stub → constants/spawn → LOD → static world → shell → rig → FIRST PLAYABLE B7 → state machine → ANIMATED B9 → HUD/perf → conditional core B11 → optional Playwright B12 → close-out B13), 12.3 non-steps. `node_modules` not installed in this VM session (no `npm ci`; planning only); canon check run as `git diff --quiet HEAD -- Design_specs Milestone` because `ea112ec` is outside the shallow history. NEXT = §13 Verification plan. |
 | 25 | 2026-10-20 | T1 plan §13 Verification plan | Same VM session, resumed from e063c7c (no drift). Drafted §13: erratum (e2e/m1f.spec.ts asserts no FAIL badge, so it exits 1 by design with R5 parked — regression is judged by the logged badge vector; B11 corrected in place); 13.1 V0 commands; 13.2 Node matrix of the 7 test-play scripts with sources; 13.3 manual matrix MT1–MT16; 13.4 Playwright smoke; 13.5 regression (baseline-first, expected outcomes and env-soft rows from the ledger); 13.6 evidence format. Push again via GitHub git-data API (proxy `git push` hangs). NEXT = §14 Risk register. |
+| 26 | 2026-10-20 | Lead directive: R5 waiver | Recorded the R5 waiver (R5 FAIL = PASS for verification) in AGENT_BRIEF.md §8 + §10, notes/task.md T1 constraints, APPROVAL LEDGER, and T1 plan §12 B11 + §13 (erratum, 13.5 table and pass rule). Docs only; no code. Plan unchanged at Steps 13/15; NEXT unchanged = §14 Risk register. |
 
 ## ANCHOR
 07ae8ad768089bebb5715d78fb67bc8a1312effe — round-7 report + ledgers (the wind-down commit; the tool/evidence work commit precedes it;

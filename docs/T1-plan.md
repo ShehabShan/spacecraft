@@ -1938,8 +1938,9 @@ or reordered. A step that fails its checks is not committed as done.
   - Checks: V0; `test-play-controller` + the §9.6 core default-path item
     (integrity trace byte-equal with both fields at 0); REGRESSION
     `npx playwright test e2e/m1e.spec.ts e2e/m1f.spec.ts; echo PW_EXIT=$?` →
-    m1e 6/6 PASS, m1f badges exactly [PASS,PASS,PASS,PASS,FAIL] (R5 the parked
-    FAIL; `PW_EXIT` is therefore 1 by design, so judge by the badges, §13.5). With no ruling on record, this box is checked as **SKIPPED (no
+    m1e 6/6 PASS, m1f badges R1–R4 PASS, R5 WAIVED (counted as PASS whatever it shows,
+    Lead directive 2026-10-20; `PW_EXIT` stays 1 while R5 shows FAIL, so judge by the
+    badges, §13.5). With no ruling on record, this box is checked as **SKIPPED (no
     ruling)** with that reason in the commit, and no core file changes.
 
 - [ ] **B12 — OPTIONAL Playwright smoke (Q6).**
@@ -1978,6 +1979,11 @@ final tree. A "clean" or "PASS" claim needs an observed, UNPIPED exit code
   by design**.
 - The regression criterion is therefore the badge vector the spec logs
   (`[m1f gate] badges: …`), not the exit code. B11's text is corrected in place.
+- **R5 waiver (Lead directive 2026-10-20).** R5 is deferred to later work and counts as
+  PASS in every T1 check. An R5 FAIL is never a regression and never a
+  blocker; record it as `R5 WAIVED`. Every other FAIL still blocks. The
+  waiver changes no code: the harness, its rows and thresholds, and
+  `e2e/m1f.spec.ts` stay as they are (Scope OUT; AGENT_BRIEF.md §8).
 
 **13.1 Base commands (V0, every step)** — run from `game/`:
 
@@ -2070,10 +2076,11 @@ echo NODE_EXIT=$?`.
 | m1c | 4/4 PASS | — |
 | m1d | 5/5 PASS on hardware WebGL | row 2 (dive misses grounding under SwiftShader; FPS backlog) |
 | m1e | 6/6 PASS, `PW_EXIT=0` | — |
-| m1f | badges exactly `["PASS","PASS","PASS","PASS","FAIL"]`; `PW_EXIT=1` by design (R5 parked) | — |
+| m1f | R1–R4 PASS; R5 WAIVED = PASS (Lead directive 2026-10-20); `PW_EXIT=1` while R5 shows FAIL is expected, not a failure | R5 (waived, excluded from comparison) |
 
 - **Pass rule.** Each suite's badges must match its baseline exactly. An
   environment-soft row may differ only if it also differed in the baseline.
+  m1f R5 is excluded from the comparison (waived).
 - **Stop rule.** Any other difference is a regression. Fix it before
   reporting, or STOP (AGENT_BRIEF.md §9).
 

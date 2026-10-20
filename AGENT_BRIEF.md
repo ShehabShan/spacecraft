@@ -133,6 +133,8 @@ essays.
 - MS 1F — round-7 ruling PENDING: the option menu is at
   `notes/reports/M1F.md` §15.7 (recommendation (a): rebase gate ≥ 2 → ≥ 1).
   The 1F harness state is green except R5 by design; leave it that way.
+  R5 FAIL is WAIVED for all task verification (Lead, 2026-10-20): count it as
+  PASS, never a blocker or regression; do not change code to hide it.
 - MS 1G (IndexedDB saves) — DEFERRED, explicitly ignored until the Lead orders
   it ("much later"). Do not start it, do not plan it.
 
@@ -157,3 +159,6 @@ about whether a change is allowed — STOP, write the options, ask the Lead.
   checkpoint: the plan checkbox, tracker row, and STATE.md NEXT ACTION updates
   ride in the SAME commit, so each push is a complete resume point. Lead gate
   added between plan READY and build start: execute only on the Lead's order.
+- 2026-10-20 R5 waiver (Lead): the M1F R5 FAIL is deferred to later work and
+  counts as PASS in every task's verification/regression check (m1f spec exit
+  1 caused only by R5 is expected). No code, row or threshold changes (§8).
