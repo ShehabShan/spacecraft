@@ -471,7 +471,7 @@ Rules:
   - `sprint` and `crouch`;
   - `jumpPressed` (an edge, latched until consumed);
   - `lookDX`/`lookDY` (accumulated mouse pixels, zeroed on read);
-  - edges for `toggleCam`, `respawn` and `pause`;
+  - edges for `toggleCam`, `respawn` and `pause`, plus `toggleHud` (§10.5);
   - `pointerLocked`.
 - **Camera heading.** `ThirdPersonCamera` owns a planet-frame unit vector
   `heading` (tangent to `kcc.up`), plus `pitch` and `distance`. Each frame
@@ -506,7 +506,7 @@ Rules:
     and −Z is facing (three.js forward);
   - a future `GltfAnimator` implements the same four members.
 - **`ui/playStore`** holds:
-  - `phase`: `LOADING`, `CLICK_TO_PLAY`, `PLAYING` or `PAUSED`;
+  - `phase`: `LOADING`, `CLICK_TO_PLAY`, `PLAYING`, `PAUSED` or `ERROR` (§10.2);
   - `loadProgress`;
   - a HUD snapshot (speed, state name, grounded, FPS, coordinates),
     published at ≤10 Hz through `createTelemetryPublisher`.
@@ -697,7 +697,7 @@ export class InputState {
   sprint = false; crouch = false;
   jumpPressed = false;                // latched edge, cleared by the controller
   lookDX = 0; lookDY = 0;             // accumulated movementX/Y while locked
-  toggleCamEdge = false; respawnEdge = false; pauseEdge = false;
+  toggleCamEdge = false; respawnEdge = false; pauseEdge = false; toggleHudEdge = false; // H (§10.5)
   pointerLocked = false;
   attach(el: HTMLElement): void;      // keydown/keyup/blur/mousemove/pointerlockchange
   detach(): void;
@@ -1380,6 +1380,7 @@ while `pointerLocked`, and §10 owns the click-to-play overlay)
 | V | `toggleCam` edge | TP ↔ FP (9.4) |
 | R | `respawn` edge | respawn (9.3) |
 | P / Esc | `pause` edge | pause. Esc also releases pointer lock, which also pauses (§10) |
+| H | `toggleHud` edge (additive, §10.5) | debug HUD readout on/off |
 
 Keys are tracked as held sets. `keydown` repeat events are ignored, so an
 edge fires once per physical press. A `blur` clears every held key, so no
