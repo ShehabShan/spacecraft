@@ -2,7 +2,7 @@
 
 - Task: **T1** (playable moon) — definition: `notes/task.md` § "T1 — PLAYABLE MOON"
 - Branch: `t1-playable-moon`
-- Stage: **BUILDING** — plan READY (7/7); Lead execute order recorded 2026-10-20; build B1/13 done, next B2
+- Stage: **BUILDING** — plan READY (7/7); Lead execute order recorded 2026-10-20; build B2/13 done, next B3
 - Last updated: 2026-10-20
 - **Resume at the FIRST UNCHECKED BOX** (planning item or build step).
 - Rules: planning changes NO game code (plan + process files only); each checked
@@ -1814,7 +1814,7 @@ or reordered. A step that fails its checks is not committed as done.
     added (out of scope). Every later "no console errors" check (MT1, B12
     smoke) ignores exactly this `/favicon.ico` 404 and nothing else.
 
-- [ ] **B2 — Moon constants + spawn.**
+- [x] **B2 — Moon constants + spawn.**
   - Files: `src/play/world/moonConfig.ts` (`MOON_PARAMS`, `MOON_R`, `MOON_MU`,
     `MAX_TERRAIN_H`, `HEIGHT_SLACK`, `MOON_SPIN_OMEGA`, `MOON_ASTRONAUT`,
     `PLAY_POOL_OPTS`, `PLAY_TUNING` incl. `readyRadiusM` 300 / `loadTimeoutS`
@@ -1830,6 +1830,25 @@ or reordered. A step that fails its checks is not committed as done.
   - **Q8 ruling (2026-10-20):** `MOON_ASTRONAUT.spinOmega` = 0 (play config
     copy only; the harness and KCC defaults are untouched), with a `// WHY:`
     line citing Q8. `test-play-spawn` pins `spinOmega === 0`.
+
+  - **Build notes (B2, 2026-10-20, independent decisions — later steps use these).**
+    - `findEarthriseSpawn(earthDir, sunDir)` takes **both** directions (§5.2
+      listed `earthDir` only): the verbatim search rotates Earth 75° about
+      earth×sun, so the Sun direction is an input. B4 stage 8 passes both.
+    - `PLAY_POOL_OPTS` omits `params` as well as `material`
+      (`Omit<TerrainMeshPoolOptions, 'material' | 'params'>`); B4 constructs
+      `new TerrainMeshPool({ ...PLAY_POOL_OPTS, params: MOON_PARAMS })`.
+    - `PLAY_TUNING` is a plain `as const` object with every §5.2 field set to
+      the value the plan names (camDistance 7 / 1.2 / 12, pitch ±1.2 / 0.35,
+      clearance 0.4, camPosTau 0.08, camRotTau 0, pivot 1.4, jumpBuffer 0.12,
+      coyote 0.10, airControl 0.3, boomTau 0.30, hard landing 4.5 / 0.5,
+      jumpDelay 0, ready 300 m / 15 s). Later steps tune values here only.
+    - Spawn pin: the 1e-9 constant is the full-precision value observed in
+      Node 24 — (0.32058829107484366, −0.03682548816622783, 0.9465025256421825);
+      it agrees with §6.1's 6-digit value. Search 157–162 ms, score 16.505.
+    - `moonConfig.ts` has no module-scope side effects; `initTerrainField`
+      stays in `createMoonWorld()` (B4). Neither file is imported by
+      `PlayPage` yet, so B2 has zero runtime effect.
 
 - [ ] **B3 — LOD controller.**
   - Files: `src/play/world/MoonLod.ts` (class port of harness 274–434: module

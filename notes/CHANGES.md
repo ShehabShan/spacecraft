@@ -1137,3 +1137,13 @@ Observations (NO change made — recorded for the Lead):
     execute order. · Evidence: TSC_EXIT=0, BUILD_EXIT=0, CANON_EXIT=0,
     SHARED_EXIT=0, 1 PlayPage-*.js chunk, K10 grep exit 1, headless-Chrome
     manual pass (menu/stub/back-link/m1a). · Source: Lead execute order.
+78. 2026-10-20 · T1/B2 · game/src/play/world/moonConfig.ts (new),
+    game/src/play/world/spawn.ts (new), game/tools/test-play-spawn.mjs (new) ·
+    Play moon constants copied by value from the M1F harness (MOON params,
+    MU, heights, KCC config A2 with spinOmega 0 per Q8, pool opts) +
+    PLAY_TUNING; findEarthriseSpawn = harness findSpawn verbatim (takes
+    earthDir + sunDir), parseSpawnOverride (`[play]` prefix). No runtime
+    effect (not imported by PlayPage yet). · WHY: T1 plan §12 B2, §6.1, Q8.
+    · Evidence: test-play-spawn PASS 70/70 (×2), spawn (0.320588, −0.036825,
+    0.946503) pinned 1e-9, slope 0.41°, Earth 8.67°, Sun 36.41°; TSC/BUILD/
+    CANON/SHARED exit 0; K10 grep exit 1. · Source: Lead execute order.

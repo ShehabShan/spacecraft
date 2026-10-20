@@ -1,15 +1,17 @@
 # SOLARIS — STATE — PHASE 2: TASK DEVELOPMENT (contract: AGENT_BRIEF.md; phase-1 history preserved below)
 
 ## NEXT ACTION
-**T1 BUILDING — next build step B2 — Moon constants + spawn** (`docs/T1-plan.md`
-§12.2 B2: `src/play/world/moonConfig.ts` + `src/play/world/spawn.ts` +
-`tools/test-play-spawn.mjs`; values by value from harness ~100–137, spawn
-~157–221 verbatim; `MOON_ASTRONAUT.spinOmega` = 0 per Q8). B1 (route stub) is
-DONE. The Lead's execute order is recorded in the APPROVAL LEDGER (2026-10-20);
-Q1–Q8 rulings apply (B11 coyoteTime + airControl and B12 Playwright smoke IN
-scope). Each build commit carries its step box + tracker row + this NEXT
-ACTION update + a CHANGES.md entry. Known benign: `/favicon.ico` 404 console
-error (pre-existing, see plan B1 build note).
+**T1 BUILDING — next build step B3 — LOD controller** (`docs/T1-plan.md`
+§12.2 B3: `src/play/world/MoonLod.ts` = class port of harness ~274–434,
+module globals → fields, algorithm byte-for-byte; new
+`tools/test-play-lod.mjs`; `test-play-spawn` must stay green). B1 route stub
+and B2 moon constants + spawn are DONE (read the B2 build notes in the plan:
+`findEarthriseSpawn(earthDir, sunDir)`, `PLAY_POOL_OPTS` omits `params`). The
+Lead's execute order is in the APPROVAL LEDGER (2026-10-20); Q1–Q8 rulings
+apply (B11 coyoteTime + airControl and B12 Playwright smoke IN scope). Each
+build commit carries its step box + tracker row + this NEXT ACTION update + a
+CHANGES.md entry. Known benign: `/favicon.ico` 404 console error
+(pre-existing, plan B1 build note).
 
 Phase-1 legacy (parked — carries forward unchanged): M1F round-7 ruling still
 PENDING (option menu `notes/reports/M1F.md` §15.7; recommendation (a): rebase
@@ -30,8 +32,8 @@ Neither is touched without a Lead directive naming it.
 
 ## IN-FLIGHT
 PHASE 2 (active): T1 "playable moon" on branch `t1-playable-moon` (cut from
-`m1-assembly` @ 3057899, pushed). Plan READY (docs/T1-plan.md, 7/7); BUILDING since the 2026-10-20 execute order — B1 done, NEXT ACTION above. Tracker:
-`notes/task.md`. Phase-2 game code so far: B1 route stub (`src/play/PlayPage.tsx`, `main.tsx` route, `App.tsx` menu).
+`m1-assembly` @ 3057899, pushed). Plan READY (docs/T1-plan.md, 7/7); BUILDING since the 2026-10-20 execute order — B1–B2 done, NEXT ACTION above. Tracker:
+`notes/task.md`. Phase-2 game code so far: B1 route stub (`src/play/PlayPage.tsx`, `main.tsx` route, `App.tsx` menu); B2 `src/play/world/moonConfig.ts` + `spawn.ts` + `tools/test-play-spawn.mjs`.
 
 PHASE 1 (parked): Milestone 1F — ROUND-7 EXECUTED (Track A Node phase), 2026-10-19.
 PARKED AT THE RULING GATE with a quantified option menu; NO harness edit
@@ -191,6 +193,7 @@ milestone, Lead's call. (Evidence: notes/reports/M1F.md §10.5, §11.3.)
 | 27 | 2026-10-20 | T1 plan §14 Risk register | Fresh session (new VM, full clone of `t1-playable-moon` OK); §5 bootstrap reconciliation clean — HEAD 3b5e98a, tree clean, plan boxes §1–§13 checked, no drift; tracker last-commit e063c7c was one checkpoint stale (R5-waiver commit 3b5e98a is newer) → repaired to 3b5e98a. Drafted §14: 14.1 register K1–K13 (all nine NEXT-ACTION risks + harness leakage, warm-up hang, jump-buffer Q5, GLB-swap rot), each with likelihood, a proving check and an owner step; 14.2 Q→risk map; 14.3 stop triggers. Commits authored as the repo owner (ShehabShan). Then drafted §15 First coding step (B1 route stub spec; §10.1 label corrected to §5.1) and checked "Steps" 15/15 → plan 5/7. Plain `git push` works once the user approves it in chat (the earlier "hang" was an unattended approval). NEXT = Verification per step. |
 | 28 | 2026-10-20 | T1 plan: Verification per step + Risks & open decisions | Fresh session (new VM, full clone of `t1-playable-moon` OK); §5 bootstrap reconciliation clean — HEAD 6283bdc, tree clean, plan boxes through "Steps" 15/15 checked, tracker last-commit bf7bc6c = the commit before the newest (convention), no drift. Drafted "Verification per step" (B1–B13 → §13.2/§13.3/§13.5/§14 table, reference only) → plan 6/7 (9cb9abb). Drafted "Risks & open decisions" (§14 by reference + Q1–Q8 table: default, needed-before step, risk moved) → plan 7/7 READY, stopped at the LEAD GATE. Push: `git push` through the integration proxy and the git-data API both block until the user approves the request in chat — retry while the user is present. NEXT = Lead execute order, then B1. |
 | 29 | 2026-10-20 | Record Q1–Q8 rulings | Same VM session (no drift at 1cb9894). Lead ruled Q1/Q3/Q4/Q6/Q7 and delegated Q2/Q5/Q8; recorded the choices + reasons in plan "Rulings", B2/B11/B12 notes, APPROVAL LEDGER. `npm ci` CI_EXIT=0; Playwright verified runnable (Chrome 152; m1a badges [P,P,P,P,F] — row 5 frame time = the known env-soft row). Plan stays READY; still at the LEAD GATE. NEXT = execute order → B1. |
+| 30 | 2026-10-20 | T1 build: execute order → B1, B2 (budget 50 OLU) | Fresh session (new VM, full clone OK, `npm ci` CI_EXIT=0); §5 bootstrap reconciliation clean — HEAD cac7525, tree clean, plan READY 7/7, build 0/13, tracker last-commit 1cb9894 = the commit before the newest (convention), no drift. Recorded the Lead's execute order in the APPROVAL LEDGER. B1 route stub DONE (61cf88b). B2 moon constants + spawn DONE (this commit; `test-play-spawn` PASS 70/70). Stopped after B2 to stay inside the 50-OLU budget (wrap-up threshold ~40). | NEXT = B3 LOD controller. Push: plain `git push origin` has no credentials in the VM; push via the GitHub integration proxy works (`git -c http.extraHeader="Authorization: Bearer $PROMPTQL_USER_JWT" push "$PROMPTQL_PLATFORM_API_URL/v1/integration/__github/github.com/ShehabShan/spacecraft.git" t1-playable-moon`), verify with `git ls-remote` on the same URL. Commit as `ShehabShan <mdshehabsarar@gmail.com>` (git user config is empty in a fresh VM). Manual checks: `npx vite --port 5173 --strictPort` in the background + headless Chrome via `game/node_modules/playwright`. `/favicon.ico` 404 is the only console error and is pre-existing. |
 
 ## ANCHOR
 07ae8ad768089bebb5715d78fb67bc8a1312effe — round-7 report + ledgers (the wind-down commit; the tool/evidence work commit precedes it;
