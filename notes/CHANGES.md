@@ -1205,3 +1205,17 @@ Observations (NO change made — recorded for the Lead):
     27/27 (4 new sync rows), frame 12/12, lod 40/40, spawn 70/70 (all with
     --expose-gc); TSC/BUILD exit 0; K10 grep 0 hits. · Source: Lead execute
     order.
+
+83. 2026-10-21 · T1/B5a · game/src/play/ui/playStore.ts (new),
+    game/src/play/input/InputState.ts (new), game/tools/test-play-shell.mjs
+    (new) · play shell store (PlayPhase incl. ERROR, PlayEvent, PlayHud, pure
+    nextPhase for the §10.2 table, usePlayStore.dispatch with side-fields) and
+    InputState (§9.1 key map, held set, repeat-ignored edges, locked-only
+    reads, blur/lock-change clears, first-delta drop + 200 px clamp, wheel
+    zoomDelta, attach/detach with injectable DOM). No runtime effect (not
+    imported yet). · WHY: T1 plan §12.2 B5 → B5a, §4.2, §5.2, §9.1, §10.2, K3.
+    · Evidence: test-play-shell PASS 72/72 (every §10.2 row, reachable set =
+    5 phases, store side-fields, fake-DOM input rows, 6 listeners attached /
+    0 after detach, heap < 64 KB over 300,000 events); world 27/27, frame
+    12/12, lod 40/40, spawn 70/70; TSC/BUILD exit 0; K10 grep 0 hits.
+    · Source: Lead execute order.

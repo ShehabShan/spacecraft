@@ -2,7 +2,7 @@
 
 - Task: **T1** (playable moon) — definition: `notes/task.md` § "T1 — PLAYABLE MOON"
 - Branch: `t1-playable-moon`
-- Stage: **BUILDING** — plan READY (7/7); Lead execute order recorded 2026-10-20; build B4/13 done (B4 = B4a–B4c), next B5a (B5 = B5a–B5c)
+- Stage: **BUILDING** — plan READY (7/7); Lead execute order recorded 2026-10-20; build B4/13 done (B4 = B4a–B4c), next B5b (B5 = B5a–B5c; B5a done)
 - Last updated: 2026-10-21
 - **Resume at the FIRST UNCHECKED BOX** (planning item or build step).
 - Rules: planning changes NO game code (plan + process files only); each checked
@@ -2030,7 +2030,7 @@ or reordered. A step that fails its checks is not committed as done.
   - **Split (2026-10-21, oversized-step rule).** B5 touches four new files,
     playFrame and PlayPage and needs headless + browser checks — too big for
     one commit. Intent unchanged; B5 is checked when B5c is.
-  - [ ] **B5a — Store + input (headless).**
+  - [x] **B5a — Store + input (headless).**
     - Files: `src/play/ui/playStore.ts` (`PlayPhase` incl. `ERROR`,
       `PlayHud`, `usePlayStore` with `setPhase`/`setLoad`/`setHud`, and the
       pure `nextPhase(phase, event)` that encodes the §10.2 table),
@@ -2046,6 +2046,26 @@ or reordered. A step that fails its checks is not committed as done.
       press (repeat ignored), keys ignored while unlocked, `blur` clears
       held, lock change clears held + drops the first mouse delta,
       `detach` removes every listener.
+    - **Build notes (B5a, 2026-10-21, independent decisions — later steps use these).**
+      - `usePlayStore.dispatch(event, nowMs, detail)` is the single entry for
+        §10.2 transitions; it calls the pure `nextPhase(phase, event)` and
+        writes the side-fields in the same `set()`: `pausedAtMs` (for the
+        1.0 s Resume cool-down), `loadTimedOut` (the "terrain still
+        streaming" note), `lockHint` (after `pointerlockerror`), `errorText`.
+        `PlayEvent` = ready | timeout | lockAcquired | lockLost | pauseKey |
+        hidden | lockError | fatal. ERROR is terminal in V1.
+      - `InputState.attach(el, doc?, win?)` takes injectable DOM targets.
+        Keys and blur listen on `window`, mousemove and pointerlockchange on
+        `document`, wheel on the canvas. Additive members: `lockChanged`
+        (an edge, set on every lock change, cleared by `clearEdges`),
+        `zoomDelta` (wheel deltaY, accumulated), `exitLock()`.
+      - K3: the first mouse event after a lock change is dropped, and every
+        event is clamped to `MOUSE_EVENT_CLAMP_PX` = 200 px (0.44 rad at
+        `lookSens`). A lock change also zeroes pending look/zoom and clears
+        held keys and `jumpPressed`.
+      - `pointerlockerror`, `visibilitychange`, `webglcontextlost` and worker
+        `error` are NOT in InputState; B5b's `shellRuntime.ts` maps them to
+        `dispatch`.
   - [ ] **B5b — Frame stages 1, 2, 11 + loading gate (headless).**
     - Files: `src/play/frame/playFrame.ts` (stage 1 clock with
       `resumedThisFrame`, stage 2 edges — `pause` → `exitPointerLock` +

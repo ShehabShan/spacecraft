@@ -1,16 +1,19 @@
 # SOLARIS — STATE — PHASE 2: TASK DEVELOPMENT (contract: AGENT_BRIEF.md; phase-1 history preserved below)
 
 ## NEXT ACTION
-**T1 BUILDING — next build step B5a — Store + input** (`docs/T1-plan.md`
-§12.2 B5 → B5a): `src/play/ui/playStore.ts` (phases incl. `ERROR`, pure
-`nextPhase` for the §10.2 table), `src/play/input/InputState.ts` (§9.1 map,
-held sets, edges, `blur` clear, lock-change first-delta drop, `attach/detach`)
-and `tools/test-play-shell.mjs` part 1. B5 was split into B5a–B5c
-(2026-10-21); B5b = playFrame stages 1/2/11 + loading gate, B5c = overlays +
-PlayShell + PlayPage wiring. B1–B4 are DONE — read the B4a/B4b/B4c build
-notes (B4c: boot entity sync; run Node tests with `node --expose-gc`;
+**T1 BUILDING — next build step B5b — Frame stages 1, 2, 11 + loading gate**
+(`docs/T1-plan.md` §12.2 B5 → B5b): `src/play/frame/playFrame.ts` stage 1
+(clock: `dt = 0` unless PLAYING, one `dt = 0` frame per resume via
+`resumedThisFrame`), stage 2 (edges: `pause` → `exitLock` + PAUSED,
+`respawn`, `toggleHud`), stage 11 (loading gate: two consecutive
+`residentAround = 1.0` or `loadTimeoutS`, ≤10 Hz `setLoad`), plus
+`src/play/ui/shellRuntime.ts` (pointerlockchange/pointerlockerror/
+visibilitychange/context-loss/worker-error → `usePlayStore.dispatch`) and
+`tools/test-play-shell.mjs` part 2. B5a is DONE — read its build notes
+(dispatch API, InputState attach targets, `lockChanged`). B5c = overlays +
+PlayShell + PlayPage wiring. Run Node tests with `node --expose-gc`;
 `tools/check-play-b4.mjs` automates MT2/MT16 against `vite preview --port
-4173`). The Lead's execute order is in the APPROVAL LEDGER (2026-10-20);
+4173`. The Lead's execute order is in the APPROVAL LEDGER (2026-10-20);
 Q1–Q8 rulings apply. Each build commit carries its step box, the tracker
 row, this NEXT ACTION update and a CHANGES.md entry. Known benign: the
 `/favicon.ico` 404 console error.
