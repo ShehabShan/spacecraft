@@ -2,7 +2,7 @@
 
 - Task: **T1** (playable moon) — definition: `notes/task.md` § "T1 — PLAYABLE MOON"
 - Branch: `t1-playable-moon`
-- Stage: **PLANNING** — plan status IN PROGRESS (4/7 sections; Steps 14/15)
+- Stage: **PLANNING** — plan status IN PROGRESS (5/7 sections; Steps 15/15)
 - Last updated: 2026-10-20
 - **Resume at the FIRST UNCHECKED BOX** (planning item or build step).
 - Rules: planning changes NO game code (plan + process files only); each checked
@@ -14,7 +14,7 @@
 - [x] Scope IN
 - [x] Scope OUT
 - [x] Affected modules
-- [ ] Steps — the 15 required sections (`notes/task.md` "Required structure"),
+- [x] Steps — the 15 required sections (`notes/task.md` "Required structure"),
       drafted in order; each sub-box is its own checkpoint commit:
   - [x] §1 Executive summary (recommended architecture + why)
   - [x] §2 Assumptions and open questions
@@ -30,7 +30,7 @@
   - [x] §12 Implementation phases (= the ordered BUILD steps)
   - [x] §13 Verification plan
   - [x] §14 Risk register
-  - [ ] §15 First coding step
+  - [x] §15 First coding step
 - [ ] Verification per step
 - [ ] Risks & open decisions
 
@@ -1550,7 +1550,7 @@ state. Every navigation is a full page load (F1/F2).
   `pages`, so `/?page=play` loads it as its own Vite chunk. The
   no-StrictMode comment is kept, because the KCC and rig singletons break
   under a double mount (F1).
-- **Menu.** `App.tsx` `PAGES` gets `{ id: 'play', label: 'T1 — Playable Moon' }`
+- **Menu.** `App.tsx` `PAGES` gets `{ id: 'play', label: 'PLAY — Playable Moon (T1)' }` (§5.1; corrected in place at §15)
   as the **first** entry, so the game sits above the test harnesses. Only
   `play` is added (Q7 default). m1e and m1f stay URL-only.
 - **Back to menu.** This is a plain `<a href="/">` in the pause overlay. The
@@ -2135,3 +2135,91 @@ defaults until ruled)
 - A push cannot be completed by either route (K9) — finished work would sit
   unpushed.
 - A regression badge differs from its baseline (other than the waived m1f R5).
+
+### §15 First coding step
+The first change after the Lead's execute order is build step **B1 — Route
+stub** (§12.2). It is the smallest change that can be verified on its own. It
+creates the route, the menu entry and the separate Vite chunk, and it touches
+no shared module. Every later step lands inside the page it creates.
+
+**15.1 Preconditions**
+- **LEAD GATE passed.** The plan status is READY, and STATE.md records the
+  Lead's execute order. B1 depends on no open question except Q7 (menu), and
+  it uses the Q7 default: only `play` is added.
+- **Clean start.** The tree is clean on `t1-playable-moon`, and HEAD is the
+  READY commit. Run `cd game && npm ci` if `node_modules` is missing.
+- **Anchors** (re-grep them before editing; the code wins):
+  - `main.tsx`: the `pages` map at lines 11–17.
+  - `App.tsx`: `PAGES` at lines 1–6, and the `<h1>` title text at line 23.
+  - Both were verified at `bf7bc6c`.
+
+**15.2 Edits** (three files, nothing else)
+1. **`game/src/main.tsx`.** Add one entry to `pages`, after `m1f`. The key
+   order does not affect routing. Keep both comments (the one-harness-per-page
+   rule and no-StrictMode) unchanged.
+   ```ts
+   play: () => import('./play/PlayPage'),
+   ```
+2. **`game/src/App.tsx`.**
+   - Insert `{ id: 'play', label: 'PLAY — Playable Moon (T1)' }` as the FIRST
+     `PAGES` row. The rows m1a–m1d stay unchanged, and m1e/m1f are not added
+     (Q7).
+   - Change the `<h1>` text to `SOLARIS — PLAY / MILESTONE HARNESSES`.
+   - **Label discrepancy.** §10.1 said `T1 — Playable Moon`, while §5.1 and
+     B1 say `PLAY — Playable Moon (T1)`. §5.1 is the binding file plan, so its
+     label is used, and §10.1 is corrected in place.
+3. **`game/src/play/PlayPage.tsx`** (new; the only file under `src/play/` in
+   B1). It contains no `three` import, no Canvas, no store and no world.
+   ```tsx
+   // T1 play page, B1 stub: route + chunk only. The world, Canvas and shell
+   // arrive in B4/B5 (§12). Nothing under src/play may import src/test/** (§4.1).
+   export default function PlayPage(): JSX.Element {
+     return (
+       <main style={{ position: 'fixed', inset: 0, display: 'flex',
+         flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+         gap: 16, background: '#04070c', color: '#cfe0ee',
+         fontFamily: 'ui-monospace, Menlo, Consolas, monospace' }}>
+         <div style={{ color: '#7fd4ff', letterSpacing: '0.08em' }}>
+           SOLARIS — PLAY (booting…)
+         </div>
+         <a href="/" style={{ color: '#aec6dc' }}>← menu</a>
+       </main>
+     )
+   }
+   ```
+   The palette is copied from `App.tsx`, so the stub matches the menu.
+
+**15.3 Checks** (record each result in VERIFIED, with exit codes UNPIPED, §13.6)
+- **V0.**
+  - `npm run typecheck; echo TSC_EXIT=$?` → 0.
+  - `npm run build; echo BUILD_EXIT=$?` → 0.
+  - `git diff --quiet ea112ec -- Design_specs Milestone; echo CANON_EXIT=$?` → 0.
+    If `ea112ec` is not reachable, use the K9 substitution.
+- **Chunk.** `ls dist/assets | grep -c '^PlayPage-.*\.js$'` → 1.
+- **Additive (V0.5).**
+  `git diff --quiet <step-base> -- src/core src/render src/workers src/test; echo SHARED_EXIT=$?`
+  → 0. This is why the M1 regression is not required in B1 (§13.5).
+- **Leakage (K10).** `grep -rn "test/" src/play; echo GREP_EXIT=$?` → 1
+  (no hits).
+- **Manual** (`npm run dev`), all observed in the same session:
+  - the menu lists PLAY first;
+  - the m1a–m1d links are unchanged;
+  - `/?page=play` renders the stub with no console errors;
+  - `← menu` returns to the menu;
+  - `/?page=m1a` still loads.
+
+**15.4 Commit** (one commit, AGENT_BRIEF.md §6, authored as the repo owner)
+- **First line:** `T1-build: B1 — route stub (/?page=play + menu entry)`.
+- **Body:** WHAT (the three files) / WHY (§12 B1, §15) / STATE (BUILDING,
+  B1/13) / NEXT (B2 moon constants + spawn) / VERIFIED (15.3, line by line).
+- **Riding in the same commit:**
+  - the B1 box checked;
+  - the plan header stage → BUILDING;
+  - the tracker row's build status → IN PROGRESS (B1 of B1–B13);
+  - STATE.md NEXT ACTION → B2;
+  - a `notes/CHANGES.md` entry.
+- **Push, then verify** that the remote branch head equals the local `HEAD`.
+
+**15.5 Done when.** All 15.3 checks pass, and the commit is pushed and
+verified. If any check fails, B1 is not checked off. Fix it inside the three
+files, or STOP (§14.3).

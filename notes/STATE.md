@@ -1,23 +1,18 @@
 # SOLARIS — STATE — PHASE 2: TASK DEVELOPMENT (contract: AGENT_BRIEF.md; phase-1 history preserved below)
 
 ## NEXT ACTION
-**T1 plan — checklist item "Steps" → sub-box §15 First coding step** in
-`docs/T1-plan.md` (plan IN PROGRESS 4/7; Steps 14/15: §1–§13 as before; §14
-Risk register done — 14.1 table K1–K13 (risk, impact, likelihood, mitigation +
-proof, owner step: KCC frame mixing, LOD port drift, pointer-lock quirks, rebase
-lurch, slope foot slide, day/night Q8, perf budget, B11 core regression,
-shallow-clone/proxy push friction, harness leakage, warm-up hang, jump-buffer Q5,
-GLB-swap rot), 14.2 open decisions → risks, 14.3 stop triggers). §15 = B1 (route
-stub, §12.2) stated as the single smallest first change: exact edits to
-`src/main.tsx` / `src/App.tsx` / new `src/play/PlayPage.tsx`, its checks and its
-commit message skeleton. After §15 the "Steps" item is 15/15 → check it; then the
-checklist items "Verification per step" and "Risks & open decisions" (each may
-reference §12/§13 and §2/§14 rather than duplicate). Q1–Q8 await a Lead ruling
-but do not block planning; proceed with the stated defaults. Resume at the FIRST
-UNCHECKED BOX of its PLANNING CHECKLIST; each commit carries its checkbox +
-tracker row + this NEXT ACTION update. NO game-code changes during planning. On
-7/7: plan status READY, STOP at the LEAD GATE — building starts only on the
-Lead's execute order.
+**T1 plan — checklist item "Verification per step"** in `docs/T1-plan.md`
+(plan IN PROGRESS 5/7; "Steps" 15/15 checked: §1–§14 as before; §15 First coding
+step done — B1 route stub specified as preconditions, the three exact edits
+(`main.tsx` `pages` entry, `App.tsx` first `PAGES` row + title, new
+`src/play/PlayPage.tsx` stub), checks, commit contents; the §10.1 menu label was
+corrected in place to the binding §5.1 label `PLAY — Playable Moon (T1)`).
+"Verification per step" = a short section mapping every build step B1–B13 to
+its §12.2 checks and §13 rows (reference, do not duplicate). Then "Risks & open
+decisions" (reference §2 Q1–Q8 and §14). On 7/7: plan status READY, STOP at the
+LEAD GATE — building starts only on the Lead's execute order. Q1–Q8 await a
+Lead ruling but do not block planning. Each commit carries its checkbox +
+tracker row + this NEXT ACTION update. NO game-code changes during planning.
 
 Phase-1 legacy (parked — carries forward unchanged): M1F round-7 ruling still
 PENDING (option menu `notes/reports/M1F.md` §15.7; recommendation (a): rebase
@@ -194,7 +189,7 @@ milestone, Lead's call. (Evidence: notes/reports/M1F.md §10.5, §11.3.)
 | 24 | 2026-10-20 | T1 plan §12 Implementation phases | Fresh session (new VM; shallow clone `--depth 30` because a full clone stalled); §5 bootstrap reconciliation clean — HEAD 6e17fd0, tree clean, plan boxes §1–§11 checked, tracker last-commit f6a735f = the commit before the newest (convention), no drift. Drafted §12: rules + V0 base check, code-anchor list (grep-verified), 12.1 step table, 12.2 build steps B1–B13 as checkboxes (route stub → constants/spawn → LOD → static world → shell → rig → FIRST PLAYABLE B7 → state machine → ANIMATED B9 → HUD/perf → conditional core B11 → optional Playwright B12 → close-out B13), 12.3 non-steps. `node_modules` not installed in this VM session (no `npm ci`; planning only); canon check run as `git diff --quiet HEAD -- Design_specs Milestone` because `ea112ec` is outside the shallow history. NEXT = §13 Verification plan. |
 | 25 | 2026-10-20 | T1 plan §13 Verification plan | Same VM session, resumed from e063c7c (no drift). Drafted §13: erratum (e2e/m1f.spec.ts asserts no FAIL badge, so it exits 1 by design with R5 parked — regression is judged by the logged badge vector; B11 corrected in place); 13.1 V0 commands; 13.2 Node matrix of the 7 test-play scripts with sources; 13.3 manual matrix MT1–MT16; 13.4 Playwright smoke; 13.5 regression (baseline-first, expected outcomes and env-soft rows from the ledger); 13.6 evidence format. Push again via GitHub git-data API (proxy `git push` hangs). NEXT = §14 Risk register. |
 | 26 | 2026-10-20 | Lead directive: R5 waiver | Recorded the R5 waiver (R5 FAIL = PASS for verification) in AGENT_BRIEF.md §8 + §10, notes/task.md T1 constraints, APPROVAL LEDGER, and T1 plan §12 B11 + §13 (erratum, 13.5 table and pass rule). Docs only; no code. Plan unchanged at Steps 13/15; NEXT unchanged = §14 Risk register. |
-| 27 | 2026-10-20 | T1 plan §14 Risk register | Fresh session (new VM, full clone of `t1-playable-moon` OK); §5 bootstrap reconciliation clean — HEAD 3b5e98a, tree clean, plan boxes §1–§13 checked, no drift; tracker last-commit e063c7c was one checkpoint stale (R5-waiver commit 3b5e98a is newer) → repaired to 3b5e98a. Drafted §14: 14.1 register K1–K13 (all nine NEXT-ACTION risks + harness leakage, warm-up hang, jump-buffer Q5, GLB-swap rot), each with likelihood, a proving check and an owner step; 14.2 Q→risk map; 14.3 stop triggers. Commits authored as the repo owner (ShehabShan). NEXT = §15 First coding step (= B1). |
+| 27 | 2026-10-20 | T1 plan §14 Risk register | Fresh session (new VM, full clone of `t1-playable-moon` OK); §5 bootstrap reconciliation clean — HEAD 3b5e98a, tree clean, plan boxes §1–§13 checked, no drift; tracker last-commit e063c7c was one checkpoint stale (R5-waiver commit 3b5e98a is newer) → repaired to 3b5e98a. Drafted §14: 14.1 register K1–K13 (all nine NEXT-ACTION risks + harness leakage, warm-up hang, jump-buffer Q5, GLB-swap rot), each with likelihood, a proving check and an owner step; 14.2 Q→risk map; 14.3 stop triggers. Commits authored as the repo owner (ShehabShan). Then drafted §15 First coding step (B1 route stub spec; §10.1 label corrected to §5.1) and checked "Steps" 15/15 → plan 5/7. Plain `git push` works once the user approves it in chat (the earlier "hang" was an unattended approval). NEXT = Verification per step. |
 
 ## ANCHOR
 07ae8ad768089bebb5715d78fb67bc8a1312effe — round-7 report + ledgers (the wind-down commit; the tool/evidence work commit precedes it;
