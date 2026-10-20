@@ -1,15 +1,18 @@
 # SOLARIS — STATE — PHASE 2: TASK DEVELOPMENT (contract: AGENT_BRIEF.md; phase-1 history preserved below)
 
 ## NEXT ACTION
-**T1 BUILDING — next build step B3 — LOD controller** (`docs/T1-plan.md`
-§12.2 B3: `src/play/world/MoonLod.ts` = class port of harness ~274–434,
-module globals → fields, algorithm byte-for-byte; new
-`tools/test-play-lod.mjs`; `test-play-spawn` must stay green). B1 route stub
-and B2 moon constants + spawn are DONE (read the B2 build notes in the plan:
-`findEarthriseSpawn(earthDir, sunDir)`, `PLAY_POOL_OPTS` omits `params`). The
-Lead's execute order is in the APPROVAL LEDGER (2026-10-20); Q1–Q8 rulings
-apply (B11 coyoteTime + airControl and B12 Playwright smoke IN scope). Each
-build commit carries its step box + tracker row + this NEXT ACTION update + a
+**T1 BUILDING — next build step B4 — Static world on screen** (`docs/T1-plan.md`
+§12.2 B4: `skyState.ts`, `moonWorld.ts`, `ThirdPersonCamera.ts` reset/static
+pose, `playFrame.ts` stages 6/8/9/10, `PlayPage.tsx` Canvas + pool attach).
+B4 is large (five files + manual browser checks): first split it into
+sub-steps in the plan, commit + push the breakdown, then implement the first
+sub-step (session rule for oversized steps). B1–B3 are DONE — read the B2 and
+B3 build notes in the plan (`findEarthriseSpawn(earthDir, sunDir)`;
+`PLAY_POOL_OPTS` omits `params`; `MoonLod.residentAround` returns a fraction;
+`update()` does not pump; `initTerrainField` before `new MoonLod`). The Lead's
+execute order is in the APPROVAL LEDGER (2026-10-20); Q1–Q8 rulings apply
+(B11 coyoteTime + airControl and B12 Playwright smoke IN scope). Each build
+commit carries its step box + tracker row + this NEXT ACTION update + a
 CHANGES.md entry. Known benign: `/favicon.ico` 404 console error
 (pre-existing, plan B1 build note).
 
@@ -32,8 +35,8 @@ Neither is touched without a Lead directive naming it.
 
 ## IN-FLIGHT
 PHASE 2 (active): T1 "playable moon" on branch `t1-playable-moon` (cut from
-`m1-assembly` @ 3057899, pushed). Plan READY (docs/T1-plan.md, 7/7); BUILDING since the 2026-10-20 execute order — B1–B2 done, NEXT ACTION above. Tracker:
-`notes/task.md`. Phase-2 game code so far: B1 route stub (`src/play/PlayPage.tsx`, `main.tsx` route, `App.tsx` menu); B2 `src/play/world/moonConfig.ts` + `spawn.ts` + `tools/test-play-spawn.mjs`.
+`m1-assembly` @ 3057899, pushed). Plan READY (docs/T1-plan.md, 7/7); BUILDING since the 2026-10-20 execute order — B1–B3 done, NEXT ACTION above. Tracker:
+`notes/task.md`. Phase-2 game code so far: B1 route stub (`src/play/PlayPage.tsx`, `main.tsx` route, `App.tsx` menu); B2 `src/play/world/moonConfig.ts` + `spawn.ts` + `tools/test-play-spawn.mjs`; B3 `src/play/world/MoonLod.ts` + `tools/test-play-lod.mjs`.
 
 PHASE 1 (parked): Milestone 1F — ROUND-7 EXECUTED (Track A Node phase), 2026-10-19.
 PARKED AT THE RULING GATE with a quantified option menu; NO harness edit
@@ -194,6 +197,7 @@ milestone, Lead's call. (Evidence: notes/reports/M1F.md §10.5, §11.3.)
 | 28 | 2026-10-20 | T1 plan: Verification per step + Risks & open decisions | Fresh session (new VM, full clone of `t1-playable-moon` OK); §5 bootstrap reconciliation clean — HEAD 6283bdc, tree clean, plan boxes through "Steps" 15/15 checked, tracker last-commit bf7bc6c = the commit before the newest (convention), no drift. Drafted "Verification per step" (B1–B13 → §13.2/§13.3/§13.5/§14 table, reference only) → plan 6/7 (9cb9abb). Drafted "Risks & open decisions" (§14 by reference + Q1–Q8 table: default, needed-before step, risk moved) → plan 7/7 READY, stopped at the LEAD GATE. Push: `git push` through the integration proxy and the git-data API both block until the user approves the request in chat — retry while the user is present. NEXT = Lead execute order, then B1. |
 | 29 | 2026-10-20 | Record Q1–Q8 rulings | Same VM session (no drift at 1cb9894). Lead ruled Q1/Q3/Q4/Q6/Q7 and delegated Q2/Q5/Q8; recorded the choices + reasons in plan "Rulings", B2/B11/B12 notes, APPROVAL LEDGER. `npm ci` CI_EXIT=0; Playwright verified runnable (Chrome 152; m1a badges [P,P,P,P,F] — row 5 frame time = the known env-soft row). Plan stays READY; still at the LEAD GATE. NEXT = execute order → B1. |
 | 30 | 2026-10-20 | T1 build: execute order → B1, B2 (budget 50 OLU) | Fresh session (new VM, full clone OK, `npm ci` CI_EXIT=0); §5 bootstrap reconciliation clean — HEAD cac7525, tree clean, plan READY 7/7, build 0/13, tracker last-commit 1cb9894 = the commit before the newest (convention), no drift. Recorded the Lead's execute order in the APPROVAL LEDGER. B1 route stub DONE (61cf88b). B2 moon constants + spawn DONE (this commit; `test-play-spawn` PASS 70/70). Stopped after B2 to stay inside the 50-OLU budget (wrap-up threshold ~40). | NEXT = B3 LOD controller. Push: plain `git push origin` has no credentials in the VM; push via the GitHub integration proxy works (`git -c http.extraHeader="Authorization: Bearer $PROMPTQL_USER_JWT" push "$PROMPTQL_PLATFORM_API_URL/v1/integration/__github/github.com/ShehabShan/spacecraft.git" t1-playable-moon`), verify with `git ls-remote` on the same URL. Commit as `ShehabShan <mdshehabsarar@gmail.com>` (git user config is empty in a fresh VM). Manual checks: `npx vite --port 5173 --strictPort` in the background + headless Chrome via `game/node_modules/playwright`. `/favicon.ico` 404 is the only console error and is pre-existing. |
+| 31 | 2026-10-20 | T1 build: B3 (same budget, continued on the Lead's "continue") | Same VM; repo clean at 3238bb7, no drift. B3 LOD controller DONE (this commit): `MoonLod` class port of harness 274–434 (K2: 134/157 lines verbatim, no algorithm line differs) + `residentAround` fraction + `isSelectedLeaf`; `test-play-lod` PASS 40/40 (`node --expose-gc`), `test-play-spawn` PASS 70/70, V0 green. | NEXT = B4 static world on screen — split into sub-steps first. Push and commit mechanics as in row 30. |
 
 ## ANCHOR
 07ae8ad768089bebb5715d78fb67bc8a1312effe — round-7 report + ledgers (the wind-down commit; the tool/evidence work commit precedes it;

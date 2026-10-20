@@ -2,7 +2,7 @@
 
 - Task: **T1** (playable moon) — definition: `notes/task.md` § "T1 — PLAYABLE MOON"
 - Branch: `t1-playable-moon`
-- Stage: **BUILDING** — plan READY (7/7); Lead execute order recorded 2026-10-20; build B2/13 done, next B3
+- Stage: **BUILDING** — plan READY (7/7); Lead execute order recorded 2026-10-20; build B3/13 done, next B4
 - Last updated: 2026-10-20
 - **Resume at the FIRST UNCHECKED BOX** (planning item or build step).
 - Rules: planning changes NO game code (plan + process files only); each checked
@@ -1850,7 +1850,7 @@ or reordered. A step that fails its checks is not committed as done.
       stays in `createMoonWorld()` (B4). Neither file is imported by
       `PlayPage` yet, so B2 has zero runtime effect.
 
-- [ ] **B3 — LOD controller.**
+- [x] **B3 — LOD controller.**
   - Files: `src/play/world/MoonLod.ts` (class port of harness 274–434: module
     globals → fields, algorithm byte-for-byte, plus the new
     `residentAround(dir, radiusM)` of §10.3).
@@ -1861,6 +1861,29 @@ or reordered. A step that fails its checks is not committed as done.
     (hysteresis, §11.4); ±0.5 m camera jitter changes 0 leaves;
     `residentAround` = 0 on an empty pool and 1 when every request is
     answered; heap delta ≈ 0 over 1,000 updates.
+
+  - **Build notes (B3, 2026-10-20, independent decisions — later steps use these).**
+    - `residentAround(dirX, dirY, dirZ, radiusM)` returns a **number**, the
+      §10.3 fraction in [0, 1] (the §5 sketch said `boolean`); it is 0 while
+      no leaf is selected yet. B4/B5 gate on `=== 1` for two consecutive frames.
+    - `isSelectedLeaf(n)` (additive): the harness never clears `desired` on
+      the children of a node that merges, so `desired` alone over-counts. The
+      selected leaf set is `desired` plus every ancestor split and not desired.
+      `residentAround` and `test-play-lod` use it; the harness algorithm is
+      untouched.
+    - `LodPool` = `Pick<TerrainMeshPool, 'records' | 'acquire' | 'release' |
+      'freeCount' | 'inFlightTotal'>`, so `test-play-lod` drives a fake pool.
+    - `update()` does NOT call `pool.pump()`; the frame loop pumps after it
+      (harness 1504 order: `updateLOD(); pool.pump();`). The caller passes the
+      camera in the planet frame (spin-conjugated, harness 1501–1503).
+    - `stats { active, pending, candidates }` is a read-only pass after the
+      harness body. Construction samples `terrainHeight`, so
+      `initTerrainField(MOON_PARAMS)` must run before `new MoonLod(...)`.
+    - K2 diff: 134 of 157 non-blank harness lines (274–434) are verbatim in
+      the port (indentation and `this.` normalised); the 23 others are the
+      banner, the constant/state declarations and the function headers. No
+      algorithm line differs. Observed at spawn: 125 selected leaves, ready
+      after 10 answered frames; heap delta −6.5 KB over 1,000 updates.
 
 - [ ] **B4 — Static world on screen.**
   - Files: `src/play/world/skyState.ts` (`applySkyState` = harness 810–914

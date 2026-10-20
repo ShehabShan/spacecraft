@@ -1147,3 +1147,15 @@ Observations (NO change made — recorded for the Lead):
     · Evidence: test-play-spawn PASS 70/70 (×2), spawn (0.320588, −0.036825,
     0.946503) pinned 1e-9, slope 0.41°, Earth 8.67°, Sun 36.41°; TSC/BUILD/
     CANON/SHARED exit 0; K10 grep exit 1. · Source: Lead execute order.
+
+79. 2026-10-20 · T1/B3 · game/src/play/world/MoonLod.ts (new),
+    game/tools/test-play-lod.mjs (new) · M1F quadtree + LOD controller
+    (harness 274–434) ported by value as class MoonLod: constants copied,
+    algorithm byte-for-byte, module state → fields; additive residentAround
+    (§10.3 fraction), isSelectedLeaf, stats, LodPool type. No runtime effect
+    (not imported by PlayPage yet). · WHY: T1 plan §12.2 B3, §10.3, risk K2.
+    · Evidence: test-play-lod PASS 40/40 (341 nodes/face, 2,046 total,
+    MAX_LEVEL 4 at spawn, stable over 100 updates, 0 changes under ±0.5 m
+    jitter, residentAround 0 → 1, heap −6,552 B over 1,000 updates);
+    test-play-spawn PASS 70/70; TSC/BUILD/CANON/SHARED exit 0; K10 grep
+    exit 1; K2 diff 134/157 verbatim. · Source: Lead execute order.
