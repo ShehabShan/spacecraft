@@ -2,7 +2,7 @@
 
 - Task: **T1** (playable moon) — definition: `notes/task.md` § "T1 — PLAYABLE MOON"
 - Branch: `t1-playable-moon`
-- Stage: **PLANNING** — plan status IN PROGRESS (4/7 sections; Steps 13/15)
+- Stage: **PLANNING** — plan status IN PROGRESS (4/7 sections; Steps 14/15)
 - Last updated: 2026-10-20
 - **Resume at the FIRST UNCHECKED BOX** (planning item or build step).
 - Rules: planning changes NO game code (plan + process files only); each checked
@@ -29,7 +29,7 @@
   - [x] §11 Performance plan
   - [x] §12 Implementation phases (= the ordered BUILD steps)
   - [x] §13 Verification plan
-  - [ ] §14 Risk register
+  - [x] §14 Risk register
   - [ ] §15 First coding step
 - [ ] Verification per step
 - [ ] Risks & open decisions
@@ -2095,3 +2095,43 @@ echo NODE_EXIT=$?`.
   badges side by side.
 - **Not run.** Anything not run is written as NOT RUN with the reason. A step
   whose required checks were not run is not checked off.
+
+### §14 Risk register
+Each row names the step that owns the mitigation and the check that proves it.
+Likelihood: L (unlikely) · M (plausible) · H (expected without the
+mitigation). A risk whose mitigation fails its check is a STOP for that step
+(AGENT_BRIEF.md §9), never a silent workaround.
+
+**14.1 Register**
+
+| # | Risk | Impact | Likelihood | Mitigation (and its proof) | Owner step |
+|---|---|---|---|---|---|
+| K1 | **KCC frame mixing** (§5 erratum to §4.4): `absPos`/`absVel` are inertial, `pLocal`/`up`/`fwd` are planet-frame; mixing them rotates the WASD mapping, the heading and the camera boom by the spin phase (0.0005 rad/s ≈ 1.7°/min). | High — controls and camera drift slowly away from "forward"; looks like a bug only after minutes of play. | H | All play-layer math (heading, move mapping, boom, smoothing) runs in the PLANET frame; the spin is composed ONCE at render extraction (§4.3 stage 6), via `spinQuatInto(kcc.spinPhase)` exactly as `computeDriverPose`/`refreshFwdWorld` do. Proof: `test-play-controller` runs the §9.6 mapping case after advancing the spin phase by 600 s and still meets the 1e-6 tolerance. | B4, B7 |
+| K2 | **LOD port drift**: the class port of harness 274–434 (`MoonLod`) changes selection, split/merge hysteresis or activation order (module globals → fields). | Medium — popping, holes, or a different streaming load than the ratified M1F behaviour. | M | Byte-for-byte algorithm port (constants MAX_LEVEL 4, SPLIT_K 2.0, MERGE_K 1.45, GRACE 45, 3 activations/frame, in-flight cap 24, HORIZON_MARGIN 150 copied, not re-derived); the step's commit shows a side-by-side diff of the body vs the harness range. Proof: `test-play-lod` (341 nodes/face, 2,046 total, MAX_LEVEL 4 at spawn, stable leaf set over 100 updates, ±0.5 m jitter → 0 changes). | B3 |
+| K3 | **Pointer-lock quirks**: Chrome's ~1 s re-lock refusal after Esc (`pointerlockerror`), `movementX/Y` spikes on the lock/unlock frame, browsers differing (Firefox/Safari), lock lost on alt-tab. | Medium — dead clicks, camera snapping on resume, stuck keys. | H | §10.2 rules: Resume disabled 1.0 s after entering PAUSED; `input.clearHeld()` on every lock change; mouse deltas are ignored on the first event after a lock change and clamped per event; `resumedThisFrame` gives a `dt = 0` frame. Proof: MT4 (Esc/P/tab switch → PAUSED, no lurch on resume). Chrome is the reference browser; others are best-effort and noted in the commit. | B5 |
+| K4 | **Rebase lurch**: a floating-origin rebase (max\|local\| > 1,024 m, `REBASE_THRESHOLD` in `precisionMath.ts`) shifts every render-local position; any smoothing or cached render-local value jumps by up to 1,024 m. | High — a visible camera/character jump every ~1 km of travel. | M | Camera follow smoothing runs as a planet-frame lag offset (§9.4); nothing in the play layer caches a render-local position across frames; local positions are always Float64 subtraction then narrowing (§3 invariant). Proof: §9.6 "rebase continuity" (camera step = character step to 1 mm across a forced rebase) and MT13. | B7 |
+| K5 | **Foot slide / foot gap on slopes** (§8.6): `kcc.up` leans only 0.65 toward the normal, so a planted sole is tilted ≈ 0.35·slope against the terrain (4–8 cm toe/heel gap at 30°), and stride/speed mismatch slides the stance foot. | Low–medium — cosmetic, but it is the most visible animation flaw. | H | §8.6 ankle pitch/roll from `slopeFwdDeg`/`slopeSideDeg` (stance-weighted, clamped ±20°; residual ≈ 1 mm accepted); stride frequency derived from speed (§8). Proof: `test-play-anim` flat-ground stance displacement < 1 cm at v ∈ {1, 2, 4, 8}; MT14 visual check on a 30° slope. Per-leg IK is explicitly out of V1. | B8, B9 |
+| K6 | **Day/night (Q8)**: with `spinOmega` 0.0005 the spawn reaches sunset 21.3 min after load and stays Sun-dark for ~105 min (§6.1). | Medium — a player who stays near the spawn sees the world go dark and may read it as a rendering failure. | H (if played > 20 min) | Q8 default keeps the harness value (A2). The value lives in the play page's own config copy (`moonConfig.ts`), so a Lead ruling of `spinOmega = 0` (or a slower day) is a one-field change with no core edit; `test-play-spawn` pins the configured value so a change is deliberate. Earth-light (0.28) + ambient (0.5) keep the terrain readable at night. | B2 |
+| K7 | **Performance budget** (§11.2: play-layer CPU ≤ 3 ms, FPS EMA ≥ 58): animator, 4 terrain samples, LOD walk and HUD exceed it on low-end machines; hidden per-frame allocations cause GC hitches. Software WebGL (SwiftShader) runs ~20 FPS regardless (STATE.md E-1 evidence). | Medium — stutter; GC pauses break the zero-GC invariant. | M | §11.3 allocation rules; boot-allocated scratch; `test-play-perf` heap delta ≈ 0 over 10k frames; MT15 is judged on HARDWARE WebGL only and the commit records the renderer string; a SwiftShader FPS shortfall is environment-soft (same rule as m1d row 2), an allocation is never soft. | B10 |
+| K8 | **B11 core regression**: adding `coyoteTime`/`airControl` to `astronautKCC.ts` alters the default path — the F14 jump clear (~483) and read (~590) and the F18 launch compose are the two ratified core edits and sit exactly there. | High — breaks the m1e/m1f acceptance gates and the 1G §3.5 re-grep. | M | Only on a Lead ruling (Q2/Q3); optional fields read as `cfg.x ?? 0`, logic only inside `if (cfg.x > 0)` blocks; baseline-first regression (§13.5) — m1e 6/6, m1f R1–R4 PASS, R5 WAIVED = PASS; integrity trace byte-equal with both fields at 0. No ruling → B11 checked SKIPPED, no core file changes. | B11 |
+| K9 | **Shallow-clone / proxy push friction**: a full clone stalled (session 24, `--depth 30` used); `git push` through the integration proxy hung (session 25 pushed via the GitHub git-data API); the V0 canon check against `ea112ec` fails when that commit is outside the shallow history. | Medium — finished work not pushed = a broken resume point (§6); a false CANON failure blocks a step. | M | Push with a bounded timeout first; on a hang, fall back to the git-data API (blob → tree → commit with the repo owner as author/committer → fast-forward ref update, never force); after every push verify the remote branch head equals the local `HEAD`. Canon check: `git diff --quiet ea112ec -- Design_specs Milestone` when `ea112ec` is reachable, else `git diff --quiet HEAD -- Design_specs Milestone` plus `git status --short` showing no staged canon path — the substitution is noted in VERIFIED. | every step |
+| K10 | **Harness leakage into the play page**: an import of `src/test/**` (or a shared module that imports it) executes M1F singletons, satellites and THREE patches on the play page. | High — corrupted page state (AGENT_BRIEF.md §3 page rule). | L | §4.1 rule; every step's VERIFIED carries `grep -rn "src/test\|test/Milestone" game/src/play` → 0 hits; the build lists a separate `PlayPage-*.js` chunk (B1); MT16 confirms m1f still boots after leaving play. | B1–B10 |
+| K11 | **Terrain warm-up never "ready"**: a worker stall or the F10b detach race keeps `residentAround` < 1.0, so the loading gate hangs. | Medium — the player waits on LOADING. | L | `loadTimeoutS` 15 s fallback to CLICK_TO_PLAY with "terrain still streaming" (§10.3); worker `error` → ERROR phase (§10.2); the step logs time-to-ready. Proof: B4/B5 manual load observation; `residentAround` unit cases in `test-play-lod`. | B4, B5 |
+| K12 | **Jump-buffer semantics (Q5)**: the F14 comment claims airborne presses buffer to landing but the code does not; a future core fix would double-buffer with the play-layer buffer. | Low — an extra or double jump only if core changes later. | L | Buffer lives in the play layer only (§9.3); §9.6 buffer case (0.10 s fires, 0.20 s does not); Q5 recorded for a Lead ruling; any core buffering change must remove the play buffer in the same commit. | B7 |
+| K13 | **GLB-swap path rot**: the `CharacterAnimator` interface grows procedural-only assumptions, so a future GLTF/AnimationMixer animator needs controller changes. | Medium — defeats a stated T1 requirement. | M | Two implementations from B6 onward (`RestAnimator` + `ProceduralAnimator`) behind the same interface; the controller and telemetry import only the interface type; the B9 commit greps that `PlayerController.ts` does not import `ProceduralAnimator`. | B6, B9 |
+
+**14.2 Open decisions that move a risk** (§2; the plan proceeds on the
+defaults until ruled)
+- Q1 (Option B) — retires nothing; Option A would add K2-class drift risk to
+  the 1F harness itself.
+- Q2/Q3 (coyote time / air control) — the only trigger for K8.
+- Q5 (jump-buffer comment) — K12.
+- Q6 (Playwright smoke) — adds an automated K10/K11 guard if approved.
+- Q8 (spin) — K6.
+
+**14.3 Stop triggers** (any one → STOP, write the options, ask the Lead)
+- A check above fails and the fix would touch a ratified constant, the KCC
+  default path, a milestone harness, or `Design_specs/`/`Milestone/`.
+- A push cannot be completed by either route (K9) — finished work would sit
+  unpushed.
+- A regression badge differs from its baseline (other than the waived m1f R5).
