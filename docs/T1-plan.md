@@ -2,7 +2,7 @@
 
 - Task: **T1** (playable moon) — definition: `notes/task.md` § "T1 — PLAYABLE MOON"
 - Branch: `t1-playable-moon`
-- Stage: **PLANNING** — plan status IN PROGRESS (5/7 sections; Steps 15/15)
+- Stage: **PLANNING** — plan status IN PROGRESS (6/7 sections; Steps 15/15)
 - Last updated: 2026-10-20
 - **Resume at the FIRST UNCHECKED BOX** (planning item or build step).
 - Rules: planning changes NO game code (plan + process files only); each checked
@@ -31,7 +31,7 @@
   - [x] §13 Verification plan
   - [x] §14 Risk register
   - [x] §15 First coding step
-- [ ] Verification per step
+- [x] Verification per step
 - [ ] Risks & open decisions
 
 <!-- Sections are appended below as they are drafted. -->
@@ -2223,3 +2223,37 @@ no shared module. Every later step lands inside the page it creates.
 **15.5 Done when.** All 15.3 checks pass, and the commit is pushed and
 verified. If any check fails, B1 is not checked off. Fix it inside the three
 files, or STOP (§14.3).
+
+### Verification per step
+How each build step B1–B13 (§12.2) is verified. This section only maps steps
+to checks that are defined elsewhere: the step box in §12.2 is the authority
+for its own checks, §13 defines every command, script and manual row, and
+§14 names the risk each check retires. Nothing here adds a new check.
+
+**Rules (all steps)**
+- **V0** (§13.1 V0.2–V0.5, plus V0.1 once per fresh VM) runs in every step.
+- **Cumulative Node checks.** A `test-play-*` script, once introduced, re-runs
+  in every later step and must stay green (§13.2).
+- **Manual rows.** A step records the rows it introduces ("From" in §13.3)
+  and re-checks earlier rows its change can affect. B13 records all of them.
+- **Regression** (§13.5) only where the table says so, or wherever V0.5 is
+  non-zero.
+- **Evidence** in the step commit's VERIFIED block, in the §13.6 format. A
+  required check NOT RUN means the box stays unchecked; a failure is fixed
+  inside the step or is a STOP (§14.3).
+
+| Step | Node scripts (§13.2; **new** in bold) | Manual rows (§13.3) | Regression (§13.5) | Step-specific checks (§12.2 / §14) |
+|---|---|---|---|---|
+| B1 | — | MT1 | not required (V0.5 = 0) | one `PlayPage-*.js` chunk; K10 leakage grep (§15.3) |
+| B2 | **spawn** | — | not required | spawn literals pinned; configured `spinOmega` pinned (K6) |
+| B3 | spawn, **lod** | — | not required | side-by-side diff of the `MoonLod` port vs harness 274–434 (K2) |
+| B4 | spawn, lod | MT2, MT16 | not required | K10 grep; time-to-ready logged (K11) |
+| B5 | + **shell** | MT3, MT4 | not required | pointer-lock rules (K3); timeout path (K11) |
+| B6 | + **rig** | MT5 | not required | `RestAnimator` behind `CharacterAnimator` (K13) |
+| B7 | + **controller** | MT6–MT13 | not required | spin-advanced mapping case (K1); rebase continuity (K4); buffer case (K12) |
+| B8 | + **anim** (state machine) | — (nothing on screen changes) | not required | heap ≈ 0 over 10k steps |
+| B9 | anim (full: foot slide, interrupt) | MT14 | not required | `PlayerController.ts` does not import `ProceduralAnimator` (K13); slope stance (K5) |
+| B10 | + **perf** (`--expose-gc`) | MT15 | not required | renderer string recorded; SwiftShader FPS = env-soft, allocation never soft (K7) |
+| B11 | controller + core default-path trace | MT8, MT9 re-check | **mandatory**, baseline first: m1e, m1f (R5 WAIVED) | V0.5 non-zero by design; integrity trace byte-equal at 0 (K8); no ruling → SKIPPED, no core change |
+| B12 | — | — | not required | §13.4 `PW_EXIT=0`, or SKIPPED (Q6 declined) / NOT RUN (no Chrome) |
+| B13 | all seven | MT1–MT16 | m1e + m1f re-run on the final tree if B11 was applied; otherwise not required | full §13 matrix on the final tree; §13.6 evidence |

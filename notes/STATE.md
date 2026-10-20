@@ -1,18 +1,15 @@
 # SOLARIS — STATE — PHASE 2: TASK DEVELOPMENT (contract: AGENT_BRIEF.md; phase-1 history preserved below)
 
 ## NEXT ACTION
-**T1 plan — checklist item "Verification per step"** in `docs/T1-plan.md`
-(plan IN PROGRESS 5/7; "Steps" 15/15 checked: §1–§14 as before; §15 First coding
-step done — B1 route stub specified as preconditions, the three exact edits
-(`main.tsx` `pages` entry, `App.tsx` first `PAGES` row + title, new
-`src/play/PlayPage.tsx` stub), checks, commit contents; the §10.1 menu label was
-corrected in place to the binding §5.1 label `PLAY — Playable Moon (T1)`).
-"Verification per step" = a short section mapping every build step B1–B13 to
-its §12.2 checks and §13 rows (reference, do not duplicate). Then "Risks & open
-decisions" (reference §2 Q1–Q8 and §14). On 7/7: plan status READY, STOP at the
-LEAD GATE — building starts only on the Lead's execute order. Q1–Q8 await a
-Lead ruling but do not block planning. Each commit carries its checkbox +
-tracker row + this NEXT ACTION update. NO game-code changes during planning.
+**T1 plan — checklist item "Risks & open decisions"** in `docs/T1-plan.md`
+(plan IN PROGRESS 6/7; "Steps" 15/15 and "Verification per step" checked — a
+B1–B13 table mapping each build step to its §13.2 Node scripts, §13.3 manual
+rows, §13.5 regression and §14 risk checks, by reference). "Risks & open
+decisions" = reference §14 (K1–K13) and list §2 Q1–Q8 with their defaults and
+the step/risk each moves. On 7/7: plan status READY, STOP at the LEAD GATE —
+building starts only on the Lead's execute order. Each commit carries its
+checkbox + tracker row + this NEXT ACTION update. NO game-code changes during
+planning.
 
 Phase-1 legacy (parked — carries forward unchanged): M1F round-7 ruling still
 PENDING (option menu `notes/reports/M1F.md` §15.7; recommendation (a): rebase
@@ -190,6 +187,7 @@ milestone, Lead's call. (Evidence: notes/reports/M1F.md §10.5, §11.3.)
 | 25 | 2026-10-20 | T1 plan §13 Verification plan | Same VM session, resumed from e063c7c (no drift). Drafted §13: erratum (e2e/m1f.spec.ts asserts no FAIL badge, so it exits 1 by design with R5 parked — regression is judged by the logged badge vector; B11 corrected in place); 13.1 V0 commands; 13.2 Node matrix of the 7 test-play scripts with sources; 13.3 manual matrix MT1–MT16; 13.4 Playwright smoke; 13.5 regression (baseline-first, expected outcomes and env-soft rows from the ledger); 13.6 evidence format. Push again via GitHub git-data API (proxy `git push` hangs). NEXT = §14 Risk register. |
 | 26 | 2026-10-20 | Lead directive: R5 waiver | Recorded the R5 waiver (R5 FAIL = PASS for verification) in AGENT_BRIEF.md §8 + §10, notes/task.md T1 constraints, APPROVAL LEDGER, and T1 plan §12 B11 + §13 (erratum, 13.5 table and pass rule). Docs only; no code. Plan unchanged at Steps 13/15; NEXT unchanged = §14 Risk register. |
 | 27 | 2026-10-20 | T1 plan §14 Risk register | Fresh session (new VM, full clone of `t1-playable-moon` OK); §5 bootstrap reconciliation clean — HEAD 3b5e98a, tree clean, plan boxes §1–§13 checked, no drift; tracker last-commit e063c7c was one checkpoint stale (R5-waiver commit 3b5e98a is newer) → repaired to 3b5e98a. Drafted §14: 14.1 register K1–K13 (all nine NEXT-ACTION risks + harness leakage, warm-up hang, jump-buffer Q5, GLB-swap rot), each with likelihood, a proving check and an owner step; 14.2 Q→risk map; 14.3 stop triggers. Commits authored as the repo owner (ShehabShan). Then drafted §15 First coding step (B1 route stub spec; §10.1 label corrected to §5.1) and checked "Steps" 15/15 → plan 5/7. Plain `git push` works once the user approves it in chat (the earlier "hang" was an unattended approval). NEXT = Verification per step. |
+| 28 | 2026-10-20 | T1 plan: Verification per step + Risks & open decisions | Fresh session (new VM, full clone of `t1-playable-moon` OK); §5 bootstrap reconciliation clean — HEAD 6283bdc, tree clean, plan boxes through "Steps" 15/15 checked, tracker last-commit bf7bc6c = the commit before the newest (convention), no drift. Drafted "Verification per step" (B1–B13 → §13.2/§13.3/§13.5/§14 table, reference only) → plan 6/7. NEXT = Risks & open decisions. |
 
 ## ANCHOR
 07ae8ad768089bebb5715d78fb67bc8a1312effe — round-7 report + ledgers (the wind-down commit; the tool/evidence work commit precedes it;
