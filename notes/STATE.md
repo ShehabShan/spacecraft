@@ -1,20 +1,15 @@
 # SOLARIS — STATE — PHASE 2: TASK DEVELOPMENT (contract: AGENT_BRIEF.md; phase-1 history preserved below)
 
 ## NEXT ACTION
-**T1 plan — checklist item "Steps" → sub-box §8 Animation state machine (table)** in
-`docs/T1-plan.md` (plan IN PROGRESS 4/7; Steps 7/15: §1 Executive summary
-(Option B recommended), §2 Assumptions + open questions Q1–Q8, §3
-Current-state findings, §4 Architecture, §5 File-by-file change plan, §6
-World bootstrap plan, §7 Character rig specification (17-joint pivot
-hierarchy, rest pose = identity, dimensions + RIG_DIMS export, rotation sign
-conventions + L/R mirror rule, 3 geometries/4 materials/20 meshes, attachment
-under characterRoot with Ry(−π/2) facing fix + −groundClearance offset, GLB
-bone map + glTF +Z facing correction) done; §8 must give the TABLE — states
-Idle/Walk/Run/JumpLaunch/JumpRise/Fall/Land/Slide with entry/exit conditions
-from CharacterTelemetry (§5), pose drivers in the §7.1 sign conventions using
-RIG_DIMS + the §7.2 two-bone leg solver, blend times, stride scaling with
-speed, foot-slide minimization, the §7.4 slope-foot residual, and the
-crouch-anticipation/launch/tuck/arms-out/land poses). Q1–Q8 await a Lead ruling but do not block
+**T1 plan — checklist item "Steps" → sub-box §9 Controller + camera plan** in
+`docs/T1-plan.md` (plan IN PROGRESS 4/7; Steps 8/15: §1–§7 as before; §8
+Animation state machine done — 8-state table with top-down priority,
+hysteresis + coyote grace, blend times + `snap` interrupt buffer, two-bone
+`legDrop` solver, no-slide gait (cadence/amplitude/stance-fraction law),
+launch/tuck/arms-out/land/slide poses, slope-foot ankle pitch+roll via new
+telemetry `slopeFwdDeg`/`slopeSideDeg` (additive §5 amendment)). §9 must
+cover controller + camera AND decide the §8.4 caveat: optional ~70 ms
+jump-impulse delay for a true crouch anticipation (default: no delay). Q1–Q8 await a Lead ruling but do not block
 planning; proceed with the stated defaults. Resume at the FIRST UNCHECKED BOX of its PLANNING CHECKLIST;
 draft sections incrementally per the schema in `notes/task.md` (each commit
 carries its checkbox + tracker row + this NEXT ACTION update). The "Steps"
@@ -188,6 +183,7 @@ milestone, Lead's call. (Evidence: notes/reports/M1F.md §10.5, §11.3.)
 | 16 | 2026-10-19 | T1 planning session (fresh session, PromptQL VM) — bootstrap + plan checkpoints | Bootstrap per §5: clone clean at 0c555b3 = origin; tracker NOT STARTED, no docs/ — consistent with the Lead-ordered revert c32514b + definition commit 0c555b3 (no session row existed for 0c555b3 — noted here). REPAIR: row 15 carried two handoff columns (the second a stale copy of row 14's handoff) — stale duplicate removed, no other text altered. Checkpoint 1: docs/T1-plan.md created (header + empty PLANNING CHECKLIST, Steps = 15 sub-boxes) — e787bcf (push was blocked until the PromptQL GitHub App was installed on ShehabShan; then pushed). Checkpoint 2: Goal, Scope IN, Scope OUT, Affected modules drafted (4/7) — 8f70131. Checkpoint 3: Steps §1–§3 drafted (Option B recommended; KCC has no real jump buffer and coyote time needs an opt-in core hook — recorded as F10/F11 and Q2/Q5). (in progress — handoff note added at session end) | (not written at session end — REPAIRED by session 17: session 16 stopped after checkpoint 3 `089b157`; state = plan 4/7, Steps §1–§3 done; next = §4 Architecture) |
 | 17 | 2026-10-20 | T1 planning (fresh session, PromptQL VM) — bootstrap + plan checkpoints | Bootstrap per §5: clone clean at 089b157 = origin; tracker/STATE/plan checkboxes agree. REPAIR: row 16 handoff was "(pending)" — filled from evidence. Checkpoint 4: Steps §4 Architecture drafted (Steps 4/15). Checkpoint 5: Steps §5 File-by-file change plan drafted (Steps 5/15) + §4.4 erratum. Push was blocked (PromptQL `__github` integration not enabled) until the user connected it; c1926d1 + 77b0318 were then pushed together (the 77b0318 message line "Push still blocked" is stale). Checkpoint 6: Steps §6 World bootstrap plan drafted (Steps 6/15) + Q8 added. | (not written at session end — REPAIRED by session 18: session 17 stopped after checkpoint 6 `550c4a0`; state = plan 4/7, Steps 6/15, §1–§6 done; next = §7 Character rig specification) |
 | 18 | 2026-10-20 | T1 planning (fresh session, PromptQL VM) — bootstrap + plan checkpoints | Bootstrap per §5: clone clean at 550c4a0 = origin; tracker/STATE/plan checkboxes agree. REPAIR: row 17 handoff was "(in progress)" — filled from evidence. Checkpoint 7: Steps §7 Character rig specification drafted (Steps 7/15) — rig axes/sign conventions verified numerically against quatFromFrameInto (X=fwd, Y=up, Z=fwd×up) and the KCC right vector; two additive amendments to the §5 AstronautRig.ts API: `RIG_DIMS` export + optional `buildAstronautRig(groundClearance = 0.02)`. | Next: §8 Animation state machine (table) — the first unchecked box; Q1–Q8 still await the Lead (non-blocking). |
+| 19 | 2026-10-20 | T1 plan §8 Animation state machine | Bootstrapped per §5 (fresh VM clone; git log/status/filesystem agree with tracker + STATE.md at 31c6b0a, no drift, .DS_Store untracked and never staged); drafted §8 (8.1 solver, 8.2 table, 8.3 no-slide gait, 8.4 air/land poses, 8.5 slide, 8.6 slope residual, 8.7 checks) + additive §5 telemetry amendment; plan Steps 8/15; NEXT = §9 Controller + camera plan (must rule on the §8.4 jump-impulse-delay caveat). Session ended deliberately after one checkpoint (user OLU budget). |
 
 ## ANCHOR
 07ae8ad768089bebb5715d78fb67bc8a1312effe — round-7 report + ledgers (the wind-down commit; the tool/evidence work commit precedes it;

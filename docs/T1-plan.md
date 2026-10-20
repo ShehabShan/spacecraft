@@ -2,7 +2,7 @@
 
 - Task: **T1** (playable moon) — definition: `notes/task.md` § "T1 — PLAYABLE MOON"
 - Branch: `t1-playable-moon`
-- Stage: **PLANNING** — plan status IN PROGRESS (4/7 sections; Steps 7/15)
+- Stage: **PLANNING** — plan status IN PROGRESS (4/7 sections; Steps 8/15)
 - Last updated: 2026-10-20
 - **Resume at the FIRST UNCHECKED BOX** (planning item or build step).
 - Rules: planning changes NO game code (plan + process files only); each checked
@@ -23,7 +23,7 @@
   - [x] §5 File-by-file change plan
   - [x] §6 World bootstrap plan
   - [x] §7 Character rig specification
-  - [ ] §8 Animation state machine (table)
+  - [x] §8 Animation state machine (table)
   - [ ] §9 Controller + camera plan
   - [ ] §10 Game shell + HUD plan
   - [ ] §11 Performance plan
@@ -740,6 +740,7 @@ export interface CharacterTelemetry {
   grounded: boolean; speed: number; vertSpeed: number; slopeDeg: number;
   sliding: boolean; sprint: boolean; crouch: boolean; inputMag: number;
   jumped: boolean; landed: boolean; landingSpeed: number; airTime: number; dt: number;
+  slopeFwdDeg: number; slopeSideDeg: number; // §8.6 additive amendment
 }
 export function createTelemetry(): CharacterTelemetry;
 export function sampleTelemetry(kcc: AstronautKCC, ctrl: PlayerController,
@@ -751,6 +752,8 @@ How each field is derived:
 - `landed` is true when `integrity.landings` differs from the previous
   frame's value; `landingSpeed` = `integrity.lastLandingRelSpeed`.
 - `sliding` = `telemetry.slideSpeed > 0.25`.
+- `slopeFwdDeg` / `slopeSideDeg` = signed angle between the ground normal
+  and `kcc.up`, projected on `kcc.fwd` / right (0 when airborne); §8.6.
 
 `character/CharacterAnimator.ts` is THE GLB seam, an interface only:
 ```ts
@@ -803,6 +806,7 @@ export type PoseFn = (s: PoseSample, out: PoseBuffer) => void; // s = {phase, sp
 export class PoseBuffer { q: Float32Array /* JOINTS.length·4 */; hipsY: number; }
 export class ProceduralAnimator implements CharacterAnimator {
   constructor(rig?: AstronautRig);       // builds its own rig by default
+  // §8.2 amendment: a third boot PoseBuffer `snap` freezes the blended pose on an interrupted blend
   // update: sm.step → gait phase += dt·strideHz(speed) → evaluate prev+cur
   // poses into two boot PoseBuffers → per-joint slerp by sm.blend → write joints
 }
@@ -1172,3 +1176,168 @@ in V1)
   (the sign-table spot check).
 - The rig has 20 meshes, `geometries.length === 3`,
   `materials.length === 4`, and every mesh has `layers.mask === NEAR_BIT`.
+
+### §8 Animation state machine
+
+`character/animStateMachine.ts` picks the state. `character/ProceduralAnimator.ts`
+evaluates the poses. The only input is `CharacterTelemetry` (§5). Every pose
+quaternion is a rest-relative delta in the §7.1 sign conventions: hip and
+shoulder flexion is +X, knee flexion is −X, a forward spine lean is −X, ankle
+dorsiflexion is +X, and R abduction is +Z. One side is authored and mirrored
+with `side`. Every length comes from `RIG_DIMS`. Angles are in radians unless
+marked °.
+
+**8.1 Two-bone leg solver** (`legDrop(D)`, from §7.2)
+- The hip pivot is at 0.86 and the ankle at 0.06, so `d0 = upperLeg +
+  lowerLeg = 0.80` and `L = 0.40`.
+- For a pelvis drop `D` (clamped to [0, 0.30]), `d = d0 − D` and
+  `hip = acos(d / 2L)` (+X).
+- `knee = 2·hip` (−X) and `ankle = hip` (the sum of the X rotations is 0, so
+  the foot stays flat). `hipsY = RIG_DIMS.hipsY − D`.
+- Computed values:
+
+  | D (m) | 0.05 | 0.12 | 0.15 | 0.30 |
+  |---|---|---|---|---|
+  | hip flexion (°) | 20.4 | 31.8 | 35.7 | 51.3 |
+  | knee flexion (°) | 40.7 | 63.6 | 71.3 | 102.6 |
+
+- Used by crouch (0.12), the launch dip (0.10), landing (0.03–0.30) and
+  slide (0.15).
+
+**8.2 The state table** (evaluated top-down every `step`; the first row
+whose entry holds wins, subject to the exit rule of the current state)
+
+| Prio | State | Entry (telemetry) | Exit | Blend-in | Pose driver |
+|---|---|---|---|---|---|
+| 1 | JumpLaunch | `jumped` (from any state) | after `T_launch` = 0.12 s → JumpRise (or Fall if `vertSpeed` ≤ 0.5) | 0.05 s | 8.4 dip → extension |
+| 2 | Land | `landed` and `landingSpeed` > 1.0 m/s | after `T_land` = clamp(0.10 + 0.04·landingSpeed, 0.12, 0.40) s, or at once on `jumped` | 0.04 s | 8.4 absorb with `legDrop` |
+| 3 | JumpRise | not `grounded` and `vertSpeed` > 0.5, entered only from JumpLaunch | `vertSpeed` ≤ 0.5 → Fall; `grounded` → Land or locomotion | 0.15 s | 8.4 tuck |
+| 4 | Fall | not `grounded`, `airTime` > 0.15 (coyote grace), `vertSpeed` ≤ 0.5 | `grounded` → Land (or locomotion when the landing is soft) | 0.25 s | 8.4 arms-out, ramped by `airTime` |
+| 5 | Slide | `grounded` and `sliding` | `sliding` false for 0.10 s | 0.20 s | 8.5 |
+| 6 | Run | `grounded` and `speed` ≥ 5.0 m/s | `speed` < 4.5 | 0.20 s | 8.3 gait, run parameters |
+| 7 | Walk | `grounded` and `speed` ≥ 0.30 m/s | `speed` < 0.15 and `inputMag` < 0.1 | 0.20 s | 8.3 gait, walk parameters |
+| 8 | Idle | default | any row above | 0.30 s | 8.3 idle |
+
+Rules:
+- **Hysteresis.** Walk/Run uses 5.0/4.5 m/s, which falls between `walkSpeed`
+  4 and `sprintSpeed` 8. Idle/Walk uses 0.30/0.15 m/s. Crouch speed (1.8)
+  stays in Walk.
+- **Coyote grace.** If the character leaves the ground without `jumped`
+  (bumps, crests) and `airTime` < 0.15 s, the ground state is held.
+- **Soft landing.** `landed` with `landingSpeed` ≤ 1.0 skips Land. An additive
+  `legDrop(0.03)` dip decays over 0.10 s instead.
+- **Crouch is a weight, not a state.** `w_c` eases toward `crouch ? 1 : 0`
+  over 0.15 s. It adds `legDrop(0.12·w_c)` and a chest lean of −X 0.15·w_c
+  onto Idle, Walk and Run.
+- **Blend curve.** `blend = smoothstep(timeInState / blendTime)`, and the
+  joints are combined with a per-joint `slerpFlat(prev, cur, blend)`.
+- **Interrupt.** If a transition fires while `blend` < 1, the current blended
+  output is copied into a third boot buffer, `snap`. `prev` then evaluates as
+  the frozen `snap` and `blend` restarts from 0, so there is no pop (§5
+  additive amendment).
+- **Minimum dwell.** 0.08 s on every state except JumpLaunch and Land, which
+  are timed.
+
+**8.3 Locomotion and foot-slide minimisation** (Walk and Run share one
+`gait(v)` PoseFn, so the phase never resets between them)
+- **Phase.** `p += dt·f(v)` with `v = speed`, where
+  `f(v) = clamp(0.8 + 0.2v, 0.8, 2.2)` Hz.
+- **Amplitude.** The hip half-swing is `A(v) = clamp(0.10 + 0.075v, 0.10, 0.60)`.
+- **No-slide law.** A stance foot sweeps `S = 2·d0·sin A` relative to the
+  hips. To keep the foot planted, the stance must last `S / v`, so the stance
+  fraction is `β = S·f / v` (computed):
+
+  | v (m/s) | 1 | 2 | 4 | 8 |
+  |---|---|---|---|---|
+  | f (Hz) | 1.0 | 1.2 | 1.6 | 2.2 |
+  | S (m) | 0.28 | 0.40 | 0.62 | 0.90 |
+  | β | 0.28 | 0.24 | 0.25 | 0.25 |
+
+  β stays within [0.22, 0.65] from 0.5 to 8 m/s. A duty cycle of about 0.25
+  with a flight phase is the 1/6 g lunar lope, which is the intended look.
+- **Stance** (`p_s < β`, with `p_s = p + 0.5` on the L side, mod 1):
+  - hip `θ = asin(sin A·(1 − 2p_s/β))` (+X). The foot's hip-relative x is then
+    exactly linear in time, so slide is zero on flat ground. A plain linear θ
+    would slide up to about 1.1 cm (computed).
+  - The knee is 0. The ankle is `−θ`, which keeps the foot flat.
+- **Swing** (`u = (p_s − β)/(1 − β)`):
+  - hip `θ = −A + 2A·smoothstep(u)`;
+  - knee −X `(0.6 + A)·sin(πu)`;
+  - ankle +X `0.25·sin(πu)`, for toe clearance.
+- **Bob.** `hipsY = RIG_DIMS.hipsY − 0.02 + 0.04·(v/8)·|sin 2πp|`. The pelvis
+  peaks during flight.
+- **Upper body.**
+  - Arm flexion is `−0.8·θ` of the same-side leg (counter-swing).
+  - The elbow is +X `0.25 + 0.35·(v/8)`.
+  - The chest leans −X `0.05 + 0.10·(v/8)`.
+  - The spine counter-twists by Ry `0.05·sin 2πp`.
+  - Run uses the same formulas. The v terms are the only difference, so there
+    is no discontinuity at 5.0 m/s.
+- **Idle.**
+  - Breathing: chest −X `0.02·sin(2π·0.25t)`.
+  - Suit-bulk arm abduction: 0.06 (R +Z, L −Z).
+  - Legs: `legDrop(0.02)`.
+
+**8.4 Jump, air and landing poses**
+- **JumpLaunch.**
+  - The first 40 % of `T_launch` is the crouch anticipation: `legDrop(0.10)`,
+    chest −X 0.20 and arm flexion −0.5 (back).
+  - The rest is extension: the legs go to rest, the ankles plantarflex
+    −X 0.35, and the arms swing to flexion +1.2.
+  - **Caveat.** The KCC applies `jumpSpeed` on the `jumped` frame, so the body
+    is already rising during the dip. The anticipation therefore reads
+    compressed, at about 50 ms. A true anticipation needs an optional delay of
+    about 70 ms on the jump impulse, which is a controller decision for §9.
+    The default is no delay, for responsiveness.
+- **JumpRise (tuck).**
+  - Hip +0.6, knee −1.0, ankle +0.2.
+  - The R leg leads by 0.15 rad for asymmetry.
+  - Arm flexion +0.6, arm abduction 0.25.
+- **Fall (arms out).**
+  - The weight is `clamp((airTime − 0.15)/0.5, 0, 1)`.
+  - Arm abduction 1.1 (R +Z, L −Z), elbow 0.3.
+  - The legs reach for the ground: hip +0.2, knee −0.35.
+  - A slow flail of Rz `0.08·sin(2π·0.6t)` on the chest.
+- **Land (absorb).**
+  - `D = clamp(0.04·landingSpeed, 0.03, 0.30)` through `legDrop`.
+  - The drop eases out to `D` over the first 30 % of `T_land`, then recovers
+    with a smoothstep.
+  - Chest −X `0.6·D/0.30`, arm flexion +0.3 for balance.
+  - A full-height jump (`landingSpeed` ≈ 5) gives D = 0.20 and T_land = 0.30 s.
+
+**8.5 Slide pose**
+- The stride phase is frozen and the legs are at `legDrop(0.15)`.
+- The R leg leads (hip +0.35) and the L leg trails (hip −0.20).
+- Arm abduction 0.7 for balance. The chest leans back +X 0.10.
+
+**8.6 Slope-foot residual** (the §7.4 caveat)
+- `kcc.up` is weighted 0.65 toward the normal, so the sole is tilted against
+  the terrain by about 0.35·slope (10.5° at 30°). Uncorrected, that leaves a
+  toe or heel gap of 4–8 cm.
+- **Mitigation.** Two telemetry fields are added (an additive §5 amendment):
+  `slopeFwdDeg` and `slopeSideDeg`. They are the signed angles between the
+  ground normal and `kcc.up`, projected on `kcc.fwd` and on right. Both are 0
+  when airborne.
+- Each stance foot adds ankle pitch +X `rad(slopeFwdDeg)` (uphill ahead means
+  dorsiflexion) and ankle roll Rz `−rad(slopeSideDeg)`. The roll follows the
+  terrain, so it is NOT multiplied by `side`.
+- Both corrections are weighted by stance: 1 in stance, fading to 0 across
+  swing. Each is clamped to ±20°.
+- What remains is the ankle-height error `ankleY·(1 − cos α)` ≈ 1.0 mm at a
+  30° slope (computed). Per-leg stance IK is not worth its cost in V1, so the
+  residual is accepted.
+
+**8.7 State machine checks** (these feed §13; a Node script, no browser)
+- **Scripted telemetry sequences** produce exactly these state sequences:
+  - Idle → Walk → Run → Walk → Idle;
+  - JumpLaunch → JumpRise → Fall → Land → Idle;
+  - a coyote bump (`airTime` 0.1 s without `jumped`) produces no air state.
+- **Hysteresis.** Speed noise of ±0.2 around 4.75 m/s produces 0 transitions.
+- **Foot slide.** On flat ground at v ∈ {1, 2, 4, 8}, the stance foot's
+  displacement over a stance phase is < 1 cm.
+- **Solver.** `legDrop` matches the 8.1 table to 0.1°. For D ∈ [0, 0.30] the
+  sole normal · up exceeds 0.9999.
+- **Interrupt.** A JumpLaunch fired at blend 0.5 of a Walk → Run blend changes
+  any joint by < 5° between frames.
+- **Integrity.** Every quaternion is unit to 1e-6. The heap delta over 10k
+  `update` calls is about 0, so there is zero allocation.
