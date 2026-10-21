@@ -2289,12 +2289,37 @@ or reordered. A step that fails its checks is not committed as done.
       - Manual checks (walk/sprint feel, crater-rim fall, >45° slide, orbit
         clip) are left for the Lead's hands-on pass; the scripted ones pass.
 
-- [ ] **B8 — Animation state machine.**
+- [x] **B8 — Animation state machine.**
   - Files: `src/play/character/animStateMachine.ts` (§8.2 table, timers,
     hysteresis; `legDrop` §8.1). Pure TS: no THREE.
   - Outcome: the machine is verified in isolation; nothing on screen changes.
   - Checks: V0; `test-play-anim` = §8.7 scripted sequences, hysteresis,
     solver table to 0.1°, quaternion integrity, heap ≈ 0 over 10k steps.
+
+    - **Build notes (B8, session 41 — independent decisions).**
+      - `LEG = {d0 0.80, L 0.40, hipsY 0.92, maxDrop 0.30}` is restated in
+        `animStateMachine.ts` instead of importing `RIG_DIMS` (AstronautRig
+        pulls THREE + MultiCameraRig; the machine must stay pure). The test
+        asserts `LEG` against `RIG_DIMS`. `legDrop(D, out)` writes a boot
+        `LegPose` (angles + hip/knee/ankle X quaternions, f64) — B9 copies
+        them into its `PoseBuffer`.
+      - The JumpLaunch and Land entries override the 0.08 s minimum dwell:
+        `jumped`/`landed` are one-frame edges and would otherwise be lost.
+      - An un-jumped airborne body past the 0.15 s coyote grace enters Fall
+        even while `vertSpeed` > 0.5 (crest launch): §8.2 enters JumpRise only
+        from JumpLaunch, and holding a gait in mid-air reads as a bug.
+      - A grounded exit of JumpLaunch / JumpRise / Fall re-evaluates the
+        ground rows (Land if `landed` and > 1.0 m/s, else Slide/Run/Walk/Idle).
+      - `sm.interrupted` is true for exactly the step whose transition fired
+        while `blend` < 1; B9 copies its blended output into `snap` then.
+        `sm.softDipD` (0.03 m decaying linearly over 0.10 s) and
+        `sm.crouchW` (linear ease, 0.15 s) are exposed for B9's poses.
+      - `test-play-anim` PASS 48/48: the three §8.7 sequences, hysteresis
+        0 transitions from Walk and from Run, dwell, ledge Fall at 0.15 s +
+        Land → Walk, slide-off 0.10 s, Land→JumpLaunch, mid-blend interrupt
+        flag, smoothstep + BLEND_IN, crouch weight, solver table to 0.1°,
+        sole·up > 0.9999, unit quaternions, heap < 64 KB over 10k steps.
+        The foot-slide and per-frame interrupt-angle rows land in B9.
 
 - [ ] **B9 — Procedural animator (ANIMATED).**
   - Files: `src/play/character/ProceduralAnimator.ts` (§8.3–§8.6 poses,

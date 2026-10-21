@@ -1315,3 +1315,15 @@ Observations (NO change made — recorded for the Lead):
     rig 97, world 27, shell 101, lod 40, spawn 70 PASS; TSC/BUILD exit 0; K10
     grep 0 hits. No core edit.
     · Source: Lead execute order.
+90. 2026-10-21 · T1/B8 · game/src/play/character/animStateMachine.ts (new),
+    game/tools/test-play-anim.mjs (new)
+    · Animation state machine: AnimState ids, AnimStateMachine.step (§8.2
+    table + exit rules, blend-in, smoothstep blend, hysteresis, dwell, coyote
+    hold, slide-off, soft dip, crouch weight, T_land, interrupt flag) and the
+    §8.1 legDrop two-bone solver. Pure TS, zero allocation; nothing on screen.
+    · Why: plan step B8 (decisions in the plan's B8 build notes).
+    · Evidence: test-play-anim PASS 48/48 (§8.7 sequences, hysteresis 0
+    transitions, solver table to 0.1°, sole·up > 0.9999, unit quaternions,
+    heap < 64 KB / 10k steps); rig 97, controller 57, frame 23 PASS; TSC/BUILD
+    exit 0; CANON_EXIT 0; no core/render edit.
+    · Source: Lead execute order.
