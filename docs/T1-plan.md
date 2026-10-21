@@ -2332,6 +2332,39 @@ or reordered. A step that fails its checks is not committed as done.
     v ∈ {1, 2, 4, 8}) and interrupt (< 5° per frame); manual matrix — each of
     Idle, Walk, Run, JumpLaunch, JumpRise, Fall, Land, Slide observed at least
     once in a 2-minute session, no visible pops at transitions.
+  - **Split (session 41, oversized-step rule):** B9 is one pose module plus
+    two test families plus a page swap — too large for one session. It is
+    split by state family so each sub-step is independently verifiable; the
+    B9 box is checked when B9c is done. Intent, files and checks unchanged.
+  - [ ] **B9a — PoseBuffer + ProceduralAnimator core + locomotion.**
+    - Files: `src/play/character/ProceduralAnimator.ts` — `PoseBuffer`
+      (JOINTS·4 f32 + hipsY), boot `prev`/`cur`/`snap` buffers, per-joint
+      `slerpFlat` crossfade by `sm.blend`, joint write-out; PoseFns Idle
+      (§8.3 idle) and the shared `gait(v)` Walk/Run (§8.3 phase, amplitude,
+      no-slide stance law), crouch weight via `legDrop(0.12·w_c)` + chest
+      lean, soft-landing dip. Other states fall back to Idle until B9b.
+      Not yet swapped into `PlayPage` (nothing on screen changes).
+    - Outcome: Idle/Walk/Run/crouch poses evaluate headless from telemetry.
+    - Checks: V0; `test-play-anim` extended — §8.7 foot slide (stance foot
+      < 1 cm over a stance phase at v ∈ {1, 2, 4, 8}), phase continuity
+      across Walk ↔ Run, unit quaternions to 1e-6, heap ≈ 0 over 10k
+      `update` calls.
+  - [ ] **B9b — air, landing and slide poses + interrupt snap.**
+    - Files: `ProceduralAnimator.ts` — §8.4 JumpLaunch dip → extension,
+      JumpRise tuck, Fall arms-out ramped by `airTime`, Land absorb +
+      recovery (`legDrop` D = clamp(0.04·landingSpeed, 0.03, 0.30)); §8.5
+      Slide; §8.6 slope ankle terms; `snap` filled on `sm.interrupted`.
+    - Outcome: every §8.2 state has its pose; transitions never pop.
+    - Checks: V0; `test-play-anim` — §8.7 interrupt (JumpLaunch at blend 0.5
+      of Walk → Run changes any joint < 5° between frames), each of the 8
+      states' poses differs from rest, unit quaternions, heap ≈ 0.
+  - [ ] **B9c — swap into PlayPage (ANIMATED on screen).**
+    - Files: `PlayPage.tsx` (ProceduralAnimator replaces RestAnimator; HUD
+      state name via `stateName`), new `tools/check-play-b9.mjs`.
+    - Outcome: **movement animates** in the browser (the B9 outcome).
+    - Checks: V0; all play Node tests; `check-play-b9` (W → Walk/Run state
+      observed, Space → JumpLaunch/JumpRise/Fall/Land, 0 errors) + b7
+      regression; manual matrix (B9 checks) left for the Lead's hands-on pass.
 
 - [ ] **B10 — HUD + performance pass.**
   - Files: `src/play/ui/Hud.tsx`, `createTelemetryPublisher(100)` wiring,
