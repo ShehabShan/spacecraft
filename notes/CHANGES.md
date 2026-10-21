@@ -1327,3 +1327,19 @@ Observations (NO change made — recorded for the Lead):
     heap < 64 KB / 10k steps); rig 97, controller 57, frame 23 PASS; TSC/BUILD
     exit 0; CANON_EXIT 0; no core/render edit.
     · Source: Lead execute order.
+91. 2026-10-21 · T1/B9a · game/src/play/character/ProceduralAnimator.ts (new),
+    game/tools/test-play-anim.mjs (rows 14–18)
+    · Procedural animator core: PoseBuffer (f32 JOINTS·4 + hipsY), boot
+    prev/cur/snap/out, per-joint slerp crossfade by sm.blend, interrupt snap,
+    Idle and the shared gait(v) Walk/Run (§8.3 asin no-slide stance), crouch
+    weight + soft dip as additive legDrop, joint write-out. Air/Land/Slide fall
+    back to Idle (B9b); PlayPage unchanged (B9c).
+    · Why: plan step B9a. Decisions (plan B9a build notes): swing ankle =
+    knee − θ + 0.25·sin(πu) (the literal popped 34° at stance boundaries);
+    β clamped [0.22, 0.65]; Walk/Run pop row sampled at 600 Hz.
+    · Evidence: test-play-anim PASS 75/75 (foot slide 0.0000 cm at v=1, < 1 cm
+    at v ∈ {2,4,8}; β table; phase error 1e-16; max joint step 1.39° per
+    1/600 s; heap ≈ 0 over 10k updates); rig 97, world 27, frame 23, shell 101,
+    lod 40, spawn 70 PASS; controller 57/57 on re-run (camera-heap row flaky,
+    also fails on a44eee6); TSC/BUILD exit 0. No core/render edit.
+    · Source: Lead execute order.

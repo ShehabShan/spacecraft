@@ -2336,7 +2336,7 @@ or reordered. A step that fails its checks is not committed as done.
     two test families plus a page swap — too large for one session. It is
     split by state family so each sub-step is independently verifiable; the
     B9 box is checked when B9c is done. Intent, files and checks unchanged.
-  - [ ] **B9a — PoseBuffer + ProceduralAnimator core + locomotion.**
+  - [x] **B9a — PoseBuffer + ProceduralAnimator core + locomotion.**
     - Files: `src/play/character/ProceduralAnimator.ts` — `PoseBuffer`
       (JOINTS·4 f32 + hipsY), boot `prev`/`cur`/`snap` buffers, per-joint
       `slerpFlat` crossfade by `sm.blend`, joint write-out; PoseFns Idle
@@ -2349,6 +2349,35 @@ or reordered. A step that fails its checks is not committed as done.
       < 1 cm over a stance phase at v ∈ {1, 2, 4, 8}), phase continuity
       across Walk ↔ Run, unit quaternions to 1e-6, heap ≈ 0 over 10k
       `update` calls.
+    - **B9a build notes (session 42, independent decisions):**
+      - `ProceduralAnimator.ts`: `PoseBuffer` (f32 JOINTS·4 + `hipsY`),
+        `JOINT_INDEX`, `GAIT` literals, `gaitFreq/gaitAmp/gaitBeta`,
+        `gaitPose` (Walk + Run, one formula), `idlePose`, `blendPose`
+        (per-joint shortest-path slerp, lerp+normalize when cos > 0.9995),
+        boot `prev/cur/snap/out`; pose math in f64, THREE is type-only.
+        `evalState` returns Idle for JumpLaunch/JumpRise/Fall/Land/Slide
+        (B9b replaces those branches). `snap` is already filled from `out`
+        on `sm.interrupted` and used as `prev` (`prevIsSnap`).
+      - **Swing ankle (deviation from the §8.3 literal):** the literal swing
+        ankle `0.25·sin(πu)` is 0 at both ends while the stance ankle `−θ`
+        ends at ±A — a measured 34° pop per step at sprint. The swing ankle
+        is `knee − θ + 0.25·sin(πu)` (the stance foot-flat law extended to
+        swing, plus the same toe-clearance term): C⁰ at both stance
+        boundaries, flat foot + clearance intent kept.
+      - β is clamped to [0.22, 0.65] (the band §8.3 computes for 0.5–8 m/s):
+        below ~0.25 m/s `S·f/v` → ∞, the clamp keeps a swing phase at a
+        crawl. The v/8 terms use v clamped to [0, 8].
+      - Crouch and the soft dip are additive `legDrop(0.12·w_c + softDipD)`
+        X angles on the gait legs (all about X, so they commute with θ);
+        Idle uses `legDrop(0.02 + addD)`. Chest lean −0.15·w_c is additive.
+      - The "no pop" row samples Walk ↔ Run at 600 Hz (< 3° per 1/600 s): at
+        60 Hz a sprint swing legitimately moves > 10° per frame, so a
+        per-frame bound cannot tell a pop from motion. B9b's §8.7 interrupt
+        row (< 5° per frame) stays as specified.
+      - `test-play-anim` PASS 75/75 (+27: purity, PoseBuffer layout, β table,
+        foot slide 0.0000 cm at v = 1 and < 1 cm at 2/4/8, phase error
+        1e-16, max joint step 1.39°/600 Hz, write-out, Idle/crouch/soft-dip,
+        Idle fallback, heap ≈ 0 over 10k `update`).
   - [ ] **B9b — air, landing and slide poses + interrupt snap.**
     - Files: `ProceduralAnimator.ts` — §8.4 JumpLaunch dip → extension,
       JumpRise tuck, Fall arms-out ramped by `airTime`, Land absorb +
