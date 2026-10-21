@@ -8,8 +8,8 @@ starting point.
 ## TRACKER
 | Task | Branch | Plan status | Build status | Step progress | Last commit | Blockers |
 |------|--------|-------------|--------------|---------------|-------------|----------|
-| T1 playable moon | `t1-playable-moon` | READY (7/7 sections; Q1–Q8 ruled 2026-10-20) — `docs/T1-plan.md` | PAUSED 2026-10-21 for A1 (Lead) — was IN PROGRESS | plan 7/7 · build 10/13 (B4 = B4a–B4c; B5 = B5a–B5c; B7 = B7a–B7c; B9 = B9a–B9c) — PLAYABLE + ANIMATED + HUD (B10 done: HUD + zero-allocation proof) · B10 browser b9/b7 re-run PASS (session 46) · next: B11 core edit (coyoteTime / airControl) — BLOCKED at its baseline | 1283545 | B11 baseline m1f R2 FAIL on the unedited tree (R3 flaky) — Lead ruling needed (plan B11 options a/b/c) |
-| A1 engine audit (read-only) | `a1-engine-audit` | READY (7/7; authored 2026-10-21) — `docs/A1-plan.md` | IN PROGRESS (execute order 2026-10-21) | build 0/27 units · next: U01 m1f baseline diagnosis | 2eb8366 | none |
+| T1 playable moon | `t1-playable-moon` | READY (7/7 sections; Q1–Q8 ruled 2026-10-20) — `docs/T1-plan.md` | PAUSED 2026-10-21 for A1 (Lead) — was IN PROGRESS | plan 7/7 · build 10/13 (B4 = B4a–B4c; B5 = B5a–B5c; B7 = B7a–B7c; B9 = B9a–B9c) — PLAYABLE + ANIMATED + HUD (B10 done: HUD + zero-allocation proof) · B10 browser b9/b7 re-run PASS (session 46) · next: B11 core edit (coyoteTime / airControl) — BLOCKED at its baseline | 1283545 | B11 baseline m1f R2 FAIL on the unedited tree (R3 flaky) — Lead ruling needed (plan B11 options a/b/c) — A1-U01: baseline red is NOT environmental (R2 regressed at 3057899; `docs/audit/U01-m1f-baseline.md`) |
+| A1 engine audit (read-only) | `a1-engine-audit` | READY (7/7; authored 2026-10-21) — `docs/A1-plan.md` | IN PROGRESS (execute order 2026-10-21) | build 1/27 units (U01 done: R2 red = real regression at 3057899, not env) · next: U02 m1f R1 + R2 validity | cd743e8 | none |
 
 
 Note: "Last commit" = the commit BEFORE the newest checkpoint (a file cannot

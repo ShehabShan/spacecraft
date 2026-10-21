@@ -1,0 +1,6 @@
+logpoint: sunPx line 1202, target line 1206 (transformed source)
+logpoint set at {"scriptId":"15","lineNumber":1206,"columnNumber":4}
+U01PROBE {"sunElevDeg":32.962400421279455,"sunThetaDeg":2.0064931770890757,"cullBelowDeg":-3.7253665624815455,"sunSlotId":"sun","sunActive":true,"hitFullFrame":1,"nonBlackPx":921600,"maxR":174,"drv":{"x":506.6183320407826,"y":35.85803238871389,"z":1249.895996413092},"origin":{"x":512,"y":0,"z":1280},"rebases":1,"liveWallS":120.03309999999975,"hudFps":11.245642313603184}
+[Milestone1F] acceptance FAILED
+badges ["PASS","FAIL","PASS","PASS","FAIL"]
+R2 detail: 8 live instances: rendered disk θ vs Float64 truth max err 0.0e+0 rad (law: s = D·tan θ, staged D ≤ 9,600 m, one f64→f32 narrowing); staged positions exact to 0.0e+0 m. Sun ground truth (1280×720 readback): disk footprint 0 px vs ideal π·r² = 0.0%, (tol ±15%); center offset 999.00 px vs the independent f64 projection (tol 1.5 px). r = 21.0 px from θ = 2.006°.

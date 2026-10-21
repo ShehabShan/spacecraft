@@ -56,7 +56,7 @@ is §6.4 plus the unit's own evidence line. Line counts are given so a session c
 see that the unit fits its budget.
 
 ### Phase A — Gate health (do these first)
-- [ ] **U01 m1f baseline diagnosis** (needs an 8 GB VM; at most 3 m1f runs)
+- [x] **U01 m1f baseline diagnosis** — DONE (`docs/audit/U01-m1f-baseline.md`: real defect, not env; R2 regressed at 3057899) (needs an 8 GB VM; at most 3 m1f runs)
   - Run `npx playwright test e2e/m1f.spec.ts` on the unedited tree and capture
     **R2's full detail string**. Session 46 recorded R3's detail but not R2's.
   - Classify the cause:

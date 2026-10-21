@@ -1,0 +1,51 @@
+
+
+Running 1 test using 1 worker
+
+[1/1] e2e/m1f.spec.ts:9:1 › M1F — 3-Camera Layers & Sky Impostors acceptance
+e2e/m1f.spec.ts:9:1 › M1F — 3-Camera Layers & Sky Impostors acceptance
+[m1f gate] acceptance line: [Milestone1F] acceptance FAILED
+
+[m1f gate] badges: ["PASS","FAIL","PASS","PASS","FAIL"]
+
+[m1f gate] page console transcript (tail):
+
+  error: Failed to load resource: the server responded with a status of 404 (Not Found)
+
+  warning: [.WebGL-0x1c00149c00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+
+  warning: [.WebGL-0x1c00149c00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+
+  warning: [.WebGL-0x1c00149c00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+
+  warning: [.WebGL-0x1c00149c00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
+
+  log: R3DUMP hdr centre=(640.00,360.00) meshR=90.27 impR=90.27 meshRmax=113.14 impRmax=113.14 totA=25600 sym=0
+
+  log: [Milestone1F] acceptance FAILED
+
+  1) e2e/m1f.spec.ts:9:1 › M1F — 3-Camera Layers & Sky Impostors acceptance ────────────────────────
+
+    Error: acceptance console line
+
+    expect(received).toContain(expected) // indexOf
+
+    Expected substring: "PASSED"
+    Received string:    "[Milestone1F] acceptance FAILED"
+
+      28 |   for (const l of consoleLines.slice(-12)) console.log(`  ${l}`)
+      29 |
+    > 30 |   expect(line, 'acceptance console line').toContain('PASSED')
+         |                                           ^
+      31 |   expect(badges.length, 'badge rows scraped').toBeGreaterThan(0)
+      32 |   expect(badges.join(' | '), 'no FAIL badge may remain').not.toContain('FAIL')
+      33 | })
+        at /workspace/spacecraft/game/e2e/m1f.spec.ts:30:43
+
+    Error Context: test-results/m1f-M1F-—-3-Camera-Layers-Sky-Impostors-acceptance/error-context.md
+
+
+  1 failed
+    e2e/m1f.spec.ts:9:1 › M1F — 3-Camera Layers & Sky Impostors acceptance ─────────────────────────
+96:        - generic [ref=e76]: "Pair audit (gap vs δ(z) of the assigned pass): probeA/probeB @233 km 2.5 km gap, ratio 1,556 · Earth vs horizon terrain (Mid) 30.0 km gap, ratio 1,000,000,000 · boots/ground @1.7 m (Near) 20 mm gap, ratio 11,611. Layered minimum 1,556× (>10 required). Single-camera counterfactual (n=0.01, f=1e7): the probe pair fuses (ratio 0.0077 < 1 — per-pixel depth lottery at the handoff range; Earth/horizon degrades to 3.3×). Frozen-frame determinism: 0 differing bytes across two identical renders."
+101:        - generic [ref=e81]: "8 live instances: rendered disk θ vs Float64 truth max err 0.0e+0 rad (law: s = D·tan θ, staged D ≤ 9,600 m, one f64→f32 narrowing); staged positions exact to 0.0e+0 m. Sun ground truth (1280×720 readback): disk footprint 0 px vs ideal π·r² = 0.0%, (tol ±15%); center offset 999.00 px vs the independent f64 projection (tol 1.5 px). r = 21.0 px from θ = 2.006°."
