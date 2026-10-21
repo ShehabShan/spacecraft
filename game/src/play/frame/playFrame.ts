@@ -14,6 +14,7 @@ import type { InputState } from '../input/InputState';
 import type { PlayStoreLike } from '../ui/shellRuntime';
 import { PLAY_TUNING } from '../world/moonConfig';
 import { LoadingGate, PlayClock } from './shellStages';
+import { createTelemetry } from '../character/CharacterTelemetry';
 
 export function quatMulInto(a: Quat, b: Quat, out: Quat): Quat {
   const w = a.w * b.w - a.x * b.x - a.y * b.y - a.z * b.z;
@@ -46,6 +47,8 @@ export function createPlayFrame(w: MoonWorld, cam: ThirdPersonCamera, shell?: Pl
   const off: Vec3 = { x: 0, y: 0, z: 0 };
   const camP: Vec3 = { x: 0, y: 0, z: 0 };
   const clock = new PlayClock();
+  // WHY (B6): boot telemetry record; B7's sampleTelemetry refills it in place.
+  const telem = createTelemetry();
   const gate = new LoadingGate(PLAY_TUNING.loadTimeoutS);
   const now = shell?.now ?? (() => performance.now());
   const fn = function playFrame(delta: number): void {
@@ -78,7 +81,9 @@ export function createPlayFrame(w: MoonWorld, cam: ThirdPersonCamera, shell?: Pl
     kcc.frameQuatInto(qF);
     quatMulInto(qS, qF, qW);
     w.characterRoot.quaternion.set(qW.x, qW.y, qW.z, qW.w);
-    // 7 telemetry + animation — B6
+    // 7. telemetry (B7) + animation — B6: RestAnimator holds the rest pose
+    telem.dt = clock.dt;
+    w.animator.update(telem, clock.dt);
     // 8. camera post-step (static pose; spring arm/smoothing in B7)
     cam.poseInto(kcc);
     rotateByQuatInto(qS, cam.offsetPlanet.x, cam.offsetPlanet.y, cam.offsetPlanet.z, off);

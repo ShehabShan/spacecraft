@@ -1249,3 +1249,22 @@ Observations (NO change made — recorded for the Lead):
     it in V1) · Evidence: check-play-b5 B5_EXIT=0 (C1–C6 PASS); shell
     101/101, frame 12/12, world 27/27, lod 40/40, spawn 70/70; TSC/BUILD
     exit 0; K10 grep 0 hits. · Source: Lead execute order.
+
+86. 2026-10-21 · T1/B6 · game/src/play/character/AstronautRig.ts (new),
+    game/src/play/character/CharacterAnimator.ts (new),
+    game/src/play/character/CharacterTelemetry.ts (new),
+    game/src/play/world/moonWorld.ts, game/src/play/frame/playFrame.ts,
+    game/tools/test-play-rig.mjs (new), game/tools/check-play-b6.mjs (new)
+    · articulated block astronaut per §7.2/§7.3 (17 pivot groups, 20 meshes
+    on 3 shared unit geometries + 4 materials, all NEAR_BIT, static meshes
+    matrixAutoUpdate off, rig.root Ry(−π/2) + −groundClearance);
+    CharacterAnimator interface + RestAnimator (identity pose) behind the
+    K13 seam; telemetry record type + boot factory (sampleTelemetry in B7);
+    createMoonWorld mounts the rig under characterRoot as world.animator and
+    disposes it; playFrame stage 7 calls animator.update · Why: plan §12.2
+    B6 (§5.2, §7, K13) · Evidence: test-play-rig PASS 97/97 (every §7.6 row;
+    in-world sole contact −0.0000 m, visor·fwd 0.904; RestAnimator heap
+    < 64 KB over 10,000 updates; 7/7 dispose events); world 27/27, frame
+    12/12, shell 101/101, lod 40/40, spawn 70/70; TSC/BUILD exit 0;
+    check-play-b5 B5_EXIT=0, check-play-b6 B6_EXIT=0; K10 grep 0 hits.
+    · Source: Lead execute order.

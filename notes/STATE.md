@@ -1,21 +1,26 @@
 # SOLARIS — STATE — PHASE 2: TASK DEVELOPMENT (contract: AGENT_BRIEF.md; phase-1 history preserved below)
 
 ## NEXT ACTION
-**T1 BUILDING — next build step B6 — Articulated rig**
-(`docs/T1-plan.md` §12.2 B6, spec §7): `src/play/character/CharacterAnimator.ts`
-(interface §5.2 + `RestAnimator` identity pose), `src/play/character/AstronautRig.ts`
-(§7.2 hierarchy, §7.3 3 geometries / 4 materials / 20 meshes on NEAR,
-`disposeAstronautRig`), mounted under `characterRoot` (placed by playFrame
-stage 6), `tools/test-play-rig.mjs` (every §7.6 assertion). B5 is DONE
-(B5a–B5c) — the shell is live; read the B5c build notes (PlayShell hooks,
-no worker hook). If B6 is oversized, split it first (B6a/B6b). Run Node tests
-with `node --expose-gc`; browser checks: `npx vite build && npx vite preview
---port 4173 &` then `node tools/check-play-b5.mjs http://localhost:4173`
-(run `npx playwright install chromium` first in a fresh VM). The Lead's
-execute order is in the APPROVAL LEDGER (2026-10-20); Q1–Q8 rulings apply.
-Each build commit carries its step box, the tracker row, this NEXT ACTION
-update and a CHANGES.md entry. Known benign: the `/favicon.ico` 404 console
-error; test-play-world's heap row can flake once under GC noise (re-run).
+**T1 BUILDING — next build step B7 — Controller + camera (FIRST PLAYABLE)**
+(`docs/T1-plan.md` §12.2 B7, spec §9): `src/play/controller/PlayerController.ts`
+(sole writer of `kcc.input`; §9.2 math, §9.3 play-layer jump buffer +
+respawn), `sampleTelemetry` in `src/play/character/CharacterTelemetry.ts`
+(the type + `createTelemetry` exist since B6), `ThirdPersonCamera.ts`
+completed (§9.4 orbit, spring arm, 4-sample clearance, FP toggle →
+`animator.setVisible(false)`, zoom), playFrame stages 3–5 and 7
+(`kcc.update(dt, 5)` + `core.advance(dt)`; stage 7 already calls
+`w.animator.update(telem, clock.dt)`). B6 is DONE — read the B6 build notes
+(RestAnimator lives in `createMoonWorld` as `world.animator`). B7 is large:
+split it first (e.g. B7a controller + telemetry headless, B7b camera, B7c
+wiring + browser check). Run Node tests with `node --expose-gc` (rig 97/97,
+world 27/27, frame 12/12, shell 101/101, lod 40/40, spawn 70/70); browser:
+`npx playwright install chromium`, `npx vite build && npx vite preview
+--port 4173 &`, then `node tools/check-play-b5.mjs` / `check-play-b6.mjs
+http://localhost:4173`. The Lead's execute order is in the APPROVAL LEDGER
+(2026-10-20); Q1–Q8 rulings apply. Each build commit carries its step box,
+the tracker row, this NEXT ACTION update and a CHANGES.md entry. Known
+benign: the `/favicon.ico` 404 console error; test-play-world's heap row can
+flake once under GC noise (re-run).
 
 Phase-1 legacy (parked — carries forward unchanged): M1F round-7 ruling still
 PENDING (option menu `notes/reports/M1F.md` §15.7; recommendation (a): rebase
@@ -228,3 +233,4 @@ byte-identical to ea112ec. Phase-2 truth: the code is the source of truth;
 the active tracker is notes/task.md; NEXT ACTION = "T1 plan".
 | 36 | 2026-10-21 | T1 build: B5b (budget 50 OLU, wrap-up ~40) | Fresh session (VM v2, clone + `npm ci` CI_EXIT=0); §5 reconciliation clean — HEAD 4ab8443, tree clean, no drift; execute order already in the APPROVAL LEDGER (not re-recorded). B5b DONE (this commit): `frame/shellStages.ts` (PlayClock, LoadingGate), `ui/shellRuntime.ts` (lock/lockerror/visibility/context-loss/worker-error → dispatch), playFrame stages 1/2/11 behind an optional shell arg, store `hudVisible`/`toggleHud`; test-play-shell PASS 101/101; spawn 70/70, lod 40/40, world 27/27, frame 12/12; TSC/BUILD exit 0; K10 grep 0 hits. Stopped at ~30 OLU: B5c needs a browser check, too large for the remainder under the ~40 wrap-up. Bootstrap cost ~21 OLU (reading STATE.md in full is the main cost). | NEXT = B5c (STATE.md NEXT ACTION). Read only NEXT ACTION + SESSION LOG tail of STATE.md (e.g. `sed -n 1,25p` and `tail -4`), not the whole file. Push and commit mechanics as in row 30. |
 | 37 | 2026-10-21 | T1 build: B5c (budget 50 OLU, wrap-up ~40) | Fresh session (VM v2, clone + `npm ci` CI_EXIT=0); §5 reconciliation clean — HEAD b501353, tree clean, no drift; execute order already in the APPROVAL LEDGER (not re-recorded). B5c DONE (this commit) — closes B5: `ui/Overlays.tsx`, `ui/PlayShell.tsx`, PlayPage shell wiring, `tools/check-play-b5.mjs` B5_EXIT=0 (LOADING → CLICK_TO_PLAY 8.7 s → lock → PLAYING → P → PAUSED → Resume → PLAYING; 0 errors; m1f&manual=1 boots); shell 101/101, frame 12/12, world 27/27, lod 40/40, spawn 70/70; TSC/BUILD exit 0; K10 grep clean. Stopped after B5c (~30 OLU): B6 is a new rig + test step, started fresh next session. | NEXT = B6 (STATE.md NEXT ACTION). Playwright browsers are absent in a fresh VM: `npx playwright install chromium`. The integration-proxy push may wait on a chat approval — run it with a long timeout (≥10m). Read only NEXT ACTION + SESSION LOG tail of STATE.md. Push and commit mechanics as in row 30. |
+| 38 | 2026-10-21 | T1 build: B6 (budget 50 OLU, wrap-up ~40) | Fresh session (VM v2, clone + `npm ci` CI_EXIT=0); §5 reconciliation clean — HEAD 2f6181e, tree clean, no drift; execute order already in the APPROVAL LEDGER (not re-recorded). B6 DONE (this commit): `character/AstronautRig.ts` (JOINTS, RIG_DIMS, 17 pivots / 20 meshes / 3 geometries / 4 materials, NEAR_BIT, Ry(−π/2) + −groundClearance), `character/CharacterAnimator.ts` (interface + RestAnimator), `character/CharacterTelemetry.ts` (type + createTelemetry), mounted in `createMoonWorld` as `world.animator`, stage 7 calls it; test-play-rig PASS 97/97 (sole contact −0.0000 m, visor·fwd 0.904); check-play-b6 + check-play-b5 exit 0 (screenshot: rig standing, back to camera); all play tests green; TSC/BUILD exit 0. Stopped after B6 (~28 OLU): B7 must be split and is started fresh next session. | NEXT = B7 (split first). A PLAYING-phase Playwright screenshot times out under SwiftShader — press P first (check-play-b6 does). Read only NEXT ACTION + SESSION LOG tail of STATE.md. Push and commit mechanics as in row 30. |

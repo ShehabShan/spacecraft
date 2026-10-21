@@ -17,6 +17,8 @@ import {
 import { findEarthriseSpawn } from './spawn';
 import { MoonLod, type LodPool } from './MoonLod';
 import { EARTH_R, PLAY_BODIES, type SkyCtx } from './skyState';
+import { RestAnimator, type CharacterAnimator } from '../character/CharacterAnimator';
+import { buildAstronautRig } from '../character/AstronautRig';
 
 /** The pool surface the play world uses: the LOD subset + frame/teardown. */
 // WHY (B4c): attach/primeAll/unprimeAll join the surface because PlayPage
@@ -48,6 +50,8 @@ export interface MoonWorld extends SkyCtx {
   earthDir: Vec3;
   sunDir: Vec3;
   spawnDir: Vec3;
+  /** Character animator; its root hangs under characterRoot (§7.4). */
+  animator: CharacterAnimator;
   /** Teleport the KCC back to the spawn site (R key, §10). */
   respawnPlayer(): void;
   /** §6.4 teardown — workers, meshes, GPU resources, the entity. */
@@ -126,17 +130,22 @@ export function createMoonWorld(opts: MoonWorldOptions): MoonWorld {
   characterRoot.name = 'characterRoot';
   characterRoot.layers.mask = NEAR_BIT;
   sceneRoot.add(characterRoot);
+  // WHY (B6): RestAnimator is the B6–B8 placeholder behind the K13 seam;
+  // ProceduralAnimator replaces it in B9. Stage 6 places characterRoot.
+  const animator: CharacterAnimator = new RestAnimator(buildAstronautRig(MOON_ASTRONAUT.groundClearance));
+  characterRoot.add(animator.root);
   // MoonLod samples terrainHeight at construction → after step 1.
   const lod = new MoonLod(pool, MOON_R);
 
   const world: MoonWorld = {
     core, adapter, astroState, kcc, sky, pool, lod, moonAbs: moonState.absPos, earthVec, earthDist,
-    earthMesh, glow, characterRoot, sceneRoot, spinGroup, skyGroup, earthDir, sunDir, spawnDir,
+    earthMesh, glow, characterRoot, sceneRoot, spinGroup, skyGroup, earthDir, sunDir, spawnDir, animator,
     respawnPlayer() { kcc.teleportSurface(spawnDir.x, spawnDir.y, spawnDir.z); syncEntity(); },
     dispose() {
       pool.disposeAll();
       disposeMesh(sky.mesh); disposeMesh(sky.stars);
       disposeMesh(shell); disposeMesh(earthMesh); disposeMesh(glow);
+      animator.dispose();
       core.unregisterEntity(PLAY_ENTITY_ID);
     },
   };

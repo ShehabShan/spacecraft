@@ -2136,7 +2136,7 @@ or reordered. A step that fails its checks is not committed as done.
         SwiftShader frame can block the main thread > 1 s; the disabled
         window itself is therefore a manual MT3/MT4 check.
 
-- [ ] **B6 — Articulated rig.**
+- [x] **B6 — Articulated rig.**
   - Files: `src/play/character/CharacterAnimator.ts` (interface, §5.2) +
     `RestAnimator` (identity pose; the B6–B8 placeholder),
     `src/play/character/AstronautRig.ts` (§7.2 hierarchy, §7.3 3 geometries /
@@ -2147,6 +2147,25 @@ or reordered. A step that fails its checks is not committed as done.
   - Checks: V0; `test-play-rig` = every §7.6 assertion; manual — soles touch
     the terrain (no float, no sink > 2 cm), rig visible at both near and far
     boom distances.
+  - Build notes (B6, independent decisions — Lead review):
+      - `CharacterTelemetry.ts` ships in B6 as the record type +
+        `createTelemetry()` only (the animator seam is typed against it);
+        `sampleTelemetry(kcc, ctrl, inp, dt, out)` needs `PlayerController`
+        and lands in B7 with the §5.2 signature unchanged.
+      - `createMoonWorld` builds `RestAnimator(buildAstronautRig(
+        MOON_ASTRONAUT.groundClearance))`, mounts `animator.root` under
+        `characterRoot`, exposes `world.animator` (B9 swaps in
+        `ProceduralAnimator` there) and disposes it in `world.dispose()`.
+        playFrame stage 7 already calls `w.animator.update(telem, clock.dt)`
+        on a boot telemetry record (B7 fills it).
+      - `buildAstronautRig` constructs parent-first (legs after hips), then
+        re-keys `joints` in `JOINTS` order so `Object.keys(joints)` equals
+        `JOINTS` (§7.6).
+      - `test-play-rig` adds a Node MT5 analog: mounted in the play world,
+        one frame, sole contact −0.0000 m from the terrain (|·| ≤ 2 cm) and
+        visor-from-head-centre · kcc.fwd = 0.904 (= 0.19/hypot(0.09, 0.19),
+        the geometric value). `tools/check-play-b6.mjs` screenshots the rig
+        after a pause (a PLAYING screenshot times out under SwiftShader).
 
 - [ ] **B7 — Controller + camera (FIRST PLAYABLE).**
   - Files: `src/play/controller/PlayerController.ts` (sole writer of
