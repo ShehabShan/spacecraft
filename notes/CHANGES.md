@@ -1284,3 +1284,19 @@ Observations (NO change made — recorded for the Lead):
     mm; heap Δ 22.7 KB / 10k frames); rig 97, world 27, frame 12, shell 101,
     lod 40, spawn 70 all PASS; TSC/BUILD exit 0. No core edit.
     · Source: Lead execute order.
+88. 2026-10-21 · T1/B7b · game/src/play/camera/ThirdPersonCamera.ts (completed),
+    game/src/play/world/moonConfig.ts (PLAY_TUNING.camZoomSens additive),
+    game/tools/test-play-controller.mjs (part 2)
+    · §9.4 camera: preStep (parallel transport, raw orbit a = −dx·lookSens about
+    up, pitch clamp ±1.2, multiplicative zoom clamped [1.2, 12], V enter/exit
+    with the one-shot body yaw and autoTurn toggle), poseInto(kcc, dt) with a
+    planet-frame pivot lag offset (camPosTau), 4-sample terrain cut, instant
+    shrink / camBoomTau regrow, height clamp, FP eye pose; reset → TP.
+    · Why: plan step B7b (decisions in the plan's B7b build notes).
+    · Evidence: test-play-controller PASS 57/57 (orbit sign/angle, clamps,
+    spring arm, walk lag within 3 % of v·dt/(e^{dt/τ}−1), rebase step mismatch
+    0.30 mm ≤ 1 mm, FP enter/yaw/exit, frozen pose bit-identical, real-terrain
+    orbit min clearance 0.400 m ≥ 0.35, min boom 1.35 m, camera heap 26.9 KB /
+    10k); rig 97, world 27, frame 12, shell 101, lod 40, spawn 70 PASS; TSC/BUILD
+    exit 0. No core edit.
+    · Source: Lead execute order.

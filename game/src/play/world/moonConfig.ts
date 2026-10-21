@@ -57,6 +57,7 @@ export const PLAY_TUNING = {
   coyoteS: 0.10,             // KCC coyoteTime (Q2a ruling, B11)
   airControl: 0.3,           // KCC airControl (Q3 ruling, B11)
   camBoomTau: 0.30,          // s boom regrowth after terrain compression (§9.4)
+  camZoomSens: 0.001,        // per wheel deltaY unit, multiplicative zoom (B7b decision)
   hardLandingSpeed: 4.5, landRecoverScale: 0.5, // §9.3 landing recovery
   jumpDelayS: 0,             // §9.3 decision: no launch delay
   readyRadiusM: 300, loadTimeoutS: 15, // §10.3 loading gate

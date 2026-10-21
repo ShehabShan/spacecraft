@@ -2212,7 +2212,7 @@ or reordered. A step that fails its checks is not committed as done.
           jump flies 2u/g = 5.19 s, so 5 s cannot contain the landing. Checks
           run on a zero-amplitude (perfect sphere) field so mapping/facing are
           not confounded by slope; real-terrain behaviour is B7c's browser check.
-  - [ ] **B7b — ThirdPersonCamera completed (headless).**
+  - [x] **B7b — ThirdPersonCamera completed (headless).**
     - Files: `src/play/camera/ThirdPersonCamera.ts` (§9.4 orbit, pitch clamp,
       zoom, spring arm shrink/regrow `camBoomTau`, planet-frame pivot lag
       `camPosTau`, FP pose + enter/exit), `test-play-controller` part 2.
@@ -2221,6 +2221,34 @@ or reordered. A step that fails its checks is not committed as done.
       below terrain + 0.35, boom ≥ 1.2) + Rebase continuity (camera step =
       character step to 1 mm) + orbit sign (dx > 0 turns heading toward
       `heading × up`).
+    - Build notes (B7b, independent decisions — Lead review):
+        - **API (affects B7c).** Stage 3 = `cam.preStep(kcc, input, ctrl)`
+          (transport, TP orbit, pitch, zoom, V toggle; consumes `lookDY` /
+          `zoomDelta` always and `lookDX` in TP only — in FP `lookDX` is left
+          on the shared InputState for `ctrl.step` as body yaw). Stage 8 =
+          `cam.poseInto(kcc, clock.dt)`; `poseInto(kcc)` without dt = snap (no
+          lag, boom at target) — the B4b static path, kept for test-play-frame.
+          Respawn: `cam.reset(kcc, earthDir, ctrl)` (always returns to TP and
+          clears `ctrl.firstPerson`). The camera owns the FP flag and syncs the
+          controller's (`FirstPersonSink`).
+        - Zoom is multiplicative: `dist·e^{zoomDelta·camZoomSens}`, new additive
+          `PLAY_TUNING.camZoomSens` = 0.001 per wheel unit (one 100-unit notch ≈
+          10 %), clamped [1.2, 12] — same feel at both ends.
+        - Pivot lag snaps (lag = 0) when the pivot moves > 50 m in one frame
+          (teleport/respawn), on FP exit, and on the first pose; dt = 0 keeps
+          the lag/boom frozen (pose bit-identical over 120 frozen frames).
+        - The terrain cut samples the boom from the SMOOTHED pivot (the point
+          the camera actually hangs from); the spring arm then shrinks to the
+          cut instantly and regrows with `1 − e^{−dt/camBoomTau}`.
+        - FP shares the TP `pitch` value (pitch > 0 = look down, mouse-down
+          looks down, same sense as the orbit); it is not reset on enter/exit.
+          FP has no follow lag (the eye is rigid to the head).
+        - Checks: rebase continuity emulates the 256 m lattice / 1,024 m
+          threshold in the test (Float64 subtract then `Math.fround`, as the
+          adapter does) — measured 0.30 mm, the Float32 narrowing floor;
+          clearance runs on the real MOON_PARAMS field at the steepest sample
+          within ±1.2 km of the spawn (79.7 m per 5 m), 7 pitches × 72 orbit
+          steps, boom compressed on every frame.
   - [ ] **B7c — playFrame stages 3–5/7 wiring + browser check (FIRST PLAYABLE).**
     - Files: `src/play/frame/playFrame.ts` (stage 3 camera pre-step, 4
       controller, 5 `kcc.update(dt, 5)` + `core.advance(dt)`, 7

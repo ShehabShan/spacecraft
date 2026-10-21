@@ -1,19 +1,20 @@
 # SOLARIS — STATE — PHASE 2: TASK DEVELOPMENT (contract: AGENT_BRIEF.md; phase-1 history preserved below)
 
 ## NEXT ACTION
-**T1 BUILDING — next build step B7b — ThirdPersonCamera completed (headless)**
-(`docs/T1-plan.md` §12.2 B7 → B7b, spec §9.4/§9.6): orbit (raw mouse, pitch
-clamp, zoom [1.2, 12]), spring arm (instant shrink, `camBoomTau` regrow),
-planet-frame pivot lag `camPosTau`, FP pose + enter/exit, `cam.reset`; checks
-added as part 2 of `tools/test-play-controller.mjs` (clearance over real
-terrain, rebase continuity 1 mm, orbit sign). B7a is DONE — read its build
-notes: stage 5 in B7c calls `ctrl.simulate(inp, cam, clock.dt, 5)` (per-tick
-controller), not `kcc.update` directly. Then B7c (wiring + `check-play-b7`
-browser check = FIRST PLAYABLE). controller test 29/29. Run Node tests with
-`node --expose-gc` (rig 97/97, world 27/27, frame 12/12, shell 101/101,
+**T1 BUILDING — next build step B7c — playFrame stages 3–5/7 wiring + browser check (FIRST PLAYABLE)**
+(`docs/T1-plan.md` §12.2 B7 → B7c): stage 3 `cam.preStep(kcc, input, ctrl)`,
+4+5 `ctrl.beginFrame()` + `ctrl.simulate(input, cam, clock.dt, 5)` (per-tick,
+B7a) + `core.advance(dt)`, 7 `sampleTelemetry`, 8 `cam.poseInto(kcc,
+clock.dt)`; respawn via `ctrl.reset` + `cam.reset(kcc, earthDir, ctrl)`; FP
+hides the rig (`animator.setVisible(!cam.firstPerson)`); §9.6 Pause case in
+`test-play-frame`; new `tools/check-play-b7.mjs` (W hold moves, Space leaves
+the ground, P freezes). B7a + B7b DONE — read both build-note blocks in the
+plan (camera API + FP lookDX hand-off). controller test 57/57. Run Node tests
+with `node --expose-gc` (rig 97/97, world 27/27, frame 12/12, shell 101/101,
 lod 40/40, spawn 70/70); browser: `npx playwright install chromium`,
 `npx vite build && npx vite preview --port 4173 &`, then
 `node tools/check-play-b5.mjs` / `check-play-b6.mjs http://localhost:4173`.
+
 The Lead's execute order is in the APPROVAL LEDGER (2026-10-20); Q1–Q8
 rulings apply. Each build commit carries its step box, the tracker row, this
 NEXT ACTION update and a CHANGES.md entry. Known benign: the `/favicon.ico`
@@ -231,3 +232,4 @@ the active tracker is notes/task.md; NEXT ACTION = "T1 plan".
 | 36 | 2026-10-21 | T1 build: B5b (budget 50 OLU, wrap-up ~40) | Fresh session (VM v2, clone + `npm ci` CI_EXIT=0); §5 reconciliation clean — HEAD 4ab8443, tree clean, no drift; execute order already in the APPROVAL LEDGER (not re-recorded). B5b DONE (this commit): `frame/shellStages.ts` (PlayClock, LoadingGate), `ui/shellRuntime.ts` (lock/lockerror/visibility/context-loss/worker-error → dispatch), playFrame stages 1/2/11 behind an optional shell arg, store `hudVisible`/`toggleHud`; test-play-shell PASS 101/101; spawn 70/70, lod 40/40, world 27/27, frame 12/12; TSC/BUILD exit 0; K10 grep 0 hits. Stopped at ~30 OLU: B5c needs a browser check, too large for the remainder under the ~40 wrap-up. Bootstrap cost ~21 OLU (reading STATE.md in full is the main cost). | NEXT = B5c (STATE.md NEXT ACTION). Read only NEXT ACTION + SESSION LOG tail of STATE.md (e.g. `sed -n 1,25p` and `tail -4`), not the whole file. Push and commit mechanics as in row 30. |
 | 37 | 2026-10-21 | T1 build: B5c (budget 50 OLU, wrap-up ~40) | Fresh session (VM v2, clone + `npm ci` CI_EXIT=0); §5 reconciliation clean — HEAD b501353, tree clean, no drift; execute order already in the APPROVAL LEDGER (not re-recorded). B5c DONE (this commit) — closes B5: `ui/Overlays.tsx`, `ui/PlayShell.tsx`, PlayPage shell wiring, `tools/check-play-b5.mjs` B5_EXIT=0 (LOADING → CLICK_TO_PLAY 8.7 s → lock → PLAYING → P → PAUSED → Resume → PLAYING; 0 errors; m1f&manual=1 boots); shell 101/101, frame 12/12, world 27/27, lod 40/40, spawn 70/70; TSC/BUILD exit 0; K10 grep clean. Stopped after B5c (~30 OLU): B6 is a new rig + test step, started fresh next session. | NEXT = B6 (STATE.md NEXT ACTION). Playwright browsers are absent in a fresh VM: `npx playwright install chromium`. The integration-proxy push may wait on a chat approval — run it with a long timeout (≥10m). Read only NEXT ACTION + SESSION LOG tail of STATE.md. Push and commit mechanics as in row 30. |
 | 38 | 2026-10-21 | T1 build: B6 (budget 50 OLU, wrap-up ~40) | Fresh session (VM v2, clone + `npm ci` CI_EXIT=0); §5 reconciliation clean — HEAD 2f6181e, tree clean, no drift; execute order already in the APPROVAL LEDGER (not re-recorded). B6 DONE (this commit): `character/AstronautRig.ts` (JOINTS, RIG_DIMS, 17 pivots / 20 meshes / 3 geometries / 4 materials, NEAR_BIT, Ry(−π/2) + −groundClearance), `character/CharacterAnimator.ts` (interface + RestAnimator), `character/CharacterTelemetry.ts` (type + createTelemetry), mounted in `createMoonWorld` as `world.animator`, stage 7 calls it; test-play-rig PASS 97/97 (sole contact −0.0000 m, visor·fwd 0.904); check-play-b6 + check-play-b5 exit 0 (screenshot: rig standing, back to camera); all play tests green; TSC/BUILD exit 0. Stopped after B6 (~28 OLU): B7 must be split and is started fresh next session. | NEXT = B7 (split first). A PLAYING-phase Playwright screenshot times out under SwiftShader — press P first (check-play-b6 does). Read only NEXT ACTION + SESSION LOG tail of STATE.md. Push and commit mechanics as in row 30. |
+| 39 | 2026-10-21 | T1 build: B7b (budget 50 OLU, wrap-up ~40) | Fresh session (VM v2, clone + `npm ci` CI_EXIT=0); §5 reconciliation — HEAD d0c5ab6 = origin, tree clean; execute order already in the APPROVAL LEDGER (not re-recorded). REPAIR: the session that committed f6efaf7 (B7 split) + d0c5ab6 (B7a) left no SESSION LOG row; its state is fully carried by those commits + the B7a build notes (no other drift). B7b DONE (this commit): `camera/ThirdPersonCamera.ts` completed (preStep orbit/pitch/zoom/V, poseInto spring arm + planet-frame pivot lag + FP, reset → TP), `PLAY_TUNING.camZoomSens`, test-play-controller part 2 → PASS 57/57 (rebase step mismatch 0.30 mm; min clearance 0.400 m over a 79.7 m/5 m rim; min boom 1.35 m); all play tests green; TSC/BUILD exit 0. | NEXT = B7c (STATE.md NEXT ACTION). In tests that keep camera input apart from the controller input, pass the camera's leftover `lookDX` to the controller (FP body yaw) — in the page both read the one InputState. Read only NEXT ACTION + SESSION LOG tail of STATE.md. Push and commit mechanics as in row 30. |
