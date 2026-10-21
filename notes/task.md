@@ -8,7 +8,9 @@ starting point.
 ## TRACKER
 | Task | Branch | Plan status | Build status | Step progress | Last commit | Blockers |
 |------|--------|-------------|--------------|---------------|-------------|----------|
-| T1 playable moon | `t1-playable-moon` | READY (7/7 sections; Q1–Q8 ruled 2026-10-20) — `docs/T1-plan.md` | IN PROGRESS (execute order 2026-10-20) | plan 7/7 · build 10/13 (B4 = B4a–B4c; B5 = B5a–B5c; B7 = B7a–B7c; B9 = B9a–B9c) — PLAYABLE + ANIMATED + HUD (B10 done: HUD + zero-allocation proof) · B10 browser b9/b7 re-run PASS (session 46) · next: B11 core edit (coyoteTime / airControl) — BLOCKED at its baseline | 1283545 | B11 baseline m1f R2 FAIL on the unedited tree (R3 flaky) — Lead ruling needed (plan B11 options a/b/c) |
+| T1 playable moon | `t1-playable-moon` | READY (7/7 sections; Q1–Q8 ruled 2026-10-20) — `docs/T1-plan.md` | PAUSED 2026-10-21 for A1 (Lead) — was IN PROGRESS | plan 7/7 · build 10/13 (B4 = B4a–B4c; B5 = B5a–B5c; B7 = B7a–B7c; B9 = B9a–B9c) — PLAYABLE + ANIMATED + HUD (B10 done: HUD + zero-allocation proof) · B10 browser b9/b7 re-run PASS (session 46) · next: B11 core edit (coyoteTime / airControl) — BLOCKED at its baseline | 1283545 | B11 baseline m1f R2 FAIL on the unedited tree (R3 flaky) — Lead ruling needed (plan B11 options a/b/c) |
+| A1 engine audit (read-only) | `a1-engine-audit` | READY (7/7; authored 2026-10-21) — `docs/A1-plan.md` | IN PROGRESS (execute order 2026-10-21) | build 0/26 units · next: U01 m1f baseline diagnosis | 256d77d | none (GitHub push access pending) |
+
 
 Note: "Last commit" = the commit BEFORE the newest checkpoint (a file cannot
 contain its own hash); current HEAD: `git log -1`.
@@ -20,6 +22,16 @@ contain its own hash); current HEAD: `git log -1`.
 | MS 1G | DEFERRED (ignored) | Explicitly out of scope — "much later" per Lead, 2026-10-19. Do not start or plan. |
 
 ## TASK DEFINITIONS
+
+### A1 — ENGINE AUDIT (read-only) — ACTIVE
+Why: specs by GLM 5.3, engine by GLM 5.3 Flash (Lead, 2026-10-21); several gates
+looked tuned-to-pass (R2 tautological θ audit, R2 comment/code tolerance mismatch,
+R3 threshold 45→8, R5 waived) and the m1f baseline is red on the unedited tree.
+Goal: evidence-backed findings on specs, engine, play layer and tests, sized into
+later fix tasks. READ-ONLY (AGENT_BRIEF.md §11). Plan: `docs/A1-plan.md` (26 units,
+one per 50-OLU session). Ends at a LEAD GATE: the Lead triages
+`docs/audit/FINDINGS.md`; then fix tasks F1, F2, … are planned; T1 resumes after
+the Lead decides when.
 
 ### T1 — PLAYABLE MOON
 Task type: new game page (the first GAME page, not a test harness). Branch:

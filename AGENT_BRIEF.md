@@ -18,6 +18,8 @@ alone.
    its PLAN stage, first commit).
 4. `notes/STATE.md` — NEXT ACTION (the binding pointer) and the SESSION LOG tail.
 5. The code you are about to touch, under `game/src`.
+6. If the active task is **A1 (engine audit)**: §11 AUDIT MODE below, which
+   overrides parts of §2, §3 and §8 for that task only.
 
 ## 2. FILE MAP — what to read, what never to read
 - `game/` — THE GAME. Source of truth for all behavior, constants, structure.
@@ -162,3 +164,25 @@ about whether a change is allowed — STOP, write the options, ask the Lead.
 - 2026-10-20 R5 waiver (Lead): the M1F R5 FAIL is deferred to later work and
   counts as PASS in every task's verification/regression check (m1f spec exit
   1 caused only by R5 is expected). No code, row or threshold changes (§8).
+- 2026-10-21 Audit amendment (Lead): T1 PAUSED at B11; new task A1 engine audit
+  (read-only) is active; §11 AUDIT MODE added; session budget 50 OLU per session
+  stated as binding for every task; sessions from now on run on high-capability
+  models.
+
+## 11. AUDIT MODE (binds only while the active task is A1)
+Why: the milestone specs were written by GLM 5.3 and the engine by GLM 5.3 Flash
+(Lead, 2026-10-21). Specs, code and tests are all suspect; a session that defends
+the existing code cannot audit it.
+- READ-ONLY: never edit `game/src/**`, `game/e2e/**`, `game/playwright.config.ts`,
+  `Milestone/**`, `Design_specs/**`. Write only `docs/audit/**`, `game/tools/audit/**`
+  (new files) and the process files.
+- §2 DO-NOT-READ is lifted for A1: read `Milestone/*.txt` (targeted grep, never a
+  whole file), `Design_specs/`, and `notes/reports/` as needed.
+- §3 "when code looks odd, assume there is a reason" is SUSPENDED for A1. Treat
+  `// WHY:` comments, CHANGES.md and reports as claims to verify, not as proof.
+- "Code wins every conflict" does NOT apply in A1: a spec/code conflict is a
+  finding, and the auditor judges which side is right on physics and math.
+- RATIFIED items (§3) and parked 1F (§8) MAY be audited and flagged; changing them
+  still needs a Lead ruling in a later fix task.
+- Method, finding template, severity scale and budget rule: `docs/A1-plan.md` §6.
+

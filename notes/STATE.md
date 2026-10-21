@@ -1,34 +1,22 @@
 # SOLARIS — STATE — PHASE 2: TASK DEVELOPMENT (contract: AGENT_BRIEF.md; phase-1 history preserved below)
 
 ## NEXT ACTION
-**T1 BUILDING — next build step B11 — BLOCKED AT ITS BASELINE: Lead ruling needed**
-(`docs/T1-plan.md` §12.2 B11, first sub-bullet "BLOCKED at the baseline").
-B10 is fully verified: browser check-play-b9 and check-play-b7 PASS on the
-re-run (session 46). The B11 baseline-first m1f run on the UNEDITED tree
-(no shared file changed since 3057899) shows R2 FAIL in 2 of 2 runs and
-R3 FAIL in 1 of 2 runs. m1e is 6/6 PASS. Do NOT start the core edit until
-the Lead picks an option: (a) R2/R3 environment-soft on this VM, judge B11
-by "badges identical to baseline"; (b) re-run m1f on hardware WebGL first;
-(c) investigate R2 first. Once ruled: add the opt-in `coyoteTime` /
-`airControl` fields (default 0, branch skipped at 0) to
-`src/core/physics/astronautKCC.ts` per §5.3. Re-read the F14 jump clear (~483)
-and its read (~590) before editing. `MOON_ASTRONAUT` uses 0.10 s and 0.3.
-Walk-off = `_tryMove`'s cliff path setting `_grounded = false`. Split first
-if oversized.
-A fresh VM needs `npx playwright install chromium` for the tools/check-play-*
-scripts (the e2e specs use the system Chrome channel).
-Node tests use `node --expose-gc`: anim 115, rig 97, world 27, frame 23,
-shell 101, lod 40, spawn 70, controller 57, perf 19.
+**A1 ENGINE AUDIT (read-only) — next unit U01: m1f baseline diagnosis**
+(`docs/A1-plan.md` §5, first unchecked box). Read AGENT_BRIEF.md §11 AUDIT MODE
+first: no edits to game/src, e2e, Milestone, Design_specs; write only
+docs/audit/** and game/tools/audit/**. U01 needs an 8 GB VM (provision 8192 MB),
+`cd game && npm ci && npx playwright install chromium`, then
+`npx playwright test e2e/m1f.spec.ts` (≈4 min; e2e uses the system Chrome
+channel). Capture R2's FULL detail string; decide Sun-culled vs wall-clock pose
+(`LIVE_SECONDS = 120` wall seconds, harness ~line 1394) vs blank MSAA readback vs
+code defect. At most 3 m1f runs this session. Budget 50 OLU; wrap up at ~40.
 
-The Lead's execute order is in the APPROVAL LEDGER (2026-10-20); Q1–Q8
-rulings apply. Each build commit carries its step box, the tracker row, this
-NEXT ACTION update and a CHANGES.md entry. Known benign: the `/favicon.ico`
-404 console error; test-play-world's heap row can flake once under GC noise; test-play-controller's camera-heap row (64 KB bound; the shell/perf heap rows now warm up 20k frames, B10) flakes ~2 of 3 runs at 92–123 KB — pre-existing (fails on a44eee6 too), not a B9 regression; re-run.
+T1 is PAUSED at B11 (blocked at its m1f baseline; U01 should answer that). Do not
+resume T1 until the Lead orders it.
 
 Phase-1 legacy (parked — carries forward unchanged): M1F round-7 ruling still
-PENDING (option menu `notes/reports/M1F.md` §15.7; recommendation (a): rebase
-gate ≥ 2 → ≥ 1, 7 admissible sites); 1G explicitly DEFERRED ("much later").
-Neither is touched without a Lead directive naming it.
+PENDING (option menu `notes/reports/M1F.md` §15.7); 1G explicitly DEFERRED. A1 may
+READ and FLAG 1F (AGENT_BRIEF §11) but changes nothing.
 
 ## MILESTONE LEDGER (phase 1 — HISTORY; the ACTIVE tracker is notes/task.md)
 | MS | Status | Evidence |
@@ -170,6 +158,9 @@ milestone, Lead's call. (Evidence: notes/reports/M1F.md §10.5, §11.3.)
 | 2026-10-20 | R5 WAIVER (Lead): the M1F R5 FAIL is deferred to later work and counts as PASS in every task verification/regression check (T1 §13.5, B11). Not a blocker, not a regression; record as `R5 WAIVED`. No harness/spec/row/threshold change; every other FAIL still blocks. |
 | 2026-10-20 | T1 OPEN QUESTIONS RULED (Lead; Q2/Q5/Q8 delegated to the bot): Q1 Option B; Q2 (a) opt-in KCC `coyoteTime` default 0, play 0.10 s; Q3 yes, `airControl` 0.3 default 0; Q4 crouch blend pose; Q5 core untouched, jump buffer in the play layer; Q6 yes (Playwright runnable in the VM); Q7 `play` only; Q8 play `MOON_ASTRONAUT.spinOmega` = 0 (harness/KCC defaults unchanged). B11 + B12 now IN scope. NOT an execute order — build still awaits "execute the T1 plan". |
 | 2026-10-20 | EXECUTE ORDER (Lead): "execute the T1 plan" — LEAD GATE passed; build B1–B13 in order. Session budget 50 OLU (wrap-up at ~40); §9 relaxed for routine technical decisions (decide without asking, record each decision + reason in the commit message and, where it affects later steps, in `docs/T1-plan.md`); §3 invariants, §8 parked items and the rest of §9 stay binding; oversized steps are split into sub-steps in the plan (own files/outcome/check, intent preserved, breakdown committed first). |
+| 2026-10-21 | Lead (repo owner): the milestone specs were authored by GLM 5.3 and the engine by GLM 5.3 Flash; run a deep engine audit before more features. T1 PAUSED at B11. |
+| 2026-10-21 | Lead: A1 engine audit approved and ordered to execute (plan `docs/A1-plan.md`); READ-ONLY at first; AGENT_BRIEF §11 AUDIT MODE installed; the repo owner is the Lead. |
+| 2026-10-21 | Lead: every session has a 50-OLU budget — every committable unit must fit in one session; split anything larger. Quality over quantity. Sessions from now on run on high-capability models (Opus 5.5 / Fable 5.1 / GPT-6 Astra class). |
 
 ## SESSION LOG
 | # | Date | Goal | Outcome | Handoff note |
@@ -245,3 +236,4 @@ the active tracker is notes/task.md; NEXT ACTION = "T1 plan".
 | 44 | 2026-10-21 | T1 build: B9c (budget 50 OLU, wrap-up ~40) | Fresh session (VM v2, clone + `npm ci` CI_EXIT=0); §5 reconciliation clean — HEAD 0383238 = origin, tree clean, tracker last-commit 83dbc39 = the commit before the newest (convention), no drift; execute order already in the APPROVAL LEDGER (not re-recorded). B9c DONE (this commit) → B9 DONE, ANIMATED: `createMoonWorld` mounts ProceduralAnimator (swap in the world, not PlayPage); new check-play-b9 PASS (Idle → Walk; JumpLaunch → JumpRise → Fall → Land → Idle; 0 errors); b7 PASS; all play Node tests PASS; TSC/BUILD exit 0. Stopped after B9c (~26 OLU after the push): B10 (HUD + perf test) is started fresh next session. | NEXT = B10 (STATE.md NEXT ACTION). The b9 jump window at 640×360 OOM-killed the browser on a 4 GB VM — check-play-b9 runs at 400×225 and the VM was resized to 8 GB (`provision_vm memory_mb=8192`); run browser checks one at a time. Push and commit mechanics as in row 30; OLU query as in row 41. |
 | 45 | 2026-10-21 | T1 build: B10 (budget 50 OLU, wrap-up ~40) | Fresh session (VM v2, clone + `npm ci` CI_EXIT=0); §5 reconciliation clean — HEAD fdcdbba = origin, tree clean, no drift (tracker last-commit 0383238 lagged one notes commit; repaired to fdcdbba); execute order already in the APPROVAL LEDGER (not re-recorded). B10 DONE (this commit): `ui/hudPublisher.ts` (play-local throttled publisher, double-buffered PlayHud, FPS EMA, hint fade) + `ui/Hud.tsx` + stage-11 wiring + H default by build; new test-play-perf PASS 19/19 ×3 (heap Δ ≈ −8 KB, trend < 0.1 KB/1k frames, 666 publishes / 69.4 s at 144 Hz, max 10/s); every other play Node test PASS; TSC/BUILD/CANON exit 0, SHARED_EXIT 0, K10 grep 0. The heap rows in test-play-perf and test-play-shell now warm up for 20k frames (V8 tiering creep; `--jitless` flat; the shell row also failed on 8f6a97e). Browser b9/b7 NOT run — stopped at ~37 OLU. | NEXT = re-run check-play-b9/b7 against B10 (8 GB VM), then B11 (STATE.md NEXT ACTION). Push and commit mechanics as in row 30; OLU query as in row 41. |
 | 46 | 2026-10-21 | T1 build: B10 browser re-run → B11 (budget 50 OLU, wrap-up ~40) | Fresh session (VM v2 resized to 8 GB, clone + `npm ci` CI_EXIT=0, `npx playwright install chromium` PWI_EXIT=0); §5 reconciliation clean — HEAD 1283545 = origin, tree clean, tracker last-commit fdcdbba = the commit before the newest (convention), no drift; execute order already in the APPROVAL LEDGER (not re-recorded). B10 browser verification DONE: check-play-b9 (400×225) B9_EXIT=0, check-play-b7 B7_EXIT=0, TSC/BUILD exit 0. B11 baseline-first regression on the UNEDITED tree: m1e 6/6 PASS, m1f `[P,F,F,P,F]` then `[P,F,P,P,F]` — R2 red on the baseline itself (shared-module diff since 3057899 empty) → B11 core edit NOT started, escalated to the Lead (§9). Stopped at ~33 OLU. | NEXT = Lead ruling on the B11 baseline (options in the plan's B11 box), then B11. m1f takes ~4 min per run; run it as a background job and poll. Push and commit mechanics as in row 30; OLU query as in row 41. |
+| 47 | 2026-10-21 | A1 setup (PromptQL bot session) | T1 paused; branch a1-engine-audit cut from 256d77d; docs/A1-plan.md authored READY (26 units); AGENT_BRIEF §1 item 6 + §10 entry + §11 AUDIT MODE; tracker A1 row; ledger rows; no code changed | Next: U01 (8 GB VM). Diagnosis leads from this session: R2 detail string was never captured in session 46; R2 θ audit is tautological; R2 doc ±12%/1 px vs code ±15%/1.5 px; LIVE_SECONDS is wall time so the suite pose may depend on machine speed (M1F.md §15.4: Sun can cull at the end pose). |
