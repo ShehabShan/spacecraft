@@ -2,7 +2,7 @@
 
 - Task: **A1** · Branch: `a1-engine-audit` (cut from `t1-playable-moon` @ 256d77d)
 - Stage: **BUILDING** (plan READY 7/7; Lead execute order 2026-10-21, APPROVAL LEDGER)
-- Last updated: 2026-10-21
+- Last updated: 2026-10-22
 - **Resume at the FIRST UNCHECKED BOX** (§5). One unit = one session = one commit.
 - Binding rules for this task: AGENT_BRIEF.md §11 AUDIT MODE.
 
@@ -84,7 +84,7 @@ see that the unit fits its budget.
     - R4's heap rows got longer warm-ups.
     - R5: independently verify the claim that its spawn corridor is
       "unmeetable" (§15.3). Is the gate wrong, or the terrain, or the KCC?
-- [ ] **U04 m1e harness validity** (`Milestone1E_TestHarness.tsx` 1,570; `e2e/m1e.spec.ts`; Milestone 1E grep)
+- [x] **U04 m1e harness validity** — DONE (`docs/audit/U04-m1e-harness-validity.md`: R5 Coriolis passes on a mis-measured 0.75 cm (true ≈1.9 cm; KCC physics fine); penetration clauses vacuous; R1 misses 4° yaw snaps; R4 canary tautological + heap verdict GC-dependent) (`Milestone1E_TestHarness.tsx` 1,570; `e2e/m1e.spec.ts`; Milestone 1E grep)
 - [ ] **U05 m1d harness validity** (`Milestone1D_TestHarness.tsx` 1,182; Milestone 1D grep)
 - [ ] **U06 m1c harness validity** (`Milestone1C_TestHarness.tsx` 1,006; Milestone 1C grep)
 - [ ] **U07 m1b harness validity** (`Milestone1B_TestHarness.tsx` 1,286; Milestone 1B grep)
