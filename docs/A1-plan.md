@@ -77,7 +77,7 @@ see that the unit fits its budget.
     - The doc comment says ±12% / 1 px, but the code checks ±15% / 1.5 px.
     - `abRender` returns its last buffer after 6 retries without flagging it.
     - Can R1's single-camera counterfactual distinguish a broken layering?
-- [ ] **U03 m1f R3 + R4 + R5 validity** (harness ~1180–1300, R4/R5 blocks; `m1fStraddle.ts`; M1F.md §12–§15 as claims)
+- [x] **U03 m1f R3 + R4 + R5 validity** — DONE (`docs/audit/U03-m1f-r3r4r5-validity.md`: R3 hole/double are tautologies hiding a real 5.6 km descending handoff hole; R3(c) window saturated; R4 canary unused; R5 ≥2 rebases unreachable by the SAT_B fixture) (harness ~1180–1300, R4/R5 blocks; `m1fStraddle.ts`; M1F.md §12–§15 as claims)
   - Seeds:
     - R3's threshold went from 45 to 8 (round 6b). Is it now testing the
       fixture instead of the handoff?
