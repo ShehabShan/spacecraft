@@ -2378,7 +2378,7 @@ or reordered. A step that fails its checks is not committed as done.
         foot slide 0.0000 cm at v = 1 and < 1 cm at 2/4/8, phase error
         1e-16, max joint step 1.39°/600 Hz, write-out, Idle/crouch/soft-dip,
         Idle fallback, heap ≈ 0 over 10k `update`).
-  - [ ] **B9b — air, landing and slide poses + interrupt snap.**
+  - [x] **B9b — air, landing and slide poses + interrupt snap.**
     - Files: `ProceduralAnimator.ts` — §8.4 JumpLaunch dip → extension,
       JumpRise tuck, Fall arms-out ramped by `airTime`, Land absorb +
       recovery (`legDrop` D = clamp(0.04·landingSpeed, 0.03, 0.30)); §8.5
@@ -2387,6 +2387,32 @@ or reordered. A step that fails its checks is not committed as done.
     - Checks: V0; `test-play-anim` — §8.7 interrupt (JumpLaunch at blend 0.5
       of Walk → Run changes any joint < 5° between frames), each of the 8
       states' poses differs from rest, unit quaternions, heap ≈ 0.
+    - **B9b build notes (session 43, independent decisions):**
+      - `ProceduralAnimator.ts`: `AIR` literals (§8.4–§8.5), `launchPose`,
+        `risePose`, `fallPose`, `landDepth`, `landDrop`, `landPose`,
+        `slidePose`, `dropLegs`; `evalState(b, s, speed, u)` takes the timed
+        state's progress `u` (`progress()`: JumpLaunch t/tLaunch, Land
+        t/T_land). Land depth D is fixed at Land entry (`landD`).
+      - A timed prev state (JumpLaunch / Land) is evaluated at its END pose
+        (u = 1) while blending out — the pose it handed over from.
+      - JumpLaunch: the dip (first 40 %) is a held pose (the 0.05 s blend-in
+        eases into it); the extension smoothsteps every angle from the dip
+        values to its targets, so the seam is C⁰ (< 1° per u/1200).
+      - JumpRise: the R-leg 0.15 rad lead is split ±0.075 about hip 0.6.
+      - Land drop: quadratic ease-out 0 → D over the first 30 %, smoothstep
+        recovery to 0; chest −X 0.6·d/0.30, arm flexion 0.3·d/D.
+      - §8.6 slope terms ride on Idle / Walk / Run / Land / Slide (ground
+        states); air states have 0 by telemetry. Gait swing weight is
+        `1 − sin(πu)`: 0 mid-swing, C⁰ at both stance boundaries.
+      - Slide freezes the stride phase (`phase` not advanced in Slide).
+      - §8.7 interrupt (< 5°) is read as the TRANSITION frame: the frozen
+        `snap` is what blend 0 shows (measured 0.035°); the 0.05 s
+        JumpLaunch blend-in that follows is intended motion (up to ~32° per
+        frame — a 50 ms crossfade). Walk and Run share `gaitPose`, so an
+        Idle → Walk control row proves the check discriminates (no-snap
+        step 17.9°).
+      - `test-play-anim` PASS 115/115 (+40; the B9a Idle-fallback rows
+        retired).
   - [ ] **B9c — swap into PlayPage (ANIMATED on screen).**
     - Files: `PlayPage.tsx` (ProceduralAnimator replaces RestAnimator; HUD
       state name via `stateName`), new `tools/check-play-b9.mjs`.

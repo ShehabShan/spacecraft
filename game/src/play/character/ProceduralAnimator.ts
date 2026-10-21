@@ -1,14 +1,15 @@
-// T1 B9a procedural animator (plan §8.2–§8.3, §12.2 B9a). Evaluates the pose
-// for the state AnimStateMachine picks: Idle and the shared gait(v) Walk/Run,
-// the crouch weight and the soft-landing dip. Air / Land / Slide poses fall
-// back to Idle until B9b; PlayPage still mounts RestAnimator until B9c.
+// T1 B9 procedural animator (plan §8.2–§8.6, §12.2 B9a/B9b). Evaluates the
+// pose for the state AnimStateMachine picks: Idle and the shared gait(v)
+// Walk/Run (B9a), JumpLaunch / JumpRise / Fall / Land / Slide and the §8.6
+// slope ankle terms (B9b), the crouch weight and the soft-landing dip.
+// PlayPage still mounts RestAnimator until B9c.
 // Pose math is pure f64 (no THREE math); THREE is touched only in the
 // write-out. Boot-only allocation — `update` allocates nothing.
 import type * as THREE from 'three';
 import type { CharacterAnimator } from './CharacterAnimator';
 import type { CharacterTelemetry } from './CharacterTelemetry';
 import { buildAstronautRig, disposeAstronautRig, JOINTS, RIG_DIMS, type AstronautRig, type JointName } from './AstronautRig';
-import { AnimState, AnimStateMachine, createLegPose, legDrop, LEG, type AnimStateId, type LegPose } from './animStateMachine';
+import { ANIM_TUNING, AnimState, AnimStateMachine, createLegPose, legDrop, LEG, type AnimStateId, type LegPose } from './animStateMachine';
 
 /** Joint name → slot in PoseBuffer.q (JOINTS order). */
 export const JOINT_INDEX = Object.fromEntries(JOINTS.map((n, i) => [n, i])) as Record<JointName, number>;
@@ -54,7 +55,7 @@ export const GAIT = {
   crouchDrop: 0.12, crouchLean: 0.15,
 } as const;
 const G = GAIT;
-const TAU = 2 * Math.PI;
+const TAU = 2 * Math.PI, RAD = Math.PI / 180;
 const clamp = (x: number, a: number, b: number) => (x < a ? a : x > b ? b : x);
 const frac = (x: number) => x - Math.floor(x);
 
@@ -68,8 +69,8 @@ export function gaitBeta(v: number): number {
 
 /** One leg of the gait at side phase ps ∈ [0,1); returns the hip angle θ. */
 function gaitLeg(b: PoseBuffer, hip: number, knee: number, ankle: number,
-  ps: number, A: number, beta: number, add: LegPose): number {
-  let th: number, kn: number, an: number;
+  ps: number, A: number, beta: number, add: LegPose, sp: number, sr: number): number {
+  let th: number, kn: number, an: number, w = 1;
   if (ps < beta) {
     // WHY (§8.3): asin makes the foot's hip-relative z exactly linear in
     // time, so with β = S·f/v the stance foot is planted (zero slide flat).
@@ -83,9 +84,12 @@ function gaitLeg(b: PoseBuffer, hip: number, knee: number, ankle: number,
     // stance law extended) plus the same 0.25·sin(πu) toe-clearance term:
     // C⁰ at both stance boundaries, intent (flat foot + clearance) kept.
     an = kn - th + G.swingAnkle * su;
+    w = 1 - su;   // §8.6 stance weight: 1 in stance, fading to 0 mid-swing
   }
-  // Crouch / soft dip are additive legDrop angles (all X — they commute).
-  setX(b, hip, th + add.hip); setX(b, knee, -(kn + add.knee)); setX(b, ankle, an + add.ankle);
+  // Crouch / soft dip are additive legDrop angles (all X — they commute);
+  // the §8.6 slope pitch (X) / roll (Z) ride on the ankle, stance-weighted.
+  setX(b, hip, th + add.hip); setX(b, knee, -(kn + add.knee));
+  setZX(b, ankle, an + add.ankle + w * sp, w * sr);
   return th;
 }
 
@@ -95,12 +99,12 @@ function gaitLeg(b: PoseBuffer, hip: number, knee: number, ankle: number,
  * soft dip), `chestAdd` = additive −X chest lean. `scratch` is a boot LegPose.
  */
 export function gaitPose(b: PoseBuffer, speed: number, p: number, addD: number,
-  chestAdd: number, scratch: LegPose): void {
+  chestAdd: number, scratch: LegPose, sp = 0, sr = 0): void {
   restInto(b);
   const v = clamp(speed, 0, G.vMax), A = gaitAmp(v), beta = gaitBeta(v), k = v / G.vMax;
   legDrop(addD, scratch);
-  const thR = gaitLeg(b, J.upperLegR, J.lowerLegR, J.footR, frac(p), A, beta, scratch);
-  const thL = gaitLeg(b, J.upperLegL, J.lowerLegL, J.footL, frac(p + 0.5), A, beta, scratch);
+  const thR = gaitLeg(b, J.upperLegR, J.lowerLegR, J.footR, frac(p), A, beta, scratch, sp, sr);
+  const thL = gaitLeg(b, J.upperLegL, J.lowerLegL, J.footL, frac(p + 0.5), A, beta, scratch, sp, sr);
   const s2 = Math.sin(TAU * p);
   b.hipsY = RIG_DIMS.hipsY - G.bobBase + G.bobAmp * k * Math.abs(s2) - scratch.D;
   setX(b, J.upperArmR, -G.armCounter * thR); setX(b, J.upperArmL, -G.armCounter * thL);
@@ -110,21 +114,100 @@ export function gaitPose(b: PoseBuffer, speed: number, p: number, addD: number,
   setY(b, J.spine, G.twist * s2);
 }
 
+/** Writes a legDrop solution to both legs (+ per-side hip offsets) and the
+ *  §8.6 slope ankle pitch sp / roll sr (both feet in stance, weight 1). */
+function dropLegs(b: PoseBuffer, leg: LegPose, hipR: number, hipL: number, sp: number, sr: number): void {
+  setX(b, J.upperLegR, leg.hip + hipR); setX(b, J.lowerLegR, -leg.knee); setZX(b, J.footR, leg.ankle + sp, sr);
+  setX(b, J.upperLegL, leg.hip + hipL); setX(b, J.lowerLegL, -leg.knee); setZX(b, J.footL, leg.ankle + sp, sr);
+  b.hipsY = leg.hipsY;
+}
+
 /** §8.3 Idle: breathing chest, suit-bulk arm abduction, legDrop(0.02). */
-export function idlePose(b: PoseBuffer, time: number, addD: number, chestAdd: number, scratch: LegPose): void {
+export function idlePose(b: PoseBuffer, time: number, addD: number, chestAdd: number, scratch: LegPose,
+  sp = 0, sr = 0): void {
   restInto(b);
-  legDrop(G.idleDrop + addD, scratch);
-  const q = scratch.q;
-  for (let i = 0; i < IDLE_LEGS.length; i += 3) {   // index loop: no iterator alloc
-    copy4(b.q, IDLE_LEGS[i] * 4, q, 0); copy4(b.q, IDLE_LEGS[i + 1] * 4, q, 4); copy4(b.q, IDLE_LEGS[i + 2] * 4, q, 8);
-  }
-  b.hipsY = scratch.hipsY;
+  dropLegs(b, legDrop(G.idleDrop + addD, scratch), 0, 0, sp, sr);
   setX(b, J.chest, -G.idleBreath * Math.sin(TAU * G.idleBreathHz * time) - chestAdd);
   setZX(b, J.upperArmR, 0, G.idleAbd); setZX(b, J.upperArmL, 0, -G.idleAbd);
 }
-const IDLE_LEGS: readonly number[] = [J.upperLegL, J.lowerLegL, J.footL, J.upperLegR, J.lowerLegR, J.footR];
-function copy4(d: Float32Array, o: number, s: ArrayLike<number>, u: number): void {
-  d[o] = s[u]; d[o + 1] = s[u + 1]; d[o + 2] = s[u + 2]; d[o + 3] = s[u + 3];
+
+/** §8.4–§8.5 pose literals (rad, m, s). */
+export const AIR = {
+  launchDipU: 0.4, launchDipD: 0.10, launchDipChest: 0.20, launchDipArm: -0.5,
+  launchAnkle: -0.35, launchArm: 1.2,
+  riseHip: 0.6, riseLead: 0.15, riseKnee: 1.0, riseAnkle: 0.2, riseArm: 0.6, riseAbd: 0.25,
+  fallT0: 0.15, fallRamp: 0.5, fallAbd: 1.1, fallElbow: 0.3, fallHip: 0.2, fallKnee: 0.35,
+  fallFlail: 0.08, fallFlailHz: 0.6,
+  landPerSpeed: 0.04, landMin: 0.03, landMax: 0.30, landPeakU: 0.3, landChest: 0.6, landArm: 0.3,
+  slideD: 0.15, slideLead: 0.35, slideTrail: -0.20, slideAbd: 0.7, slideChest: 0.10,
+  slopeMax: 20 * Math.PI / 180,
+} as const;
+const P = AIR;
+const smooth = (x: number) => { const c = clamp(x, 0, 1); return c * c * (3 - 2 * c); };
+/** §8.4 Land drop depth from the landing speed. */
+export const landDepth = (landingSpeed: number) => clamp(P.landPerSpeed * landingSpeed, P.landMin, P.landMax);
+
+/** §8.4 JumpLaunch at progress u = timeInState / tLaunch ∈ [0,1]. */
+export function launchPose(b: PoseBuffer, u: number, scratch: LegPose): void {
+  restInto(b);
+  const leg = legDrop(P.launchDipD, scratch);
+  // WHY (B9b decision): the dip (first 40 %) is a held pose — the 0.05 s
+  // blend-in eases into it; the extension then smoothsteps every angle from
+  // the dip values to its targets, so the dip → extension seam is C⁰.
+  const k = u <= P.launchDipU ? 0 : smooth((u - P.launchDipU) / (1 - P.launchDipU)), r = 1 - k;
+  const hip = leg.hip * r, knee = leg.knee * r, ankle = leg.ankle * r + P.launchAnkle * k;
+  setX(b, J.upperLegR, hip); setX(b, J.lowerLegR, -knee); setX(b, J.footR, ankle);
+  setX(b, J.upperLegL, hip); setX(b, J.lowerLegL, -knee); setX(b, J.footL, ankle);
+  b.hipsY = leg.hipsY + (RIG_DIMS.hipsY - leg.hipsY) * k;
+  setX(b, J.chest, -P.launchDipChest * r);
+  const arm = P.launchDipArm + (P.launchArm - P.launchDipArm) * k;
+  setX(b, J.upperArmR, arm); setX(b, J.upperArmL, arm);
+}
+
+/** §8.4 JumpRise tuck (R leg leads by 0.15 rad, split ±0.075 about 0.6). */
+export function risePose(b: PoseBuffer): void {
+  restInto(b);
+  const h = P.riseLead * 0.5;
+  setX(b, J.upperLegR, P.riseHip + h); setX(b, J.upperLegL, P.riseHip - h);
+  setX(b, J.lowerLegR, -P.riseKnee); setX(b, J.lowerLegL, -P.riseKnee);
+  setX(b, J.footR, P.riseAnkle); setX(b, J.footL, P.riseAnkle);
+  setZX(b, J.upperArmR, P.riseArm, P.riseAbd); setZX(b, J.upperArmL, P.riseArm, -P.riseAbd);
+}
+
+/** §8.4 Fall: arms out + legs reaching, weighted by clamp((airTime − 0.15)/0.5). */
+export function fallPose(b: PoseBuffer, airTime: number, time: number): void {
+  restInto(b);
+  const w = clamp((airTime - P.fallT0) / P.fallRamp, 0, 1);
+  setZX(b, J.upperArmR, 0, P.fallAbd * w); setZX(b, J.upperArmL, 0, -P.fallAbd * w);
+  setX(b, J.lowerArmR, P.fallElbow * w); setX(b, J.lowerArmL, P.fallElbow * w);
+  setX(b, J.upperLegR, P.fallHip * w); setX(b, J.upperLegL, P.fallHip * w);
+  setX(b, J.lowerLegR, -P.fallKnee * w); setX(b, J.lowerLegL, -P.fallKnee * w);
+  setZX(b, J.chest, 0, P.fallFlail * w * Math.sin(TAU * P.fallFlailHz * time));
+}
+
+/** §8.4 Land at progress u = timeInState / T_land: ease out to D over the
+ *  first 30 %, then smoothstep recovery to 0. Returns the current drop d. */
+export function landDrop(u: number, D: number): number {
+  if (u < P.landPeakU) { const x = u / P.landPeakU; return D * (1 - (1 - x) * (1 - x)); }
+  return D * (1 - smooth((u - P.landPeakU) / (1 - P.landPeakU)));
+}
+export function landPose(b: PoseBuffer, u: number, D: number, addD: number, chestAdd: number,
+  scratch: LegPose, sp: number, sr: number): void {
+  restInto(b);
+  const d = landDrop(u, D);
+  dropLegs(b, legDrop(d + addD, scratch), 0, 0, sp, sr);
+  const ratio = D > 0 ? d / D : 0;
+  setX(b, J.chest, -P.landChest * d / P.landMax - chestAdd);
+  setX(b, J.upperArmR, P.landArm * ratio); setX(b, J.upperArmL, P.landArm * ratio);
+}
+
+/** §8.5 Slide: frozen stride, legDrop(0.15), R leads / L trails, arms out, lean back. */
+export function slidePose(b: PoseBuffer, addD: number, chestAdd: number, scratch: LegPose,
+  sp: number, sr: number): void {
+  restInto(b);
+  dropLegs(b, legDrop(P.slideD + addD, scratch), P.slideLead, P.slideTrail, sp, sr);
+  setZX(b, J.upperArmR, 0, P.slideAbd); setZX(b, J.upperArmL, 0, -P.slideAbd);
+  setX(b, J.chest, P.slideChest - chestAdd);
 }
 
 /** Per-joint shortest-path slerp a→b by t into out (f64 math, normalized). */
@@ -160,6 +243,13 @@ export class ProceduralAnimator implements CharacterAnimator {
   time = 0;
   /** True while `prev` is the frozen `snap` (a mid-blend interrupt). */
   prevIsSnap = false;
+  /** Pose inputs refreshed from telemetry each update (public for tests). */
+  airTime = 0;
+  /** §8.4 Land depth D, fixed at Land entry from landingSpeed. */
+  landD: number = P.landMin;
+  /** §8.6 slope ankle pitch / roll (rad, clamped ±20°). */
+  slopeP = 0;
+  slopeR = 0;
   private readonly leg = createLegPose();
   private readonly objs: THREE.Object3D[];
 
@@ -179,24 +269,46 @@ export class ProceduralAnimator implements CharacterAnimator {
       // so a transition fired mid-blend restarts from what is on screen.
       this.prevIsSnap = sm.interrupted;
       if (sm.interrupted) copyPose(this.snap, this.out);
+      if (sm.state === AnimState.Land) this.landD = landDepth(t.landingSpeed);
     }
     this.time += dt;
-    this.phase = frac(this.phase + dt * gaitFreq(clamp(t.speed, 0, G.vMax)));
-    this.evalState(this.cur, sm.state, t.speed);
+    this.airTime = t.airTime;
+    this.slopeP = clamp(t.slopeFwdDeg * RAD, -P.slopeMax, P.slopeMax);
+    // §8.6: the roll follows the terrain (Rz −slopeSide), not mirrored by side.
+    this.slopeR = clamp(-t.slopeSideDeg * RAD, -P.slopeMax, P.slopeMax);
+    // §8.5: the stride phase is frozen while sliding.
+    if (sm.state !== AnimState.Slide) this.phase = frac(this.phase + dt * gaitFreq(clamp(t.speed, 0, G.vMax)));
+    this.evalState(this.cur, sm.state, t.speed, this.progress(sm.state, sm.timeInState));
     if (sm.blend >= 1) copyPose(this.out, this.cur);
     else {
-      const a = this.prevIsSnap ? this.snap : this.evalState(this.prev, sm.prev, t.speed);
+      // WHY (B9b decision): a timed prev state (JumpLaunch / Land) is
+      // evaluated at its end (u = 1) — the pose it handed over from.
+      const a = this.prevIsSnap ? this.snap : this.evalState(this.prev, sm.prev, t.speed, 1);
       blendPose(this.out, a, this.cur, sm.blend);
     }
     this.writeOut();
   }
 
-  /** PoseFn dispatch. B9a: Idle / Walk / Run; every other state → Idle (B9b). */
-  evalState(b: PoseBuffer, s: AnimStateId, speed: number): PoseBuffer {
-    const sm = this.sm;
+  /** Progress u ∈ [0,1] of the timed states (JumpLaunch, Land); 0 otherwise. */
+  progress(s: AnimStateId, timeInState: number): number {
+    if (s === AnimState.JumpLaunch) return Math.min(1, timeInState / ANIM_TUNING.tLaunch);
+    if (s === AnimState.Land) { const d = this.sm.landDuration; return d > 0 ? Math.min(1, timeInState / d) : 1; }
+    return 0;
+  }
+
+  /** PoseFn dispatch (§8.3–§8.6). `u` = timed-state progress (see `progress`). */
+  evalState(b: PoseBuffer, s: AnimStateId, speed: number, u: number): PoseBuffer {
+    const sm = this.sm, sp = this.slopeP, sr = this.slopeR;
     const addD = G.crouchDrop * sm.crouchW + sm.softDipD, chestAdd = G.crouchLean * sm.crouchW;
-    if (s === AnimState.Walk || s === AnimState.Run) gaitPose(b, speed, this.phase, addD, chestAdd, this.leg);
-    else idlePose(b, this.time, addD, chestAdd, this.leg);
+    switch (s) {
+      case AnimState.Walk: case AnimState.Run: gaitPose(b, speed, this.phase, addD, chestAdd, this.leg, sp, sr); break;
+      case AnimState.JumpLaunch: launchPose(b, u, this.leg); break;
+      case AnimState.JumpRise: risePose(b); break;
+      case AnimState.Fall: fallPose(b, this.airTime, this.time); break;
+      case AnimState.Land: landPose(b, u, this.landD, addD, chestAdd, this.leg, sp, sr); break;
+      case AnimState.Slide: slidePose(b, addD, chestAdd, this.leg, sp, sr); break;
+      default: idlePose(b, this.time, addD, chestAdd, this.leg, sp, sr);
+    }
     return b;
   }
 

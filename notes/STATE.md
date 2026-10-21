@@ -1,20 +1,18 @@
 # SOLARIS — STATE — PHASE 2: TASK DEVELOPMENT (contract: AGENT_BRIEF.md; phase-1 history preserved below)
 
 ## NEXT ACTION
-**T1 BUILDING — next build step B9b — air, landing and slide poses + interrupt snap**
-(`docs/T1-plan.md` §12.2 B9b; B9a done in session 42 — read its build notes):
-extend `src/play/character/ProceduralAnimator.ts` `evalState` with §8.4
-JumpLaunch dip → extension, JumpRise tuck, Fall arms-out ramped by `airTime`,
-Land absorb + recovery (`legDrop` D = clamp(0.04·landingSpeed, 0.03, 0.30)),
-§8.5 Slide, §8.6 slope ankle terms (telemetry `slopeFwdDeg/slopeSideDeg`).
-`snap`/`prevIsSnap` interrupt handling already exists. Extend
-`tools/test-play-anim.mjs` (now 75/75) with the §8.7 interrupt row
-(JumpLaunch at blend 0.5 of Walk → Run, any joint < 5° between frames),
-each of the 8 states' poses ≠ rest, unit quaternions, heap ≈ 0. Poses: plan
-§8.4–§8.6 (≈ lines 1285–1335). Still NOT swapped into PlayPage (that is B9c).
-Run Node tests with `node --expose-gc` (anim 75/75, rig 97/97, world 27/27,
-frame 23/23, shell 101/101, lod 40/40, spawn 70/70, controller 57/57).
-B9b needs no browser check.
+**T1 BUILDING — next build step B9c — swap ProceduralAnimator into PlayPage**
+(`docs/T1-plan.md` §12.2 B9c; B9a/B9b done — read their build notes): in
+`src/play/PlayPage.tsx` (and `createMoonWorld` if it builds the animator)
+replace RestAnimator with ProceduralAnimator (same CharacterAnimator
+interface, same rig); show `animator.stateName` in the HUD/probe; new
+`tools/check-play-b9.mjs` (Playwright, b7 pattern: W → Walk/Run state
+observed, Space → JumpLaunch/JumpRise/Fall/Land, 0 errors) + check-play-b7
+regression; then check the B9 parent box. All poses are headless-verified
+(`test-play-anim` 115/115). K13: `PlayerController.ts` must not import
+ProceduralAnimator (grep 0). Run Node tests with `node --expose-gc` (anim
+115/115, rig 97/97, world 27/27, frame 23/23, shell 101/101, lod 40/40,
+spawn 70/70, controller 57/57). Manual matrix MT14 stays for the Lead.
 
 The Lead's execute order is in the APPROVAL LEDGER (2026-10-20); Q1–Q8
 rulings apply. Each build commit carries its step box, the tracker row, this
@@ -237,3 +235,4 @@ the active tracker is notes/task.md; NEXT ACTION = "T1 plan".
 | 40 | 2026-10-21 | T1 build: B7c (budget 50 OLU, wrap-up ~40) | Fresh session (VM v2, clone + `npm ci` CI_EXIT=0); §5 reconciliation clean — HEAD 058b437 = origin, tree clean; execute order already in the APPROVAL LEDGER (not re-recorded). B7c DONE (this commit) → B7 DONE, FIRST PLAYABLE: playFrame stages 3 (preStep, PLAYING-only), 4+5 (ctrl.simulate per tick + core.advance), 7 (sampleTelemetry), 8 (lagged poseInto), respawn via ctrl.reset + cam.reset, FP hides the rig; `?probe=1` read-only probe in PlayPage; test-play-frame PASS 23/23 (W 2 s → 5.959 m, Space airborne + lands, 120 PAUSED frames bit-identical, resume 0 substeps, respawn dt = 0, shell-path heap non-growing); new check-play-b7 PASS (W moves, Space airborne, P freezes, 0 errors); b5/b6 PASS; all play tests green; TSC/BUILD exit 0; K10 grep 0 hits. Decisions in the plan's B7c build notes. | NEXT = B8 (STATE.md NEXT ACTION). Headless SwiftShader renderer RSS grows ~100–200 MB/s while PLAYING (pre-existing at B7b HEAD; JS heap flat) — keep browser checks short at 640×360 and run them one at a time. Manual feel checks still owed by the Lead. Push and commit mechanics as in row 30. |
 | 41 | 2026-10-21 | T1 build: B8 (budget 50 OLU, wrap-up ~40) | Fresh session (VM v2, clone + `npm ci` CI_EXIT=0); §5 reconciliation clean — HEAD 90a3c8f = origin, tree clean, tracker last-commit 058b437 = the commit before the newest (convention), no drift; execute order already in the APPROVAL LEDGER (not re-recorded). B8 DONE (6cc7fdd, pushed + ls-remote verified); then B9 split into B9a–B9c (this commit, plan-only); stopped before B9a code at ~30 OLU because B9a (a full pose module + foot-slide tests) would not fit under the ~40 wrap-up. B8: `character/animStateMachine.ts` (§8.2 table, hysteresis, dwell, coyote, slide-off, soft dip, crouch weight, T_land, interrupt flag; `legDrop` §8.1) + `tools/test-play-anim.mjs` PASS 48/48; rig/controller/frame PASS; TSC/BUILD/CANON exit 0; no core/render edit. Decisions in the plan's B8 build notes. | NEXT = B9a (STATE.md NEXT ACTION). OLU: query `olu_usage_aggregate { aggregate { sum { olus } } }` (the field is `olus`, not `olu`). `git ls-remote` through the proxy can hang — wrap it in `timeout 60`. Push and commit mechanics as in row 30. |
 | 42 | 2026-10-21 | T1 build: B9a (budget 50 OLU, wrap-up ~40) | Fresh session (VM v2, clone + `npm ci` CI_EXIT=0); §5 reconciliation clean — HEAD a44eee6 = origin, tree clean, tracker last-commit 6cc7fdd = the commit before the newest (convention), no drift; execute order already in the APPROVAL LEDGER (not re-recorded). B9a DONE (this commit): `character/ProceduralAnimator.ts` (PoseBuffer, prev/cur/snap/out, per-joint slerp crossfade, Idle + shared gait(v) Walk/Run, crouch weight, soft dip; air/land/slide → Idle until B9b; not in PlayPage yet); test-play-anim PASS 75/75 (foot slide 0.0000 cm at v=1, < 1 cm at 2/4/8; max joint step 1.39°/600 Hz; heap ≈ 0); rig/world/frame/shell/lod/spawn PASS; controller 57/57 on re-run (camera-heap row flaky, pre-existing at a44eee6); TSC/BUILD exit 0. Decisions (swing-ankle C⁰ fix, β clamp, 600 Hz pop row) in the plan's B9a build notes. Stopped after B9a at ~33 OLU: B9b (five poses + interrupt row) would not fit under the ~40 wrap-up. | NEXT = B9b (STATE.md NEXT ACTION). Bootstrap cheaply: `sed -n 1,30p notes/STATE.md` + `tail -3`, then the plan's B9a/B9b block (`grep -n B9a docs/T1-plan.md`). Push and commit mechanics as in row 30; OLU query as in row 41. |
+| 43 | 2026-10-21 | T1 build: B9b (budget 50 OLU, wrap-up ~40) | Fresh session (VM v2, clone + `npm ci` CI_EXIT=0); §5 reconciliation clean — HEAD 83dbc39 = origin, tree clean, tracker last-commit a44eee6 = the commit before the newest (convention), no drift; execute order already in the APPROVAL LEDGER (not re-recorded). B9b DONE (this commit): JumpLaunch/JumpRise/Fall/Land/Slide poses + §8.6 slope ankle terms + timed-state progress in `ProceduralAnimator.ts`; test-play-anim PASS 115/115 (interrupt frame 0.035°, control no-snap 17.9°); rig/world/frame/shell/lod/spawn PASS; controller 57/57 on re-run (camera-heap row flaky, pre-existing); TSC/BUILD exit 0. Decisions in the plan's B9b build notes. Stopped after B9b (~30 OLU): B9c needs browser checks and is started fresh next session. | NEXT = B9c (STATE.md NEXT ACTION). Browser checks: press P before PLAYING-phase screenshots under SwiftShader; keep runs short at 640×360 (row 40). Push and commit mechanics as in row 30; OLU query as in row 41. |

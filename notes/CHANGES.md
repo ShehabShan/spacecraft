@@ -1343,3 +1343,17 @@ Observations (NO change made — recorded for the Lead):
     lod 40, spawn 70 PASS; controller 57/57 on re-run (camera-heap row flaky,
     also fails on a44eee6); TSC/BUILD exit 0. No core/render edit.
     · Source: Lead execute order.
+92. 2026-10-21 · T1/B9b · game/src/play/character/ProceduralAnimator.ts,
+    game/tools/test-play-anim.mjs (rows 17b–17d)
+    · Air, landing and slide poses: JumpLaunch dip → extension, JumpRise tuck,
+    Fall arms-out ramped by airTime, Land absorb + recovery (D =
+    clamp(0.04·landingSpeed, 0.03, 0.30)), Slide (frozen stride), §8.6 slope
+    ankle pitch/roll (±20°, stance-weighted); timed-state progress u; Land D
+    fixed at entry. PlayPage unchanged (B9c).
+    · Why: plan step B9b. Decisions in the plan's B9b build notes (end-pose
+    blend-out of timed states, C⁰ launch seam, interrupt row = transition
+    frame with an Idle→Walk control).
+    · Evidence: test-play-anim PASS 115/115; rig 97, world 27, frame 23,
+    shell 101, lod 40, spawn 70 PASS; controller 57/57 on re-run; TSC/BUILD
+    exit 0. No core/render edit.
+    · Source: Lead execute order.

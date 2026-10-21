@@ -1,8 +1,8 @@
 // T1 B8 Node check (plan §12.2 B8, §8.7): the animation state machine in
 // isolation — scripted telemetry sequences, hysteresis, dwell/coyote/slide/
 // soft-landing/interrupt rules, the §8.1 legDrop solver table to 0.1°,
-// quaternion integrity and zero-GC stepping. B9 extends it (foot slide,
-// per-frame interrupt angle). Run: `node --expose-gc tools/test-play-anim.mjs`.
+// quaternion integrity and zero-GC stepping. B9a/B9b extend it (poses, foot
+// slide, slope ankles, per-frame interrupt angle). Run: `node --expose-gc tools/test-play-anim.mjs`.
 // WHY: esbuild bundle (test-play-rig pattern) so RIG_DIMS can be compared.
 import { build } from 'esbuild'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -272,9 +272,93 @@ const unitErr = (q) => { let m = 0; for (let o = 0; o < q.length; o += 4) m = Ma
   ok(an.sm.state === S.Idle && an.out.hipsY < 0.90 - 0.02, `soft dip lowers hips (hipsY ${an.out.hipsY.toFixed(4)})`)
   for (let i = 0; i < 12; i++) an.update(t, DT)
   ok(Math.abs(an.out.hipsY - 0.90) < 1e-6, 'soft dip decays in 0.10 s')
-  const b1 = PA.createPoseBuffer(), b2 = PA.createPoseBuffer()
-  for (const s of [S.JumpLaunch, S.JumpRise, S.Fall, S.Land, S.Slide]) { an.evalState(b1, s, 0); an.evalState(b2, S.Idle, 0)
-    ok(maxAngle(b1.q, b2.q) === 0, `state ${N[s]} not the Idle fallback (B9a)`) } }
+}
+
+// ---- 17b. B9b: every §8.2 state has its own pose (≠ rest, ≠ Idle), unit quats
+{ const an = new PA.ProceduralAnimator(), rest = PA.createPoseBuffer(), idle = PA.createPoseBuffer(), b = PA.createPoseBuffer()
+  an.time = 0.7; an.airTime = 1.0; an.landD = PA.landDepth(4.2); an.phase = 0.1
+  an.evalState(idle, S.Idle, 0, 0)
+  const cases = [[S.Idle, 0, 0], [S.Walk, 2, 0], [S.Run, 6, 0], [S.JumpLaunch, 0, 0.2], [S.JumpRise, 0, 0],
+    [S.Fall, 0, 0], [S.Land, 0, 0.3], [S.Slide, 0, 0]]
+  for (const [st, v, u] of cases) { an.evalState(b, st, v, u)
+    ok(maxAngle(b.q, rest.q) * DEG > 2, `${N[st]} pose ≈ rest (${(maxAngle(b.q, rest.q) * DEG).toFixed(2)}°)`)
+    if (st !== S.Idle) ok(maxAngle(b.q, idle.q) * DEG > 2, `${N[st]} pose ≈ Idle`)
+    ok(unitErr(b.q) < 1e-6, `${N[st]} pose unit error`) }
+  // §8.4 JumpLaunch: dip held for 40 %, then extension; C⁰ across the seam.
+  const ang = (bb, j) => 2 * Math.atan2(q4(bb, j)[0], q4(bb, j)[3])
+  PA.launchPose(b, 0.2, createLegPose())
+  ok(Math.abs(b.hipsY - 0.82) < 1e-9 && Math.abs(ang(b, 'upperArmR') + 0.5) < 1e-6 && Math.abs(ang(b, 'chest') + 0.20) < 1e-6,
+    `launch dip hipsY ${b.hipsY.toFixed(4)} arm ${ang(b, 'upperArmR').toFixed(3)}`)
+  PA.launchPose(b, 1, createLegPose())
+  ok(Math.abs(b.hipsY - 0.92) < 1e-9 && Math.abs(ang(b, 'footR') + 0.35) < 1e-6 && Math.abs(ang(b, 'upperArmR') - 1.2) < 1e-6
+    && Math.abs(ang(b, 'upperLegR')) < 1e-9, 'launch extension: legs rest, ankles −0.35, arms +1.2')
+  { const a = PA.createPoseBuffer(), c = PA.createPoseBuffer(); let w = 0; PA.launchPose(a, 0, createLegPose())
+    for (let i = 1; i <= 1200; i++) { PA.launchPose(c, i / 1200, createLegPose()); w = Math.max(w, maxAngle(a.q, c.q)); a.q.set(c.q) }
+    ok(w * DEG < 1, `launch pose step ${(w * DEG).toFixed(3)}° per u/1200 (seam pop)`) }
+  // §8.4 JumpRise: R leads by 0.15 rad.
+  PA.risePose(b)
+  ok(Math.abs(ang(b, 'upperLegR') - ang(b, 'upperLegL') - 0.15) < 1e-6 && Math.abs(ang(b, 'lowerLegR') + 1.0) < 1e-6, 'rise tuck: R leads 0.15, knee −1.0')
+  // §8.4 Fall weight: 0 at airTime 0.15, full at 0.65.
+  PA.fallPose(b, 0.15, 0.3); ok(maxAngle(b.q, rest.q) < 1e-9, 'fall weight 0 at airTime 0.15')
+  PA.fallPose(b, 0.65, 0); ok(Math.abs(2 * Math.asin(q4(b, 'upperArmR')[2]) - 1.1) < 1e-6 && Math.abs(q4(b, 'upperArmL')[2] + q4(b, 'upperArmR')[2]) < 1e-9, 'fall arms out R +Z / L −Z 1.1')
+  // §8.4 Land: D from landing speed, peak at 30 %, recovered at 100 %, continuous.
+  ok(Math.abs(PA.landDepth(4.2) - 0.168) < 1e-9 && PA.landDepth(0) === 0.03 && PA.landDepth(20) === 0.30, 'landDepth clamp(0.04·v, 0.03, 0.30)')
+  ok(Math.abs(PA.landDrop(0.3, 0.17) - 0.17) < 1e-12 && PA.landDrop(0, 0.17) === 0 && Math.abs(PA.landDrop(1, 0.17)) < 1e-12, 'land drop 0 → D at 30 % → 0')
+  { let w = 0; for (let i = 1; i <= 1000; i++) w = Math.max(w, Math.abs(PA.landDrop(i / 1000, 0.3) - PA.landDrop((i - 1) / 1000, 0.3)))
+    ok(w < 0.003, `land drop step ${w.toFixed(5)} m per u/1000`) }
+  PA.landPose(b, 0.3, 0.17, 0, 0, createLegPose(), 0, 0)
+  ok(Math.abs(b.hipsY - (0.92 - 0.17)) < 1e-9 && Math.abs(ang(b, 'chest') + 0.6 * 0.17 / 0.30) < 1e-6, `land peak hipsY ${b.hipsY.toFixed(4)}`)
+  // §8.5 Slide: legDrop(0.15), R +0.35 / L −0.20 about the drop hip, phase frozen.
+  const leg = legDrop(0.15, createLegPose()); PA.slidePose(b, 0, 0, createLegPose(), 0, 0)
+  ok(Math.abs(ang(b, 'upperLegR') - (leg.hip + 0.35)) < 1e-6 && Math.abs(ang(b, 'upperLegL') - (leg.hip - 0.20)) < 1e-6
+    && Math.abs(b.hipsY - (0.92 - 0.15)) < 1e-9 && Math.abs(ang(b, 'chest') - 0.10) < 1e-6, 'slide pose')
+  { const a2 = new PA.ProceduralAnimator(), t = tel(); t.sliding = true; for (let i = 0; i < 30; i++) a2.update(t, DT)
+    const p0 = a2.phase; t.speed = 4; for (let i = 0; i < 30; i++) a2.update(t, DT)
+    ok(a2.sm.state === S.Slide && a2.phase === p0, `stride phase frozen in Slide (${a2.stateName})`) } }
+
+// ---- 17c. §8.6 slope ankle terms: stance-weighted, clamped ±20°, roll not mirrored
+{ const lg = createLegPose(), a = PA.createPoseBuffer(), c = PA.createPoseBuffer()
+  PA.idlePose(a, 0, 0, 0, lg, 0, 0); PA.idlePose(c, 0, 0, 0, lg, 0.1, 0)
+  ok(Math.abs(2 * Math.atan2(q4(c, 'footR')[0], q4(c, 'footR')[3]) - 2 * Math.atan2(q4(a, 'footR')[0], q4(a, 'footR')[3]) - 0.1) < 1e-6, 'idle stance ankle pitch +sp')
+  PA.idlePose(c, 0, 0, 0, lg, 0, 0.1)
+  ok(Math.abs(q4(c, 'footR')[2] - q4(c, 'footL')[2]) < 1e-12 && q4(c, 'footR')[2] > 0, 'slope roll same sign both feet (not mirrored)')
+  const v = 4, beta = PA.gaitBeta(v), pStance = 0.3 * beta, pSwing = beta + 0.5 * (1 - beta)
+  // WHY: f32 quaternions → 2·acos(c) near c = 1 has a ~7e-4 rad noise floor.
+  const footD = (p) => { PA.gaitPose(a, v, p, 0, 0, lg, 0, 0); PA.gaitPose(c, v, p, 0, 0, lg, 0.2, 0)
+    const o = PA.JOINT_INDEX.footR * 4; return maxAngle(a.q.subarray(o, o + 4), c.q.subarray(o, o + 4)) }
+  ok(Math.abs(footD(pStance) - 0.2) < 1e-5, `gait stance ankle gets full slope pitch (${footD(pStance).toFixed(4)})`)
+  ok(footD(pSwing) < 2e-3, `gait mid-swing ankle slope weight 0 (${footD(pSwing).toExponential(1)})`)
+  const an = new PA.ProceduralAnimator(), t = tel(); t.slopeFwdDeg = 30; t.slopeSideDeg = -35; an.update(t, DT)
+  ok(Math.abs(an.slopeP - 20 / DEG) < 1e-12 && Math.abs(an.slopeR - 20 / DEG) < 1e-12, 'slope terms clamped ±20°, roll = −slopeSide') }
+
+// ---- 17d. §8.7 interrupt: JumpLaunch fired at blend 0.5 of a Walk → Run blend
+// WHY (B9b): the < 5° bound applies to the transition frame — the frozen snap
+// is what blend 0 shows; the following frames are the 0.05 s blend-in (§8.2).
+// Walk and Run share gaitPose, so an Idle → Walk run also proves the row
+// discriminates (without the snap the frame would jump > 5°).
+function interruptRun(from, to, vFrom, vTo) {
+  const an = new PA.ProceduralAnimator(), t = tel(); t.inputMag = 1; t.speed = vFrom
+  for (let i = 0; i < 120; i++) an.update(t, DT)
+  const s0 = an.sm.state; t.speed = vTo
+  let guard = 0; do { an.update(t, DT); guard++ } while (!(an.sm.state === to && an.sm.blend >= 0.45) && guard < 200)
+  const blendAt = an.sm.blend, before = new Float32Array(an.out.q)
+  // naive (no snap): what blend 0 would show if prev were the old state's pose
+  const naive = PA.createPoseBuffer(); an.evalState(naive, an.sm.state, t.speed, 1)
+  t.jumped = true; t.grounded = false; t.vertSpeed = 4.2; an.update(t, DT); t.jumped = false
+  const step = maxAngle(before, an.out.q), naiveStep = maxAngle(before, naive.q)
+  const interrupted = an.sm.prev === to && an.prevIsSnap
+  let follow = 0; let q = new Float32Array(an.out.q)
+  for (let i = 0; i < 12; i++) { t.airTime += DT; an.update(t, DT); follow = Math.max(follow, maxAngle(q, an.out.q)); q.set(an.out.q) }
+  return { s0, interrupted, blendAt, step, naiveStep, follow, unit: unitErr(an.out.q) }
+}
+{ const r = interruptRun(S.Walk, S.Run, 4, 6)
+  ok(r.s0 === S.Walk && r.interrupted && r.blendAt >= 0.45 && r.blendAt < 0.8, `Walk→Run interrupt setup (s0 ${N[r.s0]}, blend ${r.blendAt.toFixed(2)}, snap ${r.interrupted})`)
+  ok(r.step * DEG < 5, `Walk→Run interrupt frame joint change ${(r.step * DEG).toFixed(2)}° ≥ 5°`)
+  ok(r.unit < 1e-6, 'unit quaternions after interrupt')
+  const i2 = interruptRun(S.Idle, S.Walk, 0, 2)
+  ok(i2.s0 === S.Idle && i2.interrupted && i2.step * DEG < 5, `Idle→Walk interrupt frame ${(i2.step * DEG).toFixed(2)}° (snap ${i2.interrupted})`)
+  ok(i2.naiveStep * DEG > 5, `row not discriminating: no-snap step ${(i2.naiveStep * DEG).toFixed(2)}°`)
+  console.log(`  interrupt: Walk→Run ${(r.step * DEG).toFixed(3)}°, Idle→Walk ${(i2.step * DEG).toFixed(3)}° (no-snap ${(i2.naiveStep * DEG).toFixed(1)}°); blend-in max ${(Math.max(r.follow, i2.follow) * DEG).toFixed(1)}°/frame`) }
 
 // ---- 18. zero-GC: 10,000 ProceduralAnimator.update calls across every state
 { const an = new PA.ProceduralAnimator(), t = tel()
