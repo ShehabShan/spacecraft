@@ -9,10 +9,16 @@ and commit+push after every completed step — so that ANY fresh session (a diff
 AI model, no shared memory) can continue exactly where you left off, from the repo
 alone.
 
+**ACTIVE TASK (2026-10-21): A1 ENGINE AUDIT — READ-ONLY.** While A1 is active you
+are an AUDITOR, not a builder. The specs, the code and the tests are suspects to
+check, not truths to defend. §11 AUDIT MODE overrides "the code is the source of
+truth" above, and overrides §2, §3 and §8 where they conflict. T1 is PAUSED at B11.
+Every session obeys §12 SESSION BUDGET.
+
 ## 1. READING ORDER (a fresh session reads exactly this, in order)
 1. This brief (all of it — it is short).
 2. `notes/task.md` — task tracker + task definitions; find the ACTIVE task.
-3. The active task's plan `docs/<Tn>-plan.md` — the FIRST UNCHECKED BOX is your
+3. The active task's plan `docs/<task>-plan.md` (now `docs/A1-plan.md`) — the FIRST UNCHECKED BOX is your
    starting point: a planning-checklist item while the plan is being authored,
    a build step once building has started (no plan file yet = the task is at
    its PLAN stage, first commit).
@@ -26,7 +32,7 @@ alone.
 - `notes/task.md` + `docs/<Tn>-plan.md` + `notes/STATE.md` — the task system (§4).
 - `notes/CHANGES.md` — change log. APPEND an entry for every code change you make
   (format: date · task · file · what · why · evidence · source).
-- DO NOT READ (kept in the repo for history/audit only — reading them wastes
+- DO NOT READ (lifted during A1 — see §11; kept in the repo for history/audit only — reading them wastes
   context and invites overturning settled decisions):
   - `Milestone/*.txt` — the seven assembly deliverables. Their content is already
     IN the code; where they differ from the code, the code is right.
@@ -144,6 +150,9 @@ essays.
 Any impulse to change a ratified constant/formula/threshold · any new library ·
 a milestone regression page you cannot fix · suspected lost work · any doubt
 about whether a change is allowed — STOP, write the options, ask the Lead.
+During A1, also: any edit outside `docs/audit/**`, `game/tools/audit/**` and the
+process files (`notes/task.md`, `notes/STATE.md`, `docs/A1-plan.md`).
+The Lead is the repo owner.
 
 ## 10. AMENDMENT LOG
 - 2026-10-19 Phase-2 transition (Lead order): brief rewritten for game feature
@@ -185,4 +194,13 @@ the existing code cannot audit it.
 - RATIFIED items (§3) and parked 1F (§8) MAY be audited and flagged; changing them
   still needs a Lead ruling in a later fix task.
 - Method, finding template, severity scale and budget rule: `docs/A1-plan.md` §6.
+
+## 12. SESSION BUDGET (binds every task; Lead, 2026-10-21)
+- One session = 50 OLU. Every committable unit (plan item, build step, audit
+  unit) must finish, verify, commit and push inside one session.
+- Do ONE unit per session. Start the wrap-up at about 40 OLU.
+- If a unit will not fit, commit what is done as `<id>a`, add an unchecked `<id>b`
+  box directly below it with the remaining scope, and repoint NEXT ACTION to it.
+  Never end a session with uncommitted work.
+- Quality over quantity: fewer, verified results beat many shallow ones.
 
