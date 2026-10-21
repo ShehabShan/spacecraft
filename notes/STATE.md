@@ -1,26 +1,19 @@
 # SOLARIS — STATE — PHASE 2: TASK DEVELOPMENT (contract: AGENT_BRIEF.md; phase-1 history preserved below)
 
 ## NEXT ACTION
-**T1 BUILDING — next build step B7 — Controller + camera (FIRST PLAYABLE)**
-(`docs/T1-plan.md` §12.2 B7, spec §9): `src/play/controller/PlayerController.ts`
-(sole writer of `kcc.input`; §9.2 math, §9.3 play-layer jump buffer +
-respawn), `sampleTelemetry` in `src/play/character/CharacterTelemetry.ts`
-(the type + `createTelemetry` exist since B6), `ThirdPersonCamera.ts`
-completed (§9.4 orbit, spring arm, 4-sample clearance, FP toggle →
-`animator.setVisible(false)`, zoom), playFrame stages 3–5 and 7
-(`kcc.update(dt, 5)` + `core.advance(dt)`; stage 7 already calls
-`w.animator.update(telem, clock.dt)`). B6 is DONE — read the B6 build notes
-(RestAnimator lives in `createMoonWorld` as `world.animator`). B7 is large:
-split it first (e.g. B7a controller + telemetry headless, B7b camera, B7c
-wiring + browser check). Run Node tests with `node --expose-gc` (rig 97/97,
-world 27/27, frame 12/12, shell 101/101, lod 40/40, spawn 70/70); browser:
-`npx playwright install chromium`, `npx vite build && npx vite preview
---port 4173 &`, then `node tools/check-play-b5.mjs` / `check-play-b6.mjs
-http://localhost:4173`. The Lead's execute order is in the APPROVAL LEDGER
-(2026-10-20); Q1–Q8 rulings apply. Each build commit carries its step box,
-the tracker row, this NEXT ACTION update and a CHANGES.md entry. Known
-benign: the `/favicon.ico` 404 console error; test-play-world's heap row can
-flake once under GC noise (re-run).
+**T1 BUILDING — next build step B7a — PlayerController + sampleTelemetry (headless)**
+(`docs/T1-plan.md` §12.2 B7 → B7a, spec §9.2/§9.3, §5.2): B7 was split into
+B7a (controller + telemetry, Node-verified via `tools/test-play-controller.mjs`),
+B7b (ThirdPersonCamera completed, headless), B7c (playFrame stages 3–5/7 wiring
++ `check-play-b7` browser check = FIRST PLAYABLE). Run Node tests with
+`node --expose-gc` (rig 97/97, world 27/27, frame 12/12, shell 101/101,
+lod 40/40, spawn 70/70); browser: `npx playwright install chromium`,
+`npx vite build && npx vite preview --port 4173 &`, then
+`node tools/check-play-b5.mjs` / `check-play-b6.mjs http://localhost:4173`.
+The Lead's execute order is in the APPROVAL LEDGER (2026-10-20); Q1–Q8
+rulings apply. Each build commit carries its step box, the tracker row, this
+NEXT ACTION update and a CHANGES.md entry. Known benign: the `/favicon.ico`
+404 console error; test-play-world's heap row can flake once under GC noise.
 
 Phase-1 legacy (parked — carries forward unchanged): M1F round-7 ruling still
 PENDING (option menu `notes/reports/M1F.md` §15.7; recommendation (a): rebase

@@ -2167,23 +2167,42 @@ or reordered. A step that fails its checks is not committed as done.
         the geometric value). `tools/check-play-b6.mjs` screenshots the rig
         after a pause (a PLAYING screenshot times out under SwiftShader).
 
-- [ ] **B7 — Controller + camera (FIRST PLAYABLE).**
-  - Files: `src/play/controller/PlayerController.ts` (sole writer of
-    `kcc.input`; §9.2 math, §9.3 play-layer jump buffer + respawn),
-    `src/play/character/CharacterTelemetry.ts` (§5.2 fields from
-    `kcc.telemetry` (238) and `integrity`), `ThirdPersonCamera.ts` completed
-    (§9.4 orbit, spring arm, 4-sample clearance, FP toggle, zoom), playFrame
-    stages 3–5 and 7 (`kcc.update(dt, 5)` + `core.advance(dt)`).
-  - Outcome: **the moon is playable** — WASD camera-relative walk, Shift
-    sprint, Space jump, C crouch, R respawn, V first person, mouse orbit; the
-    rig moves and turns but holds its rest pose.
-  - Checks: V0; `test-play-controller` = §9.6 Mapping, Facing, Buffer, Pause,
-    Frame-rate independence, Camera clearance, Rebase continuity (the core
-    default-path item waits for B11); manual — walk/sprint speeds read
-    ~3.2 / ~6.5 m/s (temporary `console.debug` removed before commit, or the
-    B10 HUD), a jump lands, walking off a crater rim falls, a >45° slope
-    slides, the camera never clips into terrain on a full orbit, P freezes
-    everything.
+- **B7 — Controller + camera (FIRST PLAYABLE)** — split into B7a–B7c
+  (session 39 decision: one step = controller + camera + wiring + browser
+  check exceeds one session's budget; intent unchanged — B7 is DONE when B7c
+  is checked). Original outcome kept: **the moon is playable** — WASD
+  camera-relative walk, Shift sprint, Space jump, C crouch, R respawn, V first
+  person, mouse orbit; the rig moves and turns but holds its rest pose.
+  - [ ] **B7a — PlayerController + sampleTelemetry (headless).**
+    - Files: `src/play/controller/PlayerController.ts` (sole writer of
+      `kcc.input`; §9.2 math, §9.3 play-layer jump buffer, hard-landing
+      recover scale, `reset()`), `sampleTelemetry` in
+      `src/play/character/CharacterTelemetry.ts` (§5.2 derivations),
+      `tools/test-play-controller.mjs` (part 1).
+    - Outcome: the controller drives the real KCC in Node; nothing on screen
+      changes yet (playFrame untouched).
+    - Checks: V0; `test-play-controller` = §9.6 Mapping, Facing, Buffer,
+      Frame-rate independence + telemetry derivations (vertSpeed, landed,
+      sliding) + heap ≈ 0 over 10k controller steps; all play tests green.
+  - [ ] **B7b — ThirdPersonCamera completed (headless).**
+    - Files: `src/play/camera/ThirdPersonCamera.ts` (§9.4 orbit, pitch clamp,
+      zoom, spring arm shrink/regrow `camBoomTau`, planet-frame pivot lag
+      `camPosTau`, FP pose + enter/exit), `test-play-controller` part 2.
+    - Outcome: camera behaviour verified in Node against the real terrain.
+    - Checks: V0; §9.6 Camera clearance (360° orbit, pitch −1.2…1.2, never
+      below terrain + 0.35, boom ≥ 1.2) + Rebase continuity (camera step =
+      character step to 1 mm) + orbit sign (dx > 0 turns heading toward
+      `heading × up`).
+  - [ ] **B7c — playFrame stages 3–5/7 wiring + browser check (FIRST PLAYABLE).**
+    - Files: `src/play/frame/playFrame.ts` (stage 3 camera pre-step, 4
+      controller, 5 `kcc.update(dt, 5)` + `core.advance(dt)`, 7
+      `sampleTelemetry`), `PlayPage.tsx` / `moonWorld.ts` wiring (respawn
+      through `ctrl.reset` + `cam.reset`), `tools/check-play-b7.mjs`.
+    - Checks: V0; §9.6 Pause (120 PAUSED frames bit-identical, resume frame
+      0 substeps) in `test-play-frame`; `check-play-b7` (scripted W hold
+      moves the character, Space leaves the ground, P freezes); manual —
+      walk/sprint ~3.2 / ~6.5 m/s, jump lands, crater-rim fall, >45° slide,
+      no camera clip on a full orbit.
 
 - [ ] **B8 — Animation state machine.**
   - Files: `src/play/character/animStateMachine.ts` (§8.2 table, timers,
