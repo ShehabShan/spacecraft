@@ -129,7 +129,74 @@
 - `flight.update` is fixed-tick with shed-don't-dilate, as its header says. The frame-rate dependence in A1-U05-2 is the harness's use of it, not a core bug.
 - `scripted` at :846 is dead code (S3 note, no finding).
 
-## Left for U05c
+## Left for U05c (done 2026-10-22 — see "U05c" below)
 - T2 penetration: a DDA mutation (coarsen `DDA_MAX_GAP`, or disable `_sweepTerrain`) to check whether T2 or minPostTickAGL can fail at all.
 - An independent analytic drag + gravity integration for v@1000 m.
 - Read `flightController.ts` :60–355 and :580–750 (sweep/contact), `aerodynamics.ts`, `atmosphere.ts` in full, harness :1000–1182 (HUD), and the Milestone 1D grep.
+## U05c — DDA penetration, analytic dive, remaining reads (2026-10-22)
+Probe: `game/tools/audit/u05c-m1d-dda-dive.mjs` (run from `game/`: `node tools/audit/u05c-m1d-dda-dive.mjs`).
+It builds mutant copies of the real `flightController.ts` by text substitution, strips types with esbuild, and re-points their imports at the real atmosphere, aerodynamics and terrain modules.
+Result: PROBE_EXIT=0, 9/10 checks confirmed. TERR-2 was not confirmed, and that miss is itself finding A1-U05-8.
+Reads done: `flightController.ts` :1–160, :376–560 and :596–750; `aerodynamics.ts` header + `SHIP_AERO`; `atmosphere.ts` density law; harness :488–530 and :680–705; the harness verdict (:1000–1182 is HUD + ALL-PASS chip only); Milestone 1D grep (:19, :72 DDA proof, :2325).
+
+### A1-U05-7 — T2's no-clip clauses cannot test the DDA; `minPostTickAGL` is blind to tunnelling by construction
+- Severity: S1     Confidence: confirmed
+- Category: test
+- Location: harness :686–691 (T2 predicate), :494–510 (observer); `flightController.ts` :504–531 (post-tick AGL), :609–685 (sweep) @ 739f1e0
+- Claim: the T2 detail says "Analytic DDA held the ship at/above the surface on every tick". Milestone 1D :72 states a no-clip proof for the 4 m-gap lattice sweep.
+- Evidence (probe dive section):
+  - BASE: T2 = true; minPostAGL 3.000; true minimum of the path, sampled every 0.25 m, = 3.000.
+  - ENDPOINT-only sweep (lattice 2, gap 1e9): **T2 = true**, with identical numbers.
+  - COARSE sweep (lattice 64, gap 64 m): **T2 = true**.
+  - Control, sweep removed: T2 = false, minPostAGL −1,529 m. Only total removal is caught.
+  - The dive is straight down. Every tick's path ends inside the same radial column, so the endpoint sample alone finds the contact.
+  - Low-tick section: 3,000 single ticks at 4–30 m AGL, 300–1,900 m/s, near-horizontal over real terrain. The ENDPOINT sweep tunnels through terrain on 8 uncontacted ticks, up to 5.2 m deep. On all 8, minPostTickAGL stays ≥ 0, because it is sampled only at the tick's end point (:524–531).
+- Impact: the property that matters (no tunnelling through ridges on grazing, fast, low passes) has no gate. A regression in the sweep's gap or lattice stepping would ship green.
+- Proposed fix: add a T2b row of grazing passes over the steepest terrain. Score it with an independent dense path sample (as this probe does), not with `minPostTickAGL`. Keep the vertical dive for v@1000.
+- Fix task size: one session (harness row + Node twin).
+
+### A1-U05-8 — The DDA no-clip proof rests on a false terrain slope bound (L = 1.2; measured up to 6.4)
+- Severity: S1     Confidence: confirmed (the premise is false); suspected (that real tunnelling occurs)
+- Category: spec + engine
+- Location: `flightController.ts` :59 `DDA_LIPSCHITZ = 1.2`, :623 early-out, :605–607 proof comment; Milestone 1D :72 ("conservative terrain Lipschitz L = 1.2 … ≤ 5.8 m … the next sample always detects it")
+- Claim: the terrain never rises faster than 1.2 m per metre of arc, so the mid-gap penetration is at most 4·2.2 − 3 = 5.8 m and is always detected.
+- Evidence:
+  - Measured over 200,000 random points and directions on TEST_PLANET, using a 0.5 m finite difference: **max |dh/ds| = 6.41**, and **11.2 %** of samples are steeper than 1.2.
+  - With L = 6.4 the proof's own bound becomes 4·7.4 − 3 ≈ 26.6 m. A ridge narrower than the gap can rise above the chord between two samples that both clear the surface. In that case "the next sample always detects it" does not hold.
+  - The bound also feeds the early-out at :623 (L·gap = 4.8 m of the margin). Measured max height is 734.8 m against a 900 m band, so the early-out stays safe through its height margin, not through L.
+  - The BASE sweep showed 0 tunnels in 3,000 random low ticks. Real misses were **not** reproduced.
+  - Evidence that would confirm the impact: an adversarial search for grazing paths across the steepest, narrowest ridges, scored by dense path sampling.
+- Impact: the safety argument behind the "exact" collision claim is invalid. Any later terrain retune (higher mountainAmp or detailFreq) moves it further from safe without any gate noticing (see A1-U05-7).
+- Proposed fix: derive the gap from a measured or analytic slope bound of the noise field, for example gap ≤ (clearance + margin)/(L + 1). Alternatively, make detection conservative with a per-sample segment-vs-heightfield bound. Not a RATIFIED item.
+- Fix task size: one session (measure the bound, set the gap, add the A1-U05-7 row as its gate).
+
+### A1-U05-9 — The "structural limit" a_struct is exceeded 6.9× during the governed dive
+- Severity: S2     Confidence: confirmed
+- Category: spec + doc
+- Location: `aerodynamics.ts` :8–14 (governor header), `SHIP_AERO.aStruct = 90`; Milestone 1D :2325 ("GOVERNOR chip lighting up … as the ship crosses the structural curve")
+- Claim: v_safe is "the speed at which quadratic drag deceleration equals the airframe limit a_struct". The drag map "forces the ship down onto the curve — no clamping, no discontinuity, no overshoot".
+- Evidence:
+  - Peak drag deceleration is **621 m/s² (63 g)** in an independent RK4 integration and **625 m/s²** in engine telemetry. That is 6.9× aStruct = 90 m/s² (9.2 g).
+  - At the 1,000 m gate the ship is still above the curve: 264.7 m/s against v_safe(1000) = 229.8 m/s.
+  - Converging onto the curve from above requires drag greater than aStruct, by construction. The "limit" is therefore exceeded every time the governor acts.
+- Impact: no gameplay effect today (there is no damage model). It is a trap for any later structural-damage, pilot-g or VFX feature that reads a_struct as an actual limit. The docs overstate what the governor guarantees.
+- Proposed fix: rename and redocument a_struct as the governor's equilibrium constant, or add a real airframe-load model. Decide this at a later feature task (§13 ADR).
+- Fix task size: doc-only in one session; a load model is its own task.
+
+### A1-U05-10 — Telemetry g-load excludes drag (0.000 g shown during a 63 g deceleration)
+- Severity: S2     Confidence: confirmed
+- Category: engine
+- Location: `flightController.ts` sensed accumulators `sx/sy/sz` (thrust + lift only, :~455–488), `t.gLoad = sensed / G0` (:~548) @ 739f1e0
+- Claim: the code comment says `sensed (non-gravitational) accel`. Drag is a non-gravitational contact force, which a real accelerometer or pilot feels.
+- Evidence: in the dive replay, `peakG` = 0.000 while telemetry `dragDecel` peaks at 625 m/s² (63.7 g). Drag is applied as a velocity scale in step D and never enters `sx/sy/sz`.
+- Impact: the HUD "G / PEAK G" reads 0 throughout every re-entry. Any future g-dependent effect (blackout, damage, camera shake) would be wrong.
+- Proposed fix: add the drag deceleration vector (−k·v_rel) and the contact impulses per tick to the sensed sum. Zero allocation; scalar math only.
+- Fix task size: small, fits one session with a Node check.
+
+### Checked, no issue (U05c)
+- **v@1000 m.** An independent RK4 integration (dt 1e-4 s, μ/r² gravity, drag βQρv² + βLρv, same atmosphere) gives 266.00 m/s. The engine Node replay gives 264.75, and M1D claims 264.7. The 0.5 % gap matches the engine's first-order split (exact drag map, then semi-implicit kick). Without drag the value would be 2,012 m/s.
+- **βQ derivation** (`aerodynamics.ts` :17–21): the vertical-dive integral requires βQ ≥ 2.52e-3. βQ = 3.2e-3 carries a 27 % margin, and C_d·A/(2m) = 0.35·22/2400 ≈ 3.2e-3, both as stated.
+- **Sweep endpoint.** The sweep always samples the exact segment endpoint (:675, :681). Contact places the ship at surface + 3 m, kills the inward radial velocity, scales speed by 0.985, and lands below 3.5 m/s relative speed. Every tick therefore ends ≥ 3 m AGL, as claimed.
+- **BASE sweep, no tunnelling in sample.** 0/3,000 random low, fast ticks tunnel. The sweep removal control is caught by T2.
+- **Terrain height.** Max sampled height is 734.8 m ≤ `maxTerrainHeight` 900, and the minimum is −423.0 m. The early-out and sample bands are safe on height.
+- **HUD.** Harness :1000–1182 is HUD only. The overall verdict is `TEST_ORDER.every(pass)`, with no extra logic.

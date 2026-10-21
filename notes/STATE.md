@@ -1,16 +1,16 @@
 # SOLARIS — STATE — PHASE 2 — A1 ENGINE AUDIT ACTIVE (T1 paused) (contract: AGENT_BRIEF.md; phase-1 history preserved below)
 
 ## NEXT ACTION
-**A1 ENGINE AUDIT (read-only) — next unit U05c: m1d DDA penetration mutation + analytic dive + remaining reads (scope in docs/A1-plan.md U05c box; findings so far in docs/audit/U05-m1d-harness-validity.md)**
+**A1 ENGINE AUDIT (read-only) — next unit U06: m1c harness validity (`game/src/test/Milestone1C_TestHarness.tsx` 1,006 lines; Milestone 1C grep only — never the whole file)**
 (`docs/A1-plan.md` §5, first unchecked box). Read AGENT_BRIEF.md §11 AUDIT MODE,
 §12 and §13 first: no edits to game/src, e2e, Milestone, Design_specs; write only
-docs/audit/** and game/tools/audit/**. U04 (`docs/audit/U04-m1e-harness-validity.md`)
-found m1e rows that print theory they never compare (R5), integrity counters that are
-never written on the path tested (minAGL), bounds that measure the steering command
-instead of the property, and heap guards decided by GC timing. Check m1d rows for the
-same patterns. Probe style: `game/tools/audit/u04-m1e-validity.mjs` (slice the harness
-rows verbatim, strip types with esbuild, run on the real core under Node; mutations +
-an independent physics integration + a no-effect control; run heap mutations ≥3×).
+docs/audit/** and game/tools/audit/**. U04/U05 found gate rows that print theory they
+never compare, clauses measured where the defect cannot show (U05-7: post-tick AGL is
+blind to tunnelling), heap guards decided by GC timing, and spec "proofs" built on
+unmeasured bounds (U05-8: terrain slope 1.2 assumed, 6.4 measured). Check the m1c rows
+for the same patterns. Probe style: `game/tools/audit/u05c-m1d-dda-dive.mjs` (mutant
+copies of a real core module by text substitution + esbuild, imports re-pointed at the
+real modules; independent truth sampling; a control mutation that must be caught).
 Run `npm ci` in game/ first if node_modules is absent. Budget 50 OLU; wrap up at ~40.
 COMMIT AUTHOR (Lead, 2026-10-22; APPROVAL LEDGER): every commit is authored as `Md Shehab Sarar <mdshehabsarar@gmail.com>` —
 set `git config --global user.name/user.email` to it before the first commit.
@@ -229,6 +229,7 @@ milestone, Lead's call. (Evidence: notes/reports/M1F.md §10.5, §11.3.)
 | 54 | 2026-10-22 | Lead directive: commit author = GitHub owner (same session as row 53) | Recorded the directive in the APPROVAL LEDGER and the NEXT ACTION block: every commit is authored as `Md Shehab Sarar <mdshehabsarar@gmail.com>`. The VM's global git identity was set to it. Process docs only; no audit unit work; the two earlier A1 commits authored as `PromptQL bot (A1 auditor)` stay in history (no rewrite, no force-push). | NEXT = U05 m1d harness validity (unchanged). Set the git identity before the first commit. |
 | 55 | 2026-10-22 | A1 U05a m1d reading pass (PromptQL bot, VM v2 2 vCPU/4 GB) | Bootstrap clean (HEAD 20b6e7a = origin). REPAIR: A1 tracker last-commit said ce94279 (stale) → 20b6e7a. U05 SPLIT (§12): Lead reported low balance mid-unit, so no probe ran; harness 1–1000 + flightController tick/DDA read; 8 seeds written (T4 negative-heap pass + readonly canary, T5 offset tautology, T1 self-comparisons, T3 clamp-mutation test, T2 DDA mutation, wall-clock dive). No findings claimed. | Next: U05b (probes + findings) |
 | 56 | 2026-10-22 | A1 U05b m1d probes + findings (PromptQL bot, VM v2 2 vCPU/4 GB) | Bootstrap clean (HEAD 6f1d740 = origin, tracker last-commit 20b6e7a = commit before newest, no drift). U05b DONE: Node probe tools/audit/u05-m1d-validity.mjs (T1 predicate sliced verbatim + 4 atmosphere mutations incl. control; heapOk truth table + 3× clean/allocating burns; T5 offset replica; dive replay at 60/30/15 fps + post-tick clamp mutation; PROBE_EXIT=0, 9/11 — 2 not confirmed, reported). Findings A1-U05-1..6 (3x S1, 2x S2, 1x S3): T1 passes a 50% density step / altitude-blind Mach / retrograde wind; T2 FAILS at 15 fps (45 s counted cap, 16.9 s physics, still airborne); T4 Node clean burns exceed 1 MB 2/3 (GC noise). U05 split again: U05c added (DDA mutation, analytic v@1000, remaining reads). | Next: U05c |
+| 57 | 2026-10-22 | A1 U05c m1d DDA penetration + analytic dive (PromptQL bot, VM v2 2 vCPU/4 GB) | Bootstrap clean (HEAD 739f1e0 = origin, tracker last-commit 6f1d740 = commit before newest, no drift). U05c DONE: Node probe tools/audit/u05c-m1d-dda-dive.mjs (mutant flightController copies: endpoint-only / 16× coarser / no sweep; 3,000 low grazing ticks with dense path truth; 200k terrain slope/height samples; independent RK4 dive; PROBE_EXIT=0, 9/10 — TERR-2 not confirmed = finding U05-8). Findings A1-U05-7..10 (2x S1, 2x S2) appended to docs/audit/U05-m1d-harness-validity.md: T2 passes endpoint-only + coarse sweeps (only full removal caught), endpoint sweep tunnels 8/3,000 grazing ticks up to 5.2 m while minPostTickAGL stays ≥0; no-clip proof assumes L=1.2, measured max 6.41 (11.2 % steeper); a_struct 90 exceeded 6.9× (625 m/s²); peakG 0.000 during 63 g drag. Checked: v@1000 RK4 266.0 vs engine 264.75 vs claim 264.7; βQ derivation; max terrain 734.8 ≤ 900. U05 complete. | Next: U06 (m1c harness validity). OLU query field is `olus`. |
 
 ## ANCHOR
 07ae8ad768089bebb5715d78fb67bc8a1312effe — round-7 report + ledgers (the wind-down commit; the tool/evidence work commit precedes it;
