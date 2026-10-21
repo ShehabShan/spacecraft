@@ -1,18 +1,20 @@
 # SOLARIS — STATE — PHASE 2: TASK DEVELOPMENT (contract: AGENT_BRIEF.md; phase-1 history preserved below)
 
 ## NEXT ACTION
-**T1 BUILDING — next build step B9c — swap ProceduralAnimator into PlayPage**
-(`docs/T1-plan.md` §12.2 B9c; B9a/B9b done — read their build notes): in
-`src/play/PlayPage.tsx` (and `createMoonWorld` if it builds the animator)
-replace RestAnimator with ProceduralAnimator (same CharacterAnimator
-interface, same rig); show `animator.stateName` in the HUD/probe; new
-`tools/check-play-b9.mjs` (Playwright, b7 pattern: W → Walk/Run state
-observed, Space → JumpLaunch/JumpRise/Fall/Land, 0 errors) + check-play-b7
-regression; then check the B9 parent box. All poses are headless-verified
-(`test-play-anim` 115/115). K13: `PlayerController.ts` must not import
-ProceduralAnimator (grep 0). Run Node tests with `node --expose-gc` (anim
-115/115, rig 97/97, world 27/27, frame 23/23, shell 101/101, lod 40/40,
-spawn 70/70, controller 57/57). Manual matrix MT14 stays for the Lead.
+**T1 BUILDING — next build step B10 — HUD + performance pass**
+(`docs/T1-plan.md` §12.2 B10; B9 done — the ProceduralAnimator is live in the
+page via `createMoonWorld`, read the B9c build notes): `src/play/ui/Hud.tsx`
+(controls hint + speed / animator state (`world.animator.stateName`) / FPS /
+coords), `createTelemetryPublisher(100)` wiring, the `H` toggle (store
+`hudVisible`/`toggleHud` exist since B5b); any allocation fixes the perf
+check reveals; new `tools/test-play-perf.mjs` (§11.5: 10,000 `playFrame`
+calls on fakes, `--expose-gc`, heap delta ≈ 0, no trend; §10.7: ≤ 10
+publishes per simulated second at 144 Hz). Split first if oversized. Run Node
+tests with `node --expose-gc` (anim 115, rig 97, world 27, frame 23, shell
+101, lod 40, spawn 70, controller 57). Browser checks: check-play-b9 (400×225)
+and check-play-b7 must stay PASS — run one at a time on an 8 GB VM
+(`provision_vm memory_mb=8192`). Manual matrices (MT14, B9 feel) stay for the
+Lead.
 
 The Lead's execute order is in the APPROVAL LEDGER (2026-10-20); Q1–Q8
 rulings apply. Each build commit carries its step box, the tracker row, this
@@ -236,3 +238,4 @@ the active tracker is notes/task.md; NEXT ACTION = "T1 plan".
 | 41 | 2026-10-21 | T1 build: B8 (budget 50 OLU, wrap-up ~40) | Fresh session (VM v2, clone + `npm ci` CI_EXIT=0); §5 reconciliation clean — HEAD 90a3c8f = origin, tree clean, tracker last-commit 058b437 = the commit before the newest (convention), no drift; execute order already in the APPROVAL LEDGER (not re-recorded). B8 DONE (6cc7fdd, pushed + ls-remote verified); then B9 split into B9a–B9c (this commit, plan-only); stopped before B9a code at ~30 OLU because B9a (a full pose module + foot-slide tests) would not fit under the ~40 wrap-up. B8: `character/animStateMachine.ts` (§8.2 table, hysteresis, dwell, coyote, slide-off, soft dip, crouch weight, T_land, interrupt flag; `legDrop` §8.1) + `tools/test-play-anim.mjs` PASS 48/48; rig/controller/frame PASS; TSC/BUILD/CANON exit 0; no core/render edit. Decisions in the plan's B8 build notes. | NEXT = B9a (STATE.md NEXT ACTION). OLU: query `olu_usage_aggregate { aggregate { sum { olus } } }` (the field is `olus`, not `olu`). `git ls-remote` through the proxy can hang — wrap it in `timeout 60`. Push and commit mechanics as in row 30. |
 | 42 | 2026-10-21 | T1 build: B9a (budget 50 OLU, wrap-up ~40) | Fresh session (VM v2, clone + `npm ci` CI_EXIT=0); §5 reconciliation clean — HEAD a44eee6 = origin, tree clean, tracker last-commit 6cc7fdd = the commit before the newest (convention), no drift; execute order already in the APPROVAL LEDGER (not re-recorded). B9a DONE (this commit): `character/ProceduralAnimator.ts` (PoseBuffer, prev/cur/snap/out, per-joint slerp crossfade, Idle + shared gait(v) Walk/Run, crouch weight, soft dip; air/land/slide → Idle until B9b; not in PlayPage yet); test-play-anim PASS 75/75 (foot slide 0.0000 cm at v=1, < 1 cm at 2/4/8; max joint step 1.39°/600 Hz; heap ≈ 0); rig/world/frame/shell/lod/spawn PASS; controller 57/57 on re-run (camera-heap row flaky, pre-existing at a44eee6); TSC/BUILD exit 0. Decisions (swing-ankle C⁰ fix, β clamp, 600 Hz pop row) in the plan's B9a build notes. Stopped after B9a at ~33 OLU: B9b (five poses + interrupt row) would not fit under the ~40 wrap-up. | NEXT = B9b (STATE.md NEXT ACTION). Bootstrap cheaply: `sed -n 1,30p notes/STATE.md` + `tail -3`, then the plan's B9a/B9b block (`grep -n B9a docs/T1-plan.md`). Push and commit mechanics as in row 30; OLU query as in row 41. |
 | 43 | 2026-10-21 | T1 build: B9b (budget 50 OLU, wrap-up ~40) | Fresh session (VM v2, clone + `npm ci` CI_EXIT=0); §5 reconciliation clean — HEAD 83dbc39 = origin, tree clean, tracker last-commit a44eee6 = the commit before the newest (convention), no drift; execute order already in the APPROVAL LEDGER (not re-recorded). B9b DONE (this commit): JumpLaunch/JumpRise/Fall/Land/Slide poses + §8.6 slope ankle terms + timed-state progress in `ProceduralAnimator.ts`; test-play-anim PASS 115/115 (interrupt frame 0.035°, control no-snap 17.9°); rig/world/frame/shell/lod/spawn PASS; controller 57/57 on re-run (camera-heap row flaky, pre-existing); TSC/BUILD exit 0. Decisions in the plan's B9b build notes. Stopped after B9b (~30 OLU): B9c needs browser checks and is started fresh next session. | NEXT = B9c (STATE.md NEXT ACTION). Browser checks: press P before PLAYING-phase screenshots under SwiftShader; keep runs short at 640×360 (row 40). Push and commit mechanics as in row 30; OLU query as in row 41. |
+| 44 | 2026-10-21 | T1 build: B9c (budget 50 OLU, wrap-up ~40) | Fresh session (VM v2, clone + `npm ci` CI_EXIT=0); §5 reconciliation clean — HEAD 0383238 = origin, tree clean, tracker last-commit 83dbc39 = the commit before the newest (convention), no drift; execute order already in the APPROVAL LEDGER (not re-recorded). B9c DONE (this commit) → B9 DONE, ANIMATED: `createMoonWorld` mounts ProceduralAnimator (swap in the world, not PlayPage); new check-play-b9 PASS (Idle → Walk; JumpLaunch → JumpRise → Fall → Land → Idle; 0 errors); b7 PASS; all play Node tests PASS; TSC/BUILD exit 0. Stopped after B9c (~20 OLU): B10 (HUD + perf test) is started fresh next session. | NEXT = B10 (STATE.md NEXT ACTION). The b9 jump window at 640×360 OOM-killed the browser on a 4 GB VM — check-play-b9 runs at 400×225 and the VM was resized to 8 GB (`provision_vm memory_mb=8192`); run browser checks one at a time. Push and commit mechanics as in row 30; OLU query as in row 41. |

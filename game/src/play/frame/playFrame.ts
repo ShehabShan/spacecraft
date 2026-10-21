@@ -101,7 +101,7 @@ export function createPlayFrame(w: MoonWorld, cam: ThirdPersonCamera, shell?: Pl
     kcc.frameQuatInto(qF);
     quatMulInto(qS, qF, qW);
     w.characterRoot.quaternion.set(qW.x, qW.y, qW.z, qW.w);
-    // 7. telemetry + animation (RestAnimator holds the rest pose until B9);
+    // 7. telemetry + animation (ProceduralAnimator, B9c);
     // first person hides the rig (§9.4).
     if (shell) sampleTelemetry(kcc, ctrl, shell.input, clock.dt, telem);
     else telem.dt = clock.dt;

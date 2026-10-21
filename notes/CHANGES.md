@@ -1357,3 +1357,16 @@ Observations (NO change made — recorded for the Lead):
     shell 101, lod 40, spawn 70 PASS; controller 57/57 on re-run; TSC/BUILD
     exit 0. No core/render edit.
     · Source: Lead execute order.
+93. 2026-10-21 · T1/B9c · game/src/play/world/moonWorld.ts,
+    game/src/play/frame/playFrame.ts (comment), game/tools/test-play-rig.mjs
+    (world-animator row), game/tools/check-play-b9.mjs (new)
+    · What: `createMoonWorld` mounts `ProceduralAnimator` (same rig, same
+    CharacterAnimator seam) instead of `RestAnimator`; the page now animates
+    Idle/Walk/Run/JumpLaunch/JumpRise/Fall/Land/Slide from real KCC telemetry.
+    · Why: plan step B9c (closes B9). Swap in the world, not PlayPage (one
+    mount point); state name via the ?probe=1 probe until B10's HUD.
+    · Evidence: check-play-b9 PASS (Idle → Walk; JumpLaunch → JumpRise → Fall
+    → Land → Idle, 4.98 sim s; 0 errors); check-play-b7 PASS; anim 115, rig 97,
+    world 27, frame 23, shell 101, lod 40, spawn 70, controller 57 PASS;
+    TSC/BUILD exit 0. No core/render edit.
+    · Source: Lead execute order.

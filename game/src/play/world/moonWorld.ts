@@ -17,7 +17,8 @@ import {
 import { findEarthriseSpawn } from './spawn';
 import { MoonLod, type LodPool } from './MoonLod';
 import { EARTH_R, PLAY_BODIES, type SkyCtx } from './skyState';
-import { RestAnimator, type CharacterAnimator } from '../character/CharacterAnimator';
+import type { CharacterAnimator } from '../character/CharacterAnimator';
+import { ProceduralAnimator } from '../character/ProceduralAnimator';
 import { buildAstronautRig } from '../character/AstronautRig';
 
 /** The pool surface the play world uses: the LOD subset + frame/teardown. */
@@ -130,9 +131,10 @@ export function createMoonWorld(opts: MoonWorldOptions): MoonWorld {
   characterRoot.name = 'characterRoot';
   characterRoot.layers.mask = NEAR_BIT;
   sceneRoot.add(characterRoot);
-  // WHY (B6): RestAnimator is the B6–B8 placeholder behind the K13 seam;
-  // ProceduralAnimator replaces it in B9. Stage 6 places characterRoot.
-  const animator: CharacterAnimator = new RestAnimator(buildAstronautRig(MOON_ASTRONAUT.groundClearance));
+  // WHY (B9c): the animator is built here, not in PlayPage, so the page, the
+  // Node tests and any future GLB animator share one mount point behind the
+  // K13 seam (CharacterAnimator). Stage 6 places characterRoot.
+  const animator: CharacterAnimator = new ProceduralAnimator(buildAstronautRig(MOON_ASTRONAUT.groundClearance));
   characterRoot.add(animator.root);
   // MoonLod samples terrainHeight at construction → after step 1.
   const lod = new MoonLod(pool, MOON_R);

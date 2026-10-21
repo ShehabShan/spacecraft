@@ -2,7 +2,7 @@
 
 - Task: **T1** (playable moon) — definition: `notes/task.md` § "T1 — PLAYABLE MOON"
 - Branch: `t1-playable-moon`
-- Stage: **BUILDING** — plan READY (7/7); Lead execute order recorded 2026-10-20; build B4/13 done (B4 = B4a–B4c), next B5c (B5 = B5a–B5c; B5a, B5b done)
+- Stage: **BUILDING** — plan READY (7/7); Lead execute order recorded 2026-10-20; build 9/13 done (B1–B9; B9 = B9a–B9c), next B10 HUD + performance pass
 - Last updated: 2026-10-21
 - **Resume at the FIRST UNCHECKED BOX** (planning item or build step).
 - Rules: planning changes NO game code (plan + process files only); each checked
@@ -2321,7 +2321,7 @@ or reordered. A step that fails its checks is not committed as done.
         sole·up > 0.9999, unit quaternions, heap < 64 KB over 10k steps.
         The foot-slide and per-frame interrupt-angle rows land in B9.
 
-- [ ] **B9 — Procedural animator (ANIMATED).**
+- [x] **B9 — Procedural animator (ANIMATED).**
   - Files: `src/play/character/ProceduralAnimator.ts` (§8.3–§8.6 poses,
     `PoseBuffer` crossfade, stride scaling), swapped in for `RestAnimator`
     in `PlayPage`.
@@ -2413,13 +2413,33 @@ or reordered. A step that fails its checks is not committed as done.
         step 17.9°).
       - `test-play-anim` PASS 115/115 (+40; the B9a Idle-fallback rows
         retired).
-  - [ ] **B9c — swap into PlayPage (ANIMATED on screen).**
+  - [x] **B9c — swap into PlayPage (ANIMATED on screen).**
     - Files: `PlayPage.tsx` (ProceduralAnimator replaces RestAnimator; HUD
       state name via `stateName`), new `tools/check-play-b9.mjs`.
     - Outcome: **movement animates** in the browser (the B9 outcome).
     - Checks: V0; all play Node tests; `check-play-b9` (W → Walk/Run state
       observed, Space → JumpLaunch/JumpRise/Fall/Land, 0 errors) + b7
       regression; manual matrix (B9 checks) left for the Lead's hands-on pass.
+    - Build notes (session 44, decisions):
+      - The swap is in `createMoonWorld` (`moonWorld.ts`), not `PlayPage.tsx`:
+        the world already owns the animator (B6), so page, Node tests and a
+        future GLB animator share one mount behind the K13 seam. PlayPage is
+        unchanged; `PlayerController.ts` imports no animator (grep 0).
+      - HUD state name: there is no HUD component before B10, so B9c exposes
+        `stateName` through the opt-in `?probe=1` probe
+        (`__playProbe.world.animator.stateName`); **B10's `Hud.tsx` shows it**
+        (the B10 HUD already lists "state").
+      - `check-play-b9` records the state on every rAF frame (single-frame
+        timed states would be missed by polling) and waits on the KCC for the
+        landing (~5 sim s airborne at 4.2 m/s, g 1.62 → tens of wall s under
+        SwiftShader, capped at 60 s). Viewport 400×225: the long jump window
+        at 640×360 drove the renderer to ~3.9 GB and the 4 GB VM killed the
+        browser; the VM was also resized to 8 GB. 640×360 stays for b7.
+      - `test-play-rig` row 193 now expects `Idle` from the world animator.
+      - Evidence: check-play-b9 PASS (Idle → Walk; Idle → JumpLaunch →
+        JumpRise → Fall → Land → Idle in 4.98 sim s; PAUSED holds; 0 errors);
+        check-play-b7 PASS; anim 115, rig 97, world 27, frame 23, shell 101,
+        lod 40, spawn 70, controller 57 PASS; TSC/BUILD exit 0.
 
 - [ ] **B10 — HUD + performance pass.**
   - Files: `src/play/ui/Hud.tsx`, `createTelemetryPublisher(100)` wiring,

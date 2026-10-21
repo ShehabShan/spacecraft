@@ -190,7 +190,7 @@ ok(disposed === 7, `dispose fired ${disposed}/7 dispose events`)
   w.sceneRoot.updateMatrixWorld(true)
   const an = w.animator
   ok(an.root.parent === w.characterRoot, 'rig.root not mounted under characterRoot')
-  ok(an.stateName === 'Rest', `world animator ${an.stateName}`)
+  ok(an.stateName === 'Idle', `world animator ${an.stateName} (B9c: ProceduralAnimator, Idle at spawn)`)
   const o = w.core.getOrigin(), R = P.cfg.MOON_R, S = w.spawnDir
   const ground = R + P.terrainHeight(S.x, S.y, S.z)
   let worst = -Infinity, best = Infinity
