@@ -1,17 +1,22 @@
 # SOLARIS — STATE — PHASE 2: TASK DEVELOPMENT (contract: AGENT_BRIEF.md; phase-1 history preserved below)
 
 ## NEXT ACTION
-**T1 BUILDING — next build step B11 — CONDITIONAL core edit (ruled IN)**
-(`docs/T1-plan.md` §12.2 B11; B10 done — read the B10 build notes).
-FIRST, before any B11 edit, run the browser regressions B10 could not run
-(OLU budget). Resize the VM (`provision_vm memory_mb=8192`), then run
-check-play-b9 (400×225) and check-play-b7 one at a time. Both must PASS with
-the new HUD mounted. On a failure, fix B10 first.
-Then B11: add the opt-in `coyoteTime` / `airControl` fields (default 0,
-branch skipped at 0) to `src/core/physics/astronautKCC.ts` per §5.3. Re-read
-the F14 jump clear and its read before editing. `MOON_ASTRONAUT` uses 0.10 s
-and 0.3. Run the baseline-first m1e/m1f regression (m1e 6/6, m1f R1–R4 PASS,
-R5 WAIVED). Split first if oversized.
+**T1 BUILDING — next build step B11 — BLOCKED AT ITS BASELINE: Lead ruling needed**
+(`docs/T1-plan.md` §12.2 B11, first sub-bullet "BLOCKED at the baseline").
+B10 is fully verified: browser check-play-b9 and check-play-b7 PASS on the
+re-run (session 46). The B11 baseline-first m1f run on the UNEDITED tree
+(no shared file changed since 3057899) shows R2 FAIL in 2 of 2 runs and
+R3 FAIL in 1 of 2 runs. m1e is 6/6 PASS. Do NOT start the core edit until
+the Lead picks an option: (a) R2/R3 environment-soft on this VM, judge B11
+by "badges identical to baseline"; (b) re-run m1f on hardware WebGL first;
+(c) investigate R2 first. Once ruled: add the opt-in `coyoteTime` /
+`airControl` fields (default 0, branch skipped at 0) to
+`src/core/physics/astronautKCC.ts` per §5.3. Re-read the F14 jump clear (~483)
+and its read (~590) before editing. `MOON_ASTRONAUT` uses 0.10 s and 0.3.
+Walk-off = `_tryMove`'s cliff path setting `_grounded = false`. Split first
+if oversized.
+A fresh VM needs `npx playwright install chromium` for the tools/check-play-*
+scripts (the e2e specs use the system Chrome channel).
 Node tests use `node --expose-gc`: anim 115, rig 97, world 27, frame 23,
 shell 101, lod 40, spawn 70, controller 57, perf 19.
 
@@ -239,3 +244,4 @@ the active tracker is notes/task.md; NEXT ACTION = "T1 plan".
 | 43 | 2026-10-21 | T1 build: B9b (budget 50 OLU, wrap-up ~40) | Fresh session (VM v2, clone + `npm ci` CI_EXIT=0); §5 reconciliation clean — HEAD 83dbc39 = origin, tree clean, tracker last-commit a44eee6 = the commit before the newest (convention), no drift; execute order already in the APPROVAL LEDGER (not re-recorded). B9b DONE (this commit): JumpLaunch/JumpRise/Fall/Land/Slide poses + §8.6 slope ankle terms + timed-state progress in `ProceduralAnimator.ts`; test-play-anim PASS 115/115 (interrupt frame 0.035°, control no-snap 17.9°); rig/world/frame/shell/lod/spawn PASS; controller 57/57 on re-run (camera-heap row flaky, pre-existing); TSC/BUILD exit 0. Decisions in the plan's B9b build notes. Stopped after B9b (~30 OLU): B9c needs browser checks and is started fresh next session. | NEXT = B9c (STATE.md NEXT ACTION). Browser checks: press P before PLAYING-phase screenshots under SwiftShader; keep runs short at 640×360 (row 40). Push and commit mechanics as in row 30; OLU query as in row 41. |
 | 44 | 2026-10-21 | T1 build: B9c (budget 50 OLU, wrap-up ~40) | Fresh session (VM v2, clone + `npm ci` CI_EXIT=0); §5 reconciliation clean — HEAD 0383238 = origin, tree clean, tracker last-commit 83dbc39 = the commit before the newest (convention), no drift; execute order already in the APPROVAL LEDGER (not re-recorded). B9c DONE (this commit) → B9 DONE, ANIMATED: `createMoonWorld` mounts ProceduralAnimator (swap in the world, not PlayPage); new check-play-b9 PASS (Idle → Walk; JumpLaunch → JumpRise → Fall → Land → Idle; 0 errors); b7 PASS; all play Node tests PASS; TSC/BUILD exit 0. Stopped after B9c (~26 OLU after the push): B10 (HUD + perf test) is started fresh next session. | NEXT = B10 (STATE.md NEXT ACTION). The b9 jump window at 640×360 OOM-killed the browser on a 4 GB VM — check-play-b9 runs at 400×225 and the VM was resized to 8 GB (`provision_vm memory_mb=8192`); run browser checks one at a time. Push and commit mechanics as in row 30; OLU query as in row 41. |
 | 45 | 2026-10-21 | T1 build: B10 (budget 50 OLU, wrap-up ~40) | Fresh session (VM v2, clone + `npm ci` CI_EXIT=0); §5 reconciliation clean — HEAD fdcdbba = origin, tree clean, no drift (tracker last-commit 0383238 lagged one notes commit; repaired to fdcdbba); execute order already in the APPROVAL LEDGER (not re-recorded). B10 DONE (this commit): `ui/hudPublisher.ts` (play-local throttled publisher, double-buffered PlayHud, FPS EMA, hint fade) + `ui/Hud.tsx` + stage-11 wiring + H default by build; new test-play-perf PASS 19/19 ×3 (heap Δ ≈ −8 KB, trend < 0.1 KB/1k frames, 666 publishes / 69.4 s at 144 Hz, max 10/s); every other play Node test PASS; TSC/BUILD/CANON exit 0, SHARED_EXIT 0, K10 grep 0. The heap rows in test-play-perf and test-play-shell now warm up for 20k frames (V8 tiering creep; `--jitless` flat; the shell row also failed on 8f6a97e). Browser b9/b7 NOT run — stopped at ~37 OLU. | NEXT = re-run check-play-b9/b7 against B10 (8 GB VM), then B11 (STATE.md NEXT ACTION). Push and commit mechanics as in row 30; OLU query as in row 41. |
+| 46 | 2026-10-21 | T1 build: B10 browser re-run → B11 (budget 50 OLU, wrap-up ~40) | Fresh session (VM v2 resized to 8 GB, clone + `npm ci` CI_EXIT=0, `npx playwright install chromium` PWI_EXIT=0); §5 reconciliation clean — HEAD 1283545 = origin, tree clean, tracker last-commit fdcdbba = the commit before the newest (convention), no drift; execute order already in the APPROVAL LEDGER (not re-recorded). B10 browser verification DONE: check-play-b9 (400×225) B9_EXIT=0, check-play-b7 B7_EXIT=0, TSC/BUILD exit 0. B11 baseline-first regression on the UNEDITED tree: m1e 6/6 PASS, m1f `[P,F,F,P,F]` then `[P,F,P,P,F]` — R2 red on the baseline itself (shared-module diff since 3057899 empty) → B11 core edit NOT started, escalated to the Lead (§9). Stopped at ~33 OLU. | NEXT = Lead ruling on the B11 baseline (options in the plan's B11 box), then B11. m1f takes ~4 min per run; run it as a background job and poll. Push and commit mechanics as in row 30; OLU query as in row 41. |

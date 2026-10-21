@@ -2441,7 +2441,7 @@ or reordered. A step that fails its checks is not committed as done.
         check-play-b7 PASS; anim 115, rig 97, world 27, frame 23, shell 101,
         lod 40, spawn 70, controller 57 PASS; TSC/BUILD exit 0.
 
-- [x] **B10 — HUD + performance pass.** (DONE 2026-10-21, session 45 — Node + V0 verified; browser b9/b7 re-run deferred, see build notes)
+- [x] **B10 — HUD + performance pass.** (DONE 2026-10-21, session 45 — Node + V0 verified; browser b9/b7 PASS on re-run, session 46)
   - Files: `src/play/ui/Hud.tsx`, `createTelemetryPublisher(100)` wiring,
     the `H` toggle; any allocation fixes the perf check reveals.
   - Outcome: the controls hint + speed/state/FPS/coords HUD; the play layer
@@ -2477,14 +2477,32 @@ or reordered. A step that fails its checks is not committed as done.
     - Pool health: `freeCount ≥ 6` is judged on the real pool (MT15). The
       instant-pump stub fills to MoonLod's `freeCount ≤ 2` stop, so the
       stub value is printed only.
-    - Browser checks NOT run this session (OLU budget): check-play-b9
-      (400×225) and check-play-b7 must be re-run against B10 before B11
-      starts.
+    - Browser checks deferred (OLU budget) and re-run in session 46 on an
+      8 GB VM against HEAD 1283545: check-play-b9 (400×225) B9_EXIT=0
+      (Idle → Walk; JumpLaunch → JumpRise → Fall → Land → Idle; 5.18 sim s
+      airborne; P freezes; 0 errors) and check-play-b7 B7_EXIT=0 (1.04 m/s
+      from rest, airborne, paused drift 0 m, 0 errors). B10 fully verified.
 
 - [ ] **B11 — CONDITIONAL core edit (only on a Lead ruling for Q2 and/or Q3).**
   - **Ruled IN (2026-10-20): Q2 = (a) and Q3 = yes.** B11 is applied, not
     skipped: both opt-in fields, default 0, play values `coyoteTime` 0.10 s
     and `airControl` 0.3. The baseline-first m1e/m1f regression is mandatory.
+  - **BLOCKED at the baseline (session 46, 2026-10-21) — Lead ruling needed.**
+    The §13.5 baseline-first regression was run on the UNEDITED tree
+    (HEAD 1283545; `git diff 3057899 HEAD -- src/core src/render src/workers
+    src/test e2e playwright.config.ts` empty, so no shared file has changed
+    since T1 branched). m1e 6/6 PASS. m1f badges: run 1 `[PASS,FAIL,FAIL,
+    PASS,FAIL]`, run 2 `[PASS,FAIL,PASS,PASS,FAIL]`. R2 fails in both runs
+    and R3 fails in one (R3DUMP run 1 meshR = impR = 0.00, so nothing was
+    drawn in the A/B window; run 2 meshR 85.75, sym 0). Environment: Chrome
+    155.0.8059.84 (channel chrome), SwiftShader, 2 vCPU / 8 GB VM. The B11
+    gate needs m1f R1–R4 PASS, and a red baseline cannot attribute a later
+    failure to the edit, so the core edit was NOT started (AGENT_BRIEF.md §9:
+    a regression page that cannot be fixed → STOP). Options for the Lead:
+    (a) rule R2 (and the R3 flake) environment-soft for this VM, judging
+    B11 by "badges identical to baseline"; (b) re-run m1f on hardware WebGL
+    or the Lead's machine first; (c) investigate R2 as its own item first.
+    1F is §8-parked, so no harness or row change is made under any option.
   - Files: `src/core/physics/astronautKCC.ts` (§5.3: optional `coyoteTime` /
     `airControl`, default 0, branch skipped at 0; re-read the F14 jump clear
     at 483 and the read at 590 before editing), `MOON_ASTRONAUT` enables the
