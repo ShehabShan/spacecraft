@@ -86,7 +86,8 @@ see that the unit fits its budget.
       "unmeetable" (§15.3). Is the gate wrong, or the terrain, or the KCC?
 - [x] **U04 m1e harness validity** — DONE (`docs/audit/U04-m1e-harness-validity.md`: R5 Coriolis passes on a mis-measured 0.75 cm (true ≈1.9 cm; KCC physics fine); penetration clauses vacuous; R1 misses 4° yaw snaps; R4 canary tautological + heap verdict GC-dependent) (`Milestone1E_TestHarness.tsx` 1,570; `e2e/m1e.spec.ts`; Milestone 1E grep)
 - [x] **U05a m1d reading pass** — DONE (`docs/audit/U05a-m1d-harness-reading.md`: harness + flightController tick/DDA read; 8 probe seeds, no findings yet — session cut short, Lead low balance)
-- [ ] **U05b m1d harness validity — probes + findings** (Node probe `game/tools/audit/u05-m1d-validity.mjs` for seeds 1–7 in U05a; read harness 1000–1182, flightController 60–355, aerodynamics.ts, atmosphere.ts, Milestone 1D grep; write `docs/audit/U05-m1d-harness-validity.md`)
+- [x] **U05b m1d harness probes + findings** — DONE (`docs/audit/U05-m1d-harness-validity.md`: T1 cannot fail on C∞/Mach/wind claims; T2 verdict fps-dependent (15 fps FAIL); T4 heap clause = GC noise + passes negatives; T4 canary + T5 offset tautological) (`game/tools/audit/u05-m1d-validity.mjs`)
+- [ ] **U05c m1d DDA penetration + analytic dive + remaining reads** (DDA mutation: coarsen `DDA_MAX_GAP` / disable `_sweepTerrain` — can T2 or minPostTickAGL fail?; independent drag+gravity integration for v@1000; read flightController 60–355 + 580–750, aerodynamics.ts, atmosphere.ts, harness 1000–1182, Milestone 1D grep; append to `docs/audit/U05-m1d-harness-validity.md`)
 - [ ] **U06 m1c harness validity** (`Milestone1C_TestHarness.tsx` 1,006; Milestone 1C grep)
 - [ ] **U07 m1b harness validity** (`Milestone1B_TestHarness.tsx` 1,286; Milestone 1B grep)
 - [ ] **U08 m1a harness + e2e plumbing** (`Milestone1A_TestHarness.tsx` 766; all `e2e/*.spec.ts`; `playwright.config.ts`)
