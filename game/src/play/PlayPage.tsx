@@ -1,7 +1,8 @@
-// T1 play page, B4c: the static moon on screen. One world per page load
-// (main.tsx full-load rule); nothing under src/play may import the harness
-// tree (§4.1) — the K10 leakage grep in §15.3 enforces it.
-// Game shell (loading, click-to-play, pause, error) arrives in B5.
+// T1 play page. B4c: the static moon on screen. B5c: the game shell —
+// InputState + shell runtime on the canvas, overlays via PlayShell, the frame
+// loop gated by the store phase. One world per page load (main.tsx full-load
+// rule); nothing under src/play may import the harness tree (§4.1) — the K10
+// leakage grep in §15.3 enforces it.
 import { useEffect, useMemo, useRef } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import type * as THREE from 'three';
@@ -10,8 +11,12 @@ import { createMoonWorld, type MoonWorld } from './world/moonWorld';
 import { parseSpawnOverride } from './world/spawn';
 import { ThirdPersonCamera } from './camera/ThirdPersonCamera';
 import { createPlayFrame } from './frame/playFrame';
+import { InputState } from './input/InputState';
+import { attachShellRuntime } from './ui/shellRuntime';
+import { usePlayStore } from './ui/playStore';
+import { PlayShell } from './ui/PlayShell';
 
-function Scene({ world, onFrame }: { world: MoonWorld; onFrame: (delta: number) => void }) {
+function Scene({ world, input, onFrame }: { world: MoonWorld; input: InputState; onFrame: (delta: number) => void }) {
   const { scene, gl } = useThree();
   const primed = useRef(2);
   // WHY: harness Scene() 1568–1581 line by line — attach the pool meshes to
@@ -23,6 +28,16 @@ function Scene({ world, onFrame }: { world: MoonWorld; onFrame: (delta: number) 
     world.pool.primeAll();
     primed.current = 2;
   }, [scene, gl, world]);
+  useEffect(() => {
+    // WHY (B5c decision): no worker-error hook — TerrainMeshPool keeps its
+    // workers private and already logs worker errors; exposing them means a
+    // shared render-module edit (+ m1X regression) for a V1 edge case. Context
+    // loss, lock, visibility are wired; worker → ERROR is deferred (plan §10.2).
+    const canvas = gl.domElement;
+    input.attach(canvas);
+    const detachShell = attachShellRuntime({ canvas, doc: document }, input, usePlayStore);
+    return () => { detachShell(); input.detach(); };
+  }, [gl, input]);
   useFrame(() => {
     if (primed.current > 0) {
       primed.current--;
@@ -38,11 +53,12 @@ function Scene({ world, onFrame }: { world: MoonWorld; onFrame: (delta: number) 
 }
 
 export default function PlayPage(): JSX.Element {
-  const { world, onFrame } = useMemo(() => {
+  const { world, input, onFrame } = useMemo(() => {
     const w = createMoonWorld({ spawnOverride: parseSpawnOverride(window.location.search) });
     const cam = new ThirdPersonCamera();
     cam.reset(w.kcc, w.earthDir);
-    return { world: w, onFrame: createPlayFrame(w, cam) };
+    const inp = new InputState();
+    return { world: w, input: inp, onFrame: createPlayFrame(w, cam, { input: inp, store: usePlayStore }) };
   }, []);
   useEffect(() => () => world.dispose(), [world]);
   return (
@@ -54,10 +70,9 @@ export default function PlayPage(): JSX.Element {
         gl={{ antialias: true, powerPreference: 'high-performance' }}
         camera={{ fov: 62, near: 0.1, far: 3000, position: [0, 50, 200] }}
       >
-        <Scene world={world} onFrame={onFrame} />
+        <Scene world={world} input={input} onFrame={onFrame} />
       </Canvas>
-      <a href="/" style={{ position: 'absolute', top: 12, left: 12, color: '#aec6dc',
-        fontFamily: 'ui-monospace, Menlo, Consolas, monospace', fontSize: 12 }}>← menu</a>
+      <PlayShell input={input} />
     </div>
   );
 }

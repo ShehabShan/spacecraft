@@ -2013,7 +2013,7 @@ or reordered. A step that fails its checks is not committed as done.
       - Node tests must run as `node --expose-gc tools/test-play-*.mjs`
         (the heap rows fail without it).
 
-- [ ] **B5 — Game shell.**
+- [x] **B5 — Game shell.**
   - Files: `src/play/ui/playStore.ts` (phases incl. `ERROR`),
     `src/play/input/InputState.ts` (§9.1 map, held sets, edges, `blur`
     clear, `attach/detach`), `src/play/ui/Overlays.tsx` + `PlayShell.tsx`
@@ -2102,7 +2102,7 @@ or reordered. A step that fails its checks is not committed as done.
         click → lock path. B5c must pass the pool's workers (TerrainMeshPool
         keeps them private — expose a read-only getter there or skip the
         worker hook; decide in B5c).
-  - [ ] **B5c — Overlays + PlayShell + PlayPage wiring (browser).**
+  - [x] **B5c — Overlays + PlayShell + PlayPage wiring (browser).**
     - Files: `src/play/ui/Overlays.tsx` (`LoadingOverlay`,
       `ClickToPlayOverlay`, `PauseOverlay` with the 1.0 s Resume cool-down,
       `ErrorOverlay` + Reload), `src/play/ui/PlayShell.tsx`,
@@ -2115,6 +2115,26 @@ or reordered. A step that fails its checks is not committed as done.
       within 20 s, no non-favicon errors, m1f&manual=1 still boots; manual
       MT3/MT4 (overlays in order, lock on click, Esc pauses, Resume disabled
       ~1 s then works). Closing: check B5c **and** B5.
+    - **Build notes (B5c, 2026-10-21, independent decisions — later steps use these).**
+      - `PlayShell` renders one overlay per phase and NONE while PLAYING
+        (pointer events pass to the canvas); the root carries `data-phase`,
+        the pause title `data-paused-at`, the Resume button `data-resume` —
+        stable hooks for check-play-b5 and B12. B10's HUD mounts in
+        PlayShell's PLAYING branch.
+      - `PauseOverlay` disables Resume until `RESUME_COOLDOWN_MS` = 1000 ms
+        after `pausedAtMs` (Chrome's re-lock refusal window); the `← menu`
+        link lives in the pause and error overlays.
+      - InputState is created with the world in PlayPage's `useMemo`; Scene
+        attaches it and `attachShellRuntime` to `gl.domElement` in an effect
+        and detaches both on unmount.
+      - NO worker-error → ERROR hook in V1: TerrainMeshPool keeps its workers
+        private and already logs worker errors; exposing them is a shared
+        render-module edit (+ m1X regression) for an edge case. Revisit only
+        if a worker failure is ever observed in play.
+      - check-play-b5 judges the cool-down IN PAGE (disabled iff
+        `performance.now() − pausedAtMs < 1000` at read time) because a
+        SwiftShader frame can block the main thread > 1 s; the disabled
+        window itself is therefore a manual MT3/MT4 check.
 
 - [ ] **B6 — Articulated rig.**
   - Files: `src/play/character/CharacterAnimator.ts` (interface, §5.2) +

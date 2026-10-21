@@ -1237,3 +1237,15 @@ Observations (NO change made — recorded for the Lead):
     detach; shell frame heap < 64 KB over 10,000 frames); frame 12/12, world
     27/27, lod 40/40, spawn 70/70; TSC/BUILD exit 0; K10 grep 0 hits.
     · Source: Lead execute order.
+
+85. 2026-10-21 · T1/B5c · game/src/play/ui/Overlays.tsx (new),
+    game/src/play/ui/PlayShell.tsx (new), game/src/play/PlayPage.tsx,
+    game/tools/check-play-b5.mjs (new) · loading / click-to-play / pause
+    (1.0 s Resume cool-down from pausedAtMs, ← menu) / error + Reload
+    overlays selected by store phase; PlayPage attaches InputState and the
+    shell runtime to the canvas and passes { input, store } to
+    createPlayFrame · Why: plan §12.2 B5c (§10.1–§10.4), closes B5; no
+    worker-error hook (pool workers private, shared-module edit not worth
+    it in V1) · Evidence: check-play-b5 B5_EXIT=0 (C1–C6 PASS); shell
+    101/101, frame 12/12, world 27/27, lod 40/40, spawn 70/70; TSC/BUILD
+    exit 0; K10 grep 0 hits. · Source: Lead execute order.
