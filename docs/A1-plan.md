@@ -17,6 +17,12 @@ test gates. The specs were written by GLM 5.3 and the engine by GLM 5.3 Flash
 repro and a proposed fix task sized to fit one 50-OLU session. The Lead triages
 the findings at the LEAD GATE.
 
+Yardstick (AGENT_BRIEF §13): judge everything against the project goal — a
+real-looking solar system where every planet and moon rotates and orbits in real
+time, on an optimised, flexible engine that can take future features (e.g. alien
+combat) without a rewrite. Recommending a major rework is acceptable when it is
+clearly better.
+
 ## 2. Scope IN
 - Test gates first, so later fixes can be trusted: `game/src/test/*`,
   `game/e2e/*`, `game/playwright.config.ts`, `game/tools/test-play-*.mjs`.
@@ -101,6 +107,8 @@ see that the unit fits its budget.
 - [ ] **U12 orbits + catalog** (`core/orbit/celestialData.ts` 261, `KeplerRail.ts` 254, `types.ts` 105; Milestone 1B)
   - Check Kepler solver convergence and edge cases (e → 1, M near π).
   - Check that catalog values match their stated sources.
+  - Does every body also ROTATE (sidereal period, obliquity, prime meridian),
+    not just orbit? The goal requires both.
 - [ ] **U13 SimulationCore** (`core/simulation/SimulationCore.ts` 486)
   - Is the tick order correct? Check fixed-step accumulation, the
     spiral-of-death guard and time-scale handling.
@@ -140,13 +148,21 @@ see that the unit fits its budget.
   - Find per-frame allocations in tick paths, Euler accumulators, and
     violations of the page rule.
   - Skim `play/ui/*`, `store/*`, `main.tsx`, `App.tsx`.
-- [ ] **U26 consolidation → LEAD GATE**
+- [ ] **U26 architecture fitness vs the goal** (AGENT_BRIEF §13)
+  - Can this architecture deliver a real-looking, real-time solar system at good
+    fps AND extend to new features (combat, AI entities, vehicles)?
+  - Check the entity/state model, render pipeline, scale/precision strategy,
+    worker use and extension points, using U01–U25's findings.
+  - Verdict per area: keep / refactor / rework, each with a draft ADR.
+- [ ] **U27 consolidation → LEAD GATE**
   - Write `docs/audit/FINDINGS.md`. Merge duplicate findings and rank them by
     severity × confidence.
   - Propose fix tasks F1, F2, … in dependency order, gates before engine. Each
     one is sized to fit a single 50-OLU session or is split until it does.
-  - Run U26 on a **different model** than most audit units, as a second-model
+  - Run U27 on a **different model** than most audit units, as a second-model
     review: re-check every S0/S1 finding's repro.
+  - Add a plain-language summary for the Lead (no technical choices asked;
+    only look-and-feel questions, per §13).
   - Set the stage to LEAD GATE and STOP.
 
 ## 6. Method (binds every unit)
@@ -216,16 +232,13 @@ A finding marked `suspected` must say what evidence would confirm it.
   findings and a thorough "checked, no issue" list is a valid outcome.
 
 ## 7. Risks & open decisions
-- **Push access.** This branch was authored in a PromptQL bot session without
-  GitHub push rights. The first session with push rights must push
-  `a1-engine-audit` before anything else.
 - **Auditor bias.** One model can share another's blind spots. The cross-model
-  review at U26 mitigates this; the Lead may order more.
+  review at U27 mitigates this; the Lead may order more.
 - **Findings may invalidate the 1A–1F approvals.** That is expected. Record it as a
   finding; do not reopen milestones in A1.
 - **RATIFIED items** (KCC step/slope, C¹ cap, camera bands, impostor hysteresis,
-  `celestialData` constants) may be flagged. Changing them needs a Lead ruling in a
-  fix task.
+  `celestialData` constants) may be flagged. Changing them happens in a
+  fix task under AGENT_BRIEF §13 (ADR + evidence).
 - **Environment.** m1f/m1e need an 8 GB VM and run one at a time; SwiftShader may
   differ from hardware WebGL. U01 decides how much that matters.
 - **T1 resume point.** B11 waits on U01's verdict and on the Lead.

@@ -1,7 +1,7 @@
 # TASK TRACKER — PHASE 2 MAIN DEVELOPMENT (contract: AGENT_BRIEF.md)
 
 Single source of truth for WHAT is being built and WHERE it stands. A fresh session
-resumes from: this file + the active task's `docs/<Tn>-plan.md` + `notes/STATE.md`
+resumes from: this file + the active task's `docs/<task>-plan.md` + `notes/STATE.md`
 NEXT ACTION. The first UNCHECKED BOX (planning item or build step) is always the
 starting point.
 
@@ -9,7 +9,7 @@ starting point.
 | Task | Branch | Plan status | Build status | Step progress | Last commit | Blockers |
 |------|--------|-------------|--------------|---------------|-------------|----------|
 | T1 playable moon | `t1-playable-moon` | READY (7/7 sections; Q1–Q8 ruled 2026-10-20) — `docs/T1-plan.md` | PAUSED 2026-10-21 for A1 (Lead) — was IN PROGRESS | plan 7/7 · build 10/13 (B4 = B4a–B4c; B5 = B5a–B5c; B7 = B7a–B7c; B9 = B9a–B9c) — PLAYABLE + ANIMATED + HUD (B10 done: HUD + zero-allocation proof) · B10 browser b9/b7 re-run PASS (session 46) · next: B11 core edit (coyoteTime / airControl) — BLOCKED at its baseline | 1283545 | B11 baseline m1f R2 FAIL on the unedited tree (R3 flaky) — Lead ruling needed (plan B11 options a/b/c) |
-| A1 engine audit (read-only) | `a1-engine-audit` | READY (7/7; authored 2026-10-21) — `docs/A1-plan.md` | IN PROGRESS (execute order 2026-10-21) | build 0/26 units · next: U01 m1f baseline diagnosis | 2eb8366 | none |
+| A1 engine audit (read-only) | `a1-engine-audit` | READY (7/7; authored 2026-10-21) — `docs/A1-plan.md` | IN PROGRESS (execute order 2026-10-21) | build 0/27 units · next: U01 m1f baseline diagnosis | 2eb8366 | none |
 
 
 Note: "Last commit" = the commit BEFORE the newest checkpoint (a file cannot
@@ -28,7 +28,7 @@ Why: specs by GLM 5.3, engine by GLM 5.3 Flash (Lead, 2026-10-21); several gates
 looked tuned-to-pass (R2 tautological θ audit, R2 comment/code tolerance mismatch,
 R3 threshold 45→8, R5 waived) and the m1f baseline is red on the unedited tree.
 Goal: evidence-backed findings on specs, engine, play layer and tests, sized into
-later fix tasks. READ-ONLY (AGENT_BRIEF.md §11). Plan: `docs/A1-plan.md` (26 units,
+later fix tasks. READ-ONLY (AGENT_BRIEF.md §11). Plan: `docs/A1-plan.md` (27 units,
 one per 50-OLU session). Ends at a LEAD GATE: the Lead triages
 `docs/audit/FINDINGS.md`; then fix tasks F1, F2, … are planned; T1 resumes after
 the Lead decides when.
@@ -175,7 +175,9 @@ item's content); NO game-code changes during planning — only the plan
 document + process files; on completion set plan status READY and STOP at
 the LEAD GATE.
 
-## PLAN FILE SCHEMA (every `docs/<Tn>-plan.md` follows this exactly)
+## PLAN FILE SCHEMA (every `docs/<task>-plan.md` follows this exactly)
+Audit plans (A-tasks) use audit units (Uxx, one per session) instead of build
+steps; see `docs/A1-plan.md`.
 - Header: task id · branch · stage (PLANNING / READY / BUILDING / DONE) ·
   last-updated date · "resume at the FIRST UNCHECKED BOX (planning item or
   build step)".
@@ -199,9 +201,10 @@ the LEAD GATE.
   ACTION update — is pushed. A box is the commit unit (AGENT_BRIEF.md §4/§6).
 
 ## HOW TO RESUME A TASK MIDWAY (fresh session — full procedure in AGENT_BRIEF.md §5)
-1. Read `AGENT_BRIEF.md` (the phase-2 contract above all else).
+1. Read `AGENT_BRIEF.md` (the phase-2 contract above all else). A1 also binds
+   §11 AUDIT MODE, §12 SESSION BUDGET and §13 GOAL & DECISION AUTHORITY.
 2. Here: find the ACTIVE task row (any row whose stage is not DONE).
-3. Open its `docs/<Tn>-plan.md`: the FIRST UNCHECKED BOX is the starting point —
+3. Open its `docs/<task>-plan.md`: the FIRST UNCHECKED BOX is the starting point —
    a planning-checklist item while the plan is IN PROGRESS, a build step once
    building (if the plan is READY but no execute order is on record, you are at
    the LEAD GATE — do not build; report and wait).

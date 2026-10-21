@@ -13,7 +13,7 @@ alone.
 are an AUDITOR, not a builder. The specs, the code and the tests are suspects to
 check, not truths to defend. §11 AUDIT MODE overrides "the code is the source of
 truth" above, and overrides §2, §3 and §8 where they conflict. T1 is PAUSED at B11.
-Every session obeys §12 SESSION BUDGET.
+Every session obeys §12 SESSION BUDGET and §13 GOAL & DECISION AUTHORITY.
 
 ## 1. READING ORDER (a fresh session reads exactly this, in order)
 1. This brief (all of it — it is short).
@@ -63,7 +63,7 @@ The engine is unusual BY DESIGN. When code looks odd, assume there is a reason
   green. Breaking one is a bug you introduced — fix it before reporting.
 - Final decisions live in code: catalog constants in `celestialData.ts` are never
   re-derived from formulas; the KCC step/slope rule, the C¹ speed cap, the layered
-  camera bands, and the impostor hysteresis are RATIFIED — change none of them
+  camera bands, and the impostor hysteresis are RATIFIED — change none of them (except under §13: ADR + evidence)
   without a Lead ruling.
 - Rapier (or any physics library) stays deferred: the analytic KCC + sweeps ARE
   the design. No new libraries without asking the Lead.
@@ -153,6 +153,10 @@ about whether a change is allowed — STOP, write the options, ask the Lead.
 During A1, also: any edit outside `docs/audit/**`, `game/tools/audit/**` and the
 process files (`notes/task.md`, `notes/STATE.md`, `docs/A1-plan.md`).
 The Lead is the repo owner.
+Outside A1, a technical choice (including a ratified constant, formula,
+threshold or a new library) is NOT a hard stop: decide it under §13 and record
+an ADR. Stop and ask the Lead only for look-and-feel/gameplay preferences,
+suspected lost work, or deleting the Lead's work.
 
 ## 10. AMENDMENT LOG
 - 2026-10-19 Phase-2 transition (Lead order): brief rewritten for game feature
@@ -178,6 +182,11 @@ The Lead is the repo owner.
   stated as binding for every task; sessions from now on run on high-capability
   models.
 
+- 2026-10-21 Goal & authority (Lead): §13 added. Real-looking, real-time solar
+  system on an optimised, flexible engine; major rework allowed when clearly
+  better; the session makes all technical calls (ADR in docs/decisions/); the
+  Lead answers only look-and-feel questions; no-mess safeguards.
+
 ## 11. AUDIT MODE (binds only while the active task is A1)
 Why: the milestone specs were written by GLM 5.3 and the engine by GLM 5.3 Flash
 (Lead, 2026-10-21). Specs, code and tests are all suspect; a session that defends
@@ -192,7 +201,7 @@ the existing code cannot audit it.
 - "Code wins every conflict" does NOT apply in A1: a spec/code conflict is a
   finding, and the auditor judges which side is right on physics and math.
 - RATIFIED items (§3) and parked 1F (§8) MAY be audited and flagged; changing them
-  still needs a Lead ruling in a later fix task.
+  happens in a later fix task under §13 (ADR + evidence).
 - Method, finding template, severity scale and budget rule: `docs/A1-plan.md` §6.
 
 ## 12. SESSION BUDGET (binds every task; Lead, 2026-10-21)
@@ -203,4 +212,35 @@ the existing code cannot audit it.
   box directly below it with the remaining scope, and repoint NEXT ACTION to it.
   Never end a session with uncommitted work.
 - Quality over quantity: fewer, verified results beat many shallow ones.
+
+## 13. PROJECT GOAL & DECISION AUTHORITY (Lead, 2026-10-21; binds every task)
+- **Goal.** A game that looks like a real solar system: every planet and moon
+  rotates and orbits, computed in real time. The engine must be optimised,
+  flexible, high-performance and a solid foundation, so later features (e.g.
+  fighting aliens, vehicles, new bodies) can be added without a rewrite.
+- **Realism vs performance.** Looking real is the main requirement. Where exact
+  simulation is impossible or too costly (heavy fps drops), use a workaround that
+  still looks real (LOD, impostors, analytic rails, precomputation, approximation)
+  and document the approximation.
+- **Major change is allowed** — architecture, pipeline, state model, physics
+  method, libraries — when it is clearly better for the goal.
+- **The session decides technical questions** (engineering, physics, state,
+  pipeline, performance) using its own best judgment. Do NOT ask the Lead to
+  choose between technical options.
+- **Ask the Lead only about look and feel / gameplay** (e.g. "should the Sun be
+  blinding like the real Sun, or comfortable to look at?"), in plain language,
+  with a recommended default.
+- **ADR for every significant technical decision:** `docs/decisions/ADR-NNN-<slug>.md`
+  (Context · Options · Decision · Why · Consequences), in the same commit.
+- **No-mess safeguards:**
+  1. Never delete the Lead's work: supersede, move or archive (`notes/archive/`);
+     git history stays intact; never force-push.
+  2. Rework happens on a task branch in session-sized steps (§12); every commit
+     leaves typecheck, build and the task's tests green.
+  3. Before replacing or retiring a test gate, the new independent check lands first.
+  4. Any change claimed as an optimisation shows measured frame time / heap
+     before and after.
+  5. `main` changes only by merging a finished task.
+- During A1, everything above is only **flagged and proposed**; changes happen in
+  the fix tasks that follow.
 

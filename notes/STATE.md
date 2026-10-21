@@ -1,8 +1,9 @@
-# SOLARIS — STATE — PHASE 2: TASK DEVELOPMENT (contract: AGENT_BRIEF.md; phase-1 history preserved below)
+# SOLARIS — STATE — PHASE 2 — A1 ENGINE AUDIT ACTIVE (T1 paused) (contract: AGENT_BRIEF.md; phase-1 history preserved below)
 
 ## NEXT ACTION
 **A1 ENGINE AUDIT (read-only) — next unit U01: m1f baseline diagnosis**
-(`docs/A1-plan.md` §5, first unchecked box). Read AGENT_BRIEF.md §11 AUDIT MODE
+(`docs/A1-plan.md` §5, first unchecked box). Read AGENT_BRIEF.md §11 AUDIT MODE,
+§12 and §13
 first: no edits to game/src, e2e, Milestone, Design_specs; write only
 docs/audit/** and game/tools/audit/**. U01 needs an 8 GB VM (provision 8192 MB),
 `cd game && npm ci && npx playwright install chromium`, then
@@ -161,6 +162,7 @@ milestone, Lead's call. (Evidence: notes/reports/M1F.md §10.5, §11.3.)
 | 2026-10-21 | Lead (repo owner): the milestone specs were authored by GLM 5.3 and the engine by GLM 5.3 Flash; run a deep engine audit before more features. T1 PAUSED at B11. |
 | 2026-10-21 | Lead: A1 engine audit approved and ordered to execute (plan `docs/A1-plan.md`); READ-ONLY at first; AGENT_BRIEF §11 AUDIT MODE installed; the repo owner is the Lead. |
 | 2026-10-21 | Lead: every session has a 50-OLU budget — every committable unit must fit in one session; split anything larger. Quality over quantity. Sessions from now on run on high-capability models (Opus 5.5 / Fable 5.1 / GPT-6 Astra class). |
+| 2026-10-21 | Lead: goal = real-looking, real-time solar system (every planet and moon rotates and orbits) on an optimised, flexible engine for future features; major rework allowed when clearly better; the session makes ALL technical calls (ADR); the Lead answers only look-and-feel questions; do not make a mess (AGENT_BRIEF §13). |
 
 ## SESSION LOG
 | # | Date | Goal | Outcome | Handoff note |
@@ -237,3 +239,5 @@ the active tracker is notes/task.md; NEXT ACTION = "T1 plan".
 | 45 | 2026-10-21 | T1 build: B10 (budget 50 OLU, wrap-up ~40) | Fresh session (VM v2, clone + `npm ci` CI_EXIT=0); §5 reconciliation clean — HEAD fdcdbba = origin, tree clean, no drift (tracker last-commit 0383238 lagged one notes commit; repaired to fdcdbba); execute order already in the APPROVAL LEDGER (not re-recorded). B10 DONE (this commit): `ui/hudPublisher.ts` (play-local throttled publisher, double-buffered PlayHud, FPS EMA, hint fade) + `ui/Hud.tsx` + stage-11 wiring + H default by build; new test-play-perf PASS 19/19 ×3 (heap Δ ≈ −8 KB, trend < 0.1 KB/1k frames, 666 publishes / 69.4 s at 144 Hz, max 10/s); every other play Node test PASS; TSC/BUILD/CANON exit 0, SHARED_EXIT 0, K10 grep 0. The heap rows in test-play-perf and test-play-shell now warm up for 20k frames (V8 tiering creep; `--jitless` flat; the shell row also failed on 8f6a97e). Browser b9/b7 NOT run — stopped at ~37 OLU. | NEXT = re-run check-play-b9/b7 against B10 (8 GB VM), then B11 (STATE.md NEXT ACTION). Push and commit mechanics as in row 30; OLU query as in row 41. |
 | 46 | 2026-10-21 | T1 build: B10 browser re-run → B11 (budget 50 OLU, wrap-up ~40) | Fresh session (VM v2 resized to 8 GB, clone + `npm ci` CI_EXIT=0, `npx playwright install chromium` PWI_EXIT=0); §5 reconciliation clean — HEAD 1283545 = origin, tree clean, tracker last-commit fdcdbba = the commit before the newest (convention), no drift; execute order already in the APPROVAL LEDGER (not re-recorded). B10 browser verification DONE: check-play-b9 (400×225) B9_EXIT=0, check-play-b7 B7_EXIT=0, TSC/BUILD exit 0. B11 baseline-first regression on the UNEDITED tree: m1e 6/6 PASS, m1f `[P,F,F,P,F]` then `[P,F,P,P,F]` — R2 red on the baseline itself (shared-module diff since 3057899 empty) → B11 core edit NOT started, escalated to the Lead (§9). Stopped at ~33 OLU. | NEXT = Lead ruling on the B11 baseline (options in the plan's B11 box), then B11. m1f takes ~4 min per run; run it as a background job and poll. Push and commit mechanics as in row 30; OLU query as in row 41. |
 | 47 | 2026-10-21 | A1 setup (PromptQL bot session) | T1 paused; branch a1-engine-audit cut from 256d77d; docs/A1-plan.md authored READY (26 units); AGENT_BRIEF §1 item 6 + §10 entry + §11 AUDIT MODE; tracker A1 row; ledger rows; no code changed | Next: U01 (8 GB VM). Diagnosis leads from this session: R2 detail string was never captured in session 46; R2 θ audit is tautological; R2 doc ±12%/1 px vs code ±15%/1.5 px; LIVE_SECONDS is wall time so the suite pose may depend on machine speed (M1F.md §15.4: Sun can cull at the end pose). |
+| 48 | 2026-10-21 | A1 setup cont. (PromptQL bot session) | Branch pushed (2eb8366); d9fc72f AGENT_BRIEF banner + §12 SESSION BUDGET | Process-file sweep pending |
+| 49 | 2026-10-21 | A1 setup cont.: §13 + sweep | 63d11a3's message overstates it: the sweep script was missing, so it only added docs/decisions/README.md. The follow-up commit applies the real changes: AGENT_BRIEF §13 + §9/§11 alignment; A1-plan yardstick, U12 rotation seed, new U26 architecture fitness, U27 consolidation (27 units); task.md/T1-plan/STATE sweep | Next: U01 (8 GB VM) |

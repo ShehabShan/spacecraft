@@ -2,7 +2,7 @@
 
 - Task: **T1** (playable moon) — definition: `notes/task.md` § "T1 — PLAYABLE MOON"
 - Branch: `t1-playable-moon`
-- Stage: **BUILDING** — plan READY (7/7); Lead execute order recorded 2026-10-20; build 10/13 done (B1–B10; B9 = B9a–B9c), next B11 core edit (re-run browser b9/b7 against B10 first)
+- Stage: **PAUSED 2026-10-21 for A1 (Lead)** — was BUILDING — plan READY (7/7); Lead execute order recorded 2026-10-20; build 10/13 done (B1–B10; B9 = B9a–B9c), next B11 core edit (re-run browser b9/b7 against B10 first)
 - Last updated: 2026-10-21
 - **Resume at the FIRST UNCHECKED BOX** (planning item or build step).
 - Rules: planning changes NO game code (plan + process files only); each checked
@@ -2484,6 +2484,8 @@ or reordered. A step that fails its checks is not committed as done.
       from rest, airborne, paused drift 0 m, 0 errors). B10 fully verified.
 
 - [ ] **B11 — CONDITIONAL core edit (only on a Lead ruling for Q2 and/or Q3).**
+  - **PAUSED 2026-10-21 for A1** — resume only after A1 U01's m1f baseline
+    verdict and a Lead order.
   - **Ruled IN (2026-10-20): Q2 = (a) and Q3 = yes.** B11 is applied, not
     skipped: both opt-in fields, default 0, play values `coyoteTime` 0.10 s
     and `airControl` 0.3. The baseline-first m1e/m1f regression is mandatory.
