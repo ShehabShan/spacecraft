@@ -251,7 +251,10 @@ if (globalThis.gc) {
   ok(frame.clock.dt === 0, 'PAUSED frame dt = 0')
   if (globalThis.gc) {
     S3.getState().dispatch('lockAcquired', 9)
-    for (let i = 0; i < 2000; i++) frame(1 / 60)
+    // WHY (B10): 20,000 warm-up frames — a 2,000-frame warm-up leaves V8
+    // tiering metadata growing (~70–110 KB here, also on 8f6a97e); --jitless is
+    // flat, so it is not play-layer allocation (test-play-perf, CHANGES B10).
+    for (let i = 0; i < 20000; i++) frame(1 / 60)
     globalThis.gc(); const h0 = process.memoryUsage().heapUsed
     for (let i = 0; i < 10000; i++) frame(1 / 60)
     globalThis.gc(); const dh = process.memoryUsage().heapUsed - h0

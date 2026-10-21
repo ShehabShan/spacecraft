@@ -99,7 +99,7 @@ if (typeof globalThis.gc === 'function') {
 // WHY: a stub store + input (plain objects) drive the real stages 1–8; the
 // pause row compares the KCC state and the driver/camera pose bit-for-bit.
 const st = { phase: 'PLAYING', dispatch(ev) { if (ev === 'pauseKey') st.phase = 'PAUSED' },
-  toggleHud() {}, setLoad() {} }
+  toggleHud() {}, setLoad() {}, setHud() {} }
 const inp = { moveX: 0, moveY: 0, sprint: false, crouch: false, jumpPressed: false,
   lookDX: 0, lookDY: 0, zoomDelta: 0, toggleCamEdge: false, respawnEdge: false,
   pauseEdge: false, toggleHudEdge: false, clearEdges() { this.toggleCamEdge = false;

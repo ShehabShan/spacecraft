@@ -20,6 +20,7 @@ export type PlayEvent =
 export interface PlayHud {
   speed: number; state: string; grounded: boolean; fps: number;
   lat: number; lon: number; altAGL: number;
+  hintOn: boolean; firstPerson: boolean; // B10 additive: §10.5 hint fade + FP centre dot
 }
 
 /**
@@ -45,7 +46,7 @@ export function nextPhase(p: PlayPhase, e: PlayEvent): PlayPhase {
 }
 
 export function makeHud(): PlayHud {
-  return { speed: 0, state: 'Idle', grounded: true, fps: 0, lat: 0, lon: 0, altAGL: 0 };
+  return { speed: 0, state: 'Idle', grounded: true, fps: 0, lat: 0, lon: 0, altAGL: 0, hintOn: true, firstPerson: false };
 }
 
 export interface PlayStoreState {
@@ -66,9 +67,14 @@ export interface PlayStoreState {
   reset(): void;
 }
 
+// WHY (B10, §10.5): the H debug readout defaults ON in dev builds, OFF in
+// production; Node tests have no import.meta.env, so they get the dev default.
+export const HUD_DEFAULT_VISIBLE: boolean =
+  (import.meta as unknown as { env?: { DEV?: boolean } }).env?.DEV ?? true;
+
 const INITIAL = {
   phase: 'LOADING' as PlayPhase, loadProgress: 0, loadTimedOut: false, lockHint: false,
-  pausedAtMs: 0, errorText: '', hudVisible: true,
+  pausedAtMs: 0, errorText: '', hudVisible: HUD_DEFAULT_VISIBLE,
 };
 
 export const usePlayStore = create<PlayStoreState>((set, get) => ({

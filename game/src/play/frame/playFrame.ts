@@ -3,7 +3,8 @@
 // `shell` is passed (PlayPage, B5c); without it the frame is B4's static loop
 // (test-play-frame). B7c: stages 3 (camera pre-step), 4+5 (controller ticks +
 // core.advance), 7 (sampleTelemetry) and the lagged stage-8 pose, also shell-
-// only. Zero allocation per frame: all scratch is created once in createPlayFrame.
+// only. B10: stage 11 HUD publish (HudPublisher, ≤ 10 Hz, double-buffered).
+// Zero allocation per frame: all scratch is created once in createPlayFrame.
 import {
   rotateByQuatConjInto, rotateByQuatInto, spinQuatInto, type Quat, type Vec3,
 } from '../../core/physics/sphericalFrame';
@@ -17,6 +18,10 @@ import { PLAY_TUNING } from '../world/moonConfig';
 import { LoadingGate, PlayClock } from './shellStages';
 import { createTelemetry, sampleTelemetry } from '../character/CharacterTelemetry';
 import { PlayerController } from '../controller/PlayerController';
+import { HudPublisher } from '../ui/hudPublisher';
+
+/** §10.5 HUD publish interval (s) — the plan's createTelemetryPublisher(100). */
+export const PLAY_HUD_INTERVAL_S = 0.1;
 
 export function quatMulInto(a: Quat, b: Quat, out: Quat): Quat {
   const w = a.w * b.w - a.x * b.x - a.y * b.y - a.z * b.z;
@@ -41,6 +46,8 @@ export interface PlayFrameFn {
   readonly gate: LoadingGate;
   /** Stages 4+5 controller (B7c; the sole kcc.input writer). */
   readonly ctrl: PlayerController;
+  /** Stage 11 HUD publisher (B10; test-play-perf counts its publishes). */
+  readonly hud: HudPublisher;
   /** KCC ticks run by the last frame (§9.6 Pause: resume frame = 0). */
   readonly lastTicks: number;
 }
@@ -58,6 +65,7 @@ export function createPlayFrame(w: MoonWorld, cam: ThirdPersonCamera, shell?: Pl
   const gate = new LoadingGate(PLAY_TUNING.loadTimeoutS);
   const now = shell?.now ?? (() => performance.now());
   const ctrl = new PlayerController(w.kcc);
+  const hud = new HudPublisher(PLAY_HUD_INTERVAL_S);
   let lastTicks = 0;
   const fn = function playFrame(delta: number): void {
     const { core, kcc } = w;
@@ -120,9 +128,12 @@ export function createPlayFrame(w: MoonWorld, cam: ThirdPersonCamera, shell?: Pl
     rotateByQuatConjInto(qS, kcc.absPos.x + off.x, kcc.absPos.y + off.y, kcc.absPos.z + off.z, camP);
     w.lod.update(camP.x, camP.y, camP.z);
     w.pool.pump();
-    // 11. loading gate (HUD publish arrives in B10)
+    // 11. loading gate + HUD publish (B10)
     if (shell) {
       const st = shell.store.getState();
+      // WHY: raw delta, every phase — the FPS readout must move in LOADING and
+      // PAUSED too (§10.5); the hint fade uses clock.dt (PLAYING time only).
+      hud.step(delta, clock.dt, kcc, w.animator.stateName, cam.firstPerson, st);
       if (st.phase === 'LOADING' && !gate.done) {
         // WHY: real delta, not clock.dt — loading time is wall time (§10.3).
         const s = w.spawnDir;
@@ -136,6 +147,7 @@ export function createPlayFrame(w: MoonWorld, cam: ThirdPersonCamera, shell?: Pl
   (fn as { clock: PlayClock }).clock = clock;
   (fn as { gate: LoadingGate }).gate = gate;
   (fn as { ctrl: PlayerController }).ctrl = ctrl;
+  (fn as { hud: HudPublisher }).hud = hud;
   Object.defineProperty(fn, 'lastTicks', { get: () => lastTicks });
   return fn;
 }

@@ -2,7 +2,7 @@
 
 - Task: **T1** (playable moon) — definition: `notes/task.md` § "T1 — PLAYABLE MOON"
 - Branch: `t1-playable-moon`
-- Stage: **BUILDING** — plan READY (7/7); Lead execute order recorded 2026-10-20; build 9/13 done (B1–B9; B9 = B9a–B9c), next B10 HUD + performance pass
+- Stage: **BUILDING** — plan READY (7/7); Lead execute order recorded 2026-10-20; build 10/13 done (B1–B10; B9 = B9a–B9c), next B11 core edit (re-run browser b9/b7 against B10 first)
 - Last updated: 2026-10-21
 - **Resume at the FIRST UNCHECKED BOX** (planning item or build step).
 - Rules: planning changes NO game code (plan + process files only); each checked
@@ -2441,7 +2441,7 @@ or reordered. A step that fails its checks is not committed as done.
         check-play-b7 PASS; anim 115, rig 97, world 27, frame 23, shell 101,
         lod 40, spawn 70, controller 57 PASS; TSC/BUILD exit 0.
 
-- [ ] **B10 — HUD + performance pass.**
+- [x] **B10 — HUD + performance pass.** (DONE 2026-10-21, session 45 — Node + V0 verified; browser b9/b7 re-run deferred, see build notes)
   - Files: `src/play/ui/Hud.tsx`, `createTelemetryPublisher(100)` wiring,
     the `H` toggle; any allocation fixes the perf check reveals.
   - Outcome: the controls hint + speed/state/FPS/coords HUD; the play layer
@@ -2451,6 +2451,35 @@ or reordered. A step that fails its checks is not committed as done.
     (≤ 10 publishes per simulated second at 144 Hz); manual — DevTools
     allocation timeline over 30 s shows only terrain envelopes, HUD FPS ≥ 58,
     `freeCount()` ≥ 6 throughout a 60 s walk/sprint.
+
+  - B10 build notes (decisions, session 45):
+    - Publisher: play-local `ui/hudPublisher.ts` (`HudPublisher`) replaces
+      `createTelemetryPublisher(100)`. The store one writes the TEST store's
+      telemetry shape through object literals on `performance.now()`. The
+      play one keeps the same 100 ms throttle (`PLAY_HUD_INTERVAL_S` = 0.1)
+      but runs on accumulated raw frame delta, which is deterministic
+      headless. It double-buffers `PlayHud` (§10.5) and has an FPS EMA of
+      α = 1 − e^(−Δ/τ) with τ = 0.5 s, reading in every phase.
+    - `PlayHud` gains `hintOn` and `firstPerson` (additive). The hint
+      latches off at 8 s of PLAYING time or 20 m walked while grounded.
+      Latitude = asin(up.y) and longitude = atan2(up.x, up.z), in the planet
+      frame with the spin axis +Y. `hudVisible` defaults to
+      `import.meta.env.DEV` (Node → ON).
+    - `Hud.tsx` mounts inside PlayShell while PLAYING. Hooks: `data-hud`,
+      `data-hud-state`, `data-hud-debug`, `data-hud-dot`.
+    - Allocation: no play-layer fix was needed. The sampling heap profiler
+      shows no retained growth.
+    - Warm-up change in `test-play-perf` and `test-play-shell`: the heap
+      tests now warm up for 20,000 frames. A 2,000-frame warm-up leaves a
+      ~15 KB / 1k-frame creep, but `--jitless` is flat to the byte and the
+      creep vanishes after ~20k frames, so it is V8 tiering metadata. The
+      test-play-shell heap row also failed on 8f6a97e without B10.
+    - Pool health: `freeCount ≥ 6` is judged on the real pool (MT15). The
+      instant-pump stub fills to MoonLod's `freeCount ≤ 2` stop, so the
+      stub value is printed only.
+    - Browser checks NOT run this session (OLU budget): check-play-b9
+      (400×225) and check-play-b7 must be re-run against B10 before B11
+      starts.
 
 - [ ] **B11 — CONDITIONAL core edit (only on a Lead ruling for Q2 and/or Q3).**
   - **Ruled IN (2026-10-20): Q2 = (a) and Q3 = yes.** B11 is applied, not

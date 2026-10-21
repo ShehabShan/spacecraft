@@ -1370,3 +1370,5 @@ Observations (NO change made — recorded for the Lead):
     world 27, frame 23, shell 101, lod 40, spawn 70, controller 57 PASS;
     TSC/BUILD exit 0. No core/render edit.
     · Source: Lead execute order.
+
+- 2026-10-21 · T1 B10 · `game/src/play/ui/hudPublisher.ts` (new), `ui/Hud.tsx` (new), `ui/playStore.ts`, `ui/PlayShell.tsx`, `frame/playFrame.ts`, `tools/test-play-perf.mjs` (new), `tools/test-play-shell.mjs`, `tools/test-play-frame.mjs` · HUD (controls hint with 8 s / 20 m fade, speed/state/grounded, H debug FPS/lat/lon/AGL, FP dot) published at ≤ 10 Hz from two boot buffers; the heap rows in test-play-perf and test-play-shell now warm up for 20,000 frames · plan §10.5 / §11.5 B10 · evidence: test-play-perf PASS 19/19 ×3, all play Node tests PASS, TSC/BUILD/CANON exit 0; `--jitless` heap flat (the creep is V8 tiering metadata) · source: session 45
