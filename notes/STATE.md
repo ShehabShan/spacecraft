@@ -1,16 +1,18 @@
 # SOLARIS — STATE — PHASE 2 — A1 ENGINE AUDIT ACTIVE (T1 paused) (contract: AGENT_BRIEF.md; phase-1 history preserved below)
 
 ## NEXT ACTION
-**A1 ENGINE AUDIT (read-only) — next unit U02: m1f R1 + R2 validity**
+**A1 ENGINE AUDIT (read-only) — next unit U03: m1f R3 + R4 + R5 validity**
 (`docs/A1-plan.md` §5, first unchecked box). Read AGENT_BRIEF.md §11 AUDIT MODE,
 §12 and §13 first: no edits to game/src, e2e, Milestone, Design_specs; write only
-docs/audit/** and game/tools/audit/**. Start from `docs/audit/U01-m1f-baseline.md`:
-R2 is red because the Sun is OCCLUDED at the F-12 pose (3057899), not culled/blank;
-its "Leads handed to U02" list (R1 Earth/horizon 1e9 sentinel, R2(a) re-audit loop)
-plus the plan seeds. Reuse `game/tools/audit/u01-m1f-probe.mjs` (CDP logpoint, no
-harness edit) for any in-page read. Budget 50 OLU; wrap up at ~40.
+docs/audit/** and game/tools/audit/**. U02 (`docs/audit/U02-m1f-r1r2-validity.md`)
+showed R1's pair audit is constants-only plus a dead Earth/horizon term, and R2(a)
+is a one-body tautology; check R3/R4/R5 for the same patterns (literal inputs,
+self-comparison, sentinels, break-after-first loops, header/code tolerance drift).
+Reuse the U02 probe style (`game/tools/audit/u02-r1r2-validity.mjs`: verbatim
+replica + mutation + independent read) and `u01-m1f-probe.mjs` for in-page reads.
+Budget 50 OLU; wrap up at ~40.
 
-T1 is PAUSED at B11 (blocked at its m1f baseline; U01 answered: NOT environmental — R2 regressed at 3057899). Do not
+T1 is PAUSED at B11 (blocked at its m1f baseline; U01 answered: NOT environmental — R2 likely regressed at 3057899, not bisected). Do not
 resume T1 until the Lead orders it.
 
 Phase-1 legacy (parked — carries forward unchanged): M1F round-7 ruling still
@@ -217,6 +219,7 @@ milestone, Lead's call. (Evidence: notes/reports/M1F.md §10.5, §11.3.)
 | 48 | 2026-10-21 | A1 setup cont. (PromptQL bot session) | Branch pushed (2eb8366); d9fc72f AGENT_BRIEF banner + §12 SESSION BUDGET | Process-file sweep pending |
 | 49 | 2026-10-21 | A1 setup cont.: §13 + sweep | 63d11a3's message overstates it: the sweep script was missing, so it only added docs/decisions/README.md. The follow-up commit applies the real changes: AGENT_BRIEF §13 + §9/§11 alignment; A1-plan yardstick, U12 rotation seed, new U26 architecture fitness, U27 consolidation (27 units); task.md/T1-plan/STATE sweep | Next: U01 (8 GB VM) |
 | 50 | 2026-10-21 | A1 U01 m1f baseline diagnosis (PromptQL bot, VM v2 4 vCPU/8 GB) | Bootstrap clean (HEAD cd743e8 = origin). REPAIRS: rows 36–49 sat below ## ANCHOR (outside the table) → moved back in order; A1 tracker last-commit 2eb8366 was stale. U01 DONE: 3 harness runs (1 gate RUN1_EXIT=1 badges [P,F,P,P,F]; 2 CDP-logpoint probes, tools/audit/u01-m1f-probe.mjs, PROBE_EXIT=0). R2 FAIL is a REAL defect: Sun +33° above horizon + active (not culled), readback non-blank (921,418/921,600 px), but the projected Sun centre shows [90,80,66] → occluded by nearer-pass geometry; R2 PASSED before 3057899 (F-12 pose change shipped without a gate run). Findings A1-U01-1 (S1), A1-U01-2 (S2) | Next: U02 (R1+R2 validity); leads in U01 doc (R1 Earth/horizon sentinel 1e9, R2(a) re-audits one body). T1-B11: baseline NOT env-red. |
+| 51 | 2026-10-22 | A1 U02 m1f R1 + R2 validity (PromptQL bot, VM v2 2 vCPU/4 GB) | Bootstrap clean (HEAD 29905e1 = origin, no drift). U02 DONE: Node probe tools/audit/u02-r1r2-validity.mjs (verbatim replicas + mutations, PROBE_EXIT=0, 9/9). R1 pair audit = literals only; R1(b) Earth/horizon structurally dead (0/300,000 chunks qualify, always the 1e9 sentinel); R1 determinism cannot see z-fighting; R2(a) audits the Sun 11x and compares b.theta with itself (passes with disks 2x / Sun 1.5x); R2 tolerance docs ±12%/1 px vs code ±15%/1.5 px; abRender guard vacuous. Findings A1-U02-1..6 (3x S1, 2x S2, 1x S3). Lead extra: task.md 3057899 cause softened to "likely, not bisected" (no amend) | Next: U03 (R3+R4+R5 validity) |
 
 ## ANCHOR
 07ae8ad768089bebb5715d78fb67bc8a1312effe — round-7 report + ledgers (the wind-down commit; the tool/evidence work commit precedes it;

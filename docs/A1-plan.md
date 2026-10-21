@@ -70,7 +70,7 @@ see that the unit fits its budget.
     read, not by a harness edit).
   - Also answer T1-B11's blocker: is the baseline red because of the
     environment, yes or no?
-- [ ] **U02 m1f R1 + R2 validity** (`Milestone1F_TestHarness.tsx` R1/R2 blocks, ~981–1180; Milestone 1F grep)
+- [x] **U02 m1f R1 + R2 validity** — DONE (`docs/audit/U02-m1f-r1r2-validity.md`: R1 + R2(a) cannot fail on their claims; only R2(b) is a real check) (`Milestone1F_TestHarness.tsx` R1/R2 blocks, ~981–1180; Milestone 1F grep)
   - Seeds:
     - The R2 θ audit compares `diskTheta(alpha=1)` with θ, so it can never
       fail.
