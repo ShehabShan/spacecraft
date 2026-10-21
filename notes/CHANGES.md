@@ -1300,3 +1300,18 @@ Observations (NO change made — recorded for the Lead):
     10k); rig 97, world 27, frame 12, shell 101, lod 40, spawn 70 PASS; TSC/BUILD
     exit 0. No core edit.
     · Source: Lead execute order.
+89. 2026-10-21 · T1/B7c · game/src/play/frame/playFrame.ts (stages 3/4+5/7/8
+    wired), game/src/play/PlayPage.tsx (opt-in ?probe=1 probe),
+    game/tools/test-play-frame.mjs (B7c rows), game/tools/check-play-b7.mjs (new)
+    · FIRST PLAYABLE: camera pre-step (PLAYING only), per-tick controller
+    simulate + core.advance on clock.dt, sampleTelemetry, lagged camera pose,
+    respawn through ctrl.reset + cam.reset with dt = 0, FP hides the rig.
+    · Why: plan step B7c (decisions in the plan's B7c build notes).
+    · Evidence: test-play-frame PASS 23/23 (first PLAYING frame 0 ticks; W 2 s
+    120 ticks → 5.959 m; Space airborne, lands; 120 PAUSED frames bit-identical;
+    resume 0 substeps; respawn 0 ticks, spawn·dir > 0.999999; shell-path heap
+    non-growing); check-play-b7 PASS (PLAYING → PAUSED, W moved, airborne, paused
+    drift 0 m, sim time frozen, 0 errors); check-play-b5/b6 PASS; controller 57,
+    rig 97, world 27, shell 101, lod 40, spawn 70 PASS; TSC/BUILD exit 0; K10
+    grep 0 hits. No core edit.
+    · Source: Lead execute order.

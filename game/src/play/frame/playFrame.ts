@@ -1,8 +1,9 @@
 // T1 per-frame pipeline (plan §4.3). B4b: stages 6, 8 (static camera), 9, 10.
 // B5b: stages 1 (clock), 2 (edges) and 11 (loading gate) — active only when a
 // `shell` is passed (PlayPage, B5c); without it the frame is B4's static loop
-// (test-play-frame). Stages 3–5 and 7 are filled by B6–B8. Zero allocation per
-// frame: all scratch is created once in createPlayFrame.
+// (test-play-frame). B7c: stages 3 (camera pre-step), 4+5 (controller ticks +
+// core.advance), 7 (sampleTelemetry) and the lagged stage-8 pose, also shell-
+// only. Zero allocation per frame: all scratch is created once in createPlayFrame.
 import {
   rotateByQuatConjInto, rotateByQuatInto, spinQuatInto, type Quat, type Vec3,
 } from '../../core/physics/sphericalFrame';
@@ -14,7 +15,8 @@ import type { InputState } from '../input/InputState';
 import type { PlayStoreLike } from '../ui/shellRuntime';
 import { PLAY_TUNING } from '../world/moonConfig';
 import { LoadingGate, PlayClock } from './shellStages';
-import { createTelemetry } from '../character/CharacterTelemetry';
+import { createTelemetry, sampleTelemetry } from '../character/CharacterTelemetry';
+import { PlayerController } from '../controller/PlayerController';
 
 export function quatMulInto(a: Quat, b: Quat, out: Quat): Quat {
   const w = a.w * b.w - a.x * b.x - a.y * b.y - a.z * b.z;
@@ -37,6 +39,10 @@ export interface PlayFrameFn {
   readonly clock: PlayClock;
   /** Stage 11 loading gate. */
   readonly gate: LoadingGate;
+  /** Stages 4+5 controller (B7c; the sole kcc.input writer). */
+  readonly ctrl: PlayerController;
+  /** KCC ticks run by the last frame (§9.6 Pause: resume frame = 0). */
+  readonly lastTicks: number;
 }
 
 /** Builds the MultiCameraRig onFrame callback for one world. */
@@ -51,6 +57,8 @@ export function createPlayFrame(w: MoonWorld, cam: ThirdPersonCamera, shell?: Pl
   const telem = createTelemetry();
   const gate = new LoadingGate(PLAY_TUNING.loadTimeoutS);
   const now = shell?.now ?? (() => performance.now());
+  const ctrl = new PlayerController(w.kcc);
+  let lastTicks = 0;
   const fn = function playFrame(delta: number): void {
     const { core, kcc } = w;
     if (shell) {
@@ -66,10 +74,22 @@ export function createPlayFrame(w: MoonWorld, cam: ThirdPersonCamera, shell?: Pl
         input.exitLock();
         clock.forceZero();
       }
-      if (input.respawnEdge) { w.respawnPlayer(); clock.forceZero(); }
+      if (input.respawnEdge) {
+        // §9.3 respawn: KCC placement, then controller + camera reset; the
+        // respawn frame runs dt = 0 (no catch-up ticks on the new pose).
+        w.respawnPlayer(); ctrl.reset(); cam.reset(kcc, w.earthDir, ctrl); clock.forceZero();
+      }
       if (input.toggleHudEdge) st.toggleHud();
+      // 3. camera pre-step. WHY (B7c decision): PLAYING only — input only
+      // arrives while locked, and re-projecting the heading on a frozen `up`
+      // is not bit-idempotent, so running it while PAUSED would drift the pose.
+      if (st.phase === 'PLAYING') cam.preStep(kcc, input, ctrl);
+      // 4+5. controller ticks (step → kcc.update(1/60, 1) → postSimulate per
+      // tick, B7a) then the core on the same dt (harness order: KCC, core).
+      ctrl.beginFrame();
+      lastTicks = ctrl.simulate(input, cam, clock.dt, 5);
+      core.advance(clock.dt);
     }
-    // 3 camera pre-step · 4 controller · 5 simulate (clock.dt) — B7
     // 6. render extraction (spin composed ONCE here, §4.4 / K1)
     const o = core.getOrigin();
     spinQuatInto(kcc.spinPhase, qS);
@@ -81,11 +101,15 @@ export function createPlayFrame(w: MoonWorld, cam: ThirdPersonCamera, shell?: Pl
     kcc.frameQuatInto(qF);
     quatMulInto(qS, qF, qW);
     w.characterRoot.quaternion.set(qW.x, qW.y, qW.z, qW.w);
-    // 7. telemetry (B7) + animation — B6: RestAnimator holds the rest pose
-    telem.dt = clock.dt;
+    // 7. telemetry + animation (RestAnimator holds the rest pose until B9);
+    // first person hides the rig (§9.4).
+    if (shell) sampleTelemetry(kcc, ctrl, shell.input, clock.dt, telem);
+    else telem.dt = clock.dt;
+    w.animator.setVisible(!cam.firstPerson);
     w.animator.update(telem, clock.dt);
-    // 8. camera post-step (static pose; spring arm/smoothing in B7)
-    cam.poseInto(kcc);
+    // 8. camera post-step: lagged spring arm with the shell; snap pose without
+    // (the B4b static path test-play-frame checks).
+    if (shell) cam.poseInto(kcc, clock.dt); else cam.poseInto(kcc);
     rotateByQuatInto(qS, cam.offsetPlanet.x, cam.offsetPlanet.y, cam.offsetPlanet.z, off);
     quatMulInto(qS, cam.quatPlanet, qW);
     const dx = alp[0] + off.x, dy = alp[1] + off.y, dz = alp[2] + off.z;
@@ -111,5 +135,7 @@ export function createPlayFrame(w: MoonWorld, cam: ThirdPersonCamera, shell?: Pl
   } as PlayFrameFn;
   (fn as { clock: PlayClock }).clock = clock;
   (fn as { gate: LoadingGate }).gate = gate;
+  (fn as { ctrl: PlayerController }).ctrl = ctrl;
+  Object.defineProperty(fn, 'lastTicks', { get: () => lastTicks });
   return fn;
 }

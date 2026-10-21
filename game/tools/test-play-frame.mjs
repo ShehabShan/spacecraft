@@ -95,6 +95,70 @@ if (typeof globalThis.gc === 'function') {
   ok(Math.abs(heapDelta) < 64 * 1024, `heap delta ${heapDelta} B over 10,000 frames`)
 } else fails.push('run with node --expose-gc (heap row)')
 
+// ---- B7c: shell-driven frame — W moves, Space jumps, §9.6 Pause --------
+// WHY: a stub store + input (plain objects) drive the real stages 1–8; the
+// pause row compares the KCC state and the driver/camera pose bit-for-bit.
+const st = { phase: 'PLAYING', dispatch(ev) { if (ev === 'pauseKey') st.phase = 'PAUSED' },
+  toggleHud() {}, setLoad() {} }
+const inp = { moveX: 0, moveY: 0, sprint: false, crouch: false, jumpPressed: false,
+  lookDX: 0, lookDY: 0, zoomDelta: 0, toggleCamEdge: false, respawnEdge: false,
+  pauseEdge: false, toggleHudEdge: false, clearEdges() { this.toggleCamEdge = false;
+    this.respawnEdge = false; this.pauseEdge = false; this.toggleHudEdge = false }, exitLock() {} }
+const fp2 = fakePool(M.cfg.PLAY_POOL_OPTS.meshCount)
+const w2 = M.createMoonWorld({ spawnOverride: null, makePool: () => fp2 })
+const cam2 = new M.ThirdPersonCamera(); cam2.reset(w2.kcc, w2.earthDir)
+const f2 = M.createPlayFrame(w2, cam2, { input: inp, store: { getState: () => st }, now: () => 0 })
+f2(1 / 60)
+ok(f2.lastTicks === 0, `first PLAYING frame ran ${f2.lastTicks} ticks (resume rule: 0)`)
+for (let i = 0; i < 60; i++) f2(1 / 60) // settle
+const k2 = w2.kcc, p0 = { ...k2.absPos }
+inp.moveY = 1
+let ticks = 0
+for (let i = 0; i < 120; i++) { f2(1 / 60); ticks += f2.lastTicks }
+inp.moveY = 0
+const moved = Math.hypot(k2.absPos.x - p0.x, k2.absPos.y - p0.y, k2.absPos.z - p0.z)
+ok(ticks === 120, `W hold ran ${ticks} ticks over 120 frames`)
+ok(moved > 4 && moved < 8, `W hold 2 s moved ${moved.toFixed(3)} m (walk 3.2 m/s incl. accel)`)
+for (let i = 0; i < 90; i++) f2(1 / 60) // stop
+inp.jumpPressed = true
+let airborne = false
+for (let i = 0; i < 30; i++) { f2(1 / 60); if (!k2.grounded) airborne = true }
+ok(airborne, 'Space leaves the ground')
+for (let i = 0; i < 400 && !k2.grounded; i++) f2(1 / 60)
+ok(k2.grounded, 'jump lands within 400 frames')
+// §9.6 Pause: 120 PAUSED frames bit-identical, resume frame 0 substeps
+inp.moveY = 1; f2(1 / 60); f2(1 / 60)
+inp.pauseEdge = true; f2(1 / 60)
+ok(st.phase === 'PAUSED', 'P edge → PAUSED')
+const snap = () => JSON.stringify([k2.absPos, k2.absVel, k2.fwd, k2.up, cam2.offsetPlanet, cam2.quatPlanet, M.RIG.driver])
+const s0 = snap()
+for (let i = 0; i < 120; i++) { inp.lookDX = 3; f2(1 / 60) }
+inp.lookDX = 0
+ok(snap() === s0, 'pose/state changed during 120 PAUSED frames')
+st.phase = 'PLAYING'; f2(1 / 60)
+ok(f2.lastTicks === 0, `resume frame ran ${f2.lastTicks} substeps`)
+f2(1 / 60)
+ok(f2.lastTicks === 1, `post-resume frame ran ${f2.lastTicks} ticks`)
+// respawn: back at the spawn, TP, dt = 0
+inp.respawnEdge = true; f2(1 / 60)
+const sp = w2.spawnDir, al = Math.hypot(k2.absPos.x, k2.absPos.y, k2.absPos.z)
+const sdot = (k2.pLocal.x * sp.x + k2.pLocal.y * sp.y + k2.pLocal.z * sp.z) / Math.hypot(k2.pLocal.x, k2.pLocal.y, k2.pLocal.z)
+ok(f2.lastTicks === 0 && sdot > 0.999999 && !cam2.firstPerson, `respawn: ticks ${f2.lastTicks}, spawn·dir ${sdot}`)
+// zero-GC on the shell path (walking in a circle: W + steady orbit)
+let heap2 = NaN
+if (typeof globalThis.gc === 'function') {
+  const run = (N) => { for (let i = 0; i < N; i++) { inp.lookDX = 2; f2(1 / 60) } }
+  // WHY: the shell path (controller + KCC + lagged camera) JIT-warms longer
+  // than the static path — diag: warm 2k → 10k measured 83 KB, then 30k
+  // measured 168 B, 60k 96 B (non-growing). Warm 12,000, measure 10,000.
+  run(12000); globalThis.gc(); const h0 = process.memoryUsage().heapUsed
+  run(10000); globalThis.gc(); heap2 = process.memoryUsage().heapUsed - h0
+  ok(Math.abs(heap2) < 64 * 1024, `shell-path heap delta ${heap2} B over 10,000 walking frames`)
+}
+inp.moveY = 0; inp.lookDX = 0
+console.log(`[test-play-frame] info (B7c): shell-path heap delta ${heap2} B`)
+console.log(`[test-play-frame] info (B7c): W 2 s → ${moved.toFixed(3)} m; |abs| ${al.toFixed(1)}`)
+
 console.log(`[test-play-frame] info: boom ${cam.boomLen.toFixed(3)} m, cam–char ${camChar.toFixed(3)} m, fwd·earth ${fe.toFixed(4)}, Earth ${elAngle.toFixed(2)}° off-axis, heap delta ${heapDelta} B`)
 if (fails.length) { console.log(`[test-play-frame] FAIL ${n - fails.length}/${n}`); for (const f of fails) console.log('  - ' + f); process.exit(1) }
 console.log(`[test-play-frame] PASS ${n}/${n}`)

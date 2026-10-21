@@ -2167,7 +2167,7 @@ or reordered. A step that fails its checks is not committed as done.
         the geometric value). `tools/check-play-b6.mjs` screenshots the rig
         after a pause (a PLAYING screenshot times out under SwiftShader).
 
-- **B7 — Controller + camera (FIRST PLAYABLE)** — split into B7a–B7c
+- [x] **B7 — Controller + camera (FIRST PLAYABLE)** — split into B7a–B7c
   (session 39 decision: one step = controller + camera + wiring + browser
   check exceeds one session's budget; intent unchanged — B7 is DONE when B7c
   is checked). Original outcome kept: **the moon is playable** — WASD
@@ -2249,7 +2249,7 @@ or reordered. A step that fails its checks is not committed as done.
           clearance runs on the real MOON_PARAMS field at the steepest sample
           within ±1.2 km of the spawn (79.7 m per 5 m), 7 pitches × 72 orbit
           steps, boom compressed on every frame.
-  - [ ] **B7c — playFrame stages 3–5/7 wiring + browser check (FIRST PLAYABLE).**
+  - [x] **B7c — playFrame stages 3–5/7 wiring + browser check (FIRST PLAYABLE).**
     - Files: `src/play/frame/playFrame.ts` (stage 3 camera pre-step, 4
       controller, 5 `kcc.update(dt, 5)` + `core.advance(dt)`, 7
       `sampleTelemetry`), `PlayPage.tsx` / `moonWorld.ts` wiring (respawn
@@ -2259,6 +2259,35 @@ or reordered. A step that fails its checks is not committed as done.
       moves the character, Space leaves the ground, P freezes); manual —
       walk/sprint ~3.2 / ~6.5 m/s, jump lands, crater-rim fall, >45° slide,
       no camera clip on a full orbit.
+    - **Build notes (B7c, session 40 — independent decisions).**
+      - `createPlayFrame` owns the `PlayerController` (exposed as `frame.ctrl`
+        and `frame.lastTicks` = KCC ticks of the last frame). Stage 5 is
+        `ctrl.simulate(input, cam, clock.dt, 5)` (per-tick step →
+        `kcc.update(1/60, 1)` → postSimulate, the B7a frame-rate fix) rather
+        than one `kcc.update(dt, 5)`, then `core.advance(clock.dt)` (harness
+        order: KCC, then core). The no-shell static path is unchanged (snap).
+      - Stage 3 `cam.preStep` runs only while PLAYING: re-projecting the
+        heading on a frozen `up` is not bit-idempotent, so running it while
+        PAUSED would drift the pose (§9.6 requires bit-identical).
+      - Respawn edge: `w.respawnPlayer(); ctrl.reset(); cam.reset(kcc,
+        earthDir, ctrl); clock.forceZero()` inside stage 2 — no `PlayPage` /
+        `moonWorld` change needed.
+      - Opt-in read-only probe: `?page=play&probe=1` sets
+        `window.__playProbe = { kcc, core, world, frame, cam }`; absent by
+        default (no behaviour change).
+      - `check-play-b7` runs at 640×360 with short PLAYING windows: under
+        SwiftShader the headless renderer's RSS grows ~100–200 MB/s while
+        PLAYING (pre-existing — reproduced identically at B7b HEAD, 554 → 1353
+        MB in 6 s; JS heap flat 18–19 MB), and 1280×720 OOMs a 4 GB VM.
+        SwiftShader also runs only ~0.03–0.3 sim s per wall s, so the browser
+        check asserts movement and no overspeed (≤ 3.6 m/s per sim s, judged
+        on `core.stats.simTime`); the walk-speed number is test-play-frame's
+        Node row (W 2 s → 5.959 m incl. acceleration).
+      - test-play-frame's shell-path heap row warms 12,000 frames before the
+        10,000-frame measurement (JIT warm-up: 83 KB after 2k warm, 168 B /
+        96 B at 30k / 60k — non-growing).
+      - Manual checks (walk/sprint feel, crater-rim fall, >45° slide, orbit
+        clip) are left for the Lead's hands-on pass; the scripted ones pass.
 
 - [ ] **B8 — Animation state machine.**
   - Files: `src/play/character/animStateMachine.ts` (§8.2 table, timers,

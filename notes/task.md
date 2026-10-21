@@ -8,7 +8,7 @@ starting point.
 ## TRACKER
 | Task | Branch | Plan status | Build status | Step progress | Last commit | Blockers |
 |------|--------|-------------|--------------|---------------|-------------|----------|
-| T1 playable moon | `t1-playable-moon` | READY (7/7 sections; Q1–Q8 ruled 2026-10-20) — `docs/T1-plan.md` | IN PROGRESS (execute order 2026-10-20) | plan 7/7 · build 6/13 + B7a, B7b (B4 = B4a–B4c; B5 = B5a–B5c; B7 = B7a–B7c) · next: B7c playFrame stages 3–5/7 wiring + browser check (FIRST PLAYABLE) | d0c5ab6 | none |
+| T1 playable moon | `t1-playable-moon` | READY (7/7 sections; Q1–Q8 ruled 2026-10-20) — `docs/T1-plan.md` | IN PROGRESS (execute order 2026-10-20) | plan 7/7 · build 7/13 (B4 = B4a–B4c; B5 = B5a–B5c; B7 = B7a–B7c) — FIRST PLAYABLE · next: B8 Animation state machine | 058b437 | none |
 
 Note: "Last commit" = the commit BEFORE the newest checkpoint (a file cannot
 contain its own hash); current HEAD: `git log -1`.

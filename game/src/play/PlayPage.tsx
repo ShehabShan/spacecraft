@@ -58,7 +58,13 @@ export default function PlayPage(): JSX.Element {
     const cam = new ThirdPersonCamera();
     cam.reset(w.kcc, w.earthDir);
     const inp = new InputState();
-    return { world: w, input: inp, onFrame: createPlayFrame(w, cam, { input: inp, store: usePlayStore }) };
+    const frame = createPlayFrame(w, cam, { input: inp, store: usePlayStore });
+    // WHY (B7c decision): read-only test probe for tools/check-play-b7.mjs,
+    // opt-in via ?probe=1 only — absent by default, no behaviour change.
+    if (new URLSearchParams(window.location.search).get('probe') === '1') {
+      (window as unknown as { __playProbe?: unknown }).__playProbe = { kcc: w.kcc, core: w.core, world: w, frame, cam };
+    }
+    return { world: w, input: inp, onFrame: frame };
   }, []);
   useEffect(() => () => world.dispose(), [world]);
   return (
