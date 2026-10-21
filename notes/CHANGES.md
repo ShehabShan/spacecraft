@@ -1268,3 +1268,19 @@ Observations (NO change made — recorded for the Lead):
     12/12, shell 101/101, lod 40/40, spawn 70/70; TSC/BUILD exit 0;
     check-play-b5 B5_EXIT=0, check-play-b6 B6_EXIT=0; K10 grep 0 hits.
     · Source: Lead execute order.
+
+87. 2026-10-21 · T1/B7a · game/src/play/controller/PlayerController.ts (new),
+    game/src/play/character/CharacterTelemetry.ts (sampleTelemetry added),
+    game/tools/test-play-controller.mjs (new)
+    · camera-relative WASD → kcc.input (§9.2; moveF/moveR on the KCC's own
+    fwd × up right), sprint gated on inputMag > 0.5, play-layer jump buffer
+    0.12 s (§9.3, Q5), hard-landing recovery (landRecoverScale over the §8.2
+    T_land), reset(); per-tick `simulate()` (step → kcc.update(1/60,1) →
+    postSimulate) for frame-rate independence; sampleTelemetry per §5.2/§8.6.
+    · why: plan step B7a (B7 split, session 39). · evidence: controller
+    PASS 29/29 (D·right 1.000000; heading err 1e-17 rad; walk 3.200 / sprint
+    6.500 m/s; 180° facing within 2° at 0.800 s, no overshoot; buffer 0.10 s
+    → relaunch +1 tick, 0.20 s → none; frame-rate 480/480/480 ticks, Δ 0.000
+    mm; heap Δ 22.7 KB / 10k frames); rig 97, world 27, frame 12, shell 101,
+    lod 40, spawn 70 all PASS; TSC/BUILD exit 0. No core edit.
+    · Source: Lead execute order.

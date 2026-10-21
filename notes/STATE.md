@@ -1,11 +1,15 @@
 # SOLARIS — STATE — PHASE 2: TASK DEVELOPMENT (contract: AGENT_BRIEF.md; phase-1 history preserved below)
 
 ## NEXT ACTION
-**T1 BUILDING — next build step B7a — PlayerController + sampleTelemetry (headless)**
-(`docs/T1-plan.md` §12.2 B7 → B7a, spec §9.2/§9.3, §5.2): B7 was split into
-B7a (controller + telemetry, Node-verified via `tools/test-play-controller.mjs`),
-B7b (ThirdPersonCamera completed, headless), B7c (playFrame stages 3–5/7 wiring
-+ `check-play-b7` browser check = FIRST PLAYABLE). Run Node tests with
+**T1 BUILDING — next build step B7b — ThirdPersonCamera completed (headless)**
+(`docs/T1-plan.md` §12.2 B7 → B7b, spec §9.4/§9.6): orbit (raw mouse, pitch
+clamp, zoom [1.2, 12]), spring arm (instant shrink, `camBoomTau` regrow),
+planet-frame pivot lag `camPosTau`, FP pose + enter/exit, `cam.reset`; checks
+added as part 2 of `tools/test-play-controller.mjs` (clearance over real
+terrain, rebase continuity 1 mm, orbit sign). B7a is DONE — read its build
+notes: stage 5 in B7c calls `ctrl.simulate(inp, cam, clock.dt, 5)` (per-tick
+controller), not `kcc.update` directly. Then B7c (wiring + `check-play-b7`
+browser check = FIRST PLAYABLE). controller test 29/29. Run Node tests with
 `node --expose-gc` (rig 97/97, world 27/27, frame 12/12, shell 101/101,
 lod 40/40, spawn 70/70); browser: `npx playwright install chromium`,
 `npx vite build && npx vite preview --port 4173 &`, then

@@ -2173,7 +2173,7 @@ or reordered. A step that fails its checks is not committed as done.
   is checked). Original outcome kept: **the moon is playable** — WASD
   camera-relative walk, Shift sprint, Space jump, C crouch, R respawn, V first
   person, mouse orbit; the rig moves and turns but holds its rest pose.
-  - [ ] **B7a — PlayerController + sampleTelemetry (headless).**
+  - [x] **B7a — PlayerController + sampleTelemetry (headless).**
     - Files: `src/play/controller/PlayerController.ts` (sole writer of
       `kcc.input`; §9.2 math, §9.3 play-layer jump buffer, hard-landing
       recover scale, `reset()`), `sampleTelemetry` in
@@ -2184,6 +2184,34 @@ or reordered. A step that fails its checks is not committed as done.
     - Checks: V0; `test-play-controller` = §9.6 Mapping, Facing, Buffer,
       Frame-rate independence + telemetry derivations (vertSpeed, landed,
       sliding) + heap ≈ 0 over 10k controller steps; all play tests green.
+    - Build notes (B7a, independent decisions — Lead review):
+        - **Per-tick controller (affects B7c).** `PlayerController.simulate(inp,
+          cam, dt, 5)` owns the 1/60 accumulator and runs, per tick,
+          `step` → `kcc.update(1/60, 1)` → `postSimulate`. Reason: the KCC
+          auto-turns `fwd` every tick, so moveF/moveR computed once per frame go
+          stale on multi-tick frames (measured 104 mm drift at 30 Hz vs 60 Hz
+          over the script); per tick, vDes = d·speed exactly and 30/60/144 Hz
+          end within 0.000 mm with equal tick counts. Stage 5 in B7c therefore
+          calls `ctrl.simulate(...)` instead of `kcc.update(dt, 5)` directly;
+          the KCC's own accumulator stays unused-but-intact (no core edit).
+          `beginFrame()` clears the jumped/landed edges once per frame; the
+          edges OR over the frame's ticks.
+        - `step` re-projects the camera heading onto the current `up` locally
+          (the camera still owns transport of its stored heading, B7b).
+        - Jump input is re-derived each tick (`jump = buffer > 0 && grounded
+          && !crouch`), never latched, so a stale flag cannot outlive the
+          buffer (supersedes the F10 carry-over note for the play layer).
+        - Hard-landing recovery window = the §8.2 `T_land` formula
+          (`landDuration`), so B9's Land pose and the input scale share one
+          duration. Telemetry `landed` reads the controller's landings edge
+          (one counter diff, not two).
+        - `slopeFwdDeg`/`slopeSideDeg` = `atan2(−n·fwd, n·up)` / `atan2(−n·right,
+          n·up)` from `terrainNormalInto` at the contact (+ = uphill ahead /
+          right); 0 airborne.
+        - Test scripts: the §9.6 frame-rate script runs 8 s, not 5 s — a lunar
+          jump flies 2u/g = 5.19 s, so 5 s cannot contain the landing. Checks
+          run on a zero-amplitude (perfect sphere) field so mapping/facing are
+          not confounded by slope; real-terrain behaviour is B7c's browser check.
   - [ ] **B7b — ThirdPersonCamera completed (headless).**
     - Files: `src/play/camera/ThirdPersonCamera.ts` (§9.4 orbit, pitch clamp,
       zoom, spring arm shrink/regrow `camBoomTau`, planet-frame pivot lag
