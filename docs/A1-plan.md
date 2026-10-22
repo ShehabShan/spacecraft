@@ -93,6 +93,8 @@ see that the unit fits its budget.
 - [ ] **U08 m1a harness + e2e plumbing** (`Milestone1A_TestHarness.tsx` 766; all `e2e/*.spec.ts`; `playwright.config.ts`)
   - Do the specs fail on a wrong badge, a missing badge, a timeout and a page
     error?
+  - PARTIAL (session 60): m1b spec results in `docs/audit/U08-e2e-spec-sensitivity.md`;
+    remaining work is its "Not yet checked" list.
 - [ ] **U09 play-layer Node tests** (`game/tools/test-play-*.mjs`, `check-play-*.mjs`)
   - Assertions vs the claims in `docs/T1-plan.md` §13.
   - Flaky heap rows: is each one a real leak or a bad bound?
