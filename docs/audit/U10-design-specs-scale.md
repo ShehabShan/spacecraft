@@ -219,3 +219,5 @@ Session 65 (2026-10-22) · @ 0a2ff11 · probe `game/tools/audit/u10b-cross-spec.
 
 ### Look-and-feel question for the Lead (U10b, plain words, §13)
 Right now the planets race around the Sun: an Earth year lasts about 5 minutes of play, the Moon circles Earth in under 2 minutes, but one Earth day takes 10 minutes — so a day is longer than a year. **Should the sky move like the real solar system (days much shorter than years, planets drifting slowly so your ship can fly to them), or fast so you can watch orbits happen?** Suggested default: realistic order — days much shorter than years, and planets slow enough that the ship can keep up with them.
+
+**Lead ruling (2026-10-22, APPROVAL LEDGER):** the suggested default is accepted. The sky follows the real order: days much shorter than years, and planets slow enough that the ship can reach them. A later fix task re-chooses the orbit speed-up, the speed-cap frame and the spin rates under an ADR (A1-U10-5, A1-U10-6). A1 records this only.
