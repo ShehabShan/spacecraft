@@ -99,11 +99,11 @@ see that the unit fits its budget.
   - Flaky heap rows: is each one a real leak or a bad bound?
 
 ### Phase B — Specs
-- [ ] **U10 Design_specs physics + scale sanity** (6 files, ~420 lines)
-  - Are the units consistent across the moon radius, `g`, the orbit periods and
-    the floating-origin lattice? The play config uses R = 1364.5 with
-    g = 1.62 m/s²; check what scale that implies.
-  - Do the specs contradict each other?
+- [x] **U10a Design_specs 02 + catalog/play scale** — DONE (`docs/audit/U10-design-specs-scale.md`: spec 02 lost every formula (9 empty slots); catalog radii follow two laws — Mars < Mercury, Charon/Titania > Moon; Earth 14.7° wide in the Moon sky (real 1.9°); play Moon 1:1,273 with real g — horizon 66 m, relief 26 % of R; `game/tools/audit/u10a-scale-sanity.mjs`)
+- [ ] **U10b Design_specs cross-spec sanity** (specs 00, 01, 03, 04, 05 in full, ~355 lines)
+  - Do the specs contradict each other (and spec 02)?
+  - Floating-origin lattice (256 m / rebase 1,024 m) vs body scale (Moon R 1,364.5 m); 30× time scale vs orbit periods; gravityRange vs SOI/Hill; atmosphere heights; artistic Sun 20,000 m and portalDist 80,000 m.
+  - Append to `docs/audit/U10-design-specs-scale.md` (findings A1-U10-5…).
 
 ### Phase C — Engine core (spec grep per module: see the table in §6.2)
 - [ ] **U11 precision + floating origin** (`core/math/precisionMath.ts` 170, `core/types.ts` 123, `render/FloatingOriginAdapter.ts` 118; Milestone 1A)
