@@ -1,19 +1,21 @@
 # SOLARIS — STATE — PHASE 2 — A1 ENGINE AUDIT ACTIVE (T1 paused) (contract: AGENT_BRIEF.md; phase-1 history preserved below)
 
 ## NEXT ACTION
-**A1 ENGINE AUDIT (read-only) — RESUME U08 (PARTIAL): m1a harness + e2e plumbing (`game/src/test/Milestone1A_TestHarness.tsx` 766 lines; all `game/e2e/*.spec.ts`; `game/playwright.config.ts`)**
+**A1 ENGINE AUDIT (read-only) — U08b: e2e mutation runs for m1a, m1c–m1f + plumbing (all `game/e2e/*.spec.ts`; `game/playwright.config.ts`)**
 (`docs/A1-plan.md` §5, first unchecked box). Read AGENT_BRIEF.md §11 AUDIT MODE,
 §12 and §13 first: no edits to game/src, e2e, Milestone, Design_specs; write only
-docs/audit/** and game/tools/audit/**. Session 60 DONE part: m1b spec mutation runs
-(probe `game/tools/audit/u08-spec-sensitivity.sh` + `u08-spec-mutate.mjs`, real spec +
-real config on a /tmp scratch copy) — findings A1-U08-1..4 in
-`docs/audit/U08-e2e-spec-sensitivity.md` (badge FAIL + timeout caught; pageerror,
-console.error, placeholder badges, dropped row, TS type error all pass). TO DO, in order
-(list = "Not yet checked" in that report): (1) m1a harness row validity review, U07
-probe style; (2) parameterise the sensitivity script per spec and run m1a, m1c–m1f
-(m1c/d/f slow); (3) badge-text-change mutation; (4) plumbing: port-in-use,
-`npm test` failure propagation, global 300 s timeout vs m1f; (5) finalise the report,
-tick U08, task.md row -> 8/27. Run `npm ci` in game/ first if node_modules is absent.
+docs/audit/** and game/tools/audit/**. U08a DONE (sessions 60–61): m1b spec mutations
+(A1-U08-1..4) + m1a harness rows (probe `game/tools/audit/u08-m1a-validity.mjs`,
+A1-U08-5..8). TO DO, in order (= "Not yet checked" in
+`docs/audit/U08-e2e-spec-sensitivity.md`): (1) parameterise
+`game/tools/audit/u08-spec-sensitivity.sh` + `u08-spec-mutate.mjs` per spec (harness path,
+mutation anchors) and run m1a, m1c–m1f (m1c/d/f slow; m1e/m1f want the 8 GB VM);
+(2) badge-text-change mutation; (3) plumbing: port-in-use, `npm test` failure
+propagation, global 300 s timeout vs m1f; (4) finalise the report, tick U08b,
+task.md row -> 8/27. Run `npm ci` in game/ first if node_modules is absent.
+OLU METER: GraphQL `{ olu_usage_aggregate(where:{thread_id:{_eq:"<thread>"}}){ aggregate { sum { olus } } } }`
+(field is `olus`) at `$PROMPTQL_PLATFORM_API_URL/v1/graphql`.
+GIT (session 61): a full `git clone` worked with the wiki's plain insteadOf + credential-helper setup (no workarounds needed). If it hangs, use the fallbacks below.
 GIT IN THE PROMPTQL VM (session 59: clone/ls-remote worked with the wiki helper re-keyed on the platform HOST — `credential.http://<host>:80.helper` printing `capability[]=authtype` + `authtype=Bearer` + `credential=$PROMPTQL_USER_JWT` — plus `--filter=blob:none`; a full clone timed out). Older note: the wiki's credential-helper setup hangs on git 2.53 and git
 protocol v2 POSTs hang through the integration proxy. Keep the `insteadOf` rewrite, and
 run git through a wrapper that sets, via env only, `GIT_CONFIG_COUNT=2`,
@@ -240,6 +242,7 @@ milestone, Lead's call. (Evidence: notes/reports/M1F.md §10.5, §11.3.)
 | 58 | 2026-10-22 | A1 U06 m1c harness validity (PromptQL bot, VM v2 2 vCPU/4 GB) | Bootstrap clean (HEAD e52885c = origin, tracker last-commit 739f1e0 = commit before newest, no drift). Git setup: credential-helper path + protocol v2 hang through the proxy; env-only extraHeader + protocol.version=0 works (noted in NEXT ACTION). U06 DONE: Node probe tools/audit/u06-m1c-validity.mjs (REAL terrainWorker run in Node, 215 chunks; harness seam audit + LOD traversal sliced verbatim; exact-cube-point truth check; 2 controls caught; PROBE_EXIT=0, 14/14). S1: T3 skips every cross-face pair (:487) — 816 cross-face pairs never compared, 260 inverted face-0 boundary normals pass; T2 alloc clause constant (counter written only at TerrainMeshPool.ts:137). S2: level-gap-2 neighbours in 25/600 samples unaudited; T4 heap N/A/negative passes; harness LOD merge leaves children desired (600/600 samples, ≤84 nodes, ≤3.4 s). S3: heap detail string missing `$`. Checked: engine seams bitwise-clean same-face + cross-face + corners (dev ≤1.2e-4 m); skirts cover all T-junction gaps L1..L3 + gap 1..3 (thinnest margin 103.8/122.7 m at gap 3). Findings A1-U06-1..6 (2x S1, 3x S2, 1x S3) | Next: U07 (m1b harness validity) |
 | 59 | 2026-10-22 | A1 U07 m1b harness validity (PromptQL bot, VM v2 2 vCPU/4 GB) | Bootstrap clean (HEAD 5a11dc6 = origin, tree clean, tracker last-commit e52885c = commit before newest, no drift; `npm ci` CI_EXIT=0). U07 DONE: Node probe tools/audit/u07-m1b-validity.mjs (REAL SimulationCore + KeplerRail; harness runSuite sliced verbatim lines 316–661; 3 controls caught; PROBE_EXIT=0 on 2 runs, 22/23 and 23/23 — the varying line is the GC-dependent heap verdict). S1: no row checks the orbital time scale (Earth n×1.01 and all n×2 pass all 5 rows; Kepler-3 ratio checks config T the rail never uses, and is μ-invariant); T1 reference re-uses rail basisP/Q + semiMinor (reversed orbit direction for every body passes all rows; Moon radius +0.1 % and planets b = 0.8a pass T1); zero-gc heap clause passes N/A and negative Δ (1.3 GB churn F F F then F P P; negative Δ printed as "N/A"). S2: vis-viva clause an identity, skips moons; console line + T3 detail print literal `{…}`; celestialData period table stale ≤ 11 s (Uranus 81,133.1 vs 81,144). S3: Moon at 0.71 Earth Hill radius (for U12). Checked: periods/n vs independent 2π√(a³/μ), retrograde set = Triton, spin sense, FD speed 5e-6, solver grid ≤ 6.7e-16, T5 9 × 1,024 m shifts, celestial locals exact. Findings A1-U07-1..7 (3x S1, 3x S2, 1x S3) | Next: U08 (m1a harness + e2e plumbing) |
 | 60 | 2026-10-22 | A1 U08 PARTIAL e2e spec sensitivity (PromptQL bot, VM v2 2 vCPU/4 GB) | Low OLU session — commit-only by the Lead's order. Probe tools/audit/u08-spec-sensitivity.sh + u08-spec-mutate.mjs: REAL e2e/m1b.spec.ts + playwright.config.ts on a /tmp copy, 8 runs, exits unpiped: baseline 0, badgefail 1, timeout 1, pageerror 0, consoleerror 0, norows 0, droprow 0, typeerror 0 (tsc on same copy exits 2). Findings A1-U08-1..4 (2x S1, 2x S2) in docs/audit/U08-e2e-spec-sensitivity.md. m1a harness review + other-spec runs NOT done; U08 box unticked. | Next: resume U08 (see NEXT ACTION) |
+| 61 | 2026-10-22 | A1 U08a m1a harness rows (PromptQL bot, VM v2 2 vCPU/4 GB) | Bootstrap clean (HEAD fb541e0 = origin, tree clean, tracker last-commit 237d889 = commit before newest, no drift; `npm ci` CI_EXIT=0). Probe tools/audit/u08-m1a-validity.mjs (REAL SimulationCore + generated mutant cores; harness lines 106–281 + 462–485 sliced verbatim; synthetic frame streams; PROBE_EXIT=0, 16/18, controls 5/5 OK). Findings A1-U08-5..8 (3x S1, 1x S2): thresholds 900–1100 and lattices 64/128/300/512/1000 pass all rows (T2–T4 read engine constants; axis-aligned run gives Δ=4·256); f32-before-subtract (24 m at 1 AU) and stale static beacons (9,216 m) pass; T5 drops ≥250 ms stalls and flags the frame before the rebase; verdict/detail text literal `{…}`. Checked: engine rebase ticks/Δ match spec exactly. U08 SPLIT (§12): U08a ticked, U08b = other-spec mutation runs + plumbing. | Next: U08b |
 
 ## ANCHOR
 07ae8ad768089bebb5715d78fb67bc8a1312effe — round-7 report + ledgers (the wind-down commit; the tool/evidence work commit precedes it;

@@ -90,11 +90,10 @@ see that the unit fits its budget.
 - [x] **U05c m1d DDA penetration + analytic dive + remaining reads** — DONE (`docs/audit/U05-m1d-harness-validity.md` §U05c: T2 passes with an endpoint-only sweep; DDA no-clip proof assumes slope 1.2, measured 6.4; a_struct exceeded 6.9×; g-load excludes drag; v@1000 confirmed by RK4) (DDA mutation: coarsen `DDA_MAX_GAP` / disable `_sweepTerrain` — can T2 or minPostTickAGL fail?; independent drag+gravity integration for v@1000; read flightController 60–355 + 580–750, aerodynamics.ts, atmosphere.ts, harness 1000–1182, Milestone 1D grep; append to `docs/audit/U05-m1d-harness-validity.md`)
 - [x] **U06 m1c harness validity** — DONE (`docs/audit/U06-m1c-harness-validity.md`: T3 never compares the 12 cube-face seams — inverted face-edge normals pass; level-gap-2 T-junctions occur and are unaudited; T2 alloc clause zero by construction; T4 heap N/A/negative passes; harness LOD leaves merged children desired; engine seams + skirts clean) (`Milestone1C_TestHarness.tsx` 1,006; Milestone 1C grep)
 - [x] **U07 m1b harness validity** — DONE (`docs/audit/U07-m1b-harness-validity.md`: no row checks the orbital time scale (n×2 passes all 5 rows; Kepler-3 is a tautology); T1 reference re-uses the rail basis — reversed orbit direction passes all rows; zero-gc verdict GC-dependent; vis-viva clause an identity and skips moons; log line prints literal `{…}`; period table stale ≤ 11 s) (`Milestone1B_TestHarness.tsx` 1,286; Milestone 1B grep; `game/tools/audit/u07-m1b-validity.mjs`)
-- [ ] **U08 m1a harness + e2e plumbing** (`Milestone1A_TestHarness.tsx` 766; all `e2e/*.spec.ts`; `playwright.config.ts`)
-  - Do the specs fail on a wrong badge, a missing badge, a timeout and a page
-    error?
-  - PARTIAL (session 60): m1b spec results in `docs/audit/U08-e2e-spec-sensitivity.md`;
-    remaining work is its "Not yet checked" list.
+- [x] **U08a m1a harness rows + m1b spec mutations** — DONE (`docs/audit/U08-e2e-spec-sensitivity.md`: m1b spec passes on pageerror, console.error, placeholder badges, dropped row, TS type error; m1a T2–T4 read the engine's own constants — thresholds 900–1100 and lattices 64–1000 pass all rows; f32-before-subtract and stale static beacons pass; T5 drops ≥250 ms stalls and flags the wrong rebase frame; verdict/detail text literal `{…}`) (`game/tools/audit/u08-spec-sensitivity.sh`, `u08-spec-mutate.mjs`, `u08-m1a-validity.mjs`)
+- [ ] **U08b e2e mutation runs for m1a, m1c–m1f + plumbing** (all `e2e/*.spec.ts`; `playwright.config.ts`; scope = "Not yet checked" in `docs/audit/U08-e2e-spec-sensitivity.md`)
+  - Parameterise `u08-spec-sensitivity.sh` per spec (harness path + mutation anchors) and run m1a, m1c–m1f.
+  - Badge-text-change mutation; port-in-use; `npm test` failure propagation; global 300 s timeout vs m1f.
 - [ ] **U09 play-layer Node tests** (`game/tools/test-play-*.mjs`, `check-play-*.mjs`)
   - Assertions vs the claims in `docs/T1-plan.md` §13.
   - Flaky heap rows: is each one a real leak or a bad bound?
