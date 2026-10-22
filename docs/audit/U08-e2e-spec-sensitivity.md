@@ -1,6 +1,6 @@
-# A1-U08 — m1a harness + e2e plumbing (U08a done; U08b open)
+# A1-U08 — m1a harness + e2e plumbing (DONE)
 
-**Status: U08a DONE (sessions 60–61, 2026-10-22); U08b OPEN.** Session 60 ran the e2e mutation runs for `e2e/m1b.spec.ts` (findings A1-U08-1..4). Session 61 reviewed the m1a harness rows (findings A1-U08-5..8). The mutation runs for the other specs and the plumbing checks are the U08b scope; see "Not yet checked".
+**Status: DONE (U08a sessions 60–61, U08b session 62, 2026-10-22).** Session 62 ran the generic mutations against m1a and m1c–m1f and checked the plumbing (findings A1-U08-9..10). Session 60 ran the e2e mutation runs for `e2e/m1b.spec.ts` (findings A1-U08-1..4). Session 61 reviewed the m1a harness rows (findings A1-U08-5..8). The mutation runs for the other specs and the plumbing checks are the U08b scope; see "Not yet checked".
 
 Plan question (`docs/A1-plan.md` U08): do the specs fail on a wrong badge, a missing badge, a timeout and a page error?
 
@@ -116,10 +116,10 @@ Controls (each must behave as shown):
 - **Claim (brief §3):** locals are always a Float64 subtraction, then narrowing. Per the header, static beacons shift by −Δ on every rebase while their absolute positions never move.
 - **Evidence:**
   - **`f32extract` mutant.** `local = fround(P) − fround(O)` narrows before subtracting, which breaks the §3 invariant. It passes PPPPP. At 10 km from the origin the error is below an f32 ulp, so the run cannot see it.
-  - **The same mutant 1 AU from the Sun.** The real core has a local error of 0 m; the mutant has 24 m. The probe's `M1A-F32-FAR` line printed NOT-CONFIRMED only because its pass bound (> 100 m) was set too high. The bug is still visible: just after a shift, |P − O| ≤ 128 m, so both rounded values snap to the same 16,384 m f32 grid point and the whole local, up to 128 m, is lost.
+  - **The same mutant 1 AU from the Sun.** The real core has a local error of 0 m; the mutant has 24 m. The probe's `M1A-F32-FAR` line printed NOT-CONFIRMED only because its pass bound (> 100 m) was set too high. The bug is still visible. At 1 AU the f32 spacing is 2¹⁴ = 16,384 m, and `fround(P) − fround(O)` is always a multiple of it. Just after a shift |P − O| ≤ 128 m: when P and O round to the same grid point the whole local is lost (error = |P − O|, up to 128 m), and when they straddle a grid boundary the local comes out as ±16,384 m. The worst-case error is therefore about one f32 spacing, ≈ 16 km, not 128 m (corrected in session 62).
   - **`staticStale` mutant.** Static entities are never re-extracted after a rebase. It passes PPPPP, while the beacons render 9,216 m from their true local position.
   - **Real core.** The beacon locals are exact: max error 0 m (`M1A-BEACON-OK`).
-- **Impact:** the 1A gate does not protect the invariant the whole engine rests on. The game runs at 1.5·10¹¹ m from the Sun, where this mutant puts the focus up to ~128 m off.
+- **Impact:** the 1A gate does not protect the invariant the whole engine rests on. The game runs at 1.5·10¹¹ m from the Sun, where this mutant puts the focus up to one f32 spacing (≈ 16 km) off.
 - **Proposed fix:**
   - Add a row that compares each entity's `localPosF32` with `Math.fround(absPos − O)` after every rebase, for the ship and all beacons.
   - Add a far-origin leg that starts the ship at a heliocentric offset (≈ 1 AU) and requires a local error < 1 mm.
@@ -164,8 +164,44 @@ Controls (each must behave as shown):
 - m1a: a 10th rebase does not slip through T3. No threshold mutant produced 10 rebases and passed (`M1A-T3-WINDOW` not confirmed); lattice 300 gave 10 rebases and passed only because T4 reads the mutated lattice (A1-U08-5).
 - m1a: T1 and T3 fail at 1,000 m/s (C2); T2, T3 and T4 fail with rebasing disabled (C3); T5 fails at 30 Hz and on a 200 ms stall per rebase (C4, C5). The rows are not constant.
 
-## Not yet checked (U08b scope)
-1. **Mutation runs for the other specs**: run `u08-spec-sensitivity.sh` against m1a, m1c, m1d, m1e and m1f. The script is m1b-only; it needs a harness-path/spec parameter, and each harness needs its own mutation anchors. This confirms A1-U08-1/2 by repro rather than by grep. m1c, m1d and m1f are slow (timeouts of 150/120/240 s); m1e/m1f want the 8 GB VM (A1-plan §7).
-2. **Badge text change**: e.g. a harness rendering `OK`/`ERR` instead of `PASS`/`FAIL`. A1-U08-2 predicts this passes, but it has not been run.
-3. **Plumbing**: whether `reuseExistingServer:false` plus a port already in use fails loudly; whether `npm test` (all specs, `workers:1`) propagates a single spec failure; the global `timeout: 300_000` against m1f's 240 s wait plus build time.
-4. Tick U08b, the task.md row → 8/27, and a final commit.
+## U08b — mutation runs for m1a, m1c–m1f and plumbing (session 62)
+
+Probe: `game/tools/audit/u08b-spec-sensitivity.sh` (parameterised runner, `PLAN="m1a:baseline,badgefail …"`) and `game/tools/audit/u08b-spec-mutate.mjs` (generic regex anchors shared by every harness: the verdict ternary `${X ? 'PASSED' : 'FAILED'}`, the badge text `r.pass ? 'PASS' : 'FAIL'`, and the `[Milestone1X] acceptance` console.log). Same scratch-copy method as U08a (`/tmp/u08blab`; repo tree untouched); REAL specs under the REAL `playwright.config.ts`. A dry run applied all five mutations to all five harnesses. Environment: VM v2, 2 vCPU / 4 GB.
+
+Mutations: `badgefail` = verdict forced PASSED + every badge `FAIL` (control); `badgeerr` = verdict forced PASSED + every badge `ERR`; `pageerror` = uncaught throw scheduled before the verdict line; `nolog` = verdict tag renamed, so no recognisable line.
+
+| Spec | baseline | badgefail | badgeerr | pageerror | nolog |
+|---|---|---|---|---|---|
+| m1a | 0 (14 s) | 1 ✅ | **0 ❌** | **0 ❌** | 1 ✅ (30 s wait) |
+| m1c | 0 (69 s) | 1 ✅ | **0 ❌** | **0 ❌** | – |
+| m1d | **1** (50 s) | 1 | **0 ❌** | 1 (inconclusive: baseline already red) | – |
+| m1e | 0 (34 s) | 1 ✅ | **0 ❌** | **0 ❌** | – |
+| m1f | **1** (247 s, `waitForEvent` 240 000 ms timeout) | not run | not run | not run | – |
+
+- m1d baseline is red on this VM: `[Milestone1D] acceptance FAILED — … maxDv=10.30`, badges `PASS,FAIL,PASS,PASS,PASS` (row 2 governor-dive). This is the fps-dependent T2 verdict already reported in U05b, not a new defect.
+- A1-U08-1 (page errors never asserted) is now confirmed by repro on m1a, m1c and m1e, not just by grep.
+
+### A1-U08-9 — The badge check only rejects the literal text "FAIL"; any other failing badge passes
+- **Severity:** S1 · **Confidence:** high (repro on 4 specs) · **Category:** test
+- **Location:** `e2e/m1a.spec.ts`…`m1f.spec.ts` @ 67220eb, the `not.toContain('FAIL')` assertion (m1a line 30; same line in all six).
+- **Claim (brief §3.7):** the gate asserts that every row passed.
+- **Evidence:** `badgeerr` (verdict line PASSED, every badge `ERR`) exits 0 on m1a, m1c, m1d and m1e. On m1d the governor-dive row is genuinely failing on this VM, and the spec still passes once the badge reads `ERR` and the verdict says PASSED.
+- **Impact:** a harness that renames its badge text, or renders an error state other than `FAIL`, passes the gate. Combined with A1-U08-2/3, the spec only proves that the word `FAIL` is absent.
+- **Proposed fix:** assert `badges` equals `Array(N).fill('PASS')`, with N = the harness's row count exported by the page (or a fixed per-spec constant).
+- **Fix size:** XS.
+
+### A1-U08-10 — The m1f gate did not reach a verdict within 240 s on a 2 vCPU / 4 GB VM
+- **Severity:** S3 · **Confidence:** medium (one run; cause not isolated) · **Category:** test / env
+- **Location:** `e2e/m1f.spec.ts` @ 67220eb (`waitForEvent` 240 000 ms); `playwright.config.ts` `timeout: 300_000`.
+- **Evidence:** the clean-tree m1f run ended `TimeoutError: page.waitForEvent: Timeout 240000ms exceeded`; wall 247 s. The harness's live walk alone is 120 s wall plus a multi-second synchronous suite. The per-test timeout leaves 60 s of margin over the 240 s wait. The webServer build runs before the test and does not count against it.
+- **Impact:** the m1f gate result depends on the machine; on a small runner it is red without any defect. A1-plan §7 already asks for the 8 GB VM for m1e and m1f.
+- **Proposed fix:** document the minimum runner for m1f in the spec header, or log a heartbeat and the elapsed time so a timeout can be told apart from a hang.
+- **Fix size:** XS.
+
+### Plumbing checked, no issue
+- **Port already in use:** with port 4173 occupied, the m1a run exits 1 with `http://localhost:4173 is already used … set reuseExistingServer:true` — loud and correct.
+- **`npm test` failure propagation:** `npm test -- e2e/m1a.spec.ts e2e/m1b.spec.ts` with m1a `badgefail` reports `1 failed, 1 passed` and exits 1.
+- **Missing verdict line:** `nolog` on m1a fails at the 30 s `waitForEvent` timeout (as `timeout` did on m1b).
+
+## Not yet checked (residual, not blocking)
+- m1f mutation runs (badgefail/badgeerr/pageerror) on the 8 GB VM. The m1f assertion lines are byte-identical to the other five specs, so the results above are expected to carry over.
