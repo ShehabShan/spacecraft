@@ -100,7 +100,7 @@ see that the unit fits its budget.
 
 ### Phase B — Specs
 - [x] **U10a Design_specs 02 + catalog/play scale** — DONE (`docs/audit/U10-design-specs-scale.md`: spec 02 lost every formula (9 empty slots); catalog radii follow two laws — Mars < Mercury, Charon/Titania > Moon; Earth 14.7° wide in the Moon sky (real 1.9°); play Moon 1:1,273 with real g — horizon 66 m, relief 26 % of R; `game/tools/audit/u10a-scale-sanity.mjs`)
-- [ ] **U10b Design_specs cross-spec sanity** (specs 00, 01, 03, 04, 05 in full, ~355 lines)
+- [x] **U10b Design_specs cross-spec sanity** — DONE (`docs/audit/U10-design-specs-scale.md` §U10b: speed cap has no frame — every planet outruns 2,000 m/s at 30× (S1); day longer than a year (S2); spec 05 1B "real-world positions" impossible (S2); gravityRange ≠ SOI, Sun has no range (S2); atmospheres up to 160 % of R (S2); specs built on Rapier (S2); 4× S3; look-and-feel question on orbit speed; `game/tools/audit/u10b-cross-spec.mjs`) (specs 00, 01, 03, 04, 05 in full, ~355 lines)
   - Do the specs contradict each other (and spec 02)?
   - Floating-origin lattice (256 m / rebase 1,024 m) vs body scale (Moon R 1,364.5 m); 30× time scale vs orbit periods; gravityRange vs SOI/Hill; atmosphere heights; artistic Sun 20,000 m and portalDist 80,000 m.
   - Append to `docs/audit/U10-design-specs-scale.md` (findings A1-U10-5…).
