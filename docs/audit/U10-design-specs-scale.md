@@ -113,3 +113,5 @@ Moon's size, and Earth looks about 8 times bigger in the sky than it really does
 Moon feel like a **small, dramatic world** (as now) or **look like the real Moon** (far horizon,
 gentle hills, a small Earth)? Suggested default: keep the small Moon for performance, but lower
 the mountains to look more lunar and keep the big Earth as an artistic choice.
+
+**Lead ruling (2026-10-22, APPROVAL LEDGER):** the suggested default is accepted. Keep the small Moon, lower the mountains in a later fix task (A1-U10-4) so it looks more lunar, and keep the big Earth as an artistic choice (A1-U10-3 is no longer a defect to fix; it stays documented as intended).
