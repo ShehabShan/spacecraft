@@ -106,7 +106,7 @@ see that the unit fits its budget.
   - Append to `docs/audit/U10-design-specs-scale.md` (findings A1-U10-5…).
 
 ### Phase C — Engine core (spec grep per module: see the table in §6.2)
-- [ ] **U11 precision + floating origin** (`core/math/precisionMath.ts` 170, `core/types.ts` 123, `render/FloatingOriginAdapter.ts` 118; Milestone 1A)
+- [x] **U11 precision + floating origin** — DONE (`docs/audit/U11-precision-floating-origin.md`: adapter never re-shows a re-registered entity (S2); unregistering the focus silently re-focuses entities[0] and rebases there (S2); live writable origin breaks Δ (S3); power-of-two rationale overstated — render exactness comes from subtract-then-narrow order, Δ f32-exact to 2^32 m (S3); lattice, order, ≤128 post-tick bound clean; `game/tools/audit/u11-precision-origin.mjs`) (`core/math/precisionMath.ts` 170, `core/types.ts` 123, `render/FloatingOriginAdapter.ts` 118; Milestone 1A)
 - [ ] **U12 orbits + catalog** (`core/orbit/celestialData.ts` 261, `KeplerRail.ts` 254, `types.ts` 105; Milestone 1B)
   - Check Kepler solver convergence and edge cases (e → 1, M near π).
   - Check that catalog values match their stated sources.
