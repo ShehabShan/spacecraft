@@ -1,15 +1,16 @@
 # SOLARIS — STATE — PHASE 2 — A1 ENGINE AUDIT ACTIVE (T1 paused) (contract: AGENT_BRIEF.md; phase-1 history preserved below)
 
 ## NEXT ACTION
-**A1 ENGINE AUDIT (read-only) — U09: play-layer Node tests (`game/tools/test-play-*.mjs`, `check-play-*.mjs`)**
+**A1 ENGINE AUDIT (read-only) — U10: Design_specs physics + scale sanity (6 files, ~420 lines)**
 (`docs/A1-plan.md` §5, first unchecked box). Read AGENT_BRIEF.md §11 AUDIT MODE,
 §12 and §13 first: no edits to game/src, e2e, Milestone, Design_specs; write only
 docs/audit/** and game/tools/audit/**. U08 DONE (sessions 60–62; report `docs/audit/U08-e2e-spec-sensitivity.md`,
-A1-U08-1..10). Residual: m1f mutation runs on the 8 GB VM (not blocking).
-U09: review whether the play-layer Node tests can fail on their claims
-(same method as U02–U08: read, then probe with mutants under game/tools/audit/). Run `npm ci` in game/ first if node_modules is absent.
+A1-U08-1..10). Residual: m1f mutation runs on the 8 GB VM (not blocking). U09 DONE (session 63; `docs/audit/U09-play-node-tests.md`, A1-U09-1..6; check-play-* NOT RUN — no Playwright chromium).
+U10: are units consistent across moon radius, g, orbit periods and the floating-origin lattice (play config R = 1364.5, g = 1.62 m/s² — what scale does that imply?); do the specs contradict each other?
+(same method as U02–U09: read, then probe with mutants under game/tools/audit/). Run `npm ci` in game/ first if node_modules is absent.
 OLU METER: GraphQL `{ olu_usage_aggregate(where:{thread_id:{_eq:"<thread>"}}){ aggregate { sum { olus } } } }`
 (field is `olus`) at `$PROMPTQL_PLATFORM_API_URL/v1/graphql`.
+GIT (session 63): `__github` connected; wiki insteadOf + credential helper works, BUT protocol v2 ls-remote hangs through the proxy (exit 124) — `git config protocol.version 1` in the repo makes ls-remote/fetch work.
 GIT (session 61): a full `git clone` worked with the wiki's plain insteadOf + credential-helper setup (no workarounds needed). If it hangs, use the fallbacks below.
 GIT IN THE PROMPTQL VM (session 59: clone/ls-remote worked with the wiki helper re-keyed on the platform HOST — `credential.http://<host>:80.helper` printing `capability[]=authtype` + `authtype=Bearer` + `credential=$PROMPTQL_USER_JWT` — plus `--filter=blob:none`; a full clone timed out). Older note: the wiki's credential-helper setup hangs on git 2.53 and git
 protocol v2 POSTs hang through the integration proxy. Keep the `insteadOf` rewrite, and
@@ -239,6 +240,7 @@ milestone, Lead's call. (Evidence: notes/reports/M1F.md §10.5, §11.3.)
 | 60 | 2026-10-22 | A1 U08 PARTIAL e2e spec sensitivity (PromptQL bot, VM v2 2 vCPU/4 GB) | Low OLU session — commit-only by the Lead's order. Probe tools/audit/u08-spec-sensitivity.sh + u08-spec-mutate.mjs: REAL e2e/m1b.spec.ts + playwright.config.ts on a /tmp copy, 8 runs, exits unpiped: baseline 0, badgefail 1, timeout 1, pageerror 0, consoleerror 0, norows 0, droprow 0, typeerror 0 (tsc on same copy exits 2). Findings A1-U08-1..4 (2x S1, 2x S2) in docs/audit/U08-e2e-spec-sensitivity.md. m1a harness review + other-spec runs NOT done; U08 box unticked. | Next: resume U08 (see NEXT ACTION) |
 | 61 | 2026-10-22 | A1 U08a m1a harness rows (PromptQL bot, VM v2 2 vCPU/4 GB) | Bootstrap clean (HEAD fb541e0 = origin, tree clean, tracker last-commit 237d889 = commit before newest, no drift; `npm ci` CI_EXIT=0). Probe tools/audit/u08-m1a-validity.mjs (REAL SimulationCore + generated mutant cores; harness lines 106–281 + 462–485 sliced verbatim; synthetic frame streams; PROBE_EXIT=0, 16/18, controls 5/5 OK). Findings A1-U08-5..8 (3x S1, 1x S2): thresholds 900–1100 and lattices 64/128/300/512/1000 pass all rows (T2–T4 read engine constants; axis-aligned run gives Δ=4·256); f32-before-subtract (24 m at 1 AU) and stale static beacons (9,216 m) pass; T5 drops ≥250 ms stalls and flags the frame before the rebase; verdict/detail text literal `{…}`. Checked: engine rebase ticks/Δ match spec exactly. U08 SPLIT (§12): U08a ticked, U08b = other-spec mutation runs + plumbing. | Next: U08b |
 | 62 | 2026-10-22 | A1 U08b other-spec mutation runs + plumbing (PromptQL bot, VM v2 2 vCPU/4 GB) | Bootstrap clean (HEAD 67220eb = origin). New runner tools/audit/u08b-spec-sensitivity.sh + generic u08b-spec-mutate.mjs (dry run 5 mutations × 5 harnesses OK). m1a/c/e baseline 0, badgefail 1; badgeerr 0 on m1a/c/d/e (A1-U08-9 S1: badge check only rejects text FAIL; m1d really red row passes); pageerror 0 on m1a/c/e (A1-U08-1 repro); m1d baseline red (U05b fps-dependence); m1f baseline timed out at 240 s (A1-U08-10 S3). Port-in-use exits 1 loudly; npm test 1 failed/1 passed exits 1. Fixed A1-U08-6 worst case ~128 m → ≈16 km (f32 spacing 16,384 m at 1 AU). U08b ticked. | Next: U09 |
+| 63 | 2026-10-22 | A1 U09 play-layer Node tests (PromptQL bot, VM v2 2 vCPU/4 GB) | Bootstrap clean (HEAD f05fbf4 = origin, tracker last-commit 67220eb = commit before newest, no drift; `npm ci` exit 0). 9 test-play scripts with --expose-gc: 8 exit 0 on 4 runs; controller exits 1 1 0 1. Probe tools/audit/u09-play-node-validity.mjs (src copy under node_modules/.cache/u09, mutated script copies; PROBE_EXIT=0, 11/11): ~400 B and ~4 KB per-frame transient allocation pass perf 19/19, retained leak FAIL 2/19; camera row cold h0 91–106 KB red 4/4, warm-up −8.7…10.3 KB green 4/4, later chunks ≤ 8 KB; jumpBufferS 0.19 passes, 0.30 caught. Findings A1-U09-1..6 (1x S1, 2x S2, 3x S3). check-play-* NOT RUN (no Playwright chromium). Git: protocol v2 hangs via proxy, v1 works. | Next: U10 |
 
 ## ANCHOR
 07ae8ad768089bebb5715d78fb67bc8a1312effe — round-7 report + ledgers (the wind-down commit; the tool/evidence work commit precedes it;

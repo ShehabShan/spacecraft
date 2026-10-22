@@ -94,7 +94,7 @@ see that the unit fits its budget.
 - [x] **U08b e2e mutation runs for m1a, m1c–m1f + plumbing** — DONE (A1-U08-9: `ERR` badges with a PASSED line pass m1a/c/d/e, incl. a really red m1d row; pageerror passes m1a/c/e; A1-U08-10: m1f no verdict in 240 s on 2 vCPU/4 GB; port-in-use and `npm test` propagation fine; `game/tools/audit/u08b-spec-sensitivity.sh`, `u08b-spec-mutate.mjs`) (all `e2e/*.spec.ts`; `playwright.config.ts`; scope = "Not yet checked" in `docs/audit/U08-e2e-spec-sensitivity.md`)
   - Parameterise `u08-spec-sensitivity.sh` per spec (harness path + mutation anchors) and run m1a, m1c–m1f.
   - Badge-text-change mutation; port-in-use; `npm test` failure propagation; global 300 s timeout vs m1f.
-- [ ] **U09 play-layer Node tests** (`game/tools/test-play-*.mjs`, `check-play-*.mjs`)
+- [x] **U09 play-layer Node tests** (`game/tools/test-play-*.mjs`, `check-play-*.mjs`) — DONE (`docs/audit/U09-play-node-tests.md`: heap rows measure after gc() and cannot see per-frame allocation — ~4 KB/frame of garbage passes perf 19/19 (S1); controller camera row red from a cold h0, not a leak — warm-up makes it green 4/4 (S2); only perf checks the §13.2 trend clause (S2); buffer bracket [0.10, 0.20) (S3); vacuous no-gc row + output format (S3); check-play-* NOT RUN, no chromium; `game/tools/audit/u09-play-node-validity.mjs`)
   - Assertions vs the claims in `docs/T1-plan.md` §13.
   - Flaky heap rows: is each one a real leak or a bad bound?
 
