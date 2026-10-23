@@ -123,10 +123,11 @@ see that the unit fits its budget.
     correct?
 - [x] **U16 astronautKCC part 1** — DONE (`docs/audit/U16-astronautkcc-part1.md`: the ratified 50° walk limit is really ≈56–59° because the ratio is measured along the tilted fwd (S1); on the spin-phase wrap tick the sweep samples a whole turn — 66 % false landings (S1); grounded velocity is commanded, not realised (S2); the NaN guard keeps a NaN vCtl, so the controller stays dead (S2); jump along the ε-normal, up to 4.1 m/s sideways (S2); stepHeight never binds (S3); slide 45° and walk 50° bands overlap (S3); `game/tools/audit/u16-kcc-step-rule.mjs`, `u16b-kcc-wrap-nan-blocked.mjs`) (`core/physics/astronautKCC.ts` lines 1–560)
   - Covers config, ground probe, step/slope rule (ratified) and sweeps.
-- [ ] **U17 astronautKCC part 2** (lines 560–1114)
+- [x] **U17 astronautKCC part 2** — DONE (`docs/audit/U17-astronautkcc-part2.md`: airborne/zero-G up blends to the WORLD radial (S1, latent at Ω=0); vehicle tick writes up/fwd in world frame (S2); every landing snaps the frame up to 51° (S1); slide stops 15–28× harder than μk·g (S2); airborne altAGL off up to 56 m (S2); landing drops strafe (S2); 3× S3 — the C¹ cap is not in the KCC, moved to U18; `game/tools/audit/u17-kcc-part2.mjs`) (lines 560–1114)
   - Covers jump/landing, sliding, airborne flight, the C¹ speed cap
     (ratified) and integrity.
 - [ ] **U18 flightController** (`core/physics/flightController.ts` 750; Milestone 1D)
+  - Includes the C¹ 2,000 m/s thrust fade (RATIFIED; moved here from U17, A1-U17-9) and the frame-convention check seeded by A1-U17-1.
 - [ ] **U19 aerodynamics + atmosphere** (`aerodynamics.ts` 136, `atmosphere.ts` 120; Milestone 1B/1D)
 
 ### Phase D — Render + workers
