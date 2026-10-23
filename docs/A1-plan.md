@@ -121,7 +121,7 @@ see that the unit fits its budget.
 - [x] **U15 spherical frame + impostor math** — DONE (`docs/audit/U15-spherical-frame-impostor.md`: "parallel transport" is Gram-Schmidt projection, not reversible — up jitter turns into heading drift (S2); below-horizon cull allowance 0.03 rad < eye dip 0.049–0.17 rad (S2); camera-facing impostor quads squash big bodies up to 31 % off-axis (S1); staged-rank occlusion inverts off-axis (S1); unclamped tan law (S3); header numbers wrong (S3); `game/tools/audit/u15-frame-impostor.mjs`, `u15b-occlusion-flip.mjs`) (`core/physics/sphericalFrame.ts` 249, `core/render/impostorMath.ts` 171)
   - Is parallel transport correct? Does drift accumulate? Is the projection
     correct?
-- [ ] **U16 astronautKCC part 1** (`core/physics/astronautKCC.ts` lines 1–560)
+- [x] **U16 astronautKCC part 1** — DONE (`docs/audit/U16-astronautkcc-part1.md`: the ratified 50° walk limit is really ≈56–59° because the ratio is measured along the tilted fwd (S1); on the spin-phase wrap tick the sweep samples a whole turn — 66 % false landings (S1); grounded velocity is commanded, not realised (S2); the NaN guard keeps a NaN vCtl, so the controller stays dead (S2); jump along the ε-normal, up to 4.1 m/s sideways (S2); stepHeight never binds (S3); slide 45° and walk 50° bands overlap (S3); `game/tools/audit/u16-kcc-step-rule.mjs`, `u16b-kcc-wrap-nan-blocked.mjs`) (`core/physics/astronautKCC.ts` lines 1–560)
   - Covers config, ground probe, step/slope rule (ratified) and sweeps.
 - [ ] **U17 astronautKCC part 2** (lines 560–1114)
   - Covers jump/landing, sliding, airborne flight, the C¹ speed cap
