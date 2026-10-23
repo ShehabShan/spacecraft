@@ -126,7 +126,7 @@ see that the unit fits its budget.
 - [x] **U17 astronautKCC part 2** — DONE (`docs/audit/U17-astronautkcc-part2.md`: airborne/zero-G up blends to the WORLD radial (S1, latent at Ω=0); vehicle tick writes up/fwd in world frame (S2); every landing snaps the frame up to 51° (S1); slide stops 15–28× harder than μk·g (S2); airborne altAGL off up to 56 m (S2); landing drops strafe (S2); 3× S3 — the C¹ cap is not in the KCC, moved to U18; `game/tools/audit/u17-kcc-part2.mjs`) (lines 560–1114)
   - Covers jump/landing, sliding, airborne flight, the C¹ speed cap
     (ratified) and integrity.
-- [ ] **U18 flightController** (`core/physics/flightController.ts` 750; Milestone 1D)
+- [x] **U18 flightController** — DONE (`docs/audit/U18-flight-controller.md`: yaw and roll mirrored — body +Z = X×Y is right, not left, so D/→ steer left (S1); the C¹ cap also fades retro thrust — no braking near 2,000 m/s (S1, RATIFIED); planet spin splits air/LANDED (rotating) from terrain/gravity (inertial) — parked ship slides 179 m/10 s (S1, latent); NaN input latches angVel, observer sees NaN (S2); 2,025 rescale reachable on Jupiter/Saturn/Uranus/Neptune (S2); telemetry pressure ignores tempFloor (S3); `game/tools/audit/u18-flight-controller.mjs`) (`core/physics/flightController.ts` 750; Milestone 1D)
   - Includes the C¹ 2,000 m/s thrust fade (RATIFIED; moved here from U17, A1-U17-9) and the frame-convention check seeded by A1-U17-1.
 - [ ] **U19 aerodynamics + atmosphere** (`aerodynamics.ts` 136, `atmosphere.ts` 120; Milestone 1B/1D)
 
