@@ -174,11 +174,13 @@
 ## Questions for the Lead (look and feel only)
 - **Q1 — How thick should atmospheres look and feel?** Real air layers are very thin compared to the planet, like the skin on an apple. On our small planets, a truly real one would be only a few metres to tens of metres thick, so there would be almost no air to fly through. Today they are about as tall as the planet itself.
   **Suggested default:** a thin, glowing shell that clearly looks thin from space (a few percent of the planet's size), but thick enough that you feel the air slowing you on the way down.
+  **ANSWERED (Lead, 2026-10-23): suggested default accepted.**
 - **Q2 — What should happen when you hit the ground too fast?** Today the ship just stops and counts as landed, even at 124 m/s.
   **Suggested default:**
   - Gentle (under ~5 m/s): a clean landing.
   - 5–15 m/s: a hard landing with a camera shake.
   - Faster: a crash, with a short explosion, then a respawn in orbit above the planet.
+  **ANSWERED (Lead, 2026-10-23): suggested default accepted.**
 
 ## Seeds for later units
 - U20 (terrain streaming): after T2, the arrival speed is set by the regime rule, not by drag (A1-U19-2). Streaming has to be sized for the fastest regime arrival.
