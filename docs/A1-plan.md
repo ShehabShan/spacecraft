@@ -2,7 +2,7 @@
 
 - Task: **A1** · Branch: `a1-engine-audit` (cut from `t1-playable-moon` @ 256d77d)
 - Stage: **BUILDING** (plan READY 7/7; Lead execute order 2026-10-21, APPROVAL LEDGER)
-- Last updated: 2026-10-22
+- Last updated: 2026-10-23
 - **Resume at the FIRST UNCHECKED BOX** (§5). One unit = one session = one commit.
 - Binding rules for this task: AGENT_BRIEF.md §11 AUDIT MODE.
 
@@ -115,7 +115,7 @@ see that the unit fits its budget.
 - [x] **U13 SimulationCore** — DONE (`docs/audit/U13-simulation-core.md`: the tick has no parented-compose step — the play world only works with the sky frozen (S1); controller + core accumulators disagree on 16.7 % of 144 Hz frames (S1); below 12 fps the game slows down, no load shedding, `shedSeconds` misses the 0.25 s clamp (S2); no interpolation alpha (S2); a self-unsubscribing rebase listener skips the next one (S2); `moonWorld` ticks the core directly (S3); ≈1.6 B/tick, not 0 (S3); integrate-then-rebase order, clocks, guards clean; `game/tools/audit/u13-simulation-core.mjs`, `u13b-lockstep-gc.mjs`) (`core/simulation/SimulationCore.ts` 486)
   - Is the tick order correct? Check fixed-step accumulation, the
     spiral-of-death guard and time-scale handling.
-- [ ] **U14 terrain field** (`core/terrain/noise.ts` 134, `spherify.ts` 112, `terrainField.ts` 232; Milestone 1C)
+- [x] **U14 terrain field** — DONE (`docs/audit/U14-terrain-field.md`: fixed ε 0.002 rad normals wrong by degrees on the Moon — p50 3.2°, p99 60°, not converged (S1); m1e STEEP field reaches 2,216 m vs KCC maxTerrainHeight 900 — bounds hand-typed (S1); normal frame flips → 37° jumps (S2); height/normal path allocates (S2, likely); spherify distortion 2× not √2, chunkArcWidth not conservative (S3); chunkKey collides at L9, seed aliasing, singleton field (S3); seams/determinism/inverse clean; `game/tools/audit/u14-terrain-field.mjs`, `u14b-normals-gc.mjs`) (`core/terrain/noise.ts` 134, `spherify.ts` 112, `terrainField.ts` 232; Milestone 1C)
   - Check determinism, seams, the max-height bound and the spherify
     distortion.
 - [ ] **U15 spherical frame + impostor math** (`core/physics/sphericalFrame.ts` 249, `core/render/impostorMath.ts` 171)
