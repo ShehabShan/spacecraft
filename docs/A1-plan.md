@@ -112,7 +112,7 @@ see that the unit fits its budget.
   - Check that catalog values match their stated sources.
   - Does every body also ROTATE (sidereal period, obliquity, prime meridian),
     not just orbit? The goal requires both.
-- [ ] **U13 SimulationCore** (`core/simulation/SimulationCore.ts` 486)
+- [x] **U13 SimulationCore** — DONE (`docs/audit/U13-simulation-core.md`: the tick has no parented-compose step — the play world only works with the sky frozen (S1); controller + core accumulators disagree on 16.7 % of 144 Hz frames (S1); below 12 fps the game slows down, no load shedding, `shedSeconds` misses the 0.25 s clamp (S2); no interpolation alpha (S2); a self-unsubscribing rebase listener skips the next one (S2); `moonWorld` ticks the core directly (S3); ≈1.6 B/tick, not 0 (S3); integrate-then-rebase order, clocks, guards clean; `game/tools/audit/u13-simulation-core.mjs`, `u13b-lockstep-gc.mjs`) (`core/simulation/SimulationCore.ts` 486)
   - Is the tick order correct? Check fixed-step accumulation, the
     spiral-of-death guard and time-scale handling.
 - [ ] **U14 terrain field** (`core/terrain/noise.ts` 134, `spherify.ts` 112, `terrainField.ts` 232; Milestone 1C)
