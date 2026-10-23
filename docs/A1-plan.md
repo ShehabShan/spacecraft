@@ -118,7 +118,7 @@ see that the unit fits its budget.
 - [x] **U14 terrain field** — DONE (`docs/audit/U14-terrain-field.md`: fixed ε 0.002 rad normals wrong by degrees on the Moon — p50 3.2°, p99 60°, not converged (S1); m1e STEEP field reaches 2,216 m vs KCC maxTerrainHeight 900 — bounds hand-typed (S1); normal frame flips → 37° jumps (S2); height/normal path allocates (S2, likely); spherify distortion 2× not √2, chunkArcWidth not conservative (S3); chunkKey collides at L9, seed aliasing, singleton field (S3); seams/determinism/inverse clean; `game/tools/audit/u14-terrain-field.mjs`, `u14b-normals-gc.mjs`) (`core/terrain/noise.ts` 134, `spherify.ts` 112, `terrainField.ts` 232; Milestone 1C)
   - Check determinism, seams, the max-height bound and the spherify
     distortion.
-- [ ] **U15 spherical frame + impostor math** (`core/physics/sphericalFrame.ts` 249, `core/render/impostorMath.ts` 171)
+- [x] **U15 spherical frame + impostor math** — DONE (`docs/audit/U15-spherical-frame-impostor.md`: "parallel transport" is Gram-Schmidt projection, not reversible — up jitter turns into heading drift (S2); below-horizon cull allowance 0.03 rad < eye dip 0.049–0.17 rad (S2); camera-facing impostor quads squash big bodies up to 31 % off-axis (S1); staged-rank occlusion inverts off-axis (S1); unclamped tan law (S3); header numbers wrong (S3); `game/tools/audit/u15-frame-impostor.mjs`, `u15b-occlusion-flip.mjs`) (`core/physics/sphericalFrame.ts` 249, `core/render/impostorMath.ts` 171)
   - Is parallel transport correct? Does drift accumulate? Is the projection
     correct?
 - [ ] **U16 astronautKCC part 1** (`core/physics/astronautKCC.ts` lines 1–560)
