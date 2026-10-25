@@ -1,7 +1,7 @@
 # A1 ENGINE AUDIT — CONSOLIDATED FINDINGS
 
 - Task: A1 (read-only) · Branch: `a1-engine-audit` · Built from U01–U26 reports at `49e6c32`
-- Status: **U27b in progress — K1 and K2a re-checked (U27b1/U27b2); 8/55 S0/S1 reviewed, 47 pending.** U27a built the index without rerunning repros. Fix tasks and the Lead summary remain U27c. Historical-majority model provenance is not yet established (see review below).
+- Status: **U27b in progress — K1, K2a and K2b re-checked (U27b1/U27b2/U27b3a); 11/55 S0/S1 reviewed, 44 pending.** U27a built the index without rerunning repros. Fix tasks and the Lead summary remain U27c. Historical-majority model provenance is not yet established (see review below).
 - Original evidence lives in each unit report (`docs/audit/Uxx-*.md`). This file indexes, groups and ranks it; the re-check table records later confirmation or correction without erasing original reports.
 - Regenerate the index (§4) with `python3 game/tools/audit/u27-findings-index.py --md` from the repo root. `--stats` and `--s01` print the counts and the S0/S1 list.
 
@@ -100,6 +100,34 @@ for provenance; this review supersedes the corrected subclaims.
 Six members reviewed here, plus two in K1 = **8/55**, with **47 pending**.
 Reviewer **GPT-6 Astra (`gpt-6-astra`)**, verified from platform usage; historical-
 majority provenance remains open. Remaining K2 and K3–K9 are not signed off.
+
+#### K2b re-check — U27b3a (2026-10-25, base `af725c1`)
+
+| Member | Review outcome | Evidence / qualification |
+|---|---|---|
+| A1-U08-1 | Re-confirmed S1 | Real m1b page/console errors and m1a pageerror pass; all six unchanged specs accept pre-verdict errors in fixtures. |
+| A1-U08-2 | Re-confirmed S1 | Real m1b placeholders / dropped row pass; all six specs accept both fixture classes. |
+| A1-U08-9 | Re-confirmed S1 | Real m1a ERR and red m1d with ERR + forced PASSED pass; all six specs accept ERR fixtures. |
+
+Full method, commands/exits, exact citations and audit-method ADR:
+[U27b3a K2b re-check](U27b3a-k2b-recheck.md).
+Independent probe **54/54 expected dispositions ×2**, wrapper exit 0:
+6 clean accepts, 18 correctly rejected controls, **30 false accepts per run**.
+The raw mixed Playwright suites exit 1 intentionally. These are plumbing tests,
+including m1f; **not** fresh engine/GPU acceptance or closure of the full m1f
+mutation residual. Original m1d baseline remains red.
+
+The archived §3.7 only mandates console collection/PASSED assertion/badge scraping;
+the original report overstates an explicit no-error/all-rows-PASS mandate. Findings
+stand as independently demonstrated gate-quality gaps. Remedy: explicit suite
+completion, required row identities + exact PASS states, and unexpected-error
+assertions; resolve or narrowly justify baseline 404 messages before gating them.
+Do not derive the expected row manifest from the page under test.
+
+Three members reviewed here, plus prior eight = **11/55**, **44 pending**.
+Reviewer platform model: **GPT-6 Astra (`gpt-6-astra`)**; historical-majority
+provenance remains unresolved. K2c/K2d and K3–K9 are not signed off.
+Typecheck/build/protected diff exit 0. Raw evidence: `U27b3a-evidence/`.
 
 ### K3 — No reference-frame model: bodies do not spin and actors are not parented — score 21.0 (7× S1)
 - **Members:**

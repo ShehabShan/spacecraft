@@ -1,0 +1,387 @@
+{
+  "cases": 54,
+  "positiveControls": 6,
+  "negativeControls": 18,
+  "falsePasses": 30,
+  "sourceSpecsUnchanged": true,
+  "results": [
+    {
+      "mode": "baseline",
+      "spec": "m1a",
+      "strictPass": true,
+      "shippedStatus": "passed",
+      "expectedStatus": "passed"
+    },
+    {
+      "mode": "failbadge",
+      "spec": "m1a",
+      "strictPass": false,
+      "shippedStatus": "failed",
+      "expectedStatus": "failed"
+    },
+    {
+      "mode": "failedverdict",
+      "spec": "m1a",
+      "strictPass": false,
+      "shippedStatus": "failed",
+      "expectedStatus": "failed"
+    },
+    {
+      "mode": "zerorows",
+      "spec": "m1a",
+      "strictPass": false,
+      "shippedStatus": "failed",
+      "expectedStatus": "failed"
+    },
+    {
+      "mode": "pageerror",
+      "spec": "m1a",
+      "strictPass": false,
+      "shippedStatus": "passed",
+      "expectedStatus": "passed"
+    },
+    {
+      "mode": "consoleerror",
+      "spec": "m1a",
+      "strictPass": false,
+      "shippedStatus": "passed",
+      "expectedStatus": "passed"
+    },
+    {
+      "mode": "placeholders",
+      "spec": "m1a",
+      "strictPass": false,
+      "shippedStatus": "passed",
+      "expectedStatus": "passed"
+    },
+    {
+      "mode": "missingrow",
+      "spec": "m1a",
+      "strictPass": false,
+      "shippedStatus": "passed",
+      "expectedStatus": "passed"
+    },
+    {
+      "mode": "errbadge",
+      "spec": "m1a",
+      "strictPass": false,
+      "shippedStatus": "passed",
+      "expectedStatus": "passed"
+    },
+    {
+      "mode": "baseline",
+      "spec": "m1b",
+      "strictPass": true,
+      "shippedStatus": "passed",
+      "expectedStatus": "passed"
+    },
+    {
+      "mode": "failbadge",
+      "spec": "m1b",
+      "strictPass": false,
+      "shippedStatus": "failed",
+      "expectedStatus": "failed"
+    },
+    {
+      "mode": "failedverdict",
+      "spec": "m1b",
+      "strictPass": false,
+      "shippedStatus": "failed",
+      "expectedStatus": "failed"
+    },
+    {
+      "mode": "zerorows",
+      "spec": "m1b",
+      "strictPass": false,
+      "shippedStatus": "failed",
+      "expectedStatus": "failed"
+    },
+    {
+      "mode": "pageerror",
+      "spec": "m1b",
+      "strictPass": false,
+      "shippedStatus": "passed",
+      "expectedStatus": "passed"
+    },
+    {
+      "mode": "consoleerror",
+      "spec": "m1b",
+      "strictPass": false,
+      "shippedStatus": "passed",
+      "expectedStatus": "passed"
+    },
+    {
+      "mode": "placeholders",
+      "spec": "m1b",
+      "strictPass": false,
+      "shippedStatus": "passed",
+      "expectedStatus": "passed"
+    },
+    {
+      "mode": "missingrow",
+      "spec": "m1b",
+      "strictPass": false,
+      "shippedStatus": "passed",
+      "expectedStatus": "passed"
+    },
+    {
+      "mode": "errbadge",
+      "spec": "m1b",
+      "strictPass": false,
+      "shippedStatus": "passed",
+      "expectedStatus": "passed"
+    },
+    {
+      "mode": "baseline",
+      "spec": "m1c",
+      "strictPass": true,
+      "shippedStatus": "passed",
+      "expectedStatus": "passed"
+    },
+    {
+      "mode": "failbadge",
+      "spec": "m1c",
+      "strictPass": false,
+      "shippedStatus": "failed",
+      "expectedStatus": "failed"
+    },
+    {
+      "mode": "failedverdict",
+      "spec": "m1c",
+      "strictPass": false,
+      "shippedStatus": "failed",
+      "expectedStatus": "failed"
+    },
+    {
+      "mode": "zerorows",
+      "spec": "m1c",
+      "strictPass": false,
+      "shippedStatus": "failed",
+      "expectedStatus": "failed"
+    },
+    {
+      "mode": "pageerror",
+      "spec": "m1c",
+      "strictPass": false,
+      "shippedStatus": "passed",
+      "expectedStatus": "passed"
+    },
+    {
+      "mode": "consoleerror",
+      "spec": "m1c",
+      "strictPass": false,
+      "shippedStatus": "passed",
+      "expectedStatus": "passed"
+    },
+    {
+      "mode": "placeholders",
+      "spec": "m1c",
+      "strictPass": false,
+      "shippedStatus": "passed",
+      "expectedStatus": "passed"
+    },
+    {
+      "mode": "missingrow",
+      "spec": "m1c",
+      "strictPass": false,
+      "shippedStatus": "passed",
+      "expectedStatus": "passed"
+    },
+    {
+      "mode": "errbadge",
+      "spec": "m1c",
+      "strictPass": false,
+      "shippedStatus": "passed",
+      "expectedStatus": "passed"
+    },
+    {
+      "mode": "baseline",
+      "spec": "m1d",
+      "strictPass": true,
+      "shippedStatus": "passed",
+      "expectedStatus": "passed"
+    },
+    {
+      "mode": "failbadge",
+      "spec": "m1d",
+      "strictPass": false,
+      "shippedStatus": "failed",
+      "expectedStatus": "failed"
+    },
+    {
+      "mode": "failedverdict",
+      "spec": "m1d",
+      "strictPass": false,
+      "shippedStatus": "failed",
+      "expectedStatus": "failed"
+    },
+    {
+      "mode": "zerorows",
+      "spec": "m1d",
+      "strictPass": false,
+      "shippedStatus": "failed",
+      "expectedStatus": "failed"
+    },
+    {
+      "mode": "pageerror",
+      "spec": "m1d",
+      "strictPass": false,
+      "shippedStatus": "passed",
+      "expectedStatus": "passed"
+    },
+    {
+      "mode": "consoleerror",
+      "spec": "m1d",
+      "strictPass": false,
+      "shippedStatus": "passed",
+      "expectedStatus": "passed"
+    },
+    {
+      "mode": "placeholders",
+      "spec": "m1d",
+      "strictPass": false,
+      "shippedStatus": "passed",
+      "expectedStatus": "passed"
+    },
+    {
+      "mode": "missingrow",
+      "spec": "m1d",
+      "strictPass": false,
+      "shippedStatus": "passed",
+      "expectedStatus": "passed"
+    },
+    {
+      "mode": "errbadge",
+      "spec": "m1d",
+      "strictPass": false,
+      "shippedStatus": "passed",
+      "expectedStatus": "passed"
+    },
+    {
+      "mode": "baseline",
+      "spec": "m1e",
+      "strictPass": true,
+      "shippedStatus": "passed",
+      "expectedStatus": "passed"
+    },
+    {
+      "mode": "failbadge",
+      "spec": "m1e",
+      "strictPass": false,
+      "shippedStatus": "failed",
+      "expectedStatus": "failed"
+    },
+    {
+      "mode": "failedverdict",
+      "spec": "m1e",
+      "strictPass": false,
+      "shippedStatus": "failed",
+      "expectedStatus": "failed"
+    },
+    {
+      "mode": "zerorows",
+      "spec": "m1e",
+      "strictPass": false,
+      "shippedStatus": "failed",
+      "expectedStatus": "failed"
+    },
+    {
+      "mode": "pageerror",
+      "spec": "m1e",
+      "strictPass": false,
+      "shippedStatus": "passed",
+      "expectedStatus": "passed"
+    },
+    {
+      "mode": "consoleerror",
+      "spec": "m1e",
+      "strictPass": false,
+      "shippedStatus": "passed",
+      "expectedStatus": "passed"
+    },
+    {
+      "mode": "placeholders",
+      "spec": "m1e",
+      "strictPass": false,
+      "shippedStatus": "passed",
+      "expectedStatus": "passed"
+    },
+    {
+      "mode": "missingrow",
+      "spec": "m1e",
+      "strictPass": false,
+      "shippedStatus": "passed",
+      "expectedStatus": "passed"
+    },
+    {
+      "mode": "errbadge",
+      "spec": "m1e",
+      "strictPass": false,
+      "shippedStatus": "passed",
+      "expectedStatus": "passed"
+    },
+    {
+      "mode": "baseline",
+      "spec": "m1f",
+      "strictPass": true,
+      "shippedStatus": "passed",
+      "expectedStatus": "passed"
+    },
+    {
+      "mode": "failbadge",
+      "spec": "m1f",
+      "strictPass": false,
+      "shippedStatus": "failed",
+      "expectedStatus": "failed"
+    },
+    {
+      "mode": "failedverdict",
+      "spec": "m1f",
+      "strictPass": false,
+      "shippedStatus": "failed",
+      "expectedStatus": "failed"
+    },
+    {
+      "mode": "zerorows",
+      "spec": "m1f",
+      "strictPass": false,
+      "shippedStatus": "failed",
+      "expectedStatus": "failed"
+    },
+    {
+      "mode": "pageerror",
+      "spec": "m1f",
+      "strictPass": false,
+      "shippedStatus": "passed",
+      "expectedStatus": "passed"
+    },
+    {
+      "mode": "consoleerror",
+      "spec": "m1f",
+      "strictPass": false,
+      "shippedStatus": "passed",
+      "expectedStatus": "passed"
+    },
+    {
+      "mode": "placeholders",
+      "spec": "m1f",
+      "strictPass": false,
+      "shippedStatus": "passed",
+      "expectedStatus": "passed"
+    },
+    {
+      "mode": "missingrow",
+      "spec": "m1f",
+      "strictPass": false,
+      "shippedStatus": "passed",
+      "expectedStatus": "passed"
+    },
+    {
+      "mode": "errbadge",
+      "spec": "m1f",
+      "strictPass": false,
+      "shippedStatus": "passed",
+      "expectedStatus": "passed"
+    }
+  ]
+}

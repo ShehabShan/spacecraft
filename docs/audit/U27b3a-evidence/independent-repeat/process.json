@@ -1,0 +1,20 @@
+{
+  "command": [
+    "/usr/local/bin/node",
+    "/workspace/spacecraft/game/node_modules/playwright/cli.js",
+    "test",
+    "--config",
+    "/tmp/u27b3a-fixture-q1deFz/playwright.config.cjs",
+    "--reporter=json"
+  ],
+  "exit": 1,
+  "signal": null,
+  "hashes": {
+    "m1a": "6f4a7688b422acfb5b50de007998d56c2ee6128c856c657f9ba2a13ac029be12",
+    "m1b": "c5fbebf7554b1d108381aaedf01bf44e6e93e61ecacb7eb39f4545f97170aa24",
+    "m1c": "fd75678145dbd976663a0eaf871eb217780a390dd9ff7f7cadefce80289dfc19",
+    "m1d": "a463936cbd00c1c1a35b5f4e2d5932f153160d2ed28652de63f431eb45f0b444",
+    "m1e": "e12498afea73445719d9b6af894e51bb3326e8c31ce9342e536c32d259693571",
+    "m1f": "88ffb33c8e52054db3b3fbbd3f08eb4a9be2825f0690d5fd7ad4613d29f91fc7"
+  }
+}

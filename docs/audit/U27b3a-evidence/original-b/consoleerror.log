@@ -1,0 +1,33 @@
+[u08-mutate] applied consoleerror
+[WebServer]
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+
+
+Running 1 test using 1 worker
+
+[1/1] e2e/m1b.spec.ts:5:1 › M1B — Kepler Rails & Two-Tier Time acceptance
+e2e/m1b.spec.ts:5:1 › M1B — Kepler Rails & Two-Tier Time acceptance
+[m1b gate] acceptance line: [Milestone1B] acceptance PASSED in 32.0 ms — maxPosErr={errRoundTrip.toExponential(1)}m restore={identityOk ? 'OK' : 'FAIL'} heapDelta={rebaseDelta}
+
+[m1b gate] badges: ["PASS","PASS","PASS","PASS","PASS"]
+
+[m1b gate] page console transcript:
+
+  error: Failed to load resource: the server responded with a status of 404 (Not Found)
+
+  warning: [.WebGL-0x2b3c0014d000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+
+  warning: [.WebGL-0x2b3c0014d000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+
+  warning: [.WebGL-0x2b3c0014d000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+
+  warning: [.WebGL-0x2b3c0014d000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
+
+  error: U08-injected console.error
+
+  log: [Milestone1B] acceptance PASSED in 32.0 ms — maxPosErr={errRoundTrip.toExponential(1)}m restore={identityOk ? 'OK' : 'FAIL'} heapDelta={rebaseDelta}
+
+  1 passed (5.9s)
