@@ -1,7 +1,7 @@
 # A1 ENGINE AUDIT — CONSOLIDATED FINDINGS
 
 - Task: A1 (read-only) · Branch: `a1-engine-audit` · Built from U01–U26 reports at `49e6c32`
-- Status: **U27b in progress — K1, K2a, K2b and ten K2c findings re-checked (through U27b3b2b2a); 21/55 S0/S1 reviewed, 34 pending.** U27a built the index without rerunning repros. Fix tasks and the Lead summary remain U27c. Historical-majority model provenance is not yet established (see review below).
+- Status: **U27b in progress — K1, K2a, K2b and eleven K2c findings re-checked (through U27b3b2b2b1); 22/55 S0/S1 reviewed, 33 pending.** U27a built the index without rerunning repros. Fix tasks and the Lead summary remain U27c. Historical-majority model provenance is not yet established (see review below).
 - Original evidence lives in each unit report (`docs/audit/Uxx-*.md`). This file indexes, groups and ranks it; the re-check table records later confirmation or correction without erasing original reports.
 - Regenerate the index (§4) with `python3 game/tools/audit/u27-findings-index.py --md` from the repo root. `--stats` and `--s01` print the counts and the S0/S1 list.
 
@@ -225,6 +225,30 @@ path checks; sampled continuity bounds alone cannot establish C∞.
 
 Two more reviewed = **21/55; 34 pending**. Remaining K2c: five; K2d: four.
 Next **U27b3b2b2b**, split before execution beginning m1c U06-1.
+Reviewer platform model **GPT-6 Astra (`gpt-6-astra`)**; historical-majority
+provenance unresolved. No untouched findings signed off.
+
+#### K2c m1c seam-gate re-check — U27b3b2b2b1 (2026-10-25, base `6632762`)
+
+| Member | Review outcome | Evidence / qualification |
+|---|---|---|
+| A1-U06-1 | Re-confirmed S1; qualified | Exact T3 accepts reversed normals at all 12 cube edges/eight corners and 1 m position faults on all 12 edges, in independent sphere + real-worker fixtures (64 false accepts/run). Same-face/T-junction normal/position controls fail. Production baseline 818 cross-face pairs has zero normal-bit mismatches; max position deviation 0.120 mm. |
+
+Report + audit-method ADR draft:
+[U27b3b2b2b1 m1c re-check](U27b3b2b2b1-m1c-recheck.md).
+Original **14/14 exit 0**; new probe **80/80 twice exit 0**.
+Initial **78/79 exit 1** identified synthetic +0/−0 differences; explicit control
+confirms them, only synthetic zeros canonicalized, real worker arrays untouched.
+Raw logs/exits: `U27b3b2b2b1-evidence/`. Typecheck/build/protected diff exit 0.
+
+T3 is responsive within a face and to missing coverage/bad round-trip data.
+Do not infer every FACE-table or spherify regression passes: those may break
+other clauses. New oracle uses raw Float32 bits and independent Cartesian
+topology, not production face tables or the old numeric-equality oracle.
+No fresh browser/GPU or whole-terrain seam/normal-accuracy certification.
+
+One more reviewed = **22/55; 33 pending**. Remaining K2c: four; K2d: four.
+Next **U27b3b2b2b2**, split starting m1b U07-1/-2.
 Reviewer platform model **GPT-6 Astra (`gpt-6-astra`)**; historical-majority
 provenance unresolved. No untouched findings signed off.
 
