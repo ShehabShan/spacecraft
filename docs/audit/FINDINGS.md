@@ -1,7 +1,7 @@
 # A1 ENGINE AUDIT — CONSOLIDATED FINDINGS
 
 - Task: A1 (read-only) · Branch: `a1-engine-audit` · Built from U01–U26 reports at `49e6c32`
-- Status: **U27b in progress — K1, K2a and K2b re-checked (U27b1/U27b2/U27b3a); 11/55 S0/S1 reviewed, 44 pending.** U27a built the index without rerunning repros. Fix tasks and the Lead summary remain U27c. Historical-majority model provenance is not yet established (see review below).
+- Status: **U27b in progress — K1, K2a, K2b and three K2c R1/R2 findings re-checked (through U27b3b1); 14/55 S0/S1 reviewed, 41 pending.** U27a built the index without rerunning repros. Fix tasks and the Lead summary remain U27c. Historical-majority model provenance is not yet established (see review below).
 - Original evidence lives in each unit report (`docs/audit/Uxx-*.md`). This file indexes, groups and ranks it; the re-check table records later confirmation or correction without erasing original reports.
 - Regenerate the index (§4) with `python3 game/tools/audit/u27-findings-index.py --md` from the repo root. `--stats` and `--s01` print the counts and the S0/S1 list.
 
@@ -128,6 +128,31 @@ Three members reviewed here, plus prior eight = **11/55**, **44 pending**.
 Reviewer platform model: **GPT-6 Astra (`gpt-6-astra`)**; historical-majority
 provenance remains unresolved. K2c/K2d and K3–K9 are not signed off.
 Typecheck/build/protected diff exit 0. Raw evidence: `U27b3a-evidence/`.
+
+
+#### K2c m1f R1/R2 re-check — U27b3b1 (2026-10-25, base `3081cd6`)
+
+| Member | Review outcome | Evidence / qualification |
+|---|---|---|
+| A1-U02-1 | Re-confirmed S1; qualified | Actual loop checks slot 0 six times. Four submitted/input geometry mutants pass while independent geometry rejects. Cached-position, first-slot fade, count and Sun scalar controls do fail; not a claim that full R2 can never fail. |
+| A1-U02-2 | Re-confirmed S1 | Actual plane/mask mutations do not affect fixed pair arithmetic. Independent depth separation drops 1539.03 → 0.00764 steps; actual clause still passes with supplied identical-image scalar. No GPU verdict. |
+| A1-U02-3 | Re-confirmed S1 | 8190 actual chunk origins hit the 1e9/30 km sentinel. Conservative noise-derived bound makes raw gap ≤ −1856.18 m without relying on the hand-entered 360 m terrain maximum. Positive out-of-domain control exercises real branch. |
+
+Full method, corrections, source citations, controls and audit-method ADR draft:
+[U27b3b1 R1/R2 re-check](U27b3b1-k2c-r1r2-recheck.md).
+Original repro **9/9**, exit 0; independent extracted predicates **20/20 ×2**,
+exit 0. Typecheck/build/protected diff exit 0. Raw logs: `U27b3b1-evidence/`.
+
+The R2 “cannot fail” wording in the historical report/index is scoped to the
+rendered-data property: cached bookkeeping can fail, and R2(b) remains responsive.
+Use submitted transform plus shader disk/edge ratio, not only the disk attribute,
+in future angular checks. Preserve real controls; require distinct bodies and
+explicit coverage. R1's analytic test is separate from its determinism predicate.
+No fresh browser/pixels or full m1f gate.
+
+Three more reviewed = **14/55; 41 pending**. Remaining K2c: 12; K2d: four.
+Reviewer platform model **GPT-6 Astra (`gpt-6-astra`)**; historical-majority
+provenance unresolved. Remaining K2 and K3–K9 are not signed off.
 
 ### K3 — No reference-frame model: bodies do not spin and actors are not parented — score 21.0 (7× S1)
 - **Members:**

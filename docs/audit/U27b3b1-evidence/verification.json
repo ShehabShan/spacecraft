@@ -1,0 +1,58 @@
+[
+  {
+    "name": "independent-run2",
+    "command": [
+      "node",
+      "tools/audit/u27b3b1-r1r2-recheck.mjs"
+    ],
+    "cwd": "game",
+    "exit": 0
+  },
+  {
+    "name": "typecheck",
+    "command": [
+      "npm",
+      "run",
+      "typecheck"
+    ],
+    "cwd": "game",
+    "exit": 0
+  },
+  {
+    "name": "build",
+    "command": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "cwd": "game",
+    "exit": 0
+  },
+  {
+    "name": "protected-diff",
+    "command": [
+      "git",
+      "diff",
+      "--exit-code",
+      "256d77d",
+      "--",
+      "game/src",
+      "game/e2e",
+      "game/playwright.config.ts",
+      "Milestone",
+      "Design_specs"
+    ],
+    "cwd": ".",
+    "exit": 0
+  },
+  {
+    "name": "whitespace",
+    "command": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "cwd": ".",
+    "exit": 0
+  }
+]
