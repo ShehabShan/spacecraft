@@ -159,15 +159,14 @@ see that the unit fits its budget.
   - Check the entity/state model, render pipeline, scale/precision strategy,
     worker use and extension points, using U01–U25's findings.
   - Verdict per area: keep / refactor / rework, each with a draft ADR.
-- [ ] **U27 consolidation → LEAD GATE**
-  - Write `docs/audit/FINDINGS.md`. Merge duplicate findings and rank them by
-    severity × confidence.
-  - Propose fix tasks F1, F2, … in dependency order, gates before engine. Each
-    one is sized to fit a single 50-OLU session or is split until it does.
-  - Run U27 on a **different model** than most audit units, as a second-model
-    review: re-check every S0/S1 finding's repro.
-  - Add a plain-language summary for the Lead (no technical choices asked;
-    only look-and-feel questions, per §13).
+- [x] **U27a consolidated findings index** — DONE (`docs/audit/FINDINGS.md`: 167 findings indexed (1 S0, 54 S1, 66 S2, 46 S3), all 55 S0/S1 merged into clusters K1–K9, ranked by severity × confidence, with cross-cluster dependencies; extractor `game/tools/audit/u27-findings-index.py`. S0/S1 repros NOT re-run.)
+- [ ] **U27b second-model re-check of S0/S1 repros**
+  - Run on a **different model** than most audit units. State the model in the SESSION LOG row.
+  - Re-run every S0/S1 repro (probe command + exit code) cluster by cluster (`FINDINGS.md` §3). Mark each one re-confirmed, changed or refuted in `FINDINGS.md`.
+  - If it does not fit one session, split it by cluster (U27b1, U27b2, …).
+- [ ] **U27c fix tasks + Lead summary → LEAD GATE**
+  - Propose fix tasks F1, F2, … in dependency order, gates (K2) before engine. Each one is sized to fit a single 50-OLU session or is split until it does.
+  - Add a plain-language summary for the Lead that collects the unanswered look-and-feel questions (U10a, U10b, U16, U17). Ask no technical choices (§13).
   - Set the stage to LEAD GATE and STOP.
 
 ## 6. Method (binds every unit)
