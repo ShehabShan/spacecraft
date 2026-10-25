@@ -147,7 +147,7 @@ see that the unit fits its budget.
     GLB-swap interface.
 
 ### Phase F — Cross-cutting + consolidation
-- [ ] **U25 invariants + UI sweep**
+- [x] **U25 invariants + UI sweep** — DONE (`docs/audit/U25-invariants-ui-sweep.md`: play frame allocates ≈10.5 KB/frame, 72–78 % in the core terrain height path, test-play-perf blind (S1); debug HUD lat/lon from tilted up, up to 39° off (S2); 3× S3; core purity, page rule, Euler clean; `game/tools/audit/u25-alloc-sampler.mjs`)
   - Grep audit: does `src/core` import nothing from three, react or physics
     libraries?
   - Find per-frame allocations in tick paths, Euler accumulators, and
