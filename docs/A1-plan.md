@@ -141,7 +141,7 @@ see that the unit fits its budget.
 ### Phase E — Play layer
 - [x] **U22 play world** — DONE (`docs/audit/U22-play-world.md`: drawn terrain ≠ collision terrain — L4 4.19 m mesh vs analytic height, edge-midpoint |err| p50 0.22 / p99 3.9 / max 12.9 m, diagonals max 26 m (S1); LOD selects 125 leaves for 96 meshes at the spawn — 31 holes 1.0–1.9 km, terrain-occluded at the eye, loading gate blind (S2); brad 1.5–2.2× the real extent (S3); spawn early exit unreachable, 24,000 iterations always, tangent-less roughness probes (S3); `game/tools/audit/u22-play-world.mjs`) (`play/world/*` ~720)
   - Check the boot, LOD, spawn and sky state.
-- [ ] **U23 controller, camera, input, frame** (`play/controller`, `play/camera`, `play/input`, `play/frame` ~750)
+- [x] **U23 controller, camera, input, frame** — DONE (`docs/audit/U23-controller-camera-input-frame.md`: below 12 fps the game runs slow — PlayClock 0.1 s + 5 substeps, 10 fps 0.83×, 5 fps 0.42× (S2); FP yaw moves on 600/1440 frames at 144 Hz (tick cadence) (S2); camera clears the analytic height but the drawn L4 mesh is > 0.4 m higher at 22.9 % of edge midpoints, up to 6.25 m (S2, likely); 4-point boom cut misses ridges — pivot hidden on 0.58 % of poses, up to 2.19 m (S2); heading ∥ up → zero heading, no movement (S3); wheel deltaMode ignored (S3); signs NOT mirrored, 12–144 fps independent, analytic clearance 0.400 m clean; `game/tools/audit/u23-controller-camera.mjs`) (`play/controller`, `play/camera`, `play/input`, `play/frame` ~750)
 - [ ] **U24 character** (`play/character/*` ~716)
   - Check the rig pivots, the animation state machine, blending and the
     GLB-swap interface.
