@@ -1,0 +1,48 @@
+== 1. executePasses sequence vs spec 04.1 loop
+  sequence: clearColor clear(true,true,false) far clearDepth mid clearDepth near
+  CLAIM spec loop order: PASS
+  CLAIM co-located cameras: PASS
+  fov/aspect: 62/1.7777777777777777 62/1.7777777777777777 62/1.7777777777777777 -> identical
+== 2. layerMaskFor coverage (sphere radius r at distance d; visible depth range)
+  r=1: first partially-clipped d=- · mask 0 (not drawn by any pass) from d=300001
+  r=50: first partially-clipped d=300001 · mask 0 (not drawn by any pass) from d=300050
+  r=500: first partially-clipped d=300001 · mask 0 (not drawn by any pass) from d=300501
+  r=1364.5: first partially-clipped d=300027 · mask 0 (not drawn by any pass) from d=301392
+  r=5000: first partially-clipped d=300101 · mask 0 (not drawn by any pass) from d=305001
+  r=20000: first partially-clipped d=300801 · mask 0 (not drawn by any pass) from d=320001
+  Earth-size r=5000 at d=302 km: mask=2 visible depth 297000..301959 m, beyond Mid far 300000: 1959 m of depth undrawn
+  CLAIM "every body with dn<3e5 is fully drawn": FAIL (worst d=319601 r=20000)
+  CLAIM "a mesh beyond 3e5 has a pass" (no mesh carries FAR_BIT): FAIL
+  control near-only objects inside Near far plane: ok
+== 3. painter order: Mid-only object vs a straddler fragment behind it
+  inverted (A in front, B drawn over it) depth cases: 21168; e.g. {"dnA":2400,"mA":2,"dnB":1000,"mB":3,"zB":2401}
+  CLAIM no cross-band depth interaction: FAIL
+  with Near far = 2400: inversions 0, near-only clipped 0 (straddler parts >2400 stay drawn by Mid)
+  control fix variant removes inversions: ok
+== 4. depth resolution δ(z) = z²/(n·2^24) at band-critical depths
+  Near n=0.1 z=2400: δ=3.43 m
+  Near n=0.1 z=3000: δ=5.36 m
+  Mid n=2000 z=240000: δ=1.72 m
+  Mid n=2000 z=300000: δ=2.68 m
+  BG n=500 z=9600: δ=0.0110 m
+  BG n=500 z=9700: δ=0.0112 m
+  BG staged range rank0..23 = 9600..8565 m inside [500,10000]: yes; step 45 m = 4096× δ
+  control BG gap ≫ δ: ok
+== 5. SkyImpostorPool alpha: header says "fade alpha"; harness pairs it with mesh opacity 1-α
+  {"alpha":1,"diskRadiusFrac":1,"opaqueAreaFrac":1,"meshOpacity":0,"ringSeeThrough":0}
+  {"alpha":0.75,"diskRadiusFrac":0.75,"opaqueAreaFrac":0.562,"meshOpacity":0.25,"ringSeeThrough":0.328}
+  {"alpha":0.5,"diskRadiusFrac":0.5,"opaqueAreaFrac":0.25,"meshOpacity":0.5,"ringSeeThrough":0.375}
+  {"alpha":0.25,"diskRadiusFrac":0.25,"opaqueAreaFrac":0.062,"meshOpacity":0.75,"ringSeeThrough":0.234}
+  {"alpha":0.05,"diskRadiusFrac":0.05,"opaqueAreaFrac":0.002,"meshOpacity":0.95,"ringSeeThrough":0.05}
+  material.transparent=false alphaToCoverage=true → disk is opaque; α shrinks its RADIUS
+  at α=0.5: outer 75 % of the disk shows only the 50 %-opaque mesh over the sky
+  CLAIM swap is a silhouette-exact cross-fade: FAIL
+  control α=1 disk radius = true radius: ok
+== 6. BG pass draw order
+  stars transparent=true renderOrder=-10; impostors transparent=false renderOrder=0; glow transparent=true renderOrder=-5
+  three.js WebGLRenderer renders the opaque list before the transparent list; renderOrder sorts only within a list
+  CLAIM "stars drawn first" / "glow before planet impostors": FAIL (they draw after the impostors; depth test hides stars behind impostors anyway)
+== 7. executePasses allocation (GC count over N calls vs control)
+  GC events over 2000000 frames: control (3× updateMatrixWorld) 2, executePasses 40 (incl. 1 forced)
+  CLAIM zero allocation: FAIL (likely the per-call `const cams = [...]` array, line 128)
+== controls 4/4

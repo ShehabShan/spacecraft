@@ -2,7 +2,7 @@
 
 - Task: **A1** · Branch: `a1-engine-audit` (cut from `t1-playable-moon` @ 256d77d)
 - Stage: **BUILDING** (plan READY 7/7; Lead execute order 2026-10-21, APPROVAL LEDGER)
-- Last updated: 2026-10-23
+- Last updated: 2026-10-25
 - **Resume at the FIRST UNCHECKED BOX** (§5). One unit = one session = one commit.
 - Binding rules for this task: AGENT_BRIEF.md §11 AUDIT MODE.
 
@@ -134,7 +134,7 @@ see that the unit fits its budget.
 ### Phase D — Render + workers
 - [x] **U20 terrain meshing + worker** — DONE (`docs/audit/U20-terrain-meshing-worker.md`: the "free set always exists" bound is wrong — 144 meshes on 96 sets drop requests and the LOD keeps dead `pendingRec`s, holes on 5,843/7,200 frames, 194 nodes fake data, no gate reads `drops`; play/1F safe only at meshCount = sets (S1); worker 0 does almost all generation, 94/16 (S2); receive-path garbage unmeasured (S3); `game/tools/audit/u20-mesh-pool-worker.mjs`) (`render/TerrainMeshPool.ts` 447, `workers/terrainWorker.ts` 256)
   - Check LOD cracks, pool exhaustion and worker message races.
-- [ ] **U21 camera rig + sky impostors** (`render/MultiCameraRig.tsx` 217, `render/SkyImpostorPool.ts` 326; Milestone 1F)
+- [x] **U21 camera rig + sky impostors** — DONE (`docs/audit/U21-camera-rig-sky-impostors.md`: mesh↔impostor handoff + hysteresis exist only in the 1F harness, play has no swap (S1); Near pass paints over Mid-only objects in the 2,400–3,000 m overlap (S2, RATIFIED bands); meshes past 300 km clipped or drawn by no pass (S2); impostor fade shrinks an opaque disk instead of fading (S2); 3× S3; `game/tools/audit/u21-camera-sky.mjs`) (`render/MultiCameraRig.tsx` 217, `render/SkyImpostorPool.ts` 326; Milestone 1F)
   - Are the layered bands (ratified) right? Check the depth handoff and the
     hysteresis.
 
