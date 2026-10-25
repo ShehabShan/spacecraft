@@ -1,0 +1,21 @@
+game/src/render/SkyImpostorPool.ts:219:  setBody(
+game/src/play/world/skyState.ts:82:    c.sky.setBody(cb.slot, cb.id, cb.kind, _geo.dirX, _geo.dirY, _geo.dirZ,
+game/src/play/world/moonWorld.ts:73:  const sky = new SkyImpostorPool();
+game/src/test/Milestone1F_TestHarness.tsx:121:const sky = new SkyImpostorPool();
+game/src/test/Milestone1F_TestHarness.tsx:604:export const HANDOFF_D_HARD = 240000;   // MESH -> IMPOSTOR
+game/src/test/Milestone1F_TestHarness.tsx:605:export const HANDOFF_D_SOFT = 220000;   // IMPOSTOR -> MESH
+game/src/test/Milestone1F_TestHarness.tsx:610:export function handoffFade(d: number): number {
+game/src/test/Milestone1F_TestHarness.tsx:616:export function handoffNextState(d: number, mesh: boolean): boolean {
+game/src/test/Milestone1F_TestHarness.tsx:617:  if (mesh && d > HANDOFF_D_HARD) return false;   // now IMPOSTOR
+game/src/test/Milestone1F_TestHarness.tsx:618:  if (!mesh && d < HANDOFF_D_SOFT) return true;   // now MESH
+game/src/test/Milestone1F_TestHarness.tsx:640:  probe.meshStateA = handoffNextState(probe.dA, probe.meshStateA);
+game/src/test/Milestone1F_TestHarness.tsx:641:  probe.meshStateB = handoffNextState(probe.dB, probe.meshStateB);
+game/src/test/Milestone1F_TestHarness.tsx:642:  probe.alphaImpA = handoffFade(probe.dA);
+game/src/test/Milestone1F_TestHarness.tsx:644:  probe.alphaImpB = handoffFade(probe.dB);
+game/src/test/Milestone1F_TestHarness.tsx:830:    sky.setBody(cb.slot, cb.id, cb.kind, _geo.dirX, _geo.dirY, _geo.dirZ,
+game/src/test/Milestone1F_TestHarness.tsx:843:  sky.setBody(SLOT_PROBE_A, 'probe-a', 3,
+game/src/test/Milestone1F_TestHarness.tsx:851:  sky.setBody(SLOT_PROBE_B, 'probe-b', 3,
+game/src/test/Milestone1F_TestHarness.tsx:1172:        const next = handoffNextState(d, mesh);
+game/src/test/Milestone1F_TestHarness.tsx:1174:        const imp = handoffFade(d), m = 1 - imp;
+
+CALLERS_EXIT=0

@@ -1,8 +1,8 @@
 # A1 ENGINE AUDIT — CONSOLIDATED FINDINGS
 
 - Task: A1 (read-only) · Branch: `a1-engine-audit` · Built from U01–U26 reports at `49e6c32`
-- Status: **U27a — index + S0/S1 merge.** The S0/S1 repros have **not** been re-run in U27a. That re-check is U27b. Fix tasks and the Lead summary are U27c.
-- Source of truth for each finding is its unit report (`docs/audit/Uxx-*.md`). This file only indexes, merges and ranks.
+- Status: **U27b in progress — K1 re-checked (U27b1); 2/55 S0/S1 reviewed, 53 pending.** U27a built the index without rerunning repros. Fix tasks and the Lead summary remain U27c. Historical-majority model provenance is not yet established (see review below).
+- Original evidence lives in each unit report (`docs/audit/Uxx-*.md`). This file indexes, groups and ranks it; the re-check table records later confirmation or correction without erasing original reports.
 - Regenerate the index (§4) with `python3 game/tools/audit/u27-findings-index.py --md` from the repo root. `--stats` and `--s01` print the counts and the S0/S1 list.
 
 ## 1. Totals
@@ -35,6 +35,26 @@
   - A1-U21-3 (S1): the handoff and its RATIFIED hysteresis live only in the 1F harness. The engine pool has an alpha nobody computes, and play passes α = 1.
 - **Why merged:** one missing engine-level handoff controller. The play page sidesteps it today only because Earth is always a mesh.
 - **Touches:** RATIFIED impostor hysteresis (ADR needed). Render path (`MultiCameraRig`, `SkyImpostorPool`).
+
+#### K1 re-check — U27b1 (2026-10-25, base `341ba65`)
+
+| Member | Review outcome | Evidence |
+|---|---|---|
+| A1-U03-1 | **Re-confirmed (S0)**, scope clarified | Source-extracted real update/apply functions + real pool: 57 missing samples at 100 m spacing; cutoff 225,647.934 m, inbound return strictly below 220,000 m. Actual R3(a): zero holes. |
+| A1-U21-3 | **Re-confirmed (S1)** | Real play update: 72/72 alpha values = 1; no Earth/Moon impostor slot. Source caller inventory confines handoff to harness. |
+
+Full method, commands/exits and controls: [U27b1 K1 re-check](U27b1-k1-recheck.md).
+Both old repros rerun (exit 0); independent probe 11/11 (exit 0). **No fresh GPU
+pixels or full browser suite.** “Nothing” is the affected probe's representations,
+not the whole scene or a demonstrated play-page disappearance; distances are
+harness sweep parameters. The spec's proof also omits mesh state. Moving the
+controller alone is not a sufficient fix: coverage, silhouette and production
+integration require separate verification.
+
+Reviewer model per platform usage: **GPT-6 Astra (`gpt-6-astra`)**. Accessible
+prior SOLARIS work used Claude Opus 5.5, but the models of most historical audit
+units are not attributable from available records. That cross-model provenance
+condition remains open. K2–K9 are **not reviewed** by this checkpoint.
 
 ### K2 — Acceptance gates cannot fail on their own claims — score 83.1 (28× S1)
 This is the largest cluster. The 1A–1F approvals rest on these gates, so they cannot be trusted as proof until the cluster is fixed.
@@ -107,7 +127,9 @@ This is the largest cluster. The 1A–1F approvals rest on these gates, so they 
 - K4 (height service) → K5, K9 and the K7 clearance work.
 - K1 and K8 (render) come after K3.
 
-## 4. Full index (auto-generated; all 167 findings)| ID | Sev | Conf | Category | Title | Report |
+## 4. Full index (auto-generated; all 167 findings)
+
+| ID | Sev | Conf | Category | Title | Report |
 |---|---|---|---|---|---|
 | A1-U01-1 | S1 | likely | test | R2 regressed in commit 3057899 (F-12 suite-pose change), which shipped without a gate run | `U01-m1f-baseline.md` |
 | A1-U01-2 | S2 | confirmed | test | R2 fails silently: the detail string cannot distinguish "occluded" from "culled" or "blank" | `U01-m1f-baseline.md` |

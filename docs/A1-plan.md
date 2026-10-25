@@ -160,10 +160,13 @@ see that the unit fits its budget.
     worker use and extension points, using U01–U25's findings.
   - Verdict per area: keep / refactor / rework, each with a draft ADR.
 - [x] **U27a consolidated findings index** — DONE (`docs/audit/FINDINGS.md`: 167 findings indexed (1 S0, 54 S1, 66 S2, 46 S3), all 55 S0/S1 merged into clusters K1–K9, ranked by severity × confidence, with cross-cluster dependencies; extractor `game/tools/audit/u27-findings-index.py`. S0/S1 repros NOT re-run.)
-- [ ] **U27b second-model re-check of S0/S1 repros**
-  - Run on a **different model** than most audit units. State the model in the SESSION LOG row.
-  - Re-run every S0/S1 repro (probe command + exit code) cluster by cluster (`FINDINGS.md` §3). Mark each one re-confirmed, changed or refuted in `FINDINGS.md`.
-  - If it does not fit one session, split it by cluster (U27b1, U27b2, …).
+- [x] **U27b1 K1 handoff re-check** — DONE (`docs/audit/U27b1-k1-recheck.md`; A1-U03-1 S0 + A1-U21-3 S1 re-confirmed with scope qualifications; original repros exit 0; independent probe 11/11; source unchanged). Reviewer: platform-reported GPT-6 Astra. Historical-majority model provenance remains unverified; this box certifies K1 evidence, not completion of that overall cross-model condition.
+- [ ] **U27b2 K2a zero-GC / heap gate re-check** — A1-U03-4, U04-5, U05-3, U06-2, U07-3, U09-1 (six findings).
+  - Re-run repros; independently test whether the claimed allocation property can fail. Record commands, exits, controls and dispositions in FINDINGS.md.
+- [ ] **U27b3 remaining K2 gate re-checks** — K2b (3), K2c (15), K2d (4); split by subcluster before execution if needed.
+- [ ] **U27b4 remaining K3–K9 re-checks** — 25 findings; split by cluster before execution.
+  - All U27b parts: use a different model than most original audit units; record the model in SESSION LOG. U27b1 verified its current model and one prior SOLARIS model, not the historical majority; establish that provenance before declaring overall cross-model completion.
+  - Re-run every S0/S1 repro cluster by cluster (`FINDINGS.md` §3), recording probe commands/exits and re-confirmed / changed / refuted per finding. No untouched cluster is implicitly signed off by a shared probe's output.
 - [ ] **U27c fix tasks + Lead summary → LEAD GATE**
   - Propose fix tasks F1, F2, … in dependency order, gates (K2) before engine. Each one is sized to fit a single 50-OLU session or is split until it does.
   - Add a plain-language summary for the Lead that collects the unanswered look-and-feel questions (U10a, U10b, U16, U17). Ask no technical choices (§13).
