@@ -1,7 +1,7 @@
 # A1 ENGINE AUDIT — CONSOLIDATED FINDINGS
 
 - Task: A1 (read-only) · Branch: `a1-engine-audit` · Built from U01–U26 reports at `49e6c32`
-- Status: **U27b in progress — K1, K2a, K2b and all fifteen K2c findings re-checked (through U27b3b2b2b2b1); 26/55 S0/S1 reviewed, 29 pending.** U27a built the index without rerunning repros. Fix tasks and the Lead summary remain U27c. Historical-majority model provenance is not yet established (see review below).
+- Status: **U27b in progress — K1, K2a, K2b, all fifteen K2c findings and K2d U08-7 re-checked (through U27b3b2b2b2b2a); 27/55 S0/S1 reviewed, 28 pending.** U27a built the index without rerunning repros. Fix tasks and the Lead summary remain U27c. Historical-majority model provenance is not yet established (see review below).
 - Original evidence lives in each unit report (`docs/audit/Uxx-*.md`). This file indexes, groups and ranks it; the re-check table records later confirmation or correction without erasing original reports.
 - Regenerate the index (§4) with `python3 game/tools/audit/u27-findings-index.py --md` from the repo root. `--stats` and `--s01` print the counts and the S0/S1 list.
 
@@ -299,6 +299,32 @@ apply <1 mm only to declared local ranges, not arbitrarily distant static entiti
 Two more reviewed = **26/55; 29 pending**. **K2c complete**; K2d four and K3–K9
 25 remain. Next **U27b3b2b2b2b2**, split starting U08-7 timing/stalls.
 Model `gpt-6-astra` verified by platform; historical-majority condition unresolved.
+
+#### K2d m1a timing/stall re-check — U27b3b2b2b2b2a (2026-10-25, base `9add690`)
+
+| Finding | Disposition |
+|---|---|
+| A1-U08-7 | **Re-confirmed with qualifications; S1 retained.** ≥250 ms intervals are discarded, including nine 300 ms following-rebase delays and three 1 s freezes. Rebase diagnostics tag the preceding interval and do not affect the verdict. Collector + finalizer warmup skip 40 callbacks; callback30=200 ms passes, callback41 fails. |
+
+Evidence: [timing re-check report](U27b3b2b2b2b2a-m1a-timing-recheck.md),
+new probe `game/tools/audit/u27b3b2b2b2b2a-m1a-timing-recheck.mjs`,
+raw logs `evidence/U27b3b2b2b2b2a/`. Original16/18 controls OK exit0
+(timing claims confirmed; unrelated non-confirmations preserved);
+final independent **27/27 twice exit0**, deliberate self-test **27/28 exit1**.
+Initial loader failure retained. Typecheck/build/protected diff exit0.
+
+Qualifications: spec explicitly calls >250 ms intervals tab stalls, so its
+exclusion policy is part of the defect, not simply code nonconformance.
+40 ms PASS meets the 48 ms maximum and 20 ms average: it proves wrong attribution,
+not a numeric threshold violation. Nine 80 ms delays fail the global worst test.
+30 Hz failure matches the declared budget, not proof of a physics defect.
+Installed Clock/R3F timing order checked; no fresh browser or real performance claim.
+Proposed remedy separates interval coverage/visibility evidence from actual CPU
+spans, uses one warmup, and does not treat the following delta as pure rebase cost.
+
+One more reviewed = **27/55; 28 pending**. K2d three (U03-5, U05-2, U01-1)
+and K3–K9 25 remain. Next **U27b3b2b2b2b2b**, split starting U03-5.
+Model `gpt-6-astra` verified; historical-majority condition unresolved.
 
 ### K3 — No reference-frame model: bodies do not spin and actors are not parented — score 21.0 (7× S1)
 - **Members:**
