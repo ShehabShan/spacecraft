@@ -1,0 +1,37 @@
+{
+  "data": {
+    "olu_usage_aggregate": {
+      "aggregate": {
+        "sum": {
+          "olus": "12.547419"
+        }
+      }
+    },
+    "olu_usage": [
+      {
+        "timestamp": "2026-10-25T16:41:02.320473+00:00",
+        "olus": "1.177054",
+        "llm_usage": {
+          "model": "gpt-6-astra",
+          "usage_category": "main_agent_loop"
+        }
+      },
+      {
+        "timestamp": "2026-10-25T16:40:42.92524+00:00",
+        "olus": "1.471468",
+        "llm_usage": {
+          "model": "gpt-6-astra",
+          "usage_category": "main_agent_loop"
+        }
+      },
+      {
+        "timestamp": "2026-10-25T16:40:38.815273+00:00",
+        "olus": "1.381116",
+        "llm_usage": {
+          "model": "gpt-6-astra",
+          "usage_category": "main_agent_loop"
+        }
+      }
+    ]
+  }
+}

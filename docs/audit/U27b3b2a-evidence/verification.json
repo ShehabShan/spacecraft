@@ -1,0 +1,70 @@
+{
+  "initial_runs": [
+    {
+      "command": "npm ci",
+      "cwd": "game",
+      "exit_code": 0,
+      "log": "npm-ci.log"
+    },
+    {
+      "command": "node tools/audit/u03-r3r4r5-validity.mjs",
+      "cwd": "game",
+      "exit_code": 0,
+      "log": "original-u03.log"
+    },
+    {
+      "command": "node tools/audit/u27b3b2a-r3-recheck.mjs",
+      "cwd": "game",
+      "exit_code": 0,
+      "log": "independent-run1.log"
+    }
+  ],
+  "repeat_and_checks": [
+    {
+      "command": [
+        "node",
+        "tools/audit/u27b3b2a-r3-recheck.mjs"
+      ],
+      "cwd": "game",
+      "exit_code": 0,
+      "log": "independent-run2.log"
+    },
+    {
+      "command": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "cwd": "game",
+      "exit_code": 0,
+      "log": "typecheck.log"
+    },
+    {
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "cwd": "game",
+      "exit_code": 0,
+      "log": "build.log"
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--exit-code",
+        "256d77d",
+        "--",
+        "game/src",
+        "game/e2e",
+        "game/playwright.config.ts",
+        "Milestone",
+        "Design_specs"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "log": "protected-diff.log"
+    }
+  ]
+}

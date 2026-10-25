@@ -1,7 +1,7 @@
 # A1 ENGINE AUDIT — CONSOLIDATED FINDINGS
 
 - Task: A1 (read-only) · Branch: `a1-engine-audit` · Built from U01–U26 reports at `49e6c32`
-- Status: **U27b in progress — K1, K2a, K2b and three K2c R1/R2 findings re-checked (through U27b3b1); 14/55 S0/S1 reviewed, 41 pending.** U27a built the index without rerunning repros. Fix tasks and the Lead summary remain U27c. Historical-majority model provenance is not yet established (see review below).
+- Status: **U27b in progress — K1, K2a, K2b and five K2c R1/R2/R3 findings re-checked (through U27b3b2a); 16/55 S0/S1 reviewed, 39 pending.** U27a built the index without rerunning repros. Fix tasks and the Lead summary remain U27c. Historical-majority model provenance is not yet established (see review below).
 - Original evidence lives in each unit report (`docs/audit/Uxx-*.md`). This file indexes, groups and ranks it; the re-check table records later confirmation or correction without erasing original reports.
 - Regenerate the index (§4) with `python3 game/tools/audit/u27-findings-index.py --md` from the repo root. `--stats` and `--s01` print the counts and the S0/S1 list.
 
@@ -153,6 +153,26 @@ No fresh browser/pixels or full m1f gate.
 Three more reviewed = **14/55; 41 pending**. Remaining K2c: 12; K2d: four.
 Reviewer platform model **GPT-6 Astra (`gpt-6-astra`)**; historical-majority
 provenance unresolved. Remaining K2 and K3–K9 are not signed off.
+
+#### K2c m1f R3 re-check — U27b3b2a (2026-10-25, base `0826c26`)
+
+| Member | Review outcome | Evidence / qualification |
+|---|---|---|
+| A1-U03-2 | Re-confirmed S1; qualified | Actual scalar/live loops miss 120 inbound omissions; hidden/full draw-output controls miss 4,020 omissions/doubles with supplied matching silhouette. Original M1/M2 fail other clauses: flips/slope. Non-complementary trace and missing crossings do fail. |
+| A1-U03-3 | Re-confirmed S1; qualified | Extracted pixel loop accepts bright-background missing/shifted/enlarged targets; a 69-pixel difference becomes 0.2695% against 25,600 background pixels. Empty masks and isolated bad disks fail. Historical U01 saturation re-read, not a fresh GPU run or proof of every run since 3057899. |
+
+Method, source citations, qualifications and audit-method ADR draft:
+[U27b3b2a R3 re-check](U27b3b2a-k2c-r3-recheck.md).
+Original repro **22/22**, independent controls **26/26 ×2**, all exit 0.
+Typecheck/build/protected diff exit 0; evidence in `U27b3b2a-evidence/`.
+These are source-extracted predicate tests with synthetic draw/byte fixtures, not
+a fresh browser/full-R3 verdict. Preserve responsive controls; future pixel gates
+must isolate target identity and establish coverage before comparison.
+
+Two more reviewed = **16/55; 39 pending**. Remaining K2c: ten; K2d: four.
+Next U27b3b2b must split before execution, beginning m1e U04-1/-3/-4.
+Reviewer platform model **GPT-6 Astra (`gpt-6-astra`)**; historical-majority
+provenance still unresolved. Unrelated original-probe R4/R5 output is not sign-off.
 
 ### K3 — No reference-frame model: bodies do not spin and actors are not parented — score 21.0 (7× S1)
 - **Members:**
