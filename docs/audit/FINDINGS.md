@@ -1,7 +1,7 @@
 # A1 ENGINE AUDIT — CONSOLIDATED FINDINGS
 
 - Task: A1 (read-only) · Branch: `a1-engine-audit` · Built from U01–U26 reports at `49e6c32`
-- Status: **U27b in progress — K1, K2a, K2b and eight K2c findings re-checked (through U27b3b2b1); 19/55 S0/S1 reviewed, 36 pending.** U27a built the index without rerunning repros. Fix tasks and the Lead summary remain U27c. Historical-majority model provenance is not yet established (see review below).
+- Status: **U27b in progress — K1, K2a, K2b and ten K2c findings re-checked (through U27b3b2b2a); 21/55 S0/S1 reviewed, 34 pending.** U27a built the index without rerunning repros. Fix tasks and the Lead summary remain U27c. Historical-majority model provenance is not yet established (see review below).
 - Original evidence lives in each unit report (`docs/audit/Uxx-*.md`). This file indexes, groups and ranks it; the re-check table records later confirmation or correction without erasing original reports.
 - Regenerate the index (§4) with `python3 game/tools/audit/u27-findings-index.py --md` from the repo root. `--stats` and `--s01` print the counts and the S0/S1 list.
 
@@ -200,6 +200,33 @@ Next **U27b3b2b2**, split before execution beginning m1d U05-1/-7.
 Reviewer platform model **GPT-6 Astra (`gpt-6-astra`)**; historical-majority
 provenance unresolved. Original readonly-canary output remains refuted by U27b2;
 no untouched findings signed off.
+
+#### K2c m1d re-check — U27b3b2b2a (2026-10-25, base `184dc6e`)
+
+| Member | Review outcome | Evidence / qualification |
+|---|---|---|
+| A1-U05-1 | Re-confirmed S1; qualified | Actual T1 accepts a 50% density step, sea-level-only Mach and reversed wind (104 m/s vector error). No-lapse/constant-density/zero-wind/wrong-sea-level-Mach controls fail. Baseline equations match; finite tests cannot prove C∞, and density is clamped at h≤0. Default m1d spin=0, not every controller. |
+| A1-U05-7 | Re-confirmed S1; qualified | Actual T2 dive predicate accepts a literal start/end-only sweep and coarse64 sweep, while no sweep and negative telemetry fail. Constructed ridge has +10.022 m endpoints / −10 m midpoint yet endpoint telemetry passes. Real-terrain endpoint mutant: 22/4096 tunnels, selected witness +8.368/+4.247 m endpoints / −15.078 m interior. Unmodified sweep catches both selected witnesses. No new production tunnelling claim. |
+
+Report + audit-method ADR draft:
+[U27b3b2b2a m1d re-check](U27b3b2b2a-m1d-recheck.md).
+Original repros exit 0 but only **10/11** and **9/10** observations confirmed
+(unrelated T3-2 expectation and false terrain slope-bound premise). Independent
+first attempt exit 1 (probe Function-body transpilation); corrected versions
+25/25 twice, final explicit-endpoints version **26/26 twice, exit 0**.
+Typecheck/build/protected diff exit 0; raw logs in `U27b3b2b2a-evidence/`.
+
+The original lattice2/gap1e9 mutant is not literally endpoint-only for every
+path: lattice boundaries can still contribute samples. The new explicit sweep
+isolates the claim. Baseline sweep and equations pass selected independent
+controls, not universal certification. No full browser phase-machine, GPU,
+performance or whole m1d suite verdict. Retain vertical dive and add interior
+path checks; sampled continuity bounds alone cannot establish C∞.
+
+Two more reviewed = **21/55; 34 pending**. Remaining K2c: five; K2d: four.
+Next **U27b3b2b2b**, split before execution beginning m1c U06-1.
+Reviewer platform model **GPT-6 Astra (`gpt-6-astra`)**; historical-majority
+provenance unresolved. No untouched findings signed off.
 
 ### K3 — No reference-frame model: bodies do not spin and actors are not parented — score 21.0 (7× S1)
 - **Members:**

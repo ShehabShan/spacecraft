@@ -1,0 +1,20 @@
+[u05] T1 predicate sliced :645-:663
+[u05] T1 pass: baseline=true densityStep@4km=true machIgnoresAlt=true windRetrograde=true noLapse(control)=false
+[u05] CONFIRMED T1-1: T1 passes with a 50 % density discontinuity at 4 km (claims "C∞, no cutoff discontinuity")
+[u05] CONFIRMED T1-2: T1 passes when Mach ignores altitude and when the atmosphere spins retrograde
+[u05] CONFIRMED T1-ctl: control: removing the lapse rate IS caught (a8 < a0)
+[u05] CONFIRMED T1-3: flight config planetSpin = 0 → wind law never reaches a flight tick
+[u05] T4 heapOk: -1→true -5000000→true 0→true 1048576→true 1048577→false
+[u05] CONFIRMED T4-1: any negative heap delta (incl. the −1 "N/A" sentinel and a GC during the burn) passes
+[u05] T4 burn heap Δ clean=1566456,1460824,1456552 B  alloc-1-obj/tick=445328,417872,330024 B  (bound 1,048,576)
+[u05] CONFIRMED T4-2: a burn that allocates one object EVERY tick still passes the 1 MB bound (3/3 runs)
+[u05] CONFIRMED T5-1: offset error is exactly 0 for off-lattice, non-f32 origins → the clause cannot fail and never checks the "Δ f32-exact" lattice claim
+[u05] dive 60fps:        T2=true T3=true v1000=264.7 vmax=2000 maxDv=10.30 rev=0 cross=true grounded=true sim=18.0s phys=18.0s minPostAGL=3.000 contacts=4
+[u05] dive clamp-mut:    T2=false T3=true v1000=117.1 vmax=2000 maxDv=1.47 rev=0 cross=true grounded=true sim=28.4s phys=28.4s minPostAGL=3.000 contacts=3
+[u05] dive 30fps:        T2=true T3=true v1000=264.7 vmax=2000 maxDv=10.30 rev=0 cross=true grounded=true sim=24.0s phys=18.0s minPostAGL=3.000 contacts=4
+[u05] dive 15fps:        T2=false T3=true v1000=264.7 vmax=2000 maxDv=10.30 rev=0 cross=true grounded=false sim=45.1s phys=16.9s minPostAGL=57.293 contacts=0
+[u05] CONFIRMED T2-ctl: baseline: Node dive replay passes T2 and T3 at 60 fps
+[u05] CONFIRMED T3-1: T3 passes with a hard per-tick clamp to v_safe applied after the tick (maxDv 1.47 — Δv is sampled inside integrateFlight only)
+[u05] NOT-CONFIRMED T3-2: baseline maxDv 10.30 m/s vs bound 12 (margin 1.70 m/s)
+[u05] CONFIRMED T2-1: at 15 fps the dive runs 16.9 s of physics for 45.1 s counted (shed), grounded=false
+[u05] 10/11 checks CONFIRMED — not confirmed: T3-2
