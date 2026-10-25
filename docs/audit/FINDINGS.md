@@ -1,7 +1,7 @@
 # A1 ENGINE AUDIT — CONSOLIDATED FINDINGS
 
 - Task: A1 (read-only) · Branch: `a1-engine-audit` · Built from U01–U26 reports at `49e6c32`
-- Status: **U27b in progress — K1, K2a, K2b and eleven K2c findings re-checked (through U27b3b2b2b1); 22/55 S0/S1 reviewed, 33 pending.** U27a built the index without rerunning repros. Fix tasks and the Lead summary remain U27c. Historical-majority model provenance is not yet established (see review below).
+- Status: **U27b in progress — K1, K2a, K2b and thirteen K2c findings re-checked (through U27b3b2b2b2a); 24/55 S0/S1 reviewed, 31 pending.** U27a built the index without rerunning repros. Fix tasks and the Lead summary remain U27c. Historical-majority model provenance is not yet established (see review below).
 - Original evidence lives in each unit report (`docs/audit/Uxx-*.md`). This file indexes, groups and ranks it; the re-check table records later confirmation or correction without erasing original reports.
 - Regenerate the index (§4) with `python3 game/tools/audit/u27-findings-index.py --md` from the repo root. `--stats` and `--s01` print the counts and the S0/S1 list.
 
@@ -251,6 +251,31 @@ One more reviewed = **22/55; 33 pending**. Remaining K2c: four; K2d: four.
 Next **U27b3b2b2b2**, split starting m1b U07-1/-2.
 Reviewer platform model **GPT-6 Astra (`gpt-6-astra`)**; historical-majority
 provenance unresolved. No untouched findings signed off.
+
+#### K2c m1b orbital-gate re-check — U27b3b2b2b2a (2026-10-25, base `daed833`)
+
+| Member | Review outcome | Evidence / qualification |
+|---|---|---|
+| A1-U07-1 | Re-confirmed S1; qualified | Earth n×1.01, all n×2 and coherent μHost×4/n×2/T÷2 pass five extracted rows; independent raw-input motion checks reject. Earth T×2 alone fails T1; doubled day jump fails T1/T2/T3, so not every clock fault is invisible. |
+| A1-U07-2 | Re-confirmed S1; qualified | Every basisQ reversed and Triton n sign flipped pass five rows; independent direction checks reject. Radius/flattening controls pass T1 but fail T3. Future direction truth must not use the potentially wrong n sign. |
+
+Report + audit-method ADR draft:
+[U27b3b2b2b2a m1b re-check](U27b3b2b2b2a-m1b-recheck.md).
+Original **23/23 exit 0**; independent **32/32 twice exit 0**;
+deliberate self-test **32/33 exit 1**. Raw logs/exits:
+`U27b3b2b2b2a-evidence/`. Typecheck/build/protected diff exit 0.
+
+Unmodified 16-body circular-orbit baseline: max sampled position error
+1.0214e-7 m and relative speed error 7.023e-10. Literal raw catalog/host
+inputs, nine epochs and parent-relative finite differences avoid derived
+n/T/μHost/basis/semiMinor. This verifies the selected gate faults, not raw
+astronomical realism, arbitrary inclined/eccentric orbits, heap or browser/GPU.
+Node has no performance.memory; five-row passes are explicitly scoped.
+
+Two more reviewed = **24/55; 31 pending**. Remaining K2c: two; K2d: four.
+Next **U27b3b2b2b2b**, split starting m1a U08-5/-6.
+Reviewer platform model **GPT-6 Astra (`gpt-6-astra`)**; historical-majority
+provenance unresolved. No untouched finding signed off.
 
 ### K3 — No reference-frame model: bodies do not spin and actors are not parented — score 21.0 (7× S1)
 - **Members:**
