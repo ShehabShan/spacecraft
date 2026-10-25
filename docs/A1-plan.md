@@ -139,7 +139,7 @@ see that the unit fits its budget.
     hysteresis.
 
 ### Phase E — Play layer
-- [ ] **U22 play world** (`play/world/*` ~720)
+- [x] **U22 play world** — DONE (`docs/audit/U22-play-world.md`: drawn terrain ≠ collision terrain — L4 4.19 m mesh vs analytic height, edge-midpoint |err| p50 0.22 / p99 3.9 / max 12.9 m, diagonals max 26 m (S1); LOD selects 125 leaves for 96 meshes at the spawn — 31 holes 1.0–1.9 km, terrain-occluded at the eye, loading gate blind (S2); brad 1.5–2.2× the real extent (S3); spawn early exit unreachable, 24,000 iterations always, tangent-less roughness probes (S3); `game/tools/audit/u22-play-world.mjs`) (`play/world/*` ~720)
   - Check the boot, LOD, spawn and sky state.
 - [ ] **U23 controller, camera, input, frame** (`play/controller`, `play/camera`, `play/input`, `play/frame` ~750)
 - [ ] **U24 character** (`play/character/*` ~716)
