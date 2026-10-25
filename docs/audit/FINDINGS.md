@@ -1,7 +1,7 @@
 # A1 ENGINE AUDIT — CONSOLIDATED FINDINGS
 
 - Task: A1 (read-only) · Branch: `a1-engine-audit` · Built from U01–U26 reports at `49e6c32`
-- Status: **U27b in progress — K1, K2a, K2b and thirteen K2c findings re-checked (through U27b3b2b2b2a); 24/55 S0/S1 reviewed, 31 pending.** U27a built the index without rerunning repros. Fix tasks and the Lead summary remain U27c. Historical-majority model provenance is not yet established (see review below).
+- Status: **U27b in progress — K1, K2a, K2b and all fifteen K2c findings re-checked (through U27b3b2b2b2b1); 26/55 S0/S1 reviewed, 29 pending.** U27a built the index without rerunning repros. Fix tasks and the Lead summary remain U27c. Historical-majority model provenance is not yet established (see review below).
 - Original evidence lives in each unit report (`docs/audit/Uxx-*.md`). This file indexes, groups and ranks it; the re-check table records later confirmation or correction without erasing original reports.
 - Regenerate the index (§4) with `python3 game/tools/audit/u27-findings-index.py --md` from the repo root. `--stats` and `--s01` print the counts and the S0/S1 list.
 
@@ -276,6 +276,29 @@ Two more reviewed = **24/55; 31 pending**. Remaining K2c: two; K2d: four.
 Next **U27b3b2b2b2b**, split starting m1a U08-5/-6.
 Reviewer platform model **GPT-6 Astra (`gpt-6-astra`)**; historical-majority
 provenance unresolved. No untouched finding signed off.
+
+#### K2c m1a precision/rebase re-check — U27b3b2b2b2b1 (2026-10-25, base `4d0692b`)
+
+| Finding | Disposition |
+|---|---|
+| A1-U08-5 | **Re-confirmed with qualifications; S1 retained.** Wrong thresholds/lattices pass, including ten shifts with L300. Exact trace alone misses thresholds 1023/1025; signed boundary tests catch them. L512 remains divisible by 256 but chooses the wrong off-axis origin. Independent exact-origin oracle rejects all five lattice mutants; count/bound/lattice controls respond. |
+| A1-U08-6 | **Re-confirmed with qualifications; S1 retained.** Early rounding, stale beacons (9216 m error) and zeroed locals pass. T2 does indirectly read focus locals and rejects 2048 m, so “no row reads locals” is too broad. Catalog Earth distance is 600000 m, not 1 AU: 16320 m errors are injected-fault stress witnesses, not production play defects; catalog-scale witness error is ~5 mm. |
+
+Evidence: [m1a re-check report](U27b3b2b2b2b2b1-m1a-recheck.md),
+new probe `game/tools/audit/u27b3b2b2b2b1-m1a-recheck.mjs`, raw logs
+`U27b3b2b2b2b1-evidence/`. Original 16/18 confirmed with controls OK, exit 0
+(two documented non-confirmations); independent final **50/50 twice exit 0**;
+deliberate self-test **50/51 exit 1**. Typecheck/build/protected diff exit 0.
+Baseline flight locals/adapter, exact shift trace, signed boundaries and precision
+fixtures are clean. No browser/pixel, frame-time or universal precision claim.
+
+Remedy qualifications: hard-wire policy expectations, but also test exact nearest-cell
+origins and trigger boundaries. Compare every entity to single-rounding truth;
+apply <1 mm only to declared local ranges, not arbitrarily distant static entities.
+
+Two more reviewed = **26/55; 29 pending**. **K2c complete**; K2d four and K3–K9
+25 remain. Next **U27b3b2b2b2b2**, split starting U08-7 timing/stalls.
+Model `gpt-6-astra` verified by platform; historical-majority condition unresolved.
 
 ### K3 — No reference-frame model: bodies do not spin and actors are not parented — score 21.0 (7× S1)
 - **Members:**
