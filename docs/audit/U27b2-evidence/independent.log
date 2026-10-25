@@ -1,0 +1,21 @@
+{"check":"stable identities pass","ok":true}
+{"check":"m1e canary DOES catch runtime replacement","ok":true}
+{"check":"m1b canary catches absPos replacement","ok":true}
+{"check":"m1f same-shaped replacement bypasses canary","ok":true}
+{"check":"m1f shape failure is detectable","ok":true}
+{"check":"heap clauses missing","ok":true,"got":{"e":true,"b":true,"f":true,"d":true}}
+{"check":"heap clauses negative","ok":true,"got":{"e":true,"b":true,"f":true,"d":true}}
+{"check":"heap clauses zero","ok":true,"got":{"e":true,"b":true,"f":true,"d":true}}
+{"check":"heap clauses large","ok":true,"got":{"e":false,"b":false,"f":false,"d":false}}
+{"check":"exact heap limits accepted","ok":true}
+{"check":"one byte above heap limits rejected","ok":true}
+{"check":"known transient allocations pass missing-measurement gates","ok":true,"got":{"e":true,"b":true,"f":true},"allocations":53000,"doubleSlots":27136000}
+{"check":"pool no-allocation control","ok":true}
+{"check":"pool runtime buffer allocations invisible","ok":true,"zeroDispose":true,"allocDelta":0,"constructedBuffers":1000,"retainedBytes":4096000}
+{"check":"pool counter wiring control","ok":true}
+{"allocationObserver":{"clean":{"workload":"preallocated","n":10000,"postGcHeapDelta":-15968,"sampledAllocationBytes":0},"churn":{"workload":"transient","n":10000,"postGcHeapDelta":2040,"sampledAllocationBytes":41559248},"leak":{"workload":"retained","n":5000,"postGcHeapDelta":20772936,"sampledAllocationBytes":20954568}}}
+{"check":"observer preallocated control","ok":true}
+{"check":"observer detects collected transient allocation","ok":true}
+{"check":"post-GC delta hides transient churn","ok":true}
+{"check":"retention control detectable","ok":true}
+U27b2 independent: 19/19 checks passed

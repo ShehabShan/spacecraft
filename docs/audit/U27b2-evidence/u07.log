@@ -1,0 +1,44 @@
+[u07] slice: harness chars 9946..22035 (lines 316..661)
+[u07] run BASELINE: closed-form=P reversibility=P parenting=P zero-gc=P m1a-regression=P
+[u07] CONFIRMED baseline-all-pass: unmodified engine: all 5 rows PASS in Node
+[u07] baseline console line: [Milestone1B] acceptance PASSED in 28.6 ms — maxPosErr={errRoundTrip.toExponential(1)}m restore={identityOk ? 'OK' : 'FAIL'} heapDelta={rebaseDelta}
+[u07] parenting detail: {moonNames}) verified against MOVING hosts: orbit-radius dev ≤ 1.1e-10 m; in-plane phase dev ≤ 2.2e-14 rad (incl. retrog
+[u07] CONFIRMED log-labels-wrong: acceptance console line prints literal `{…}` (missing $) — maxPosErr/heapDelta values never logged
+[u07] CONFIRMED moon-names-literal: T3 detail prints literal `{moonNames}`
+[u07] zero-gc detail (Node, no performance.memory): 20,000 continuous ticks @30× (10,000 s macro): state identities preserved 17/17; heap Δ N/A (performance.memory unavailable — identity canary stands; full V8 profiling is M1C) — limit 1,048,576 B.
+[u07] run CONTROL earth.absPos.x += 1 m after evaluate: closed-form=F reversibility=P parenting=F zero-gc=P m1a-regression=P
+[u07] CONFIRMED control-pos: a 1 m position error after evaluate fails closed-form
+[u07] run CONTROL moon basisP ×1.001: closed-form=P reversibility=P parenting=F zero-gc=P m1a-regression=P
+[u07] CONFIRMED control-moon-radius: moon orbit radius +0.1 % (38.9 m): parenting FAILS, closed-form still PASSES (=P) — T1 reuses the rail's basis
+[u07] run CONTROL stateful evaluate (1 mm per call drift): closed-form=F reversibility=F parenting=F zero-gc=P m1a-regression=P
+[u07] CONFIRMED control-stateful: a history-dependent evaluate fails reversibility (T2 has teeth for impurity)
+[u07] run M-N1 earth n ×1.01 (T unchanged): closed-form=P reversibility=P parenting=P zero-gc=P m1a-regression=P
+[u07] CONFIRMED blind-mean-motion-one: Earth moves 1 % too fast (n·T = 2π·1.01): ALL rows PASS
+[u07] run M-N2 every n ×2 (T unchanged): closed-form=P reversibility=P parenting=P zero-gc=P m1a-regression=P
+[u07] CONFIRMED blind-mean-motion-all: every body orbits at 2× the Kepler rate: ALL rows PASS
+[u07] run M-RETRO negate basisQ for every body: closed-form=P reversibility=P parenting=P zero-gc=P m1a-regression=P
+[u07] CONFIRMED blind-handedness: every orbit reversed (Triton prograde, all others retrograde): ALL rows PASS — the "retrograde Triton" claim is unverified
+[u07] run M-SHAPE planets semiMinor ×0.8: closed-form=P reversibility=P parenting=F zero-gc=P m1a-regression=P
+[u07] CONFIRMED shape-caught-by-t3-only: planet paths squashed to b = 0.8a: closed-form PASSES (reuses rail semiMinor); only the T3 host-chord clause catches it
+[u07] run M-SPEED orbitalSpeed ×1.1 (moons only): closed-form=P reversibility=P parenting=P zero-gc=P m1a-regression=P
+[u07] CONFIRMED blind-moon-speed: moon telemetry speed 10 % wrong: ALL rows PASS (vis-viva loop skips moons)
+[u07] run M-ALLOC 64 KB garbage per evaluate (Node: no performance.memory): closed-form=P reversibility=P parenting=P zero-gc=P m1a-regression=P
+[u07] CONFIRMED blind-alloc-na: 1.3 GB of per-tick allocation passes zero-gc when performance.memory is absent: 20,000 continuous ticks @30× (10,000 s macro): state identities preserved 17/17; heap Δ N/
+[u07] run M-ALLOC with heapUsed-backed performance.memory #1: closed-form=P reversibility=P parenting=P zero-gc=F m1a-regression=P
+[u07] run M-ALLOC with heapUsed-backed performance.memory #2: closed-form=P reversibility=P parenting=P zero-gc=P m1a-regression=P
+[u07] run M-ALLOC with heapUsed-backed performance.memory #3: closed-form=P reversibility=P parenting=P zero-gc=P m1a-regression=P
+[u07] CONFIRMED blind-alloc-gc: same 1.3 GB churn with a heap API: verdicts F(1,065,992 B) P(N/A ) P(N/A ) — negative Δ passes
+[u07] run CONTROL-HEAP retained leak 8 KB per evaluate: closed-form=P reversibility=P parenting=P zero-gc=F m1a-regression=P
+[u07] retained-leak zero-gc: F 163,200,056 B
+[u07] CONFIRMED heap-catches-retained: 160 MB retained leak fails zero-gc when a heap API exists
+[u07] CONFIRMED truth-periods: config T and |n| match independent 2π√(a³/μ) (max rel 0.0e+0, |n·T−2π| 1.8e-15)
+[u07] CONFIRMED doc-table-stale: celestialData banner period table vs truth: off by up to 11 s — mercury 4379.3 vs 4381; venus 6961.3 vs 6963; jupiter 30387.1 vs 30392; saturn 48144.2 vs 48139; uranus 81133.1 vs 81144; neptune 113257.9 vs 113254;
+[u07] CONFIRMED truth-retro-set: retrograde set = [triton] (real-world: Triton is the only retrograde major moon)
+[u07] CONFIRMED truth-fd-speed: finite-difference speed vs rail vis-viva, all 16 orbiters: max rel dev 5.0e-6
+[u07] CONFIRMED truth-spin-sense: (r×v)·ŷ > 0 (CCW from +Y = prograde) for all but Triton: mercury+ venus+ earth+ moon+ mars+ phobos+ jupiter+ io+ saturn+ titan+ uranus+ titania+ neptune+ triton− pluto+ charon+
+[u07] CONFIRMED truth-solver-grid: solveKeplerE residual over 96×4001 grid e∈[0,0.95]: max 6.7e-16 @ e=0.86 M=-1.6273
+[u07] hill a_moon/r_H: moon 0.71 · phobos 0.19 · io 0.11 · titan 0.19 · titania 0.11 · triton 0.08 · charon 0.12
+[u07] CONFIRMED note-hill: moons beyond 0.5 r_H: moon 0.71 (real Moon 0.26)
+[u07] CONFIRMED truth-t5-deltas: T5 flight origin shifts: 9 × [1024] m (T5 detail asserts "4×256 exact" but never checks it)
+[u07] CONFIRMED truth-celestial-locals: celestial localPosF32 === f32(abs − origin) every tick through 9 rebases (max err 0)
+[u07] 23/23 confirmed; controls OK

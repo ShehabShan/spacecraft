@@ -161,7 +161,7 @@ see that the unit fits its budget.
   - Verdict per area: keep / refactor / rework, each with a draft ADR.
 - [x] **U27a consolidated findings index** — DONE (`docs/audit/FINDINGS.md`: 167 findings indexed (1 S0, 54 S1, 66 S2, 46 S3), all 55 S0/S1 merged into clusters K1–K9, ranked by severity × confidence, with cross-cluster dependencies; extractor `game/tools/audit/u27-findings-index.py`. S0/S1 repros NOT re-run.)
 - [x] **U27b1 K1 handoff re-check** — DONE (`docs/audit/U27b1-k1-recheck.md`; A1-U03-1 S0 + A1-U21-3 S1 re-confirmed with scope qualifications; original repros exit 0; independent probe 11/11; source unchanged). Reviewer: platform-reported GPT-6 Astra. Historical-majority model provenance remains unverified; this box certifies K1 evidence, not completion of that overall cross-model condition.
-- [ ] **U27b2 K2a zero-GC / heap gate re-check** — A1-U03-4, U04-5, U05-3, U06-2, U07-3, U09-1 (six findings).
+- [x] **U27b2 K2a zero-GC / heap gate re-check** — DONE (`docs/audit/U27b2-k2a-recheck.md`; A1-U03-4, U04-5, U05-3, U06-2, U07-3, U09-1 reviewed: five re-confirmed, U04-5 canary subclaim refuted, S1 retained; independent 19/19 ×3; 8/55 reviewed). Historical-majority model condition still unverified.
   - Re-run repros; independently test whether the claimed allocation property can fail. Record commands, exits, controls and dispositions in FINDINGS.md.
 - [ ] **U27b3 remaining K2 gate re-checks** — K2b (3), K2c (15), K2d (4); split by subcluster before execution if needed.
 - [ ] **U27b4 remaining K3–K9 re-checks** — 25 findings; split by cluster before execution.

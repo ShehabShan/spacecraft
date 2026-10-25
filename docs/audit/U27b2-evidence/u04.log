@@ -1,0 +1,33 @@
+[u04] extracted setup :112-:227 and rows :576-:1092
+[u04] R1 base: pass=true path 13.60 km ticks 87792 faces 2 corner 0.82° maxUp 2.1453° maxFwd 2.3876° integrity.minAGL=Infinity independent minAGL 0.020 m airborne ticks 0
+[u04] CONFIRMED r1-base-pass: verbatim R1 passes on the unedited core
+[u04] CONFIRMED r1-minagl-vacuous: integrity.minAGL = Infinity (only written by the airborne sweep); the clause minAGL > -0.05 is vacuous; walker never airborne (0 ticks)
+[u04] CONFIRMED r1-holonomy-untested: walk covers 156° of the great circle, so the printed "holonomy 2π ≡ identity" claim is never exercised
+[u04] CONFIRMED r1-snap-undetected: mutation M-SNAP (4° yaw snap every 1,000 ticks, 87 snaps) → R1 pass=true
+[u04] CONFIRMED r1-drift-detected: mutation M-DRIFT (0.05°/tick continuous yaw error, 4291° total) → R1 pass=false (REFUTES the suspicion: continuous drift IS caught)
+[u04] R5 base: pass=true west 0.754 cm predicted 1.692 cm perp 1.183 cm air 61 settle 1
+[u04] CONFIRMED r5-base-pass: verbatim R5 passes
+[u04] CONFIRMED r5-below-theory: measured/theory = 0.445; predicted is printed but never compared
+[u04] R5 independent RK4: flight 1.0431 s, west 1.883 cm; formula 1.692 cm
+[u04] R5 r0 4922.34 m, g 10.1220, g−ω²r 9.5896, 2u/g 0.9879 s, formula with g−ω²r 1.885 cm
+[u04] CONFIRMED r5-truth-near-formula: independent inertial RK4 west 1.88 cm vs flat formula 1.69 cm (11.3%: the formula ignores the 52 m/s frame's centrifugal term); KCC reports 0.75 cm
+[u04] R5 site: slope 0.329°, normal tilt west component -5.682e-3 → uncorrected drift at T≈1.02 s: -2.90 cm per unit of uncorrected weight
+[u04] R5 control Ω=0: air 58 ticks, residual west -0.974 cm (gate's tilt correction applied); measured − theory = -0.938 cm
+[u04] CONFIRMED r5-tilt-artefact: with spin OFF the verbatim measurement still reports -0.97 cm west; that artefact explains the -0.94 cm shortfall to within 0.3 cm
+[u04] CONFIRMED r5-kcc-physics-ok: artefact-removed KCC drift 1.73 cm vs independent RK4 1.88 cm (-8.3%): the KCC physics is close; the GATE's measurement is wrong
+[u04] CONFIRMED r5-fails-x0.5: Coriolis 0.5× → R5 pass=false: west -0.16 cm (window 0.6–6), perp 0.173 cm (bound 1.2), air 59, settle 1
+[u04] CONFIRMED r5-fails-x2: Coriolis 2× → R5 pass=false: west 3.91 cm (window 0.6–6), perp 7.455 cm (bound 1.2), air 73, settle 1
+[u04] CONFIRMED r5-fails-x3: Coriolis 3× → R5 pass=false: west 15.53 cm (window 0.6–6), perp 38.300 cm (bound 1.2), air 110, settle 1
+[u04] CONFIRMED r5-perp-margin: base cross-track 1.183 cm vs bound 1.2 cm: 1.4% margin
+[u04] R3: pass=true rcsDv 2.3999 budget 2.4000 yaw 0.5002 vehErr 0 detachDv 0
+[u04] CONFIRMED r3-base-pass: verbatim R3 passes
+[u04] CONFIRMED r4-noheap-pass: heapApi = null → heap clause skipped, R4 pass=true on identity + NaN only
+[u04] CONFIRMED r4-garbage-unreliable: M-GARBAGE (~200 B/tick short-lived, ~6 MB total) over 3 runs: P(-26568) P(-1465216) P(193720) — the verdict depends on GC timing
+[u04] CONFIRMED r4-leak-unreliable: M-LEAK (one retained boxed double per tick, 30,000 retained) over 3 runs: P(-2483400) F(1765688) F(1966440)
+[u04] INFO M-LEAK/3 (10,000 retained doubles) over 3 runs: F(1084376) F(1073632) P(-3099208) — heap verdicts flip with GC timing
+[u04] CONFIRMED r4-canary-readonly: every canary field is a `readonly` member assigned once in the class body, so identityOk tests the TypeScript compiler, not allocation
+[u04] R2: pass=true integrity.minAGL=Infinity independent minAGL 0.020 m airborne ticks 0
+[u04] R2 detail: 26° slope: climbed 4.9 m uphill in 2.5 s (expected ≈ 4.4 m, slide 0.000 m/s, grounded 150/150), descended with snap-down holding grounding 150/150 · 60° slope: slide initiated at tick 5, accelerated 10.3 m/s downhill (displacement 100% downhill: 1.00); uphill SPRINT net progress 0.11 m in 1.5 s (unimpeded would be 12 m) — dual step rule blocks · 73° cliff: net uphill progress 0.02 m over 1.5 s of sprint into the face (min AGL n/a (never airborne) m — penetration-free) (engineered field swapped + restored inside one synchronous block).
+[u04] CONFIRMED r2-base-pass: verbatim R2 passes
+[u04] CONFIRMED r2-cliff-minagl-vacuous: R2(c) "penetration-free" reads integrity.minAGL = Infinity — never written while grounded
+[u04] CONFIRMED 21/21

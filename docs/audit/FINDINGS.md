@@ -1,7 +1,7 @@
 # A1 ENGINE AUDIT — CONSOLIDATED FINDINGS
 
 - Task: A1 (read-only) · Branch: `a1-engine-audit` · Built from U01–U26 reports at `49e6c32`
-- Status: **U27b in progress — K1 re-checked (U27b1); 2/55 S0/S1 reviewed, 53 pending.** U27a built the index without rerunning repros. Fix tasks and the Lead summary remain U27c. Historical-majority model provenance is not yet established (see review below).
+- Status: **U27b in progress — K1 and K2a re-checked (U27b1/U27b2); 8/55 S0/S1 reviewed, 47 pending.** U27a built the index without rerunning repros. Fix tasks and the Lead summary remain U27c. Historical-majority model provenance is not yet established (see review below).
 - Original evidence lives in each unit report (`docs/audit/Uxx-*.md`). This file indexes, groups and ranks it; the re-check table records later confirmation or correction without erasing original reports.
 - Regenerate the index (§4) with `python3 game/tools/audit/u27-findings-index.py --md` from the repo root. `--stats` and `--s01` print the counts and the S0/S1 list.
 
@@ -54,12 +54,12 @@ integration require separate verification.
 Reviewer model per platform usage: **GPT-6 Astra (`gpt-6-astra`)**. Accessible
 prior SOLARIS work used Claude Opus 5.5, but the models of most historical audit
 units are not attributable from available records. That cross-model provenance
-condition remains open. K2–K9 are **not reviewed** by this checkpoint.
+condition remains open. K2–K9 were **not reviewed** by the U27b1 checkpoint; see the later K2a review below.
 
 ### K2 — Acceptance gates cannot fail on their own claims — score 83.1 (28× S1)
 This is the largest cluster. The 1A–1F approvals rest on these gates, so they cannot be trusted as proof until the cluster is fixed.
 
-- **K2a — zero-GC and heap gates are blind (one method error: reading heap deltas after `gc()`):** A1-U03-4, A1-U04-5, A1-U05-3, A1-U06-2, A1-U07-3, A1-U09-1. The engine-side allocation they miss is K5.
+- **K2a — allocation claims use insufficient instruments (unforced browser heap deltas, post-GC Node retained heap, or a boot-only buffer counter):** A1-U03-4, A1-U04-5, A1-U05-3, A1-U06-2, A1-U07-3, A1-U09-1. The engine-side allocation they miss is K5.
 - **K2b — e2e spec plumbing passes broken pages:** A1-U08-1 (page and console errors are never asserted), A1-U08-2 (placeholder badges and dropped rows pass), A1-U08-9 (only the literal text "FAIL" fails).
 - **K2c — rows that are tautologies or compare constants:** A1-U02-1, A1-U02-2, A1-U02-3, A1-U03-2, A1-U03-3, A1-U04-1, A1-U04-3, A1-U04-4, A1-U05-1, A1-U05-7, A1-U06-1, A1-U07-1, A1-U07-2, A1-U08-5, A1-U08-6.
 - **K2d — verdict depends on the fixture, the frame rate or the process:**
@@ -68,6 +68,38 @@ This is the largest cluster. The 1A–1F approvals rest on these gates, so they 
   - A1-U08-7: m1a T5 misses stalls and flags the wrong rebase frame.
   - A1-U01-1 (likely): the R2 regression at 3057899 shipped without a gate run.
 - **Touches:** tests and harness acceptance rows only, with no game behaviour change. The 1F rows are PARKED (§8), so changing them needs a Lead directive naming 1F.
+
+#### K2a re-check — U27b2 (2026-10-25, base `36106c8`)
+
+| Member | Review outcome | Evidence / correction |
+|---|---|---|
+| A1-U03-4 | Re-confirmed S1 | m1f actual R4 accepts same-shaped replacement; missing/negative heap readings pass. |
+| A1-U04-5 | **Changed in part; S1 retained** | Heap under-test confirmed, but “canary cannot fail” refuted: replacing `up` fails the actual identity check. |
+| A1-U05-3 | Re-confirmed S1 | Real-controller extra-allocation burn passes 3/3; baseline exceeds bound 2/3. |
+| A1-U06-2 | Re-confirmed S1 | 1,000 injected runtime buffers retain 4,096,000 B; actual T2 counter delta remains 0/pass. Counter-increment control fails. |
+| A1-U07-3 | Re-confirmed S1 | Real-core allocation mutants pass absent/negative measurement; identity replacement and large retained leak controls fail. |
+| A1-U09-1 | Re-confirmed S1 | ~4 KB/frame transient mutant passes perf 19/19; retained mutant fails. Independent observer sees ~41.6 MB churn hidden by post-GC delta. |
+
+Full method, source citations, commands/unpiped exits, controls, limitations and
+audit-method ADR draft: [U27b2 K2a re-check](U27b2-k2a-recheck.md).
+Original repros all exit 0, **not** all expectations pass: U05 10/11 (old unrelated
+T3-2 expectation), U09 10/11 (cold-camera failure did not recur).
+New `node --expose-gc tools/audit/u27b2-k2a-recheck.mjs` from `game/`:
+**19/19, exit 0 on three runs**. Typecheck/build exit 0; protected-source diff
+against `256d77d` empty. No fresh browser/GPU run or production allocation-rate
+claim. Raw logs and exit manifests: `U27b2-evidence/`.
+
+**Remedy correction:** forced GC before/after, even with `--jitless` or a trend,
+measures retention, not transient allocation; do not implement the U04/U05/U07
+suggestions as allocation detectors. Keep meaningful identity checks, add
+calibrated allocation-sensitive controls (including collected objects), and
+independently instrument runtime buffer allocations. These are proposals for
+later fix tasks, not implemented fixes. Original reports/index titles are retained
+for provenance; this review supersedes the corrected subclaims.
+
+Six members reviewed here, plus two in K1 = **8/55**, with **47 pending**.
+Reviewer **GPT-6 Astra (`gpt-6-astra`)**, verified from platform usage; historical-
+majority provenance remains open. Remaining K2 and K3–K9 are not signed off.
 
 ### K3 — No reference-frame model: bodies do not spin and actors are not parented — score 21.0 (7× S1)
 - **Members:**
