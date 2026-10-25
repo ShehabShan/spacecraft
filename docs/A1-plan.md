@@ -153,7 +153,7 @@ see that the unit fits its budget.
   - Find per-frame allocations in tick paths, Euler accumulators, and
     violations of the page rule.
   - Skim `play/ui/*`, `store/*`, `main.tsx`, `App.tsx`.
-- [ ] **U26 architecture fitness vs the goal** (AGENT_BRIEF §13)
+- [x] **U26 architecture fitness vs the goal** (AGENT_BRIEF §13) — DONE (`docs/audit/U26-architecture-fitness.md` + `docs/audit/U26-adr-drafts.md` D-ADR-1..8: method KEEP (rails, f64 core, floating origin, analytic terrain/KCC, layered cameras, workers); gates REWORK first; reference frames REWORK (state model, S1); catalog/time/entity/terrain/render/play REFACTOR; terrain field per-thread singleton silently re-points actors (S2); ≈740 walking actors per 4 ms; `game/tools/audit/u26-architecture-fitness.mjs`, `u26b-terrain-singleton-walk.mjs`)
   - Can this architecture deliver a real-looking, real-time solar system at good
     fps AND extend to new features (combat, AI entities, vehicles)?
   - Check the entity/state model, render pipeline, scale/precision strategy,
