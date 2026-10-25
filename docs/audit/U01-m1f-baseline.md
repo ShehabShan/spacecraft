@@ -77,3 +77,9 @@ The result reproduced in **3/3 runs** at two different frame rates (6 and 11 FPS
 - `npx playwright test e2e/m1f.spec.ts --reporter=line` → RUN1_EXIT=1. Expected with any FAIL badge: R2 FAIL plus R5 (waived).
 - `node tools/audit/u01-m1f-probe.mjs` → PROBE_EXIT=0 (run 2: elevation + whole-frame stats). Its first attempt raised "Could not resolve breakpoint" before the page ran; the tool was fixed and that attempt is not counted as a harness run.
 - `node tools/audit/u01-m1f-probe.mjs` (with the centre-pixel and colour stats added) → PROBE2_EXIT=0 (run 3).
+
+## U27 recheck qualification — 2026-10-25, session 96
+A1-U01-1 retains S1: unchanged browser repro again captures zero Sun-footprint pixels with active Sun and nonblank readback. Commit 3057899 and F-12 remain candidates, not bisected causes. Nonblank pixels alone do not establish an opaque occluder; the original categorical occlusion explanation is unproven. Its commit record lacks a gate run, but cannot prove no unrecorded run occurred.
+Evidence and authoritative recheck disposition: [K2d batch](U27-k2d-recheck.md).
+
+Follow-up visibility controls localize suppression to spinGroup (terrain/core shell/satellites): hiding it restores 1371 pixels / 99.129% coverage, while hiding the astronaut does not. Exact occluding draw remains unidentified; centroid error still 1.993 px > 1.5, so this is not a fixed/passing R2. See the linked batch report.

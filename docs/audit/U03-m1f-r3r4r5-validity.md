@@ -124,3 +124,7 @@
 - U21 (camera rig + sky impostors): the handoff controller lives in the harness, not in `render/`; any production LOD switch must not copy it (A1-U03-1).
 - U25 (invariants): `:857` per-call literal in `applyRenderState`; check the play layer's equivalent path.
 - U01/R2 + U03/R3(c): both A/B rows went blind at the post-3057899 pose; the fix task for A1-U01-1 should re-check R3(c) in the same gate run.
+
+## U27 recheck qualification — 2026-10-25, session 96
+A1-U03-5 retains S1, but the universal impossibility/robust-upper-bound claim is withdrawn: sphere Monte Carlo is not a bound on real terrain/steering/warmup paths. Independent 1440-case short-path grid gives zero two-plus rebases; 4000 m surface-path control gives two-plus in all cases. This confirms a poor fixture, not that every candidate site was mathematically impossible.
+Evidence and authoritative recheck disposition: [K2d batch](U27-k2d-recheck.md).

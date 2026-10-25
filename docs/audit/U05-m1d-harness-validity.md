@@ -200,3 +200,8 @@ Reads done: `flightController.ts` :1–160, :376–560 and :596–750; `aerodyna
 - **BASE sweep, no tunnelling in sample.** 0/3,000 random low, fast ticks tunnel. The sweep removal control is caught by T2.
 - **Terrain height.** Max sampled height is 734.8 m ≤ `maxTerrainHeight` 900, and the minimum is −423.0 m. The early-out and sample bands are safe on height.
 - **HUD.** Harness :1000–1182 is HUD only. The overall verdict is `TEST_ORDER.every(pass)`, with no extra logic.
+
+
+## U27 recheck qualification — 2026-10-25, session 96
+A1-U05-2 retains S1. The real harness checks its deadline before updating; original replay allowed one extra frame. Correct 15 fps values: 16.8 physical seconds and 62.607 m AGL, not 16.9/57.3. Tick-deadline controls pass with identical physical traces.
+Evidence and authoritative recheck disposition: [K2d batch](U27-k2d-recheck.md).

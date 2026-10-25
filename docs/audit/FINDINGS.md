@@ -1,7 +1,7 @@
 # A1 ENGINE AUDIT — CONSOLIDATED FINDINGS
 
 - Task: A1 (read-only) · Branch: `a1-engine-audit` · Built from U01–U26 reports at `49e6c32`
-- Status: **U27b in progress — K1, K2a, K2b, all fifteen K2c findings and K2d U08-7 re-checked (through U27b3b2b2b2b2a); 27/55 S0/S1 reviewed, 28 pending.** U27a built the index without rerunning repros. Fix tasks and the Lead summary remain U27c. Historical-majority model provenance is not yet established (see review below).
+- Status: **U27b in progress — K1 and all K2 gate findings re-checked (through U27b3b2b2b2b2b); 30/55 S0/S1 reviewed, 25 pending.** U27a built the index without rerunning repros. Fix tasks and the Lead summary remain U27c. Historical-majority model provenance is not yet established (see review below).
 - Original evidence lives in each unit report (`docs/audit/Uxx-*.md`). This file indexes, groups and ranks it; the re-check table records later confirmation or correction without erasing original reports.
 - Regenerate the index (§4) with `python3 game/tools/audit/u27-findings-index.py --md` from the repo root. `--stats` and `--s01` print the counts and the S0/S1 list.
 
@@ -66,7 +66,7 @@ This is the largest cluster. The 1A–1F approvals rest on these gates, so they 
   - A1-U03-5: R5's "rebases ≥ 2" is unreachable by its own fixture.
   - A1-U05-2: the T2 verdict is fps-dependent.
   - A1-U08-7: m1a T5 misses stalls and flags the wrong rebase frame.
-  - A1-U01-1 (likely): the R2 regression at 3057899 shipped without a gate run.
+  - A1-U01-1: R2 failure re-confirmed; 3057899 remains a likely candidate, not bisected; no acceptance run recorded in that commit.
 - **Touches:** tests and harness acceptance rows only, with no game behaviour change. The 1F rows are PARKED (§8), so changing them needs a Lead directive naming 1F.
 
 #### K2a re-check — U27b2 (2026-10-25, base `36106c8`)
@@ -325,6 +325,25 @@ spans, uses one warmup, and does not treat the following delta as pure rebase co
 One more reviewed = **27/55; 28 pending**. K2d three (U03-5, U05-2, U01-1)
 and K3–K9 25 remain. Next **U27b3b2b2b2b2b**, split starting U03-5.
 Model `gpt-6-astra` verified; historical-majority condition unresolved.
+
+#### K2d remaining three re-check — U27b3b2b2b2b2b (2026-10-25, base `e86a47b`)
+
+| Finding | Disposition |
+|---|---|
+| A1-U03-5 | **Changed, S1 retained.** Overhead-target fixture limitation confirmed, universal two-rebase impossibility withdrawn. Short-path grid 0/1440 two-plus vs 1440/1440 on a 4000 m surface-path control; actual core calibration agrees. Not a real-KCC upper bound. |
+| A1-U05-2 | **Re-confirmed, S1 retained.** Exact extracted row fails at 15/10 fps before completing the same trajectory. Tick-time deadline controls pass. Original replay had one extra update; corrected 15 fps 16.8 s / 62.607 m AGL. |
+| A1-U01-1 | **Failure re-confirmed; attribution remains likely.** Fresh unchanged browser repro: R2 footprint zero, Sun active +32.9566°, nonblank frame. Follow-up visibility controls localize suppression to spinGroup (not exact draw): hiding it restores99.129% coverage, but centroid1.993px still fails. First bad commit3057899/F-12 remains unbisected. |
+
+Evidence: [K2d batch report](U27-k2d-recheck.md), new
+`game/tools/audit/u27-k2d-recheck.mjs`, raw `U27-k2d-evidence/`.
+Original U03 22/22 exit0; U05 10/11 exit0 (unrelated miss retained);
+independent **14/14 twice exit0**, deliberate **14/15 exit1**.
+Original U01 browser probe exit0 means observation captured, not a passing gate. Controlled visibility run exit0; independent log validation6/6 exit0; no full R2 recovery claimed.
+Typecheck/build/protected diff exit0. No production edits.
+**30/55 reviewed; 25 pending, K3–K9.** Next U27b4, split starting K3,
+batch related findings within the Lead's 50-OLU budget.
+Model `gpt-6-astra` verified; historical-majority provenance unresolved.
+Earlier findings/index labels below are historical; these recheck dispositions supersede overstatements.
 
 ### K3 — No reference-frame model: bodies do not spin and actors are not parented — score 21.0 (7× S1)
 - **Members:**
