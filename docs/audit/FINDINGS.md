@@ -1,7 +1,7 @@
 # A1 ENGINE AUDIT — CONSOLIDATED FINDINGS
 
 - Task: A1 (read-only) · Branch: `a1-engine-audit` · Built from U01–U26 reports at `49e6c32`
-- Status: **U27b in progress — K1, K2a, K2b and five K2c R1/R2/R3 findings re-checked (through U27b3b2a); 16/55 S0/S1 reviewed, 39 pending.** U27a built the index without rerunning repros. Fix tasks and the Lead summary remain U27c. Historical-majority model provenance is not yet established (see review below).
+- Status: **U27b in progress — K1, K2a, K2b and eight K2c findings re-checked (through U27b3b2b1); 19/55 S0/S1 reviewed, 36 pending.** U27a built the index without rerunning repros. Fix tasks and the Lead summary remain U27c. Historical-majority model provenance is not yet established (see review below).
 - Original evidence lives in each unit report (`docs/audit/Uxx-*.md`). This file indexes, groups and ranks it; the re-check table records later confirmation or correction without erasing original reports.
 - Regenerate the index (§4) with `python3 game/tools/audit/u27-findings-index.py --md` from the repo root. `--stats` and `--s01` print the counts and the S0/S1 list.
 
@@ -173,6 +173,33 @@ Two more reviewed = **16/55; 39 pending**. Remaining K2c: ten; K2d: four.
 Next U27b3b2b must split before execution, beginning m1e U04-1/-3/-4.
 Reviewer platform model **GPT-6 Astra (`gpt-6-astra`)**; historical-majority
 provenance still unresolved. Unrelated original-probe R4/R5 output is not sign-off.
+
+#### K2c m1e re-check — U27b3b2b1 (2026-10-25, base `6823d42`)
+
+| Member | Review outcome | Evidence / qualification |
+|---|---|---|
+| A1-U04-1 | Re-confirmed S1; qualified | Wrong launch-tilt correction: zero-spin residual −0.974 cm becomes −0.0126 cm using the actual normal. Prediction −1/100/NaN still passes. Six measured-variable controls reject. The ≈1.885 cm radial sphere is a different fixture, not exact terrain truth or general KCC physics sign-off. |
+| A1-U04-3 | Re-confirmed S1 | One inward position fault gives −0.080 m geometric clearance but complete R1/R2 rows still pass with Infinity telemetry. Finite −0.10 m telemetry fails both. Baselines have +0.020 m clearance; no natural penetration alleged. |
+| A1-U04-4 | Re-confirmed S1; qualified | 87 measured 4° snaps pass; 8° snaps fail. Baseline ends 123.03° from start: no closed-loop holonomy test. Separate steering/transport and derive tolerances; original 1e−6 rad recommendation is not established for the terrain-blended path. |
+
+Report, controls and audit-method ADR draft:
+[U27b3b2b1 m1e re-check](U27b3b2b1-m1e-recheck.md).
+Original repro **20/21, exit 1** (unrelated R4 M-LEAK GC trial); targeted
+checks reproduced. Independent first attempt **27/28, exit 1** caught an
+out-of-window injection; corrected probe **28/28 ×2, exit 0**.
+Typecheck/build/protected diff exit 0; raw evidence in `U27b3b2b1-evidence/`.
+
+The spec explicitly permits R5's broad 0.6–6 cm window; the issue is incorrect
+tilt compensation and implied theory agreement. Spin scaling changes more than
+Coriolis. Preserve the working bounds and distinguish analytic reference fixtures
+from terrain-normal launches. Original reports/index remain historical; this
+review supersedes their qualified subclaims. No fresh browser/live-trek verdict.
+
+Three more reviewed = **19/55; 36 pending**. Remaining K2c: seven; K2d: four.
+Next **U27b3b2b2**, split before execution beginning m1d U05-1/-7.
+Reviewer platform model **GPT-6 Astra (`gpt-6-astra`)**; historical-majority
+provenance unresolved. Original readonly-canary output remains refuted by U27b2;
+no untouched findings signed off.
 
 ### K3 — No reference-frame model: bodies do not spin and actors are not parented — score 21.0 (7× S1)
 - **Members:**

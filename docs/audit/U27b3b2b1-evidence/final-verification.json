@@ -1,0 +1,19 @@
+{
+  "allowlist": "PASS",
+  "source_manifest": "PASS",
+  "historical_session_rows": "unchanged",
+  "next_pointer": "U27b3b2b2",
+  "reviewed": 19,
+  "pending": 36,
+  "independent": "28/28 twice, exit 0",
+  "original": "20/21 exit 1, unrelated R4 trial",
+  "process_validation_correction": "First attempt detected session row embedded at prose mention of ANCHOR; corrected to exact heading and verified historical rows unchanged.",
+  "protected_diff": {
+    "exit": 0,
+    "stdout": ""
+  },
+  "whitespace": {
+    "exit": 0,
+    "stdout": ""
+  }
+}

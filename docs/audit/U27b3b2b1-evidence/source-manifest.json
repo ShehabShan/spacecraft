@@ -1,0 +1,11 @@
+{
+  "base": "6823d42d4bb1ae6e154d31e1f2b00760f34bfe78",
+  "sha256": {
+    "game/src/test/Milestone1E_TestHarness.tsx": "34b9b9532438b994e2ffb3240568f6eed0757776fc39b23d16241cb45ba6e946",
+    "game/src/core/physics/astronautKCC.ts": "72b645cd390cad4ede2d3456d10361148f00af19f03fd6f9a515743f815ef0a1",
+    "game/src/core/physics/sphericalFrame.ts": "57191926d2673f214bfcbdc1a7ff1033a602a8b1961351958eaf998e6c337270",
+    "game/src/core/terrain/terrainField.ts": "54e21c9135dd38b245a1f89965c155c003c8cffb0198405824d3ba6b509a8647",
+    "game/tools/audit/u04-m1e-validity.mjs": "09580149a84e8c8b2b2a9ecd5d5b96ea9b2e9766856e0fa8b65668426023a432",
+    "game/tools/audit/u27b3b2b1-m1e-recheck.mjs": "5ae3898df6a312029330c03b1b3e1e6b36adda6819dd917a5344e0de6a5cae2b"
+  }
+}
