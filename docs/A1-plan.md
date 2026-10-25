@@ -132,7 +132,7 @@ see that the unit fits its budget.
   - Lead 2026-10-23: also check the T2 requirement (notes/task.md): per-body real atmospheres (catalog `atmosphereHeight` is unused; one EARTHSCALE profile), manual atmosphere-affected landing, 2,000 m/s as deep-space-only.
 
 ### Phase D — Render + workers
-- [ ] **U20 terrain meshing + worker** (`render/TerrainMeshPool.ts` 447, `workers/terrainWorker.ts` 256)
+- [x] **U20 terrain meshing + worker** — DONE (`docs/audit/U20-terrain-meshing-worker.md`: the "free set always exists" bound is wrong — 144 meshes on 96 sets drop requests and the LOD keeps dead `pendingRec`s, holes on 5,843/7,200 frames, 194 nodes fake data, no gate reads `drops`; play/1F safe only at meshCount = sets (S1); worker 0 does almost all generation, 94/16 (S2); receive-path garbage unmeasured (S3); `game/tools/audit/u20-mesh-pool-worker.mjs`) (`render/TerrainMeshPool.ts` 447, `workers/terrainWorker.ts` 256)
   - Check LOD cracks, pool exhaustion and worker message races.
 - [ ] **U21 camera rig + sky impostors** (`render/MultiCameraRig.tsx` 217, `render/SkyImpostorPool.ts` 326; Milestone 1F)
   - Are the layered bands (ratified) right? Check the depth handoff and the
