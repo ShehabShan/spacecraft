@@ -1,0 +1,42 @@
+[WebServer] 
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+
+
+Running 2 tests using 1 worker
+
+[1/2] e2e/m1a.spec.ts:7:1 › M1A — Floating Origin acceptance
+e2e/m1a.spec.ts:7:1 › M1A — Floating Origin acceptance
+[m1a gate] acceptance line: [Milestone1A] acceptance PASSED — P.x={ticks} rebases=9 maxLocal={f2(avg)}ms
+
+[m1a gate] badges: ["PASS","PASS","PASS","PASS","PASS"]
+
+[m1a gate] runtime errors: []
+
+[m1a gate] page console transcript:
+
+  warning: [.WebGL-0x4d400171000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+
+  warning: [.WebGL-0x4d400171000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+
+  warning: [.WebGL-0x4d400171000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+
+  warning: [.WebGL-0x4d400171000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
+
+  log: [Milestone1A] acceptance PASSED — P.x={ticks} rebases=9 maxLocal={f2(avg)}ms
+
+[2/2] e2e/m1b.spec.ts:7:1 › M1B — Kepler Rails & Two-Tier Time acceptance
+e2e/m1b.spec.ts:7:1 › M1B — Kepler Rails & Two-Tier Time acceptance
+[m1b gate] acceptance line: [Milestone1B] acceptance PASSED in 24.6 ms — maxPosErr={errRoundTrip.toExponential(1)}m restore={identityOk ? 'OK' : 'FAIL'} heapDelta={rebaseDelta}
+
+[m1b gate] badges: ["PASS","PASS","PASS","PASS","PASS"]
+
+[m1b gate] runtime errors: []
+
+[m1b gate] page console transcript:
+
+  log: [Milestone1B] acceptance PASSED in 24.6 ms — maxPosErr={errRoundTrip.toExponential(1)}m restore={identityOk ? 'OK' : 'FAIL'} heapDelta={rebaseDelta}
+
+  2 passed (11.6s)

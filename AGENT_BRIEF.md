@@ -9,10 +9,11 @@ and commit+push after every completed step — so that ANY fresh session (a diff
 AI model, no shared memory) can continue exactly where you left off, from the repo
 alone.
 
-**ACTIVE TASK (2026-10-21): A1 ENGINE AUDIT — READ-ONLY.** While A1 is active you
-are an AUDITOR, not a builder. The specs, the code and the tests are suspects to
-check, not truths to defend. §11 AUDIT MODE overrides "the code is the source of
-truth" above, and overrides §2, §3 and §8 where they conflict. T1 is PAUSED at B11.
+**ACTIVE WORK (2026-10-26): FIX TASKS F1a… in `docs/audit/U27c-fix-tasks.md` §2 order.**
+A1 (the read-only audit) is DONE — accepted by the Lead 2026-10-26 and merged into
+`main` (STATE.md APPROVAL LEDGER). §11 AUDIT MODE no longer binds; it is kept as
+history. Fix tasks are one-session rows with no plan file: the U27c §2 row is the
+definition, the tracker row is the checkbox. T1 is PAUSED at B11 until after F2f.
 Every session obeys §12 SESSION BUDGET and §13 GOAL & DECISION AUTHORITY.
 
 ## 1. READING ORDER (a fresh session reads exactly this, in order)
@@ -186,6 +187,10 @@ suspected lost work, or deleting the Lead's work.
   system on an optimised, flexible engine; major rework allowed when clearly
   better; the session makes all technical calls (ADR in docs/decisions/); the
   Lead answers only look-and-feel questions; no-mess safeguards.
+
+- 2026-10-26 Banner repair (session 104): the top banner still named A1 as active
+  after the Lead's 2026-10-26 acceptance (APPROVAL LEDGER). It now points at the fix
+  tasks; §11 is history. No rule changed.
 
 ## 11. AUDIT MODE (binds only while the active task is A1)
 Why: the milestone specs were written by GLM 5.3 and the engine by GLM 5.3 Flash

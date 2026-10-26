@@ -1,0 +1,57 @@
+[WebServer] 
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+
+
+Running 1 test using 1 worker
+
+[1/1] e2e/m1f.spec.ts:11:1 › M1F — 3-Camera Layers & Sky Impostors acceptance
+e2e/m1f.spec.ts:11:1 › M1F — 3-Camera Layers & Sky Impostors acceptance
+[m1f gate] acceptance line: [Milestone1F] acceptance FAILED
+
+[m1f gate] badges: ["PASS","FAIL","PASS","PASS","FAIL"]
+
+[m1f gate] runtime errors: []
+
+[m1f gate] page console transcript (tail):
+
+  warning: [.WebGL-0x1c7c0017ca00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+
+  warning: [.WebGL-0x1c7c0017ca00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+
+  warning: [.WebGL-0x1c7c0017ca00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+
+  warning: [.WebGL-0x1c7c0017ca00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
+
+  log: R3DUMP hdr centre=(640.00,360.00) meshR=2.93 impR=2.93 meshRmax=105.38 impRmax=105.38 totA=27 sym=0
+
+  log: [Milestone1F] acceptance FAILED
+
+  1) e2e/m1f.spec.ts:11:1 › M1F — 3-Camera Layers & Sky Impostors acceptance ───────────────────────
+
+    Error: acceptance console line
+
+    expect(received).toMatch(expected)
+
+    Expected pattern: /\[Milestone1F\] acceptance PASSED/
+    Received string:  "[Milestone1F] acceptance FAILED"
+
+       at gate.ts:55
+
+      53 |   // Order matters only for which label a broken page reports first; every
+      54 |   // assertion is independent and each one alone rejects its defect class.
+    > 55 |   expect(line, 'acceptance console line').toMatch(new RegExp(`\\[${gate.tag}\\] acceptance PASSED`))
+         |                                           ^
+      56 |   expect(runtimeErrors, 'no page or console error').toEqual([])
+      57 |   expect(badges.length, 'badge rows scraped').toBeGreaterThan(0)
+      58 |   expect(badges.length, 'badge row count').toBe(gate.expectedRows)
+        at runAcceptanceGate (/workspace/spacecraft/game/e2e/gate.ts:55:43)
+        at /workspace/spacecraft/game/e2e/m1f.spec.ts:12:3
+
+    Error Context: test-results/m1f-M1F-—-3-Camera-Layers-Sky-Impostors-acceptance/error-context.md
+
+
+  1 failed
+    e2e/m1f.spec.ts:11:1 › M1F — 3-Camera Layers & Sky Impostors acceptance ────────────────────────

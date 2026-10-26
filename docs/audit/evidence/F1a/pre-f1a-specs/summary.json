@@ -1,0 +1,428 @@
+{
+  "rev": "6ce1d08",
+  "total": 60,
+  "rawPlaywrightExit": 1,
+  "mismatches": 36,
+  "results": [
+    {
+      "mode": "baseline",
+      "spec": "m1a",
+      "status": "passed",
+      "wantLabel": null,
+      "ok": true
+    },
+    {
+      "mode": "failbadge",
+      "spec": "m1a",
+      "status": "failed",
+      "wantLabel": "no FAIL badge may remain",
+      "ok": true
+    },
+    {
+      "mode": "failedverdict",
+      "spec": "m1a",
+      "status": "failed",
+      "wantLabel": "acceptance console line",
+      "ok": true
+    },
+    {
+      "mode": "zerorows",
+      "spec": "m1a",
+      "status": "failed",
+      "wantLabel": "badge rows scraped",
+      "ok": true
+    },
+    {
+      "mode": "pageerror",
+      "spec": "m1a",
+      "status": "passed",
+      "wantLabel": "no page or console error",
+      "ok": false
+    },
+    {
+      "mode": "consoleerror",
+      "spec": "m1a",
+      "status": "passed",
+      "wantLabel": "no page or console error",
+      "ok": false
+    },
+    {
+      "mode": "resource404",
+      "spec": "m1a",
+      "status": "passed",
+      "wantLabel": "no page or console error",
+      "ok": false
+    },
+    {
+      "mode": "placeholders",
+      "spec": "m1a",
+      "status": "passed",
+      "wantLabel": "every badge is exactly PASS",
+      "ok": false
+    },
+    {
+      "mode": "missingrow",
+      "spec": "m1a",
+      "status": "passed",
+      "wantLabel": "badge row count",
+      "ok": false
+    },
+    {
+      "mode": "errbadge",
+      "spec": "m1a",
+      "status": "passed",
+      "wantLabel": "every badge is exactly PASS",
+      "ok": false
+    },
+    {
+      "mode": "baseline",
+      "spec": "m1b",
+      "status": "passed",
+      "wantLabel": null,
+      "ok": true
+    },
+    {
+      "mode": "failbadge",
+      "spec": "m1b",
+      "status": "failed",
+      "wantLabel": "no FAIL badge may remain",
+      "ok": true
+    },
+    {
+      "mode": "failedverdict",
+      "spec": "m1b",
+      "status": "failed",
+      "wantLabel": "acceptance console line",
+      "ok": true
+    },
+    {
+      "mode": "zerorows",
+      "spec": "m1b",
+      "status": "failed",
+      "wantLabel": "badge rows scraped",
+      "ok": true
+    },
+    {
+      "mode": "pageerror",
+      "spec": "m1b",
+      "status": "passed",
+      "wantLabel": "no page or console error",
+      "ok": false
+    },
+    {
+      "mode": "consoleerror",
+      "spec": "m1b",
+      "status": "passed",
+      "wantLabel": "no page or console error",
+      "ok": false
+    },
+    {
+      "mode": "resource404",
+      "spec": "m1b",
+      "status": "passed",
+      "wantLabel": "no page or console error",
+      "ok": false
+    },
+    {
+      "mode": "placeholders",
+      "spec": "m1b",
+      "status": "passed",
+      "wantLabel": "every badge is exactly PASS",
+      "ok": false
+    },
+    {
+      "mode": "missingrow",
+      "spec": "m1b",
+      "status": "passed",
+      "wantLabel": "badge row count",
+      "ok": false
+    },
+    {
+      "mode": "errbadge",
+      "spec": "m1b",
+      "status": "passed",
+      "wantLabel": "every badge is exactly PASS",
+      "ok": false
+    },
+    {
+      "mode": "baseline",
+      "spec": "m1c",
+      "status": "passed",
+      "wantLabel": null,
+      "ok": true
+    },
+    {
+      "mode": "failbadge",
+      "spec": "m1c",
+      "status": "failed",
+      "wantLabel": "no FAIL badge may remain",
+      "ok": true
+    },
+    {
+      "mode": "failedverdict",
+      "spec": "m1c",
+      "status": "failed",
+      "wantLabel": "acceptance console line",
+      "ok": true
+    },
+    {
+      "mode": "zerorows",
+      "spec": "m1c",
+      "status": "failed",
+      "wantLabel": "badge rows scraped",
+      "ok": true
+    },
+    {
+      "mode": "pageerror",
+      "spec": "m1c",
+      "status": "passed",
+      "wantLabel": "no page or console error",
+      "ok": false
+    },
+    {
+      "mode": "consoleerror",
+      "spec": "m1c",
+      "status": "passed",
+      "wantLabel": "no page or console error",
+      "ok": false
+    },
+    {
+      "mode": "resource404",
+      "spec": "m1c",
+      "status": "passed",
+      "wantLabel": "no page or console error",
+      "ok": false
+    },
+    {
+      "mode": "placeholders",
+      "spec": "m1c",
+      "status": "passed",
+      "wantLabel": "every badge is exactly PASS",
+      "ok": false
+    },
+    {
+      "mode": "missingrow",
+      "spec": "m1c",
+      "status": "passed",
+      "wantLabel": "badge row count",
+      "ok": false
+    },
+    {
+      "mode": "errbadge",
+      "spec": "m1c",
+      "status": "passed",
+      "wantLabel": "every badge is exactly PASS",
+      "ok": false
+    },
+    {
+      "mode": "baseline",
+      "spec": "m1d",
+      "status": "passed",
+      "wantLabel": null,
+      "ok": true
+    },
+    {
+      "mode": "failbadge",
+      "spec": "m1d",
+      "status": "failed",
+      "wantLabel": "no FAIL badge may remain",
+      "ok": true
+    },
+    {
+      "mode": "failedverdict",
+      "spec": "m1d",
+      "status": "failed",
+      "wantLabel": "acceptance console line",
+      "ok": true
+    },
+    {
+      "mode": "zerorows",
+      "spec": "m1d",
+      "status": "failed",
+      "wantLabel": "badge rows scraped",
+      "ok": true
+    },
+    {
+      "mode": "pageerror",
+      "spec": "m1d",
+      "status": "passed",
+      "wantLabel": "no page or console error",
+      "ok": false
+    },
+    {
+      "mode": "consoleerror",
+      "spec": "m1d",
+      "status": "passed",
+      "wantLabel": "no page or console error",
+      "ok": false
+    },
+    {
+      "mode": "resource404",
+      "spec": "m1d",
+      "status": "passed",
+      "wantLabel": "no page or console error",
+      "ok": false
+    },
+    {
+      "mode": "placeholders",
+      "spec": "m1d",
+      "status": "passed",
+      "wantLabel": "every badge is exactly PASS",
+      "ok": false
+    },
+    {
+      "mode": "missingrow",
+      "spec": "m1d",
+      "status": "passed",
+      "wantLabel": "badge row count",
+      "ok": false
+    },
+    {
+      "mode": "errbadge",
+      "spec": "m1d",
+      "status": "passed",
+      "wantLabel": "every badge is exactly PASS",
+      "ok": false
+    },
+    {
+      "mode": "baseline",
+      "spec": "m1e",
+      "status": "passed",
+      "wantLabel": null,
+      "ok": true
+    },
+    {
+      "mode": "failbadge",
+      "spec": "m1e",
+      "status": "failed",
+      "wantLabel": "no FAIL badge may remain",
+      "ok": true
+    },
+    {
+      "mode": "failedverdict",
+      "spec": "m1e",
+      "status": "failed",
+      "wantLabel": "acceptance console line",
+      "ok": true
+    },
+    {
+      "mode": "zerorows",
+      "spec": "m1e",
+      "status": "failed",
+      "wantLabel": "badge rows scraped",
+      "ok": true
+    },
+    {
+      "mode": "pageerror",
+      "spec": "m1e",
+      "status": "passed",
+      "wantLabel": "no page or console error",
+      "ok": false
+    },
+    {
+      "mode": "consoleerror",
+      "spec": "m1e",
+      "status": "passed",
+      "wantLabel": "no page or console error",
+      "ok": false
+    },
+    {
+      "mode": "resource404",
+      "spec": "m1e",
+      "status": "passed",
+      "wantLabel": "no page or console error",
+      "ok": false
+    },
+    {
+      "mode": "placeholders",
+      "spec": "m1e",
+      "status": "passed",
+      "wantLabel": "every badge is exactly PASS",
+      "ok": false
+    },
+    {
+      "mode": "missingrow",
+      "spec": "m1e",
+      "status": "passed",
+      "wantLabel": "badge row count",
+      "ok": false
+    },
+    {
+      "mode": "errbadge",
+      "spec": "m1e",
+      "status": "passed",
+      "wantLabel": "every badge is exactly PASS",
+      "ok": false
+    },
+    {
+      "mode": "baseline",
+      "spec": "m1f",
+      "status": "passed",
+      "wantLabel": null,
+      "ok": true
+    },
+    {
+      "mode": "failbadge",
+      "spec": "m1f",
+      "status": "failed",
+      "wantLabel": "no FAIL badge may remain",
+      "ok": true
+    },
+    {
+      "mode": "failedverdict",
+      "spec": "m1f",
+      "status": "failed",
+      "wantLabel": "acceptance console line",
+      "ok": true
+    },
+    {
+      "mode": "zerorows",
+      "spec": "m1f",
+      "status": "failed",
+      "wantLabel": "badge rows scraped",
+      "ok": true
+    },
+    {
+      "mode": "pageerror",
+      "spec": "m1f",
+      "status": "passed",
+      "wantLabel": "no page or console error",
+      "ok": false
+    },
+    {
+      "mode": "consoleerror",
+      "spec": "m1f",
+      "status": "passed",
+      "wantLabel": "no page or console error",
+      "ok": false
+    },
+    {
+      "mode": "resource404",
+      "spec": "m1f",
+      "status": "passed",
+      "wantLabel": "no page or console error",
+      "ok": false
+    },
+    {
+      "mode": "placeholders",
+      "spec": "m1f",
+      "status": "passed",
+      "wantLabel": "every badge is exactly PASS",
+      "ok": false
+    },
+    {
+      "mode": "missingrow",
+      "spec": "m1f",
+      "status": "passed",
+      "wantLabel": "badge row count",
+      "ok": false
+    },
+    {
+      "mode": "errbadge",
+      "spec": "m1f",
+      "status": "passed",
+      "wantLabel": "every badge is exactly PASS",
+      "ok": false
+    }
+  ]
+}

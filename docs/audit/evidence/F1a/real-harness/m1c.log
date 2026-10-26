@@ -1,0 +1,30 @@
+[WebServer] 
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+
+
+Running 1 test using 1 worker
+
+[1/1] e2e/m1c.spec.ts:8:1 › M1C — Web Worker Terrain & Zero-GC Pool acceptance
+e2e/m1c.spec.ts:8:1 › M1C — Web Worker Terrain & Zero-GC Pool acceptance
+[m1c gate] acceptance line: [Milestone1C] acceptance PASSED — geo=145 dispose=0 remove=0 pairs=54417 parentVerts=9132 nrmMismatch=0 maxPosDev=6.6e-5 heap/frame=0B
+
+[m1c gate] badges: ["PASS","PASS","PASS","PASS"]
+
+[m1c gate] runtime errors: []
+
+[m1c gate] page console transcript (tail):
+
+  warning: [.WebGL-0x3e2400177e00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+
+  warning: [.WebGL-0x3e2400177e00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+
+  warning: [.WebGL-0x3e2400177e00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+
+  warning: [.WebGL-0x3e2400177e00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
+
+  log: [Milestone1C] acceptance PASSED — geo=145 dispose=0 remove=0 pairs=54417 parentVerts=9132 nrmMismatch=0 maxPosDev=6.6e-5 heap/frame=0B
+
+  1 passed (1.1m)

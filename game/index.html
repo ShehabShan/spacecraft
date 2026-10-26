@@ -3,6 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- WHY (F1a, ADR-001): Chrome auto-requests /favicon.ico; the 404 was the only console.error on the m1a/m1b baselines. An empty data: icon removes the request instead of allowlisting the error. -->
+    <link rel="icon" href="data:," />
     <title>Solaris Engine</title>
   </head>
   <body>
