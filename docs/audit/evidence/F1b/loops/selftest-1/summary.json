@@ -1,0 +1,225 @@
+{
+  "budgets": {
+    "alloc": 64,
+    "retained": 8
+  },
+  "ticks": 30000,
+  "cal": {
+    "noop": 0.00024,
+    "obj3": 48.26312,
+    "f64x16": 200.1148,
+    "ok": true
+  },
+  "runs": {
+    "m1b.core.tick": {
+      "base": {
+        "allocB": 9.600533333333333,
+        "retainedB": 0.11386666666666667,
+        "retainedRaw": [
+          0.0136,
+          0.1144,
+          0.11386666666666667
+        ],
+        "verdict": "PASS",
+        "top": [
+          "8.1 B src/core/simulation/SimulationCore.ts:tick@719",
+          "1.2 B src/core/orbit/KeplerRail.ts:evaluate@139",
+          "0.2 B src/core/orbit/KeplerRail.ts:get states@80",
+          "0.0 B (outside bundle) post",
+          "0.0 B (outside bundle) (anon)",
+          "0.0 B (outside bundle) sampled"
+        ]
+      },
+      "ch": {
+        "allocB": 392.96906666666666,
+        "retainedB": 0.1048,
+        "retainedRaw": [
+          0.09973333333333333,
+          0.1048,
+          0.17413333333333333
+        ],
+        "verdict": "FAIL",
+        "top": [
+          "384.5 B (outside bundle) (anon)",
+          "8.3 B src/core/simulation/SimulationCore.ts:tick@719",
+          "0.1 B src/core/orbit/KeplerRail.ts:evaluate@139",
+          "0.0 B (outside bundle) post",
+          "0.0 B (outside bundle) #onMessage",
+          "0.0 B (outside bundle) Promise"
+        ]
+      },
+      "lk": {
+        "allocB": 72.19413333333334,
+        "retainedB": 51.71146666666667,
+        "retainedRaw": [
+          51.71146666666667,
+          50.4632,
+          55.266933333333334
+        ],
+        "verdict": "FAIL",
+        "top": [
+          "63.9 B (outside bundle) (anon)",
+          "8.2 B src/core/simulation/SimulationCore.ts:tick@719",
+          "0.1 B src/core/orbit/KeplerRail.ts:evaluate@139",
+          "0.0 B (outside bundle) post",
+          "0.0 B (outside bundle) #onMessage",
+          "0.0 B (outside bundle) Promise"
+        ]
+      }
+    },
+    "m1d.integrateFlight": {
+      "base": {
+        "allocB": 745.3352,
+        "retainedB": 0,
+        "retainedRaw": [
+          0.66,
+          0,
+          0
+        ],
+        "verdict": "FAIL",
+        "top": [
+          "659.6 B src/core/physics/flightController.ts:integrateFlight@1464",
+          "65.7 B src/core/physics/flightController.ts:_sweepTerrain@1669",
+          "8.5 B src/core/physics/flightController.ts:quatIntegrateInPlace@1250",
+          "2.3 B src/core/physics/atmosphere.ts:machNumber@805",
+          "1.5 B src/core/physics/atmosphere.ts:speedOfSoundAt@802",
+          "1.5 B src/core/physics/atmosphere.ts:densityAt@794"
+        ]
+      },
+      "ch": {
+        "allocB": 434.37946666666664,
+        "retainedB": 0.0005333333333333334,
+        "retainedRaw": [
+          0.1576,
+          0.0005333333333333334,
+          0
+        ],
+        "verdict": "FAIL",
+        "top": [
+          "384.7 B (outside bundle) (anon)",
+          "49.5 B src/core/physics/flightController.ts:integrateFlight@1464",
+          "0.1 B src/core/physics/flightController.ts:quatIntegrateInPlace@1250",
+          "0.0 B (outside bundle) post",
+          "0.0 B (outside bundle) #onMessage",
+          "0.0 B (outside bundle) Promise"
+        ]
+      },
+      "lk": {
+        "allocB": 89.49253333333333,
+        "retainedB": 40,
+        "retainedRaw": [
+          62.90026666666667,
+          40,
+          40
+        ],
+        "verdict": "FAIL",
+        "top": [
+          "49.0 B src/core/physics/flightController.ts:integrateFlight@1464",
+          "40.5 B (outside bundle) (anon)",
+          "0.0 B (outside bundle) post",
+          "0.0 B (outside bundle) #onMessage",
+          "0.0 B (outside bundle) Promise",
+          "0.0 B (outside bundle) sampled"
+        ]
+      }
+    },
+    "m1e.integrateTick": {
+      "base": {
+        "allocB": 5574.8248,
+        "retainedB": 0.4786666666666667,
+        "retainedRaw": [
+          0.4786666666666667,
+          0.7538666666666667,
+          0
+        ],
+        "verdict": "FAIL",
+        "top": [
+          "1753.5 B src/core/terrain/terrainField.ts:sampleSurfaceInto@1179",
+          "975.9 B src/core/terrain/terrainField.ts:terrainHeight@1159",
+          "913.1 B src/core/terrain/noise.ts:noise3@1026",
+          "707.2 B src/core/physics/astronautKCC.ts:_groundedTick@2431",
+          "278.4 B src/core/physics/astronautKCC.ts:_fillTelemetry@3007",
+          "225.2 B src/core/physics/astronautKCC.ts:integrateTick@2354"
+        ]
+      },
+      "ch": {
+        "allocB": 4356.373333333333,
+        "retainedB": 0.023733333333333332,
+        "retainedRaw": [
+          0.1864,
+          0,
+          0.023733333333333332
+        ],
+        "verdict": "FAIL",
+        "top": [
+          "1747.6 B src/core/terrain/terrainField.ts:sampleSurfaceInto@1179",
+          "910.0 B src/core/terrain/noise.ts:noise3@1026",
+          "554.1 B src/core/terrain/terrainField.ts:terrainHeight@1159",
+          "439.9 B src/core/physics/astronautKCC.ts:_tryMove@2630",
+          "384.3 B (outside bundle) (anon)",
+          "125.0 B src/core/terrain/terrainField.ts:terrainNormalInto@1187"
+        ]
+      },
+      "lk": {
+        "allocB": 4099.8965333333335,
+        "retainedB": 40,
+        "retainedRaw": [
+          40,
+          40,
+          40
+        ],
+        "verdict": "FAIL",
+        "top": [
+          "1748.7 B src/core/terrain/terrainField.ts:sampleSurfaceInto@1179",
+          "909.1 B src/core/terrain/noise.ts:noise3@1026",
+          "550.8 B src/core/terrain/terrainField.ts:terrainHeight@1159",
+          "441.2 B src/core/physics/astronautKCC.ts:_tryMove@2630",
+          "143.4 B (outside bundle) (anon)",
+          "124.5 B src/core/terrain/terrainField.ts:terrainNormalInto@1187"
+        ]
+      }
+    }
+  },
+  "checks": [
+    {
+      "name": "m1b.core.tick.churn_adds_300_500B",
+      "cond": true,
+      "detail": "+383.4 B/tick"
+    },
+    {
+      "name": "m1b.core.tick.churn_FAIL_on_alloc",
+      "cond": true,
+      "detail": "alloc 393.0"
+    },
+    {
+      "name": "m1b.core.tick.leak_FAIL_on_retained",
+      "cond": true,
+      "detail": "+51.60 B/tick retained"
+    },
+    {
+      "name": "m1b.core.tick.baseline_finite",
+      "cond": true,
+      "detail": "alloc 9.6 retained 0.11 verdict PASS (recorded, not asserted)"
+    },
+    {
+      "name": "m1d.integrateFlight.leak_FAIL_on_retained",
+      "cond": true,
+      "detail": "+40.00 B/tick retained"
+    },
+    {
+      "name": "m1d.integrateFlight.baseline_finite",
+      "cond": true,
+      "detail": "alloc 745.3 retained 0.00 verdict FAIL (recorded, not asserted)"
+    },
+    {
+      "name": "m1e.integrateTick.leak_FAIL_on_retained",
+      "cond": true,
+      "detail": "+39.52 B/tick retained"
+    },
+    {
+      "name": "m1e.integrateTick.baseline_finite",
+      "cond": true,
+      "detail": "alloc 5574.8 retained 0.48 verdict FAIL (recorded, not asserted)"
+    }
+  ]
+}
