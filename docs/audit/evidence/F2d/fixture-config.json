@@ -1,0 +1,106 @@
+{
+  "config": {
+    "testDir": "./e2e",
+    "timeout": 30000,
+    "workers": 1,
+    "retries": 0,
+    "outputDir": "/tmp/f1a-e2e-ZvzNcE/results",
+    "use": {
+      "channel": "chrome",
+      "headless": true,
+      "baseURL": "http://127.0.0.1:44245"
+    },
+    "projects": [
+      {
+        "name": "baseline",
+        "use": {
+          "extraHTTPHeaders": {
+            "x-audit-case": "baseline"
+          }
+        }
+      },
+      {
+        "name": "failbadge",
+        "use": {
+          "extraHTTPHeaders": {
+            "x-audit-case": "failbadge"
+          }
+        }
+      },
+      {
+        "name": "failedverdict",
+        "use": {
+          "extraHTTPHeaders": {
+            "x-audit-case": "failedverdict"
+          }
+        }
+      },
+      {
+        "name": "zerorows",
+        "use": {
+          "extraHTTPHeaders": {
+            "x-audit-case": "zerorows"
+          }
+        }
+      },
+      {
+        "name": "pageerror",
+        "use": {
+          "extraHTTPHeaders": {
+            "x-audit-case": "pageerror"
+          }
+        }
+      },
+      {
+        "name": "consoleerror",
+        "use": {
+          "extraHTTPHeaders": {
+            "x-audit-case": "consoleerror"
+          }
+        }
+      },
+      {
+        "name": "resource404",
+        "use": {
+          "extraHTTPHeaders": {
+            "x-audit-case": "resource404"
+          }
+        }
+      },
+      {
+        "name": "placeholders",
+        "use": {
+          "extraHTTPHeaders": {
+            "x-audit-case": "placeholders"
+          }
+        }
+      },
+      {
+        "name": "missingrow",
+        "use": {
+          "extraHTTPHeaders": {
+            "x-audit-case": "missingrow"
+          }
+        }
+      },
+      {
+        "name": "errbadge",
+        "use": {
+          "extraHTTPHeaders": {
+            "x-audit-case": "errbadge"
+          }
+        }
+      }
+    ]
+  },
+  "rev": "working tree",
+  "hashes": {
+    "m1a.spec.ts": "48e6caa5fbeff65bebdc42a23fab4379d34a96645cefbe1d0196571a26a65eb2",
+    "m1b.spec.ts": "2dba93b7c052b60a20425d9223cf3d509ea3a7362f6bd969451bad2175078d7f",
+    "m1c.spec.ts": "7502a52f63b94066450df1defe4509e456f410674a625e91696630d66eb8dfe7",
+    "m1d.spec.ts": "22c6993749b31f8a3c298b6f2f7a50d7af369ca5c8aea23c42b521bdffde1484",
+    "m1e.spec.ts": "ded7ff129ebc6a0d6855b12947b0963a8e880182e54c0ef8f81c78b0b28271b3",
+    "m1f.spec.ts": "e7a6f4da4101e8097095fd05b51e4478e522524eaee6f4bc9b58c564e8b80e20",
+    "gate.ts": "73b9b74d80b3602ff7a7706022774fed8243d824a974527b7184a1b5efc09c53"
+  }
+}

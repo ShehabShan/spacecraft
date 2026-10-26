@@ -1,0 +1,14 @@
+{"id":"profile-pinned","pass":true,"evidence":{"drift":[],"planetRadius":5000,"planetMu":245250000}}
+{"id":"density-law","pass":true,"evidence":{"pointRelErr":0,"worstAlt":null,"straddleRelErr":3.3306690738754696e-15}}
+{"id":"mach-law","pass":true,"evidence":{"relErr":0,"at":null}}
+{"id":"wind-vector","pass":true,"evidence":{"maxVectorErr":0,"cases":20}}
+{"id":"ridge-sweep","pass":true,"evidence":{"contacts":1,"truth":true,"interior":2.9999999999996687,"end":2.999999999999676,"minPost":2.9999999999990905}}
+{"id":"ridge-clear-pass","pass":true,"evidence":{"contacts":0,"truth":true,"interior":10,"end":30.022365755444298,"minPost":30.022365755444298}}
+{"id":"real-terrain-grazing","pass":true,"evidence":{"seed":"0x27b205","trials":4096,"contacts":950,"violations":0,"worst":null}}
+{"id":"dive-60","pass":true,"evidence":{"grounded":true,"physicsS":18,"requestedS":18.067,"v1000":264.74939431820894,"peak":1999.9552333192914,"segViolations":0,"endAGL":2.999999999999929,"contacts":4}}
+{"id":"dive-30","pass":true,"evidence":{"grounded":true,"physicsS":18,"requestedS":24.133,"v1000":264.74939431820894,"peak":1999.9552333192914,"segViolations":0,"endAGL":2.999999999999929,"contacts":4}}
+{"id":"dive-15","pass":true,"evidence":{"grounded":true,"physicsS":18,"requestedS":48.267,"v1000":264.74939431820894,"peak":1999.9552333192914,"segViolations":0,"endAGL":2.999999999999929,"contacts":4}}
+{"id":"dive-10","pass":true,"evidence":{"grounded":true,"physicsS":18,"requestedS":72.4,"v1000":264.74939431820894,"peak":1999.9552333192914,"segViolations":0,"endAGL":2.999999999999929,"contacts":4}}
+{"id":"dive-fps-independent","pass":true,"evidence":[[60,1076],[30,1076],[15,1076],[10,1076]]}
+{"gate":{"passed":12,"total":12,"failed":[]}}
+{"productionSha256":"bc1d30e2b1e26234f4c69978414ca8d04688bdeda188084654677f40062eb1e9:7c2611c54e98b1775574af637c764605a430384ec182410f6e33b8422e3e301c:54e21c9135dd38b245a1f89965c155c003c8cffb0198405824d3ba6b509a8647","unchanged":true}

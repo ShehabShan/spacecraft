@@ -483,7 +483,7 @@ const script = {
   diveAlt: new Float64Array(4096), diveSpeed: new Float64Array(4096), diveCount: 0,
   divePrevAlt: Number.POSITIVE_INFINITY,
   diveSpeedAt1000: -1, diveMaxSpeed: 0, diveMinPostAGL: Number.POSITIVE_INFINITY,
-  diveGrounded: false, diveContactSpeed: 0,
+  diveGrounded: false, diveContactSpeed: 0, diveTicks: 0,
   // cruise capture
   cruiseRebase0: 0, cruiseRecv0: 0, cruiseRebases: 0, cruiseReceived: 0,
   // integration capture
@@ -519,6 +519,7 @@ function startDive(): void {
   flight.resetIntegrityStats();
   script.phase = 'DIVE';
   script.simElapsed = 0;
+  script.diveTicks = 0;
   script.streamingFrozen = true;          // the "worker delay" IS the dive
   script.diveCount = 0;
   script.divePrevAlt = Number.POSITIVE_INFINITY;
@@ -834,7 +835,10 @@ function Scene() {
     } else if (script.phase === 'DIVE') {
       timeScale = 4;
       script.simElapsed += dt * 4;
-      if (flight.telemetry.grounded || script.simElapsed > 45) startCruise();
+      // WHY (F2d, ADR-009): the 45 s deadline counts PHYSICS ticks run, not requested time —
+      // below ~20 fps the 0.1 s clamp + 6 substeps shed time, so a requested-time deadline
+      // ended the dive airborne and T2 failed on slow machines (A1-U05-2).
+      if (flight.telemetry.grounded || script.diveTicks / 60 > 45) startCruise();
     } else if (script.phase === 'CRUISE') {
       timeScale = 4;
       script.simElapsed += dt * 4;
@@ -854,7 +858,8 @@ function Scene() {
 
     /* -- (2) FLIGHT (Spec 01.1 steps 5–7) ---------------------------------- */
     if (!userPaused && script.phase !== 'BURN') {
-      flight.update(dt * timeScale, timeScale > 1 ? 6 : 5);
+      const ran = flight.update(dt * timeScale, timeScale > 1 ? 6 : 5);
+      if (script.phase === 'DIVE') script.diveTicks += ran;
     }
 
 
@@ -942,7 +947,7 @@ function Scene() {
       tele.contacts = flight.integrity.contacts;
       tele.phase = script.phase;
       tele.countdown = script.phase === 'DIVE'
-        ? Math.max(0, 45 - script.simElapsed)
+        ? Math.max(0, 45 - script.diveTicks / 60)
         : script.phase === 'CRUISE' ? Math.max(0, 30 - script.simElapsed)
         : script.phase === 'WARMUP' ? Math.max(0, 8 - script.warmElapsed) : 0;
       tele.version++;
