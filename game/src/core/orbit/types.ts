@@ -54,6 +54,20 @@ export interface OrbitParams {
 
 
 /** Static definition of one celestial body — catalog data + derived orbit. */
+/** Spin of a body (F3abba, ADR-013; derived by `spinLaw.ts`; read by the frame tree from F3b). */
+export interface SpinParams {
+  /** Sidereal spin period, game seconds (> 0). */
+  period: number;
+  /** Unit right-hand spin axis in the world frame. */
+  axis: { x: number; y: number; z: number };
+  /** IAU prime-meridian angle at J2000 about `axis`, rad. */
+  W0: number;
+  /** Axis points below the ecliptic (axis.y < 0): retrograde spin. */
+  retrograde: boolean;
+  /** Body whose orbit period this spin equals (tidal / mutual lock), else null. */
+  lockedTo: string | null;
+}
+
 export interface CelestialConfig {
   id: string;
   name: string;
@@ -76,6 +90,7 @@ export interface CelestialConfig {
   facts: Record<string, string>;
   /** Null for the Sun (fixed at the origin). */
   orbit: OrbitParams | null;
+  spin: SpinParams;
 }
 
 

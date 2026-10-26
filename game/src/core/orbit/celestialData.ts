@@ -46,6 +46,7 @@
 
 import type { BodyType, CelestialConfig, OrbitParams } from './types';
 import { TWO_PI, computeOrbitalPeriod, meanMotion } from './KeplerRail';
+import { deriveSpins } from './spinLaw';
 
 
 /** Orbital μ of the Sun — see the banner above. */
@@ -207,7 +208,7 @@ function hostMuFor(raw: RawCatalogEntry): number {
  * Fully derived celestial configs, in catalog (hierarchical) order.
  * KeplerRail's constructor topologically verifies this ordering.
  */
-export const CELESTIAL_CONFIGS: CelestialConfig[] = RAW.map((raw, index) => {
+const BASE_CONFIGS = RAW.map((raw, index) => {
   // Spec 02.3: μ = g_real · R_game². (Real mass is NEVER used — facts only.)
   const mu = raw.surfaceGravity * raw.radiusGame * raw.radiusGame;
 
@@ -253,8 +254,13 @@ export const CELESTIAL_CONFIGS: CelestialConfig[] = RAW.map((raw, index) => {
     mu,
     facts: raw.facts,
     orbit,
-  } satisfies CelestialConfig;
+  } satisfies Omit<CelestialConfig, 'spin'>;
 });
+
+// WHY: spin needs every body's game orbit period (locks, Sun reference), so it is a second pass (ADR-013).
+const SPINS = deriveSpins(BASE_CONFIGS.map((c) => ({ id: c.id, parentId: c.parentId, T: c.orbit ? c.orbit.T : null })));
+
+export const CELESTIAL_CONFIGS: CelestialConfig[] = BASE_CONFIGS.map((c) => ({ ...c, spin: SPINS[c.id] }));
 
 
 /** Body count served by this catalog (asserted by the 1B suite: 17). */
