@@ -1,0 +1,14 @@
+seam-gate run1 EXIT=0
+seam-gate --self-test run1 EXIT=0
+seam-gate run2 EXIT=0
+seam-gate --self-test run2 EXIT=0
+seam-gate --self-test --deliberate EXIT=1
+precision-gate EXIT=0
+precision-gate --self-test EXIT=0
+orbit-gate EXIT=0
+orbit-gate --self-test EXIT=0
+alloc-loops --self-test EXIT=0
+typecheck EXIT=0
+build EXIT=0
+e2e-plumbing EXIT=0
+playwright m1c EXIT=0

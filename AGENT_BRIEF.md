@@ -103,7 +103,10 @@ The engine is unusual BY DESIGN. When code looks odd, assume there is a reason
    agree with the tracker + STATE.md. Hard evidence (commits, files, plan
    checkboxes) outranks prose. Minor drift: trust evidence, repair the
    tracker/STATE.md, note the repair in the SESSION LOG. Suspected lost or
-   uncommitted work: STOP, ask the Lead.
+   uncommitted work: STOP, ask the Lead. Before cutting a task branch, run
+   `git ls-remote origin`: if the branch already exists, check it out and
+   follow the NEXT ACTION in ITS `notes/STATE.md`, not `main`'s (a split task's
+   progress lives only on its branch until the task is merged).
 3. Report ≤5 sentences: current state, exact next step, discrepancies.
 4. Continue at NEXT ACTION (the first unchecked plan step). Never redo completed
    steps; never re-ask decisions recorded in STATE.md's APPROVAL LEDGER.
@@ -195,6 +198,11 @@ suspected lost work, or deleting the Lead's work.
 - 2026-10-26 Banner repair (session 104): the top banner still named A1 as active
   after the Lead's 2026-10-26 acceptance (APPROVAL LEDGER). It now points at the fix
   tasks; §11 is history. No rule changed.
+
+- 2026-10-26 Branch-check rule (Lead suggestion, session 112): §5 step 2 now
+  requires `git ls-remote origin` before cutting a task branch. Why: a split
+  F2b's NEXT ACTION lived only on its branch, `main` still said "cut from main",
+  and a second session redid the work as a duplicate session 111.
 
 ## 11. AUDIT MODE (binds only while the active task is A1)
 Why: the milestone specs were written by GLM 5.3 and the engine by GLM 5.3 Flash
