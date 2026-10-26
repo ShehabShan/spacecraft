@@ -1,0 +1,51 @@
+{
+  "budgets": {
+    "alloc": 64,
+    "retained": 8
+  },
+  "frames": 2880,
+  "cal": {
+    "noop": 0.00024,
+    "obj3": 48.42824,
+    "f64x16": 199.8708
+  },
+  "runs": {
+    "walk": {
+      "allocB": 10527.15,
+      "retainedB": -0.7777777777777778,
+      "retainedRounds": [
+        -2.386111111111111,
+        -0.7777777777777778,
+        0.7277777777777777
+      ],
+      "verdict": "FAIL",
+      "top": [
+        "4097.3 B src/core/terrain/terrainField.ts:terrainHeight@1155",
+        "1893.8 B src/core/terrain/noise.ts:noise3@1013",
+        "1641.6 B src/core/terrain/terrainField.ts:sampleSurfaceInto@1175",
+        "857.3 B src/play/camera/ThirdPersonCamera.ts:poseInto@5115",
+        "454.0 B src/play/frame/playFrame.ts:playFrame@4966",
+        "195.6 B src/play/world/skyState.ts:applySkyState@3642"
+      ]
+    },
+    "idle": {
+      "allocB": 10727.480555555556,
+      "retainedB": 8.019444444444444,
+      "retainedRounds": [
+        0.03333333333333333,
+        8.019444444444444,
+        9.313888888888888
+      ],
+      "verdict": "FAIL",
+      "top": [
+        "3503.8 B src/core/terrain/terrainField.ts:terrainHeight@1155",
+        "2731.9 B src/core/terrain/terrainField.ts:sampleSurfaceInto@1175",
+        "2061.0 B src/core/terrain/noise.ts:noise3@1013",
+        "846.1 B src/play/camera/ThirdPersonCamera.ts:poseInto@5115",
+        "453.5 B src/play/frame/playFrame.ts:playFrame@4966",
+        "197.8 B src/play/world/skyState.ts:applySkyState@3642"
+      ]
+    }
+  },
+  "checks": []
+}
