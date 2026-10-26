@@ -2,8 +2,8 @@
 
 - Task: **A1** · Branch: `a1-engine-audit` (cut from `t1-playable-moon` @ 256d77d)
 - Stage: **BUILDING** (plan READY 7/7; Lead execute order 2026-10-21, APPROVAL LEDGER)
-- Last updated: 2026-10-25
-- **Resume at the FIRST UNCHECKED BOX** (§5). One unit = one session = one commit.
+- Last updated: 2026-10-26
+- **Resume at the FIRST UNCHECKED BOX** (§5). Default one unit/session/commit; rechecks may batch related findings per §6.5.
 - Binding rules for this task: AGENT_BRIEF.md §11 AUDIT MODE.
 
 ## PLANNING CHECKLIST
@@ -50,7 +50,7 @@ clearly better.
 Written: `docs/A1-plan.md`, `docs/audit/**`, `game/tools/audit/**` (new files only),
 `notes/task.md`, `notes/STATE.md`. Read: everything listed in §2.
 
-## 5. Steps (audit units — in order; one per session)
+## 5. Steps (audit units — in order; recheck batching per §6.5)
 Every unit writes `docs/audit/Uxx-<slug>.md` per §6.3. Each unit's **Verification**
 is §6.4 plus the unit's own evidence line. Line counts are given so a session can
 see that the unit fits its budget.
@@ -173,12 +173,13 @@ see that the unit fits its budget.
 - [x] **U27b3b2b2b2b1 m1a precision/rebase gate re-check** — DONE (`docs/audit/U27b3b2b2b2b1-m1a-recheck.md`; U08-5/-6 retain S1 with qualifications: wrong triggers/lattices, early rounding, stale/zero locals falsely pass; exact-origin/boundary/local truth rejects; T2 indirectly reads focus locals; AU errors are stress fixtures, catalog Earth 600000 m. Original16/18 exit0 controls OK; independent50/50 twice exit0; deliberate self-test50/51 exit1; 26/55 reviewed, K2c complete). Historical-majority provenance unresolved.
 - [x] **U27b3b2b2b2b2a m1a timing/stall gate re-check** — DONE (`docs/audit/U27b3b2b2b2b2a-m1a-timing-recheck.md`; U08-7 retains S1 with qualifications: ≥250 ms intervals hidden, current callback tags preceding interval, double warmup skips 40 callbacks; 40 ms PASS matches numeric budgets, 80 ms FAIL control; original16/18 controls OK exit0, independent27/27 twice exit0, self-test27/28 exit1; 27/55 reviewed). Synthetic timing only; historical-majority provenance unresolved.
 - [x] **U27b3b2b2b2b2b remaining K2d gate re-checks** — DONE (`docs/audit/U27-k2d-recheck.md`): U03-5 fixture limitation confirmed but universal impossibility withdrawn; U05-2 FPS deadline failure confirmed, replay-order correction; U01-1 browser R2 failure re-confirmed; spinGroup suppression localized, centroid still fails; historical cause unbisected. Independent 14/14 twice exit0, deliberate14/15 exit1; 30/55 reviewed. Lead 2026-10-25 permits related rechecks batched within 50 OLU; per-finding evidence retained. Historical-majority provenance unresolved.
-- [ ] **U27b4 remaining K3–K9 re-checks** — 25 findings; split by cluster before execution, starting K3 (seven findings). Lead 2026-10-25: batch related rechecks within 50 OLU, reserve wrap-up/push time; split only unfinished scope.
+- [x] **U27b4a K3 reference-frame re-check batch** — DONE (`docs/audit/U27-k3-recheck.md`): seven findings retain S1 with qualifications; U10 speed frames/interception, U12 shared vs private spin, U13 existing Moon-centred sky composition, U16 equivalent-phase false landings, U17 wrong-frame up, U18 rotating contact mismatch, U26 synthesis. Originals exit0; independent29/29 twice exit0, deliberate29/30 exit1; 37/55 reviewed.
+- [ ] **U27b4b remaining K4–K9 re-checks** — 18 findings; start K4 and batch adjacent related checks when they fit.
   - All U27b parts: use a different model than most original audit units; record the model in SESSION LOG. U27b1 verified its current model and one prior SOLARIS model, not the historical majority; establish that provenance before declaring overall cross-model completion.
   - Re-run every S0/S1 repro cluster by cluster (`FINDINGS.md` §3), recording probe commands/exits and re-confirmed / changed / refuted per finding. No untouched cluster is implicitly signed off by a shared probe's output.
 - [ ] **U27c fix tasks + Lead summary → LEAD GATE**
   - Propose fix tasks F1, F2, … in dependency order, gates (K2) before engine. Each one is sized to fit a single 50-OLU session or is split until it does.
-  - Add a plain-language summary for the Lead that collects the unanswered look-and-feel questions (U10a, U10b, U16, U17). Ask no technical choices (§13).
+  - Add a plain-language summary for the Lead. U10a/U10b are already ruled on (2026-10-22 APPROVAL LEDGER), as is U19 (2026-10-23); apply those rulings, never re-ask. Collect remaining U16/U17 look-and-feel questions. Ask no technical choices (§13).
   - Set the stage to LEAD GATE and STOP.
 
 ## 6. Method (binds every unit)
@@ -240,7 +241,8 @@ A finding marked `suspected` must say what evidence would confirm it.
   code citation, and every probe's exit code is recorded.
 
 ### 6.5 Budget rule (Lead, 2026-10-21: 50 OLU per session; quality over quantity)
-- Do one unit per session and start wrapping up at about 40 OLU.
+- Default: one unit per session; start wrapping up at about 40 OLU.
+- **Lead recheck amendment (2026-10-26, reiterating 2026-10-25):** for all remaining rechecks, prefer multiple related findings in one session/checkpoint when they fit the 50-OLU total. Reuse prior evidence and probes; avoid redoing the original audit. The Lead reports the original review was by Opus 5.5; this supports targeted rechecking, not automatic confirmation. Keep per-finding evidence, responsive controls and honest qualifications. Around 40 OLU stop expanding scope and reserve the balance for writing, verification, one commit and push; split only unfinished scope. This recheck-specific directive supersedes the one-unit default, not the read-only boundary.
 - If a unit will not finish, commit what is done as `Uxxa`. Add an unchecked
   `Uxxb` box directly below it, with the remaining scope written out, and repoint
   NEXT ACTION to it. Never leave work uncommitted.

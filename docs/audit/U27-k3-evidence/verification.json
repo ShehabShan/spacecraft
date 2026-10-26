@@ -1,0 +1,46 @@
+{
+  "independent-final": {
+    "command": [
+      "node",
+      "tools/audit/u27-k3-recheck.mjs"
+    ],
+    "exit": 0
+  },
+  "independent-repeat": {
+    "command": [
+      "node",
+      "tools/audit/u27-k3-recheck.mjs"
+    ],
+    "exit": 0
+  },
+  "self-test": {
+    "command": [
+      "node",
+      "tools/audit/u27-k3-recheck.mjs",
+      "--self-test-fail"
+    ],
+    "exit": 1
+  },
+  "typecheck": {
+    "command": [
+      "npm",
+      "run",
+      "typecheck"
+    ],
+    "exit": 0
+  },
+  "build": {
+    "command": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "exit": 0
+  },
+  "protected-diff": {
+    "exit": 0
+  },
+  "old-probe-diff": {
+    "exit": 0
+  }
+}

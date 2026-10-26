@@ -1,7 +1,7 @@
 # A1 ENGINE AUDIT — CONSOLIDATED FINDINGS
 
 - Task: A1 (read-only) · Branch: `a1-engine-audit` · Built from U01–U26 reports at `49e6c32`
-- Status: **U27b in progress — K1 and all K2 gate findings re-checked (through U27b3b2b2b2b2b); 30/55 S0/S1 reviewed, 25 pending.** U27a built the index without rerunning repros. Fix tasks and the Lead summary remain U27c. Historical-majority model provenance is not yet established (see review below).
+- Status: **U27b in progress — K1–K3 re-checked (through U27b4a); 37/55 S0/S1 reviewed, 18 pending.** U27a built the index without rerunning repros. Fix tasks and the Lead summary remain U27c. Lead reports originals by Opus 5.5; current reviewer is platform-confirmed gpt-6-astra. Per-unit historical attribution is not independently established.
 - Original evidence lives in each unit report (`docs/audit/Uxx-*.md`). This file indexes, groups and ranks it; the re-check table records later confirmation or correction without erasing original reports.
 - Regenerate the index (§4) with `python3 game/tools/audit/u27-findings-index.py --md` from the repo root. `--stats` and `--s01` print the counts and the S0/S1 list.
 
@@ -15,7 +15,7 @@
   - U08 and U09 use "high (repro/read/citation)" in place of the template's "confirmed". This file ranks "high" as confirmed and "medium" between likely and suspected. The reports are left unchanged.
 - **Duplicate IDs:** 0 (167 unique `### A1-Uxx-n` headers).
 - **Category, as first word in the reports:** engine 60, test 30, play 22, spec 21, doc 12. The remaining findings use free-text categories.
-- **Unanswered look-and-feel questions for the Lead** are at the ends of U10a, U10b, U16 (two) and U17 (two). They are collected for the Lead summary in U27c. The U19 questions were ruled on 2026-10-23.
+- **Look-and-feel rulings:** U10a/U10b were settled on 2026-10-22 (smaller relief, oversized Earth retained, realistic day/year order and reachable bodies); U19 on 2026-10-23. Apply `notes/STATE.md` APPROVAL LEDGER; do not re-ask. Remaining U16/U17 questions are collected in U27c.
 
 ## 2. Ranking rule
 
@@ -354,8 +354,33 @@ Earlier findings/index labels below are historical; these recheck dispositions s
   - A1-U18-3: the ship is split across two frames under planet spin; a parked ship slides 179 m in 10 s.
   - A1-U16-2: the spin-phase wrap tick gives 66 % false landings.
   - A1-U10-5: the speed limits have no frame, so every body outruns them.
-- **Why merged:** one state-model change (D-ADR-2/3 in `U26-adr-drafts.md`) closes all of these.
+- **Why grouped:** a shared frame/time contract (D-ADR-2/3 in `U26-adr-drafts.md`) is the foundation. It does not by itself close controller sweeps, conversions, contact integration and render consumers; verify those separately.
 - **Blocks:** the §13 goal ("every planet and moon rotates and orbits") and T2.
+
+#### K3 re-check — U27b4a (2026-10-26, base `d8f7b09`)
+
+All seven retain S1; historical member titles above are qualified by this review.
+
+| Member | Outcome / correction |
+|---|---|
+| A1-U10-5 | Frame mismatch confirmed. Parent-relative 30x Phobos/Charon <2000; all 16 Sun-frame derivatives >2000 at sampled epoch. “Never catch” overstates interception limits; co-motion is the issue. |
+| A1-U12-1 | No shared celestial spin/orientation rail. Existing private KCC spin is real; orbital basis is not body rotation. |
+| A1-U13-1 | Core has no parented actors: marker displacement error 11,144.25 m after one real second at30x, zero at scale0. Play already has ad-hoc Moon-centred observer translation, but cached Earth vector is stale by2,383.21 m. |
+| A1-U16-2 | Equivalent phases differ on84/128 landings; true-phase sampled path clearance≥4.9969 m. Original1,971/3,000 vs0/3,000 reproduced. Fixture rates, not universal probabilities. |
+| A1-U17-1 | Constant phase±π/2 with zero spin rate still gives0.47895° wrong up tilt in one tick; phase0/spin-axis controls clean. Original43.94°/92.8° reproduced. |
+| A1-U18-3 | Static-vs-rotating contact height mismatch up to226.795 m. 178.557 m is static-field travel, not body-relative drift (341.443 m here). Central gravity is rotation-invariant, not itself the mismatch. |
+| A1-U26-2 | Synthesis confirmed, not an independent root cause or proof one frame-tree change fixes every consumer. |
+
+Full evidence, source anchors, commands/exits, limitations and audit-method ADR:
+[U27b4a K3 re-check](U27-k3-recheck.md). Seven original scripts exit0, controls
+inspected; independent **29/29 twice**, exit0, deliberate self-test29/30 exit1.
+Typecheck/build and protected/old-probe diffs exit0. No browser or GPU verdict.
+Raw logs: `U27-k3-evidence/`.
+
+**37/55 reviewed; 18 pending in K4–K9.** Current model platform-confirmed
+`gpt-6-astra`; Lead attests original checks by Opus5.5, without independently
+established per-unit historical attribution. Apply the existing U10 Lead
+rulings, rather than asking those visual questions again.
 
 ### K4 — Terrain truth is inconsistent: the drawn mesh, normals, height bounds and streaming disagree with the collision field — score 15.0 (5× S1)
 - **Members:**

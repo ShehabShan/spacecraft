@@ -1,0 +1,31 @@
+control.terrainRadius=flightRadius=ok
+control.rot_matches_quatFromBasis=ok
+A.right0={"x":0,"y":0,"z":1} (fwd×up; header calls body +Z "left")
+A.yaw+1.fwd·right0=-0.1234  (>0 = nose right as claimed)
+A.roll+1.up·right0=-0.4308  (>0 = right bank, right wing down, as claimed)
+A.pitch+1.fwd·up0=0.2209  (>0 = nose up as claimed)
+A.bankTurn.vel·right0_after_2.4s=-0.004806  (>0 = turned right)
+control.retro_at_1000_is_45=ok
+B.retroDecel@1880=45 m/s²  prograde 45
+B.retroDecel@1940=22.5 m/s²  prograde 22.5
+B.retroDecel@1980=3.333 m/s²  prograde 3.333
+B.retroDecel@1995=0.2279 m/s²  prograde 0.2279
+B.retroDecel@2000=2.453e-8 m/s²  prograde -2.453e-8
+B.retroDecel@2010=2.453e-8 m/s²  prograde -2.453e-8
+B.brake1999to1880.seconds=60 (unfaded 2.64 s; cap at 3600 ticks = 60 s)
+B.fadeSlope@1880(+)=-2.083e-8  @2000(−) -2.083e-8
+C.dive.throttle0.vmax=1995 m/s at alt 11740 m; rescale events 0
+C.dive.throttle1.vmax=2000 m/s at alt 11740 m; rescale events 0
+C.vacuumBound=2024 m/s (2000 m/s from infinity to r=R, no drag) vs safetyRescaleAbove 2025
+control.noSpin_parked=ok
+D.Ω=0.arc_over_terrain_10s=0 m, grounded ticks 588/600
+D.Ω=0.0104.arc_over_terrain_10s=178.6 m, grounded ticks 396/600, airspeed 0, |v| 55.15, AGL 3
+D.capHeadroom_pro_vs_retro=1948 / 2052 m/s ground speed at Ω=0.0104 (cap measured on inertial |v|)
+E.afterOneNaNyaw=nanEvents 301/301, observer saw NaN 301, pos.x moved 0 m in 5 s at 100 m/s, angVel.y NaN
+control.noNaN_moves_500m=ok
+F.pressure@10000=telemetry 1.886e+1 vs pressureAt 1.886e+1
+F.pressure@20000=telemetry 3.213e-3 vs pressureAt 4.266e-3
+F.pressure@50000=telemetry -1.040e-14 vs pressureAt 5.925e-14
+G.quatIntegrate.yaw18rad.err_deg=-0.07734
+G.tracker.oneTick=0.04389 vs exact 0.04389
+controls=5/5
