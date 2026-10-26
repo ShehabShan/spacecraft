@@ -1,5 +1,7 @@
 # A1-U13 — SimulationCore (tick order, fixed step, clocks, shedding)
 
+> **Recheck 2026-10-26:** U27b4bbba correction: actual playFrame confirms stale extracts, but final camera position uses the SAME alp anchor as characterRoot. The original direct “character lags camera” explanation below is superseded; phase mismatch is bounded to one tick. Per-frame tick disagreement is not the same count as stale-render frames. See [K7 recheck](U27-k7-recheck.md), which supersedes conflicting interpretations below while preserving the original evidence.
+
 - Unit: U13 · Branch `a1-engine-audit` @ 75f43fe · Session 68 (2026-10-23) · READ-ONLY
 - Files read in full: `game/src/core/simulation/SimulationCore.ts` (486). Also read the
   callers' accumulator code: `play/controller/PlayerController.ts:75–90`,
@@ -49,7 +51,7 @@
 - Fix task size: more than one session. Split: (a) entity parent field + translation-only
   compose, (b) rotation-rail compose after A1-U12-1, (c) KCC spin source switched to the rail.
 
-### A1-U13-2 — Controller and core accumulators drift apart at 144 Hz (16.7 % of frames)
+### A1-U13-2 — Controller and core tick schedules disagree at 144 Hz (bounded phase mismatch)
 - Severity: S1     Confidence: confirmed (mismatch) / likely (visible jitter)
 - Category: play + engine
 - Location: `play/controller/PlayerController.ts:81` (`acc >= TICK - 1e-9`) vs

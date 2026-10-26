@@ -1,7 +1,7 @@
 # A1 ENGINE AUDIT — CONSOLIDATED FINDINGS
 
 - Task: A1 (read-only) · Branch: `a1-engine-audit` · Built from U01–U26 reports at `49e6c32`
-- Status: **U27b in progress — K1–K6 re-checked (through U27b4bba); 48/55 S0/S1 reviewed, 7 pending.** U27a built the index without rerunning repros. Fix tasks and the Lead summary remain U27c. Lead reports originals by Opus 5.5; current reviewer is platform-confirmed gpt-6-astra. Per-unit historical attribution is not independently established.
+- Status: **U27b in progress — K1–K7 re-checked (through U27b4bbba); 51/55 S0/S1 reviewed, 4 pending.** U27a built the index without rerunning repros. Fix tasks and the Lead summary remain U27c. Lead reports originals by Opus 5.5; current reviewer is platform-confirmed gpt-6-astra. Per-unit historical attribution is not independently established.
 - Original evidence lives in each unit report (`docs/audit/Uxx-*.md`). This file indexes, groups and ranks it; the re-check table records later confirmation or correction without erasing original reports.
 - Regenerate the index (§4) with `python3 game/tools/audit/u27-findings-index.py --md` from the repo root. `--stats` and `--s01` print the counts and the S0/S1 list.
 
@@ -461,6 +461,20 @@ Historical per-unit model attribution remains unverified.
   - A1-U13-2: the controller and core accumulators disagree on 16.7 % of 144 Hz frames.
 - **Touches:** the RATIFIED KCC slope rule (ADR needed).
 
+#### K7 re-check — U27b4bbba (2026-10-26, base `7c4983e`)
+
+| Finding | Disposition | Evidence / qualification |
+|---|---|---|
+| U16-1 | Retain S1, confirmed | Analytic51/55° accepted at50° limit across three speeds; exact horizontal oracle rejects. w0/60° controls reject, shallow slopes pass; real original maxima58.66–59.01° repeat, not universal limits. |
+| U17-3 | Retain S1, narrowed | 32 real drops snap13.30–24.30°; actual play root24.36°/TPcamera24.31°. Flat landing has zero snap: withdraw “every”. Render-data evidence, not GPU/subjective verdict. |
+| U13-2 | Retain S1, corrected impact | Real144Hz10s600KCC/599core,239 disagreements but120 stale frames, max0.108335m. Camera shares character's stale anchor; withdraw simple character-lags-camera assertion. Matched-count control removes mismatch/stale errors; bounded phase, not unbounded drift. |
+
+Original U16/U17 controls5/5, U13b schedule repro, all exit0.
+Independent17/17 twice exit0, deliberate17/18 exit1; first loader error retained.
+Typecheck/build/protected/old-probe diffs0. [Report](U27-k7-recheck.md),
+[method ADR draft](U27-k7-adr-draft.md), logs `evidence/U27-k7/`.
+**51/55 reviewed; K8/K9 four remain.** Historical model-majority provenance open.
+
 ### K8 — Impostor projection off-axis — score 6.0 (2× S1)
 - **Members:**
   - A1-U15-3: camera-facing quads squash big bodies by up to ~31 %.
@@ -566,7 +580,7 @@ Historical per-unit model attribution remains unverified.
 | A1-U12-5 | S3 | confirmed | doc | `wrapAngle` returns [−π, π), not (−π, π] as documented | `U12-orbits-catalog.md` |
 | A1-U12-6 | S3 | confirmed | spec (data) | Triton's surface gravity disagrees with its own mass fact by 8 % | `U12-orbits-catalog.md` |
 | A1-U13-1 | S1 | confirmed | engine + spec | The tick has no parented-compose step: the player world is detached from the solar system | `U13-simulation-core.md` |
-| A1-U13-2 | S1 | confirmed | play + engine | Controller and core accumulators drift apart at 144 Hz (16.7 % of frames) | `U13-simulation-core.md` |
+| A1-U13-2 | S1 | confirmed | play + engine | Controller and core tick schedules disagree at 144 Hz (bounded phase mismatch) | `U13-simulation-core.md` |
 | A1-U13-3 | S2 | confirmed | engine + spec + doc | Below 12 fps the game runs in slow motion; the spec's load shedding does not exist and `shedSeconds` under-counts | `U13-simulation-core.md` |
 | A1-U13-4 | S2 | confirmed | engine | No interpolation factor: 58 % of frames at 144 Hz render with no new tick | `U13-simulation-core.md` |
 | A1-U13-5 | S2 | confirmed | engine | A rebase listener that unsubscribes during the emit makes the next listener miss the event | `U13-simulation-core.md` |
@@ -593,7 +607,7 @@ Historical per-unit model attribution remains unverified.
 | A1-U16-7 | S3 | confirmed | engine (config) | slideAngle 45° < maxWalkSlope 50°: the character climbs while it slides | `U16-astronautkcc-part1.md` |
 | A1-U17-1 | S1 | confirmed | engine | airborne/zero-G "up re-alignment" pulls the planet-frame `up` toward the WORLD radial | `U17-astronautkcc-part2.md` |
 | A1-U17-2 | S2 | confirmed | engine | the vehicle tick writes `up`/`fwd` in the WORLD frame; a parked vehicle drifts by the spin angle | `U17-astronautkcc-part2.md` |
-| A1-U17-3 | S1 | confirmed | engine (visible in play) | every landing snaps the character frame by up to 51° in one tick (play Moon, Ω = 0) | `U17-astronautkcc-part2.md` |
+| A1-U17-3 | S1 | confirmed | engine (visible in play) | uneven-ground landings can snap the character frame by up to 51° in one tick (play Moon, Ω = 0) | `U17-astronautkcc-part2.md` |
 | A1-U17-4 | S2 | confirmed | engine | sliding stops 15–28× harder than kinetic friction allows once the slope reads ≤ 45° | `U17-astronautkcc-part2.md` |
 | A1-U17-5 | S2 | confirmed | engine (telemetry shown on the HUD: `play/ui/Hud.tsx:36`) | airborne `altAGL` is measured against the take-off ground height | `U17-astronautkcc-part2.md` |
 | A1-U17-6 | S2 | confirmed | engine | the landing plant drops strafe and plants a velocity that is not tangent | `U17-astronautkcc-part2.md` |

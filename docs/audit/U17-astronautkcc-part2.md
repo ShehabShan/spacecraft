@@ -1,5 +1,7 @@
 # A1-U17 — astronautKCC part 2 (jump/landing, slide, airborne + zero-G, vehicle, telemetry)
 
+> **Recheck 2026-10-26:** U27b4bbba correction: “every landing” is withdrawn; a flat radial landing is continuous. Independent real-terrain drops confirm snaps, and actual playFrame transmits a 24° orientation step to character root and TP camera. See [K7 recheck](U27-k7-recheck.md), which supersedes conflicting interpretations below while preserving the original evidence.
+
 - Unit: A1 U17 · Session 72 · 2026-10-23 · auditor: PromptQL bot (VM v2, 2 vCPU / 4 GB)
 - Code: `game/src/core/physics/astronautKCC.ts` @ 810b032, lines 524–1114 (part 1, lines 1–560, is U16),
   plus `play/world/moonConfig.ts` (MOON_ASTRONAUT) and `core/physics/sphericalFrame.ts` (helpers).
@@ -65,7 +67,7 @@
   with spin(θ)⁻¹ on attach/detach, or rotate by `spin(θ)⁻¹·provider.quat`. Lands with A1-U17-1.
 - Fix task size: fits one session with A1-U17-1.
 
-### A1-U17-3 — every landing snaps the character frame by up to 51° in one tick (play Moon, Ω = 0)
+### A1-U17-3 — uneven-ground landings can snap the character frame by up to 51° in one tick (play Moon, Ω = 0)
 - Severity: S1     Confidence: confirmed
 - Category: engine (visible in play)
 - Location: `astronautKCC.ts:857–865` (airborne up decays to radial, τ = 2 s) + `1019` (`_landAt` →
