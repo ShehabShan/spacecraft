@@ -1,7 +1,7 @@
 # A1 ENGINE AUDIT — CONSOLIDATED FINDINGS
 
 - Task: A1 (read-only) · Branch: `a1-engine-audit` · Built from U01–U26 reports at `49e6c32`
-- Status: **U27b in progress — K1–K7 re-checked (through U27b4bbba); 51/55 S0/S1 reviewed, 4 pending.** U27a built the index without rerunning repros. Fix tasks and the Lead summary remain U27c. Lead reports originals by Opus 5.5; current reviewer is platform-confirmed gpt-6-astra. Per-unit historical attribution is not independently established.
+- Status: **K1–K9 recheck evidence complete (through U27b4bbbb): 55/55 S0/S1 reviewed.** Fix tasks and the Lead summary remain U27c. Historical model-majority condition remains unresolved: Lead reports originals by Opus 5.5; platform confirms that model for U05b and gpt-6-astra for this reviewer, not the majority of original units.
 - Original evidence lives in each unit report (`docs/audit/Uxx-*.md`). This file indexes, groups and ranks it; the re-check table records later confirmation or correction without erasing original reports.
 - Regenerate the index (§4) with `python3 game/tools/audit/u27-findings-index.py --md` from the repo root. `--stats` and `--s01` print the counts and the S0/S1 list.
 
@@ -480,11 +480,35 @@ Typecheck/build/protected/old-probe diffs0. [Report](U27-k7-recheck.md),
   - A1-U15-3: camera-facing quads squash big bodies by up to ~31 %.
   - A1-U15-4: staged-rank depth draws far bodies over near ones off-axis.
 
+#### K8 re-check — U27b4bbbb (2026-10-26, base `90e6f1a`)
+
+| Finding | Disposition | Evidence / qualification |
+|---|---|---|
+| U15-3 | Retain S1, correct visual explanation | Actual matrix/shader-boundary rays: 3.68° radius at30°/45° gives width ratios0.864831/0.704182. On-axis and line-of-sight orientation controls accurate. Camera-facing disks remain screen circles; true off-axis spheres project conics. Play Earth is a mesh, not this impostor; original Earth half-angle label was wrong. |
+| U15-4 | Retain S1, controlled overlapping fixtures | Common ray inside both disks at30°/31°: true near sphere first, submitted far depth8228.806 < near8274.873. Reverse/on-axis controls correct. Orientation-only large-disk control still inverts; no current play conjunction or Earth-mesh occlusion demonstrated. |
+
 ### K9 — Character animation foot contact — score 6.0 (2× S1)
 - **Members:**
   - A1-U24-1: the stance foot floats up to 14 cm at run.
   - A1-U24-3: slope-foot roll is inverted.
 - **Note:** the drawn-vs-collision part of foot error depends on K4.
+
+#### K9 re-check — U27b4bbbb (2026-10-26, base `90e6f1a`)
+
+| Finding | Disposition | Evidence / qualification |
+|---|---|---|
+| U24-1 | Retain S1, actual live rig | Actual boot sole: sprint0.00473–0.14524m above controlled flat floor; crawl sinks0.01635m. Horizontal stance drift <5.6e-8m; actual vertical-offset control leaves it unchanged. Not measured Moon terrain contact. |
+| U24-3 | Retain S1, correct reference/remedy | Real terrain normal→sampler→rig: ±10° relative cross-slopes yield19.74845° mismatch. Flat/forward controls clean. Sign-only control leaves0.315085° residual predicted by bent-shank rotations; world-normal alignment control clean. |
+
+Original three probes exit0 (U15/U24 controls5/5 each); unchanged animation gate115/115 exit0.
+Independent48/48 twice exit0; deliberate48/49 exit1. Initial46/48 exit1 retained
+and explained (probe's incorrect residual bound, not a game failure).
+Typecheck/build/protected and existing-probe diffs exit0.
+[Report](U27-k8-k9-recheck.md), [method ADR draft](U27-k8-k9-adr-draft.md),
+evidence `evidence/U27-k8-k9/`. No production edits or GPU verdict.
+**55/55 evidence reviewed.** Current reviewer gpt-6-astra confirmed; original
+U05b independently matched to Opus5.5, but historical majority remains
+unverified. U27c must preserve/resolve that qualification, not silently close it.
 
 ### Cross-cluster dependencies (input to U27c fix ordering, from U26 §1)
 - Gate fixes come before everything else: K2 → all other clusters.

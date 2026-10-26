@@ -1,0 +1,43 @@
+{
+  "baseline": "90e6f1af77a89439a005b490bea2fbfe6c1f7f21",
+  "scope_check": "PASS; only allowed process/audit files and one new probe",
+  "first_unchecked": "U27c",
+  "checks": [
+    {
+      "command": "git diff --exit-code 256d77d -- game/src game/e2e game/playwright.config.ts Milestone Design_specs",
+      "exit": 0,
+      "output": ""
+    },
+    {
+      "command": "git diff --exit-code HEAD -- game/tools/audit",
+      "exit": 0,
+      "output": ""
+    },
+    {
+      "command": "git diff --check",
+      "exit": 0,
+      "output": ""
+    }
+  ],
+  "sha256": {
+    "docs/audit/evidence/U27-k8-k9/build.log": "9fbfe2a7b7e67e5556f2ee86daf80a62b3663754d2f9ec64f2e497776a13e56b",
+    "docs/audit/evidence/U27-k8-k9/claims-before-probe.md": "77b0e9580b0f2cd63114caecb4e37b0eb87ceed1279aa083ca4590092fea5e53",
+    "docs/audit/evidence/U27-k8-k9/independent-first.log": "f4589c4883bd7ae5b97972a00458ffbc890a2d98bfebcae57fdbb16d17ea2c91",
+    "docs/audit/evidence/U27-k8-k9/independent-repeat1.log": "5b477eb79c12873da4a2cd58e6b1a2086da98e4aaae3236e0478bcb604ab77f3",
+    "docs/audit/evidence/U27-k8-k9/independent-repeat2.log": "5b477eb79c12873da4a2cd58e6b1a2086da98e4aaae3236e0478bcb604ab77f3",
+    "docs/audit/evidence/U27-k8-k9/independent-selftest.log": "1f2a5644584545ff4b2fd29d81314fa6cc02de58dd6e2b246a70168a7c0eb253",
+    "docs/audit/evidence/U27-k8-k9/model-and-budget.json": "3fa5a60eedfb7cba3c60ccbf90d4eb68ebc6a12336f1b8c59ffb1a71b532cf6f",
+    "docs/audit/evidence/U27-k8-k9/npm-ci.log": "a186b88d64cc2f76c571a33b8598c1188dd687744c2bd5895f56b73df8baa608",
+    "docs/audit/evidence/U27-k8-k9/old-probes.log": "2a051e9a67915be637328ce3e58091ab8940b676413c175a8e23a460ab9eb948",
+    "docs/audit/evidence/U27-k8-k9/original-u15-frame-impostor.log": "d8eaa9c98374fc6df83f50368bef14a6746a0fd8ce1a16f6edcacbee3c1a5ca9",
+    "docs/audit/evidence/U27-k8-k9/original-u15b-occlusion-flip.log": "63154cddc1cbfb638a5ebc9cc8115e0c79900491b98d3e1db955f0e112cfece9",
+    "docs/audit/evidence/U27-k8-k9/original-u24-character.log": "5fad6433540777efb5480610a8913e57635156b8f2298bb5db265d3c6d7969a6",
+    "docs/audit/evidence/U27-k8-k9/protected.log": "e79931a972aadf94f522fe717158514e8c17632dde7a92a8e08b46232f7d0c8a",
+    "docs/audit/evidence/U27-k8-k9/provenance-accessible.json": "165fc85808f2b7f297de5d1141c9a32907c302abb1bccbe79bb094595fd335bf",
+    "docs/audit/evidence/U27-k8-k9/typecheck.log": "2520e1951268ecb2bf85c0a7fdfbbd9908e6ef4c5022e1f934e4c1e3bfd64aeb",
+    "docs/audit/evidence/U27-k8-k9/unchanged-anim-gate.log": "fd5b3f1c5831d84a0c9b3eadd5cb2d5dbcac624c07df74e9f2386b82bc5de44f",
+    "docs/audit/evidence/U27-k8-k9/whitespace.log": "a4268df249eee8f5fe1919ba5d2988f8dcd2fdc04ccf7958793426bdbe91dc95",
+    "game/tools/audit/u27-k8-k9-recheck.mjs": "8ad0423bf6e4c08402d0d290ded5d8ab9f3fae7888c93d83cdef5f9575bcb828"
+  },
+  "session_history_check": "PASS: previous SESSION LOG and ANCHOR byte-preserved; only session101 appended after100"
+}
