@@ -1,0 +1,5 @@
+test-real-body-data: GATE_EXIT=0 (63/63), GATE2_EXIT=0, SELF_EXIT=0 (10/10 mutants red)
+test-orbit-gate: ORBIT_EXIT=0 (9/9)
+tsc --noEmit: TSC_EXIT=0
+vite build: BUILD_EXIT=0
+sources fetched 2026-10-26: naif pck00011.tpc, ssd.jpl.nasa.gov/planets/approx_pos.html, ssd.jpl.nasa.gov/sats/elem/sep.html, nssdc plutofact.html (all HTTP 200)
