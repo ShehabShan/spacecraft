@@ -61,6 +61,6 @@ Option 4, implemented in `game/tools/test-alloc-gate.mjs` (run from `game/` with
   | `applySkyState` | 195 |
 
   This is expected until F5a, which must report this gate's numbers before and after the change (§13 safeguard 4). Until then the regression for other tasks is `--self-test` with exit 0, not the plain gate.
-- **Open item for F1bb/F5a.** Real-tree idle retained growth read 4.9–8.0 B/frame across runs, which is close to the budget. Whether this is real growth or noise has not been settled. The budget is not raised to hide it.
+- **Open item for F1bb/F5a.** Real-tree idle retained growth read 4.9–8.0 B/frame across runs, which is close to the budget. Whether this is real growth or noise has not been settled. The budget is not raised to hide it. **Settled in F1bca (ADR-004):** the growth was JIT code/metadata in V8's code and trusted spaces after the walk→idle switch; object heap growth is ≈0.12 B/frame. The retained clause now counts the object heap only.
 - **Instrument limits.** The gate measures the JS heap only. Off-heap typed-array backing stores and GPU memory are out of scope. It runs in Node, not a browser.
 - **Old checks stay until F1bb lands.** The browser harness loops (m1a–m1f) and the boot-only counters are replaced in F1bb. The old rows stay until their replacement exists (§13 safeguard 3).

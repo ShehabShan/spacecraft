@@ -4,9 +4,22 @@
 // tools/test-alloc-loops.mjs; tools/test-alloc-gate.mjs carries the same logic inline
 // (F1ba) and is folded onto this module when the harness rows are retired (F1bc).
 import inspector from 'node:inspector/promises'
+import v8 from 'node:v8'
 
 export const ALLOC_BUDGET_B_PER_FRAME = 64
 export const RETAIN_BUDGET_B_PER_FRAME = 8
+
+// WHY (F1bc, ADR-004): the retained clause counts the JS-object heap only. code_space and
+// trusted_space hold JIT code + bytecode/feedback metadata that V8 tiering adds after a
+// workload switch and frees later (walk→idle read 6–10 B/frame there; old_space 0.12).
+// A per-frame object leak lands in new/old space and is still counted.
+const CODE_SPACES = new Set(['code_space', 'code_large_object_space', 'trusted_space',
+  'trusted_large_object_space', 'shared_trusted_space', 'shared_trusted_large_object_space'])
+export function objectHeapUsed() {
+  let s = 0
+  for (const sp of v8.getHeapSpaceStatistics()) if (!CODE_SPACES.has(sp.space_name)) s += sp.space_used_size
+  return s
+}
 
 export async function createInstrument({ bundleUrl, modOf }) {
   const session = new inspector.Session(); session.connect()
@@ -39,10 +52,10 @@ export async function createInstrument({ bundleUrl, modOf }) {
     const raw = []
     for (let r = 0; r < rounds; r++) {
       globalThis.gc(); globalThis.gc()
-      const h0 = process.memoryUsage().heapUsed
+      const h0 = objectHeapUsed()
       for (let i = 0; i < N; i++) step()
       globalThis.gc(); globalThis.gc()
-      raw.push((process.memoryUsage().heapUsed - h0) / N)
+      raw.push((objectHeapUsed() - h0) / N)
     }
     const sorted = [...raw].sort((x, y) => x - y)
     const allocB = a.total / N, retainedB = sorted[Math.floor(sorted.length / 2)]

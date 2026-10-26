@@ -17,6 +17,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import path from 'node:path'
 import fs from 'node:fs'
 import inspector from 'node:inspector/promises'
+import { objectHeapUsed } from './alloc-lib.mjs' // F1bc/ADR-004: retained = JS-object heap
 
 // Budgets (ADR-002). WHY: §3 says NO per-frame allocation; 64 B/frame is the
 // measurement slack (≈9 KB/s at 144 Hz), far below the 400 B/frame churn mutant
@@ -104,10 +105,10 @@ async function measure(step) {
   const ret = []
   for (let r = 0; r < 3; r++) {
     globalThis.gc(); globalThis.gc()
-    const h0 = process.memoryUsage().heapUsed
+    const h0 = objectHeapUsed()
     for (let i = 0; i < N; i++) step()
     globalThis.gc(); globalThis.gc()
-    ret.push((process.memoryUsage().heapUsed - h0) / N)
+    ret.push((objectHeapUsed() - h0) / N)
   }
   ret.sort((x, y) => x - y)
   const allocB = a.total / N, retainedB = ret[1]
