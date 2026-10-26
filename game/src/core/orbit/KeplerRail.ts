@@ -77,6 +77,32 @@ export function meanMotion(mu: number, a: number): number {
 }
 
 
+/**
+ * Boot validation of one orbit's elements (F3aba, A1-U12-2).
+ * WHY: the elliptic solver and semiMinor = a·√(1−e²) are only defined for
+ * 0 ≤ e < 1 and a > 0; before F3aba an e ≥ 1 / a ≤ 0 / NaN element produced
+ * a NaN state silently every tick. Reject at boot with the body id instead.
+ * Boot path only (throws, allocates the message) — never called per tick.
+ */
+export function validateOrbit(id: string, o: CelestialConfig['orbit'] & object): void {
+  const fields: readonly (readonly [string, number])[] = [
+    ['a', o.a], ['e', o.e], ['i', o.i], ['Omega', o.Omega], ['omega', o.omega],
+    ['M0', o.M0], ['T', o.T], ['n', o.n], ['muHost', o.muHost],
+  ];
+  for (let k = 0; k < fields.length; k++) {
+    if (!Number.isFinite(fields[k][1])) {
+      throw new Error(`[KeplerRail] body '${id}': orbit.${fields[k][0]} is not finite (${fields[k][1]})`);
+    }
+  }
+  if (!(o.a > 0)) throw new Error(`[KeplerRail] body '${id}': orbit.a must be > 0 (got ${o.a})`);
+  if (!(o.e >= 0 && o.e < 1)) {
+    throw new Error(`[KeplerRail] body '${id}': orbit.e must be in [0, 1) — elliptic rail only (got ${o.e})`);
+  }
+  if (!(o.muHost > 0)) throw new Error(`[KeplerRail] body '${id}': orbit.muHost must be > 0 (got ${o.muHost})`);
+  if (!(o.T > 0)) throw new Error(`[KeplerRail] body '${id}': orbit.T must be > 0 (got ${o.T})`);
+}
+
+
 export class KeplerRail {
   /** Topologically ordered: parents strictly before children. */
   private readonly _states: CelestialState[] = [];
@@ -147,6 +173,7 @@ export class KeplerRail {
 
     if (cfg.orbit !== null) {
       const o = cfg.orbit;
+      validateOrbit(cfg.id, o);
       // Standard perifocal basis (Z-up convention):
       //   p̂ = Rz(Ω)·Rx(i)·Rz(ω)·(1,0,0),  q̂ = ...·(0,1,0)
       const cO = Math.cos(o.Omega), sO = Math.sin(o.Omega);
