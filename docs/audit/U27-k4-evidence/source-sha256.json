@@ -1,0 +1,12 @@
+{
+  "game/src/core/terrain/terrainField.ts": "54e21c9135dd38b245a1f89965c155c003c8cffb0198405824d3ba6b509a8647",
+  "game/src/core/terrain/noise.ts": "37a2333f81fba818a6772426013bc2bafad89c6e7b87adb749c1297d6ff8d686",
+  "game/src/core/terrain/spherify.ts": "86cc8d69b961c1b00b88753d0a4024493e27f2d4bdf411ecbee4ab788ddfffb9",
+  "game/src/workers/terrainWorker.ts": "0a32b8b43fa804d5780ff087971a3f9d7c9e70205db5581d43b4bdef4c34e0ee",
+  "game/src/render/TerrainMeshPool.ts": "bae510e20ac63d350e7fc5f870dd2263906bba34ae92ccc52a1cbe4eb0c586c0",
+  "game/src/play/world/MoonLod.ts": "9db27959cc8c38e6a030acd66f30139e5902b4e60123176f49a0cdf73fbfba4a",
+  "game/src/play/world/moonConfig.ts": "a50b67b536bf43eafad981cd7b620b4dfb21d0596e5672e73d6efab5c7eea6a0",
+  "game/src/core/physics/astronautKCC.ts": "72b645cd390cad4ede2d3456d10361148f00af19f03fd6f9a515743f815ef0a1",
+  "game/src/core/physics/flightController.ts": "7c2611c54e98b1775574af637c764605a430384ec182410f6e33b8422e3e301c",
+  "game/src/test/Milestone1E_TestHarness.tsx": "34b9b9532438b994e2ffb3240568f6eed0757776fc39b23d16241cb45ba6e946"
+}

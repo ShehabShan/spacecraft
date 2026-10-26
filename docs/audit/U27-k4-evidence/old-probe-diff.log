@@ -1,0 +1,3 @@
+$ git diff --exit-code 099ce5b -- game/tools/audit
+
+UNPIPED_EXIT=0

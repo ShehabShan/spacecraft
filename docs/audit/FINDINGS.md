@@ -1,7 +1,7 @@
 # A1 ENGINE AUDIT — CONSOLIDATED FINDINGS
 
 - Task: A1 (read-only) · Branch: `a1-engine-audit` · Built from U01–U26 reports at `49e6c32`
-- Status: **U27b in progress — K1–K3 re-checked (through U27b4a); 37/55 S0/S1 reviewed, 18 pending.** U27a built the index without rerunning repros. Fix tasks and the Lead summary remain U27c. Lead reports originals by Opus 5.5; current reviewer is platform-confirmed gpt-6-astra. Per-unit historical attribution is not independently established.
+- Status: **U27b in progress — K1–K4 re-checked (through U27b4ba); 42/55 S0/S1 reviewed, 13 pending.** U27a built the index without rerunning repros. Fix tasks and the Lead summary remain U27c. Lead reports originals by Opus 5.5; current reviewer is platform-confirmed gpt-6-astra. Per-unit historical attribution is not independently established.
 - Original evidence lives in each unit report (`docs/audit/Uxx-*.md`). This file indexes, groups and ranks it; the re-check table records later confirmation or correction without erasing original reports.
 - Regenerate the index (§4) with `python3 game/tools/audit/u27-findings-index.py --md` from the repo root. `--stats` and `--s01` print the counts and the S0/S1 list.
 
@@ -389,7 +389,28 @@ rulings, rather than asking those visual questions again.
   - A1-U14-3: `maxTerrainHeight` is hand-typed; STEEP reaches 2,216 m against a 900 m bound.
   - A1-U05-8: the DDA no-clip proof assumes a slope bound of 1.2; the measured slope is up to 6.4.
   - A1-U20-1: 144 meshes on 96 worker sets drops requests, and the dead `pendingRec` leaves holes.
-- **Why merged:** all are fixed by one terrain-instance and height-service design (D-ADR-6) whose bounds are derived from the noise parameters.
+- **Why grouped:** related terrain geometry/bound contracts (D-ADR-6), plus a distinct worker-capacity/completion contract. A height service alone does not fix asynchronous stale ownership.
+
+
+#### K4 re-check — U27b4ba (2026-10-26, base `099ce5b`)
+
+| Finding | Disposition | Independent evidence / qualification |
+|---|---|---|
+| U22-1 | Retain S1, confirmed | Actual worker triangle/radial error median0.458m, p99 5.345m, max21.081m; flat sphere2.368mm, vertices28.66μm controls. No fresh visible-walk claim; bilinear is not triangle-accurate. |
+| U14-1 | Retain S1, confirmed at converged sites | 4083/4096 sites qualify; error median3.159°, p99 63.993°; 13 nonconvergent samples excluded. No globally smooth derivative/sole-detail-octave claim. |
+| U14-3 | Retain S1, confirmed bound/sweep defect | STEEP witness2059.248m vs900; real sweep skips crossing, enlarged-bound control detects. Not a full harness verdict; empirical extrema are not proven bounds. |
+| U05-8 | Retain S1, confirmed false premise | Geodesic0.5m secant5.953>1.2; original6.412. Baseline0/3000 tunnels remains; production tunnelling not established. |
+| U20-1 | Retain S1, confirmed controlled schedule | 100 serial requests →4drops at peakinflight1; stale pending aliases another owner's active record. Larger per-worker capacity →0drops. Aggregate192sets>144meshes already holds, so total-capacity assertion alone is insufficient. |
+
+[Report](U27-k4-recheck.md), [draft method ADR](U27-k4-adr-draft.md),
+logs in `U27-k4-evidence/`; new probe `game/tools/audit/u27-k4-recheck.mjs`.
+Originals exit0 (U14/U22/U20 controls4/4; U05c9/10 rejects false bound).
+Independent **19/19 twice exit0**, deliberate19/20 exit1; typecheck/build and
+protected diff exit0. No GPU/browser verdict, production fix, or other cluster
+signed off. **42/55 reviewed; K5–K9's 13 remain**. Model `gpt-6-astra` verified
+for this session; Lead-attested original model is not independent historical
+per-unit provenance.
+
 
 ### K5 — The play frame allocates ≈10.5 KB per frame against the zero-GC invariant — score 3.0 (1× S1)
 - **Member:** A1-U25-1. 72–78 % of the allocation is in the core `terrainHeight`, `noise3` and `sampleSurfaceInto` path.

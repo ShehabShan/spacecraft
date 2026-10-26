@@ -1,0 +1,35 @@
+$ node --expose-gc tools/audit/u14-terrain-field.mjs
+P1.noise3_absmax_random=0.978524
+P1.noise3_absmax_climbed=0.978716
+P2.M1C_Test_Planet_Earth_scale_=hMin=-422.153 hMax=757.473 hMaxClimbed=763.422 ampSum=1022 configMaxTerrainHeight=900 fracAboveMax=0 heightSlack=900 fracAbsAboveSlack=0 areaAboveMax_km2=0 (KCC EARTHSCALE_ASTRONAUT / flight default 900; m1c/m1d/m1e HEIGHT_SLACK 900)
+P2.Play_Moon=hMin=-80.887 hMax=266.917 hMaxClimbed=283.947 ampSum=341 configMaxTerrainHeight=360 fracAboveMax=0 heightSlack=420 fracAbsAboveSlack=0 areaAboveMax_km2=0 (moonConfig MAX_TERRAIN_H / HEIGHT_SLACK)
+P2.M1E_STEEP=hMin=-30.1704 hMax=2183.92 hMaxClimbed=2215.7 ampSum=2243 configMaxTerrainHeight=900 fracAboveMax=0.143738 heightSlack=900 fracAbsAboveSlack=0.143738 areaAboveMax_km2=45.1567 (m1e slope suite: kcc = EARTHSCALE_ASTRONAUT (maxTerrainHeight 900))
+control.reinit_bit_identical=ok
+P3.seed_alias=seed1==seed(1+2^32):true seed1==seed1.9:true seed(-1)==seed(2^32-1):true
+P3.nan_seed=stable=true
+P3.singleton=after initTerrainField(TEST) the moon query (0,1,0) returns -43.983 not -12.424 — one active field per thread
+control.UxV_eq_C_6faces=ok
+P4.seams.L0=edgeSamples=792 uniquePoints=380 bitMismatches=0
+P4.seams.L4=edgeSamples=12312 uniquePoints=6140 bitMismatches=0
+control.seam_L4_zero_mismatch=ok
+P4.seams.L8=edgeSamples=12312 uniquePoints=6140 bitMismatches=0
+P4.seams.L12=edgeSamples=12312 uniquePoints=6140 bitMismatches=0
+P4.inverse_roundtrip_maxerr=4.82143e-12
+P4.unit_norm_maxerr=2.22045e-16
+P5.spherified=|dp/du| centre=0.707107 edgeMid(1,0)=1 corner=0.707107 | sigmaMin=0.5@(-1,-1) sigmaMax=1@(-1,0) linearRatio=2 areaRatio=1.33333 | edgeMid sigmas=0.57735/1 (anisotropy 1.73205)
+P5.gnomonic=|dp/du| centre=1 edgeMid(1,0)=0.5 corner=0.471405 | sigmaMin=0.333333@(-1,-1) sigmaMax=1@(0,0) linearRatio=3 areaRatio=5.19615 | edgeMid sigmas=0.5/0.707107 (anisotropy 1.41421)
+P6.L0=maxSide/width=0.783653@f0 ix0 iy0 s2 minSide/width=0.783653 maxCentreToVertex/(0.75·width)=0.810898
+P6.L2=maxSide/width=1.07979@f0 ix1 iy3 s3 minSide/width=0.745718 maxCentreToVertex/(0.75·width)=0.957662
+P6.L4=maxSide/width=1.20487@f0 ix0 iy7 s1 minSide/width=0.735745 maxCentreToVertex/(0.75·width)=1.01152
+P6.L6=maxSide/width=1.25414@f0 ix0 iy32 s0 minSide/width=0.735145 maxCentreToVertex/(0.75·width)=1.03178
+P6.L8=maxSide/width=1.26832@f0 ix0 iy128 s0 minSide/width=0.735108 maxCentreToVertex/(0.75·width)=1.03759
+control.chunkKey_L8_unique_corner=ok
+P6.chunkKey_collision_L9=key(0,9,1,0)=590080 key(0,9,0,256)=590080 equal=true
+P7.M1C_Test_Planet_Earth_scale_=epsArc_m=10 shortestDetailWavelength_m≈78.125 normalErrDeg p50=1.18415 p99=41.5848 max=94.3064 slopeErrDeg p1=-21.6815 p99=9.09144 trueSlope>45_reportedBelow=568/5967
+P7.Play_Moon=epsArc_m=2.729 shortestDetailWavelength_m≈15.5057 normalErrDeg p50=3.16153 p99=59.6477 max=140.486 slopeErrDeg p1=-22.5066 p99=11.8308 trueSlope>45_reportedBelow=733/9973
+P7.M1E_STEEP=epsArc_m=10 shortestDetailWavelength_m≈156.25 normalErrDeg p50=0.074069 p99=49.5982 max=130.476 slopeErrDeg p1=-16.6936 p99=5.47401 trueSlope>45_reportedBelow=193/7910
+P7.frame_switch_jump_deg_max=37.3678
+P8.gc_events=withProbeArrays=230 pureEngineLoop=124 (acc 30427300)
+controls=4/4
+
+UNPIPED_EXIT=0
