@@ -1,0 +1,27 @@
+PASS actual R3 scalar/trace conjunction accepts complementary baseline with supplied matching silhouette {"holes":0,"doubles":0,"flips":21,"maxSlope":0.0001359879789631857,"liveHoles":0,"crossedLo":true,"crossedHi":true,"pass":true}
+PASS source draw predicates expose inbound omissions absent from scalar trace {"holes":120,"doubles":0,"downHoles":120,"upHoles":0}
+PASS trace omits state/visibility {}
+PASS unobserved draw mutation: both submissions hidden {"gate":{"holes":0,"doubles":0,"flips":21,"maxSlope":0.0001359879789631857,"liveHoles":0,"crossedLo":true,"crossedHi":true,"pass":true},"observed":{"holes":4020,"doubles":0,"downHoles":2010,"upHoles":2010}}
+PASS unobserved draw mutation: both submissions full {"gate":{"holes":0,"doubles":0,"flips":21,"maxSlope":0.0001359879789631857,"liveHoles":0,"crossedLo":true,"crossedHi":true,"pass":true},"observed":{"holes":0,"doubles":4020,"downHoles":0,"upHoles":0}}
+PASS non-complementary live trace DOES fail {"holes":0,"doubles":0,"flips":21,"maxSlope":0.0001359879789631857,"liveHoles":1,"crossedLo":true,"crossedHi":true,"pass":false}
+PASS missing low crossing DOES fail {}
+PASS missing high crossing DOES fail {}
+PASS frozen mesh-state control DOES fail flips {"holes":0,"doubles":0,"flips":0,"maxSlope":0.0001359879789631857,"liveHoles":0,"crossedLo":true,"crossedHi":true,"pass":false}
+PASS step fade control DOES fail slope {"holes":0,"doubles":0,"flips":21,"maxSlope":0.002,"liveHoles":0,"crossedLo":true,"crossedHi":true,"pass":false}
+PASS original M1 rejected elsewhere (flip control) {"holes":0,"doubles":0,"flips":1,"maxSlope":0.0001359879789631857,"liveHoles":0,"crossedLo":true,"crossedHi":true,"pass":false}
+PASS original M2 rejected elsewhere (slope control) {"holes":0,"doubles":0,"flips":21,"maxSlope":0.002,"liveHoles":0,"crossedLo":true,"crossedHi":true,"pass":false}
+PASS isolated equal disks accepted and have plausible geometric area {"radius":4.6486446785144455,"area":67.8894947504182,"totA":69,"nA":69,"nB":69,"sym":0,"symPct":0,"meshR":4.686510657907603,"impR":4.686510657907603,"pass":true}
+PASS isolated missing disk DOES fail {"totA":69,"nA":69,"nB":0,"sym":69,"symPct":100,"meshR":4.686510657907603,"impR":0,"pass":false}
+PASS isolated shifted disk DOES fail {"totA":69,"nA":69,"nB":69,"sym":36,"symPct":52.17391304347826,"meshR":4.686510657907603,"impR":4.686510657907603,"pass":false}
+PASS isolated doubled radius DOES fail {"totA":69,"nA":69,"nB":277,"sym":208,"symPct":301.4492753623189,"meshR":4.686510657907603,"impR":9.389986074159536,"pass":false}
+PASS two empty masks correctly rejected (not a tautology) {"totA":0,"nA":0,"nB":0,"sym":0,"symPct":100,"meshR":0,"impR":0,"pass":false}
+PASS threshold boundary red=8 rejected {"totA":0,"nA":0,"nB":0,"sym":0,"symPct":100,"meshR":0,"impR":0,"pass":false}
+PASS uniform background 9 falsely accepted {"totA":25600,"nA":25600,"nB":25600,"sym":0,"symPct":0,"meshR":90.270333367641,"impR":90.270333367641,"pass":true}
+PASS uniform background 90 falsely accepted {"totA":25600,"nA":25600,"nB":25600,"sym":0,"symPct":0,"meshR":90.270333367641,"impR":90.270333367641,"pass":true}
+PASS bright-background false accept: target absent {"totA":25600,"nA":25600,"nB":25600,"sym":0,"symPct":0,"meshR":90.270333367641,"impR":90.270333367641,"pass":true}
+PASS bright-background false accept: target shifted 20px {"totA":25600,"nA":25600,"nB":25600,"sym":0,"symPct":0,"meshR":90.270333367641,"impR":90.270333367641,"pass":true}
+PASS bright-background false accept: target radius doubled {"totA":25600,"nA":25600,"nB":25600,"sym":0,"symPct":0,"meshR":90.270333367641,"impR":90.270333367641,"pass":true}
+PASS large background also dilutes nonzero target-sized difference below 3% {"totA":25600,"nA":25600,"nB":25531,"sym":69,"symPct":0.26953125,"meshR":90.270333367641,"impR":90.14859790456177,"pass":true}
+PASS full extracted conjunction responds to bad silhouette scalar {}
+PASS historical U01 dump records all 25600 mask pixels, zero difference {"header":"R3DUMP hdr centre=(640.00,360.00) meshR=90.27 impR=90.27 meshRmax=113.14 impRmax=113.14 totA=25600 sym=0","freshGPU":false}
+PASS 26/26; source-extracted predicates, synthetic byte inputs, historical pixel evidence only

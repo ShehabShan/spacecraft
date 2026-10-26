@@ -1,0 +1,48 @@
+$ node --expose-gc tools/audit/u22-play-world.mjs
+P1.spawn.dir=0.320588,-0.036825,0.946503
+P1.spawn.score=16.5049
+P1.spawn.ms=159
+P1.spawn.earthElevDeg=8.67
+P1.spawn.sunElevDeg=36.41
+P1.earlyBreakReachable(score<0.35 needs slope<0.00875deg, but slope<0.01 is skipped)=false
+control.spawn_matches_test_pin=ok
+P1.devProbe.tangentialFrac.spawn(min over 4)=0.663
+P1.devProbe.tangentialFrac.dir(1,0,0)(min over 4)=0.388
+P2.L4.quadSpacing_m=4.19
+P2.L4.analyticMinusDrawn_m p01/p50/p99=-2.999/-0.080/5.964
+P2.L4.|err| p50/p90/p99/max=0.432/1.878/5.979/25.966
+P2.L4.frac|err|>0.02m(groundClearance)=0.974
+P2.L4.frac|err|>0.25m=0.683
+control.P2_midpoint_on_flat_sphere_is_chord_sag=ok
+P3.L0.maxExtent/brad=1323/2028 = 0.653
+P3.L1.maxExtent/brad=824/1224 = 0.673
+P3.L2.maxExtent/brad=524/822 = 0.638
+P3.L3.maxExtent/brad=309/621 = 0.497
+P3.L4.maxExtent/brad=234/520 = 0.450
+P4.terrainH min/max (6x401^2 grid)=-80.8/282.5
+P4.shellDepthBelowR=400
+control.P4_terrain_above_shell=ok
+P5.alt1.4m.selectedLeaves/meshes=125/96 noData=31 active=94
+P5.alt1.4m.L4culled_centreVisibleOverSphereR=0/1151
+P5.alt30m.selectedLeaves/meshes=123/96 noData=29 active=94
+P5.alt30m.L4culled_centreVisibleOverSphereR=0/1136
+P5.alt200m.selectedLeaves/meshes=117/96 noData=23 active=94
+P5.alt200m.L4culled_centreVisibleOverSphereR=0/1054
+P5.alt1000m.selectedLeaves/meshes=48/96 noData=1 active=47
+P5.alt1000m.L4culled_centreVisibleOverSphereR=0/832
+P5.alt3000m.selectedLeaves/meshes=12/96 noData=0 active=12
+P5.alt3000m.L4culled_centreVisibleOverSphereR=1/639
+P5.alt10000m.selectedLeaves/meshes=6/96 noData=0 active=6
+P5.alt10000m.L4culled_centreVisibleOverSphereR=0/484
+P2b.L4.edgeMid |err| p50/p90/p99/max=0.224/1.011/3.887/12.917
+P2b.L4.chordSagFloor_m=0.0016
+P2b.L4.frac>0.25m=0.459
+P5b.spawn.noData count/holes(no ancestor/child mesh)/insideLoadingGate=31/31/0
+P5b.spawn.noData dist min/max m=1005/1907
+P5b.spawn.withData dist max m=989
+P5b.spawn.residentAround(300m)=1.000
+P5b.spawn.noData leaves with an unobstructed eye ray to their terrain top=0
+control.probe_finished=ok
+controls=4/4
+
+UNPIPED_EXIT=0

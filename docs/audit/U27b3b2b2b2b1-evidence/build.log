@@ -1,0 +1,31 @@
+
+> game@0.0.0 build
+> vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 112 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                    0.33 kB │ gzip:   0.23 kB
+dist/assets/terrainWorker-B4kmEuN9.js              6.30 kB
+dist/assets/index-qF21iB_6.js                      3.59 kB │ gzip:   1.57 kB
+dist/assets/MultiCameraRig-Jk9Eg5sk.js             8.32 kB │ gzip:   3.65 kB
+dist/assets/TerrainMeshPool-CIbwQOYg.js           10.91 kB │ gzip:   4.40 kB
+dist/assets/FloatingOriginAdapter-Dt2k66Gp.js     12.71 kB │ gzip:   4.11 kB
+dist/assets/Milestone1A_TestHarness-BzIsRhN9.js   14.75 kB │ gzip:   5.61 kB
+dist/assets/astronautKCC-BxOieEBR.js              21.15 kB │ gzip:   6.40 kB
+dist/assets/Milestone1C_TestHarness-CgV_mYJo.js   21.86 kB │ gzip:   8.25 kB
+dist/assets/Milestone1B_TestHarness-BTJ7hnn7.js   22.60 kB │ gzip:   8.82 kB
+dist/assets/Milestone1E_TestHarness-Dzl6dFk4.js   35.36 kB │ gzip:  13.87 kB
+dist/assets/Milestone1D_TestHarness-DTYc3_Xs.js   38.85 kB │ gzip:  14.65 kB
+dist/assets/Milestone1F_TestHarness-BJNLDd4g.js   42.81 kB │ gzip:  17.41 kB
+dist/assets/PlayPage-5MFZecag.js                  46.18 kB │ gzip:  18.21 kB
+dist/assets/index-ByT-DHhw.js                    145.92 kB │ gzip:  47.43 kB
+dist/assets/react-three-fiber.esm-CtRfDYRl.js    805.62 kB │ gzip: 216.84 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 3.12s

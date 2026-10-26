@@ -1,0 +1,52 @@
+[u08b-mutate] applied badgefail
+[WebServer]
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+
+
+Running 1 test using 1 worker
+
+[1/1] e2e/m1a.spec.ts:5:1 › M1A — Floating Origin acceptance
+e2e/m1a.spec.ts:5:1 › M1A — Floating Origin acceptance
+[m1a gate] acceptance line: [Milestone1A] acceptance PASSED — P.x={ticks} rebases=9 maxLocal={f2(avg)}ms
+
+[m1a gate] badges: ["FAIL","FAIL","FAIL","FAIL","FAIL"]
+
+[m1a gate] page console transcript:
+
+  error: Failed to load resource: the server responded with a status of 404 (Not Found)
+
+  warning: [.WebGL-0x188c0016fe00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+
+  warning: [.WebGL-0x188c0016fe00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+
+  warning: [.WebGL-0x188c0016fe00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+
+  warning: [.WebGL-0x188c0016fe00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
+
+  log: [Milestone1A] acceptance PASSED — P.x={ticks} rebases=9 maxLocal={f2(avg)}ms
+
+  1) e2e/m1a.spec.ts:5:1 › M1A — Floating Origin acceptance ────────────────────────────────────────
+
+    Error: no FAIL badge may remain
+
+    expect(received).not.toContain(expected) // indexOf
+
+    Expected substring: not "FAIL"
+    Received string:        "FAIL | FAIL | FAIL | FAIL | FAIL"
+
+      28 |   expect(line, 'acceptance console line').toContain('PASSED')
+      29 |   expect(badges.length, 'badge rows scraped').toBeGreaterThan(0)
+    > 30 |   expect(badges.join(' | '), 'no FAIL badge may remain').not.toContain('FAIL')
+         |                                                              ^
+      31 | })
+      32 |
+        at /tmp/u27b3a-original-a.uLfRSM/e2e/m1a.spec.ts:30:62
+
+    Error Context: test-results/m1a-M1A-—-Floating-Origin-acceptance/error-context.md
+
+
+  1 failed
+    e2e/m1a.spec.ts:5:1 › M1A — Floating Origin acceptance ─────────────────────────────────────────

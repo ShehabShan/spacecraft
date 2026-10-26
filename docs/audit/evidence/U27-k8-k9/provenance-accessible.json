@@ -1,0 +1,15 @@
+{
+  "source_bot": "1d7f6d36-bb0a-4919-8f71-3a090ea8a22d",
+  "window": "2026-10-21T00:00:00Z through 2026-10-26T00:00:00Z exclusive",
+  "matching_completed_messages": 1,
+  "distinct_usage_rows": 3,
+  "conclusion": "Accessible usage alone does not establish a model for the majority of original audit units.",
+  "confirmed_original": {
+    "unit": "U05b",
+    "commit": "739f1e0",
+    "completed_event_id": "50083455",
+    "agent_message_id": "235ca01d-21fd-4f68-959d-f4362d3f0866",
+    "main_loop_model": "claude-opus-5-5",
+    "other_model_usage": "claude-sonnet-5-5 appears only as social-feed summary in matched records"
+  }
+}

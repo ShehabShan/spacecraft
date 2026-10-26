@@ -1,0 +1,29 @@
+{"node":"v24.22.0","hashes":{"harness":"31f1b3d06580f3bade9faeca7d5dffbb85e882697636d81fb0dd40613cdeeee1","flight":"7c2611c54e98b1775574af637c764605a430384ec182410f6e33b8422e3e301c","t1":"792e5d96fde9096dd10eebda8b1a306004f06ebe345eaed2312bfcc09576d5a4","t2":"d70b53b0466a1d0f6b3c5e1649b9061457890266cb63f7bbb38f0d73580d0094"}}
+{"id":"T1-baseline","pass":true,"evidence":"source-extracted predicate"}
+{"id":"equation-controls","pass":true,"evidence":{"densityErr":0,"machErr":0}}
+{"id":"T1-discontinuity-false-accept","pass":true,"evidence":{"gate":true,"ratio":0.4999916667361106,"expectedRatio":0.9999833334722215}}
+{"id":"T1-altitude-Mach-false-accept","pass":true,"evidence":{"gate":true,"machActual":2.3509201673934,"machExpected":2.5968879943217535}}
+{"id":"wind-vector-control","pass":true,"evidence":{"windErr":0,"poses":12}}
+{"id":"T1-reverse-wind-false-accept","pass":true,"evidence":{"reverseErr":104}}
+{"id":"T1-no-lapse-rejected","pass":true,"evidence":"a8<a0 responds"}
+{"id":"T1-constant-density-rejected","pass":true,"evidence":"monotonicity responds"}
+{"id":"T1-zero-wind-rejected","pass":true,"evidence":"magnitude responds"}
+{"id":"T1-wrong-sea-level-Mach-rejected","pass":true,"evidence":"Mach at h=0 responds"}
+{"id":"flight-zero-spin","pass":true,"evidence":"default fixture only; not all possible FlightController instances"}
+{"id":"T2-dive-base","pass":true,"evidence":{"pass":true,"v1000":264.74939431820894,"minPost":3,"contacts":4,"grounded":true,"frames":270}}
+{"id":"T2-dive-endpoint","pass":true,"evidence":{"pass":true,"v1000":264.74939431820894,"minPost":3,"contacts":4,"grounded":true,"frames":270}}
+{"id":"T2-dive-coarse","pass":true,"evidence":{"pass":true,"v1000":264.74939431820894,"minPost":3,"contacts":4,"grounded":true,"frames":270}}
+{"id":"T2-dive-none","pass":true,"evidence":{"pass":false,"v1000":264.74939431820894,"minPost":-1533.660234856888,"contacts":0,"grounded":false,"frames":676}}
+{"id":"T2-negative-observer-rejected","pass":true,"evidence":"one scalar negative"}
+{"id":"T2-negative-integrity-rejected","pass":true,"evidence":"one scalar negative"}
+{"id":"T2-no-landing-rejected","pass":true,"evidence":"grounded responds"}
+{"id":"T2-too-fast-rejected","pass":true,"evidence":"speed responds"}
+{"id":"constructed-ridge-base","pass":true,"evidence":{"startAGL":10.022455039498709,"endAGL":10.022455039498709,"interior":{"min":-10,"at":0.5,"n":1200},"actualEnd":[-2.053255660819503,5010.000004775807,0],"minPost":2.9999999999990905,"contacts":1}}
+{"id":"constructed-ridge-endpoint","pass":true,"evidence":{"startAGL":10.022455039498709,"endAGL":10.022455039498709,"interior":{"min":-10,"at":0.5,"n":1200},"actualEnd":[15,5010,0],"minPost":10.0224550394978,"contacts":0}}
+{"id":"constructed-high-pass-control","pass":true,"evidence":{"minPost":30.022365755444298,"contacts":0}}
+{"id":"real-terrain-positive-endpoint-tunnels","pass":true,"evidence":{"seed":"0x27b205","trials":4096,"tunnels":22}}
+{"witness":{"index":1321,"p":[-841.0324619317759,-5026.682371835001,-854.4853349007965],"v":[-1642.601981966503,378.2379588031013,-157.63326167593516],"q":{"x":-0.05752112842759569,"y":-0.07836036270480824,"z":0.9914878487403476,"w":0.08661881516982628},"b":[-865.9742788838992,-5021.3361231249955,-856.9377418452996],"path":{"min":-15.046358419960967,"at":0.6893203883495146,"n":103},"startAGL":8.36828013043882,"endAGL":4.247184827849651,"minPost":4.247184827850106},"refined":[{"gap":0.25,"min":-15.046358419960967,"at":0.6893203883495146,"n":103},{"gap":0.125,"min":-15.069990742168045,"at":0.6941747572815534,"n":206},{"gap":0.0625,"min":-15.078224840429442,"at":0.6958637469586375,"n":411}]}
+{"id":"witness-positive-endpoints","pass":true,"evidence":{"start":8.36828013043882,"end":4.247184827849651,"telemetry":4.247184827850106}}
+{"id":"witness-refinement","pass":true,"evidence":[{"gap":0.25,"min":-15.046358419960967,"at":0.6893203883495146,"n":103},{"gap":0.125,"min":-15.069990742168045,"at":0.6941747572815534,"n":206},{"gap":0.0625,"min":-15.078224840429442,"at":0.6958637469586375,"n":411}]}
+{"id":"real-witness-baseline-control","pass":true,"evidence":{"contacts":1,"minPost":3,"actualEnd":[-845.0767041070354,-5025.81549530853,-854.8829857559217]}}
+{"summary":{"passed":26,"total":26,"failed":[]}}

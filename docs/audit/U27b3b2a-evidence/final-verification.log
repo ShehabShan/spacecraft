@@ -1,0 +1,7 @@
+$ git diff --cached --check
+
+EXIT_CODE=0
+$ git diff --exit-code 256d77d -- game/src game/e2e game/playwright.config.ts Milestone Design_specs
+
+EXIT_CODE=0
+Allowed staged paths: PASS; 19 files before adding this verification log.

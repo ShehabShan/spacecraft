@@ -1,0 +1,5 @@
+# K7 expectations before source review — 2026-10-26, base 7c4983e
+- U16-1: a radial-height slope limit must compare rise with horizontal travel, not a visual-frame vector length. Test controlled surfaces with independently prescribed gradients, plus original real-terrain witnesses. A zero-blend or corrected-distance control should remove over-limit acceptance without rejecting shallow slopes.
+- U17-3: continuity during airborne motion does not by itself promise continuity across contact. Measure actual landing transitions, include flat-ground control, and trace actual play consumers before claiming visible camera/rig pops. "Every landing" is not justified by a random sample.
+- U13-2: equal time input should yield one coordinated tick schedule. Compare real PlayerController/core and actual characterRoot against KCC minus origin, not just duplicated accumulator formulas. Controls: ordinary rates, matched scheduling; distinguish f32 rounding and duplicate integration from stale extraction.
+- No physics/gameplay policy selected. No game files changed. Independent checks must fail nonzero on failed assertions.

@@ -1,0 +1,7 @@
+$ npm run typecheck
+
+> game@0.0.0 typecheck
+> tsc --noEmit
+
+
+UNPIPED_EXIT=0

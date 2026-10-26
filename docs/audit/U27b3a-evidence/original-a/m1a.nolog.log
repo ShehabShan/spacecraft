@@ -1,0 +1,32 @@
+[u08b-mutate] applied nolog (1 site(s))
+[WebServer]
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+
+
+Running 1 test using 1 worker
+
+[1/1] e2e/m1a.spec.ts:5:1 › M1A — Floating Origin acceptance
+  1) e2e/m1a.spec.ts:5:1 › M1A — Floating Origin acceptance ────────────────────────────────────────
+
+    TimeoutError: page.waitForEvent: Timeout 30000ms exceeded while waiting for event "console"
+    =========================== logs ===========================
+    waiting for event "console"
+    ============================================================
+
+      10 |   // Register the waiter BEFORE goto so an instantly-logging harness is not missed.
+      11 |   const acceptanceLine = page
+    > 12 |     .waitForEvent('console', {
+         |      ^
+      13 |       predicate: (m) => /\[Milestone1A\] acceptance (PASSED|FAILED)/.test(m.text()),
+      14 |       timeout: 30_000,
+      15 |     })
+        at /tmp/u27b3a-original-a.uLfRSM/e2e/m1a.spec.ts:12:6
+
+    Error Context: test-results/m1a-M1A-—-Floating-Origin-acceptance/error-context.md
+
+
+  1 failed
+    e2e/m1a.spec.ts:5:1 › M1A — Floating Origin acceptance ─────────────────────────────────────────

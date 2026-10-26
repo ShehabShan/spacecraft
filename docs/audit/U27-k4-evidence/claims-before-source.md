@@ -1,0 +1,6 @@
+# K4 recheck claims written before source inspection (base 099ce5b)
+1. A unit sphere with zero relief has radial normals; real relief normals should approach a stable limit as finite differences shrink. Use a separate radial-surface gradient and two small steps to check convergence, not agreement with the production normal formula.
+2. For a rendered triangle, ray/plane intersection along a unit radial direction gives the drawn radius; compare it with R+h(d). At vertices error should reduce to f32 storage, and a smooth sphere should show only chord sag. Do not infer screen visibility or every foot location from sampled errors.
+3. A configured upper height bound is false if one actual terrain sample exceeds it. A measured maximum is not a global proof. A differential KCC sweep on that witness can localize early-out effects without claiming the browser suite fails.
+4. A 1.2 m/m Lipschitz bound is refuted by any pair whose height difference / geodesic arc exceeds 1.2. Sampling cannot establish the true global bound or prove that the production sweep tunnels.
+5. Each dispatched terrain request must terminate in owned data or an owner-visible retry/failure. Test real pool/worker transfer semantics with independent request accounting and sufficient-capacity controls; distinguish synthetic scheduling from browser frequency.

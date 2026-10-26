@@ -1,0 +1,10 @@
+file:///workspace/spacecraft/game/node_modules/zustand/esm/index.mjs:3
+import ReactExports from 'react';
+       ^^^^^^^^^^^^
+SyntaxError: The requested module 'react' does not provide an export named 'default'
+    at #asyncInstantiate (node:internal/modules/esm/module_job:455:21)
+    at async ModuleJob.run (node:internal/modules/esm/module_job:553:5)
+    at async node:internal/modules/esm/loader:647:26
+    at async file:///workspace/spacecraft/game/tools/audit/u27-k7-recheck.mjs:14:27
+
+Node.js v24.22.0

@@ -1,0 +1,12 @@
+L.hz144=frames=36000 mismatchFrames=5999 (16.664%) finalLag=1 maxLag=1
+L.hz120=frames=36000 mismatchFrames=0 (0%) finalLag=0 maxLag=0
+L.hz90=frames=36000 mismatchFrames=0 (0%) finalLag=0 maxLag=0
+L.hz60=frames=36000 mismatchFrames=0 (0%) finalLag=0 maxLag=0
+L.rAF144q=frames=36000 mismatchFrames=1999 (5.5528%) finalLag=1 maxLag=1
+L.rAF60jit=frames=36000 mismatchFrames=0 (0%) finalLag=0 maxLag=0
+G.stubRail_noEntity=gcEvents=0 heapDelta_KB=9.2578 bytesPerTick=0.00948 rebases=0
+G.stubRail_entity_noRebase=gcEvents=6 heapDelta_KB=1823.7 bytesPerTick=1.8675 rebases=16
+G.stubRail_entity_rebases=gcEvents=0 heapDelta_KB=1142 bytesPerTick=1.1695 rebases=49804
+G.realRail_noEntity=gcEvents=4 heapDelta_KB=1675.1 bytesPerTick=1.7153 rebases=0
+G.realRail_paused=gcEvents=0 heapDelta_KB=10.594 bytesPerTick=0.010848 rebases=0
+G.control_emptyLoop=gcEvents=0 heapDelta_KB=673.86 s=true

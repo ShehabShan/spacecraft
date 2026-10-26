@@ -1,0 +1,10 @@
+{
+  "five complete controls, no logpoint error": true,
+  "baseline and no-astronaut both miss Sun": true,
+  "hide spinGroup restores footprint coverage": true,
+  "sky-only agrees with hide spinGroup": true,
+  "hidden impostors reduce footprint below bound": true,
+  "centroid remains outside complete R2 tolerance": true
+}
+CHECKS=6/6
+SUN_VALIDATION_EXIT=0

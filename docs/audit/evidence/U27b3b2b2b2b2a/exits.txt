@@ -1,0 +1,9 @@
+original EXIT=0
+independent-1 EXIT=1
+independent-2 EXIT=0
+final-1 EXIT=0
+final-2 EXIT=0
+self-test EXIT=1
+typecheck EXIT=0
+build EXIT=0
+protected-diff EXIT=0

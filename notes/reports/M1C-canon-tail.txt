@@ -1,0 +1,80 @@
+      <div className="hud-col right">
+        <SuitePanel />
+        <SeamPanel />
+      </div>
+    </>
+  );
+}
+
+
+/* ============================================================================
+ * 10. ROOT
+ * ==========================================================================*/
+const M1C_CSS = `
+.m1c-root { position: fixed; inset: 0; overflow: hidden; background: #04070c;
+  font-family: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+  color: #cfe0ee; }
+.m1c-canvas { position: absolute; inset: 0; }
+.hud-col { position: absolute; top: 14px; display: flex; flex-direction: column;
+  gap: 10px; width: 340px; pointer-events: none; }
+.hud-col.left { left: 14px; }
+.hud-col.right { right: 14px; }
+.panel { pointer-events: auto; background: rgba(8, 15, 24, 0.84);
+  border: 1px solid rgba(96, 160, 205, 0.22); border-radius: 10px;
+  padding: 11px 13px; backdrop-filter: blur(10px); }
+.panel-head { display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px; gap: 8px; }
+.panel-title { font-size: 10.5px; letter-spacing: 0.14em; color: #7fd4ff; }
+.kv { display: flex; justify-content: space-between; font-size: 11.5px;
+  margin-top: 3px; gap: 10px; }
+.k { color: #6f8ba3; letter-spacing: 0.05em; }
+.v { color: #e8f2fa; text-align: right; }
+.chip { font-size: 10px; padding: 2px 8px; border-radius: 999px; letter-spacing: 0.08em;
+  color: #7fd4ff; border: 1px solid rgba(127, 212, 255, 0.4); white-space: nowrap; }
+.chip.pass { color: #4fd08a; border-color: rgba(79, 208, 138, 0.5); }
+.chip.fail { color: #ff7a6e; border-color: rgba(255, 122, 110, 0.5); }
+.chip.run { color: #e8b34b; border-color: rgba(232, 179, 75, 0.5); }
+.btnrow { display: flex; gap: 6px; margin-top: 8px; }
+.btn { pointer-events: auto; font-family: inherit; font-size: 10px; letter-spacing: 0.06em;
+  color: #cfe0ee; background: rgba(20, 36, 52, 0.85); border: 1px solid rgba(96, 160, 205, 0.3);
+  border-radius: 6px; padding: 5px 10px; cursor: pointer; }
+.btn:hover { background: rgba(40, 70, 98, 0.9); }
+.test-list { display: flex; flex-direction: column; gap: 8px; }
+.test-top { display: flex; align-items: center; gap: 9px; }
+.badge { font-size: 9.5px; padding: 2px 7px; border-radius: 4px; letter-spacing: 0.1em;
+  min-width: 48px; text-align: center; }
+.badge.pass { color: #0a1510; background: #4fd08a; }
+.badge.fail { color: #1a0b09; background: #ff7a6e; }
+.badge.run { color: #e8b34b; border: 1px solid rgba(232, 179, 75, 0.5); }
+.test-label { font-size: 11px; color: #dce9f4; }
+.test-detail { font-size: 9.5px; color: #8aa4ba; margin-top: 2px; padding-left: 60px;
+  line-height: 1.45; }
+.dim { color: #587187; }
+.legend { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+  font-size: 10px; color: #587187; letter-spacing: 0.08em; pointer-events: none; }
+`;
+
+
+export default function Milestone1CTestHarness() {
+  return (
+    <div className="m1c-root">
+      <style>{M1C_CSS}</style>
+      <div className="m1c-canvas">
+        <Canvas
+          dpr={[1, 1.75]}
+          gl={{ antialias: true, powerPreference: 'high-performance' }}
+          camera={{ fov: 62, near: 2, far: 30000, position: [6500, 2000, 0] }}
+        >
+          <color attach="background" args={[0x060a10]} />
+          <fog attach="fog" args={[0x060a10, 2600, 6800]} />
+          <Scene />
+        </Canvas>
+      </div>
+      <Hud />
+      <div className="legend">
+        EARTH-SCALE PLANET R = 5,000 m · SPHERIFIED CUBE · 6-FACE QUADTREE LOD 0–4 (491 m CHUNKS, 15 m VERTICES) · GREAT-CIRCLE FLYOVER AT 2,000 m/s · TRANSFERABLE BUFFER RECYCLING
+      </div>
+    </div>
+  );
+}
+```

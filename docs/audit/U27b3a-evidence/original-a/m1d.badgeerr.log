@@ -1,0 +1,31 @@
+[u08b-mutate] applied badgeerr
+[WebServer]
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+
+
+Running 1 test using 1 worker
+
+[1/1] e2e/m1d.spec.ts:6:1 › M1D — Flight & Aerodynamic Governor acceptance
+e2e/m1d.spec.ts:6:1 › M1D — Flight & Aerodynamic Governor acceptance
+[m1d gate] acceptance line: [Milestone1D] acceptance PASSED — v@1000m=264.7 maxDv=10.30 rebases=8 recv=46 geo=151 burnHeap=0B
+
+[m1d gate] badges: ["ERR","ERR","ERR","ERR","ERR"]
+
+[m1d gate] page console transcript (tail):
+
+  error: Failed to load resource: the server responded with a status of 404 (Not Found)
+
+  warning: [.WebGL-0x3b6400172800]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+
+  warning: [.WebGL-0x3b6400172800]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+
+  warning: [.WebGL-0x3b6400172800]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+
+  warning: [.WebGL-0x3b6400172800]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
+
+  log: [Milestone1D] acceptance PASSED — v@1000m=264.7 maxDv=10.30 rebases=8 recv=46 geo=151 burnHeap=0B
+
+  1 passed (49.2s)

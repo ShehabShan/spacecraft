@@ -1,0 +1,4 @@
+6ae344e4cdcf544749a64402bb0c35474bf2bf9dd6d18165ada9e5b3a7af0750  game/src/test/Milestone1C_TestHarness.tsx
+0a32b8b43fa804d5780ff087971a3f9d7c9e70205db5581d43b4bdef4c34e0ee  game/src/workers/terrainWorker.ts
+86cc8d69b961c1b00b88753d0a4024493e27f2d4bdf411ecbee4ab788ddfffb9  game/src/core/terrain/spherify.ts
+54e21c9135dd38b245a1f89965c155c003c8cffb0198405824d3ba6b509a8647  game/src/core/terrain/terrainField.ts

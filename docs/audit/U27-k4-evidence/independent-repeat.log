@@ -1,0 +1,23 @@
+$ node tools/audit/u27-k4-recheck.mjs
+{"name":"U05-8 tested bound matches production source","ok":true}
+{"name":"U14-1 flat-sphere radial control","ok":true,"maxDeg":5.135607331006455e-12}
+{"name":"U14-1 convergence-qualified normals disagree","ok":true,"errors":{"n":4083,"p50":3.15940721603366,"p99":63.99321530091767,"max":132.0504691478888},"convergence":{"n":4096,"p50":0.000002483715314027922,"p99":0.000008887286949068251,"max":28.009422596406093},"rejected":13,"worst":{"direction":[0.2631473425555713,0.9037412946718455,-0.337646484375],"errorDeg":132.0504691478888,"referenceConvergenceDeg":0.0000015445947702675323}}
+{"name":"U14-1 reversed-normal oracle control","ok":true}
+{"name":"U14-3 actual STEEP exceeds configured bound","ok":true,"high":{"d":[-0.9022885849066663,0.4310458062052406,0.008650000000000047],"h":2059.247619467408},"above":2881,"total":20000}
+{"name":"U14-3 default bound skips a real-height crossing","ok":true}
+{"name":"U14-3 enlarged bound restores detection control","ok":true}
+{"name":"U05-8 geodesic secant refutes 1.2 bound","ok":true,"steepest":{"slope":5.952515953530451,"d":[0.7709269896536443,0.34535230636620734,0.5351666666666667],"d2":[0.7709678681593743,0.3452610432972595,0.5351666639908333],"h0":476.276909914256,"h1":473.3006519374908,"arcM":0.5},"over":3462,"n":30000}
+{"name":"U05-8 flat-field slope control","ok":true}
+{"name":"U22-1 real worker sphere has only small chord sag","ok":true,"errors":{"n":36864,"p50":0.0023398433363581717,"p99":0.002364308933920256,"max":0.0023682814623953163},"min":0.0023155751462127228,"max":0.0023682814623953163,"vertexMax":0.0000022274512048170436,"rayMax":6.821210263296962e-13}
+{"name":"U22-1 actual indexed worker triangles mismatch analytic terrain","ok":true,"errors":{"n":36864,"p50":0.4575462772966148,"p99":5.34467854786044,"max":21.08146151354822},"min":-4.962840261776819,"max":21.08146151354822,"vertexMax":0.000028656724225584185,"rayMax":1.5916157281026244e-12}
+{"name":"U22-1 vertex/plane controls","ok":true}
+{"name":"U20-1 accounting sets=96","ok":true,"drops":4,"received":96,"dispatched":100,"active":96,"unique":96,"maxInFlight":1}
+{"name":"U20-1 drops despite low in-flight and unused second worker","ok":true,"drops":4,"received":96,"dispatched":100,"active":96,"unique":96,"maxInFlight":1}
+{"name":"U20-1 owner pending remains on freed record","ok":true}
+{"name":"U20-1 stale node falsely reports different owners data","ok":true,"idx":96,"pending":96,"reserve":0,"state":2}
+{"name":"U20-1 ownership-aware control rejects stale data","ok":true}
+{"name":"U20-1 accounting sets=144","ok":true,"drops":0,"received":100,"dispatched":100,"active":100,"unique":100,"maxInFlight":1}
+{"name":"U20-1 sufficient-capacity control","ok":true}
+SUMMARY 19/19
+
+UNPIPED_EXIT=0

@@ -1,0 +1,128 @@
+// T1 play sky + layer state (plan §6.2 port map, B4a). applySkyState = the M1F
+// harness applyRenderState (~810–914) minus the probe slots 9/10, the probe
+// meshes, the satellites, RIG.maskOverride and RIG.stats. Zero allocation per
+// call (AGENT_BRIEF §3): every scratch below is module-private and boot-made.
+import type * as THREE from 'three';
+import type { SimulationCore } from '../../core/simulation/SimulationCore';
+import type { AstronautKCC } from '../../core/physics/astronautKCC';
+import { chunkArcWidth } from '../../core/terrain/terrainField';
+import {
+  rotateByQuatConjInto, rotateByQuatInto, spinQuatInto,
+  type Quat, type Vec3,
+} from '../../core/physics/sphericalFrame';
+import {
+  bodyGeometryInto, elevationAngle, fullyBelowHorizon, thetaEdge,
+  type SkyGeometry,
+} from '../../core/render/impostorMath';
+import type { SkyImpostorPool } from '../../render/SkyImpostorPool';
+import type { ChunkRecord } from '../../render/TerrainMeshPool';
+import { MID_BIT, NEAR_BIT, layerMaskFor } from '../../render/MultiCameraRig';
+import { HEIGHT_SLACK } from './moonConfig';
+
+// WHY: harness CAT_BODIES (~794–804) verbatim — impostor slots 0–8. Slots
+// 9/10 were the M1F probe pair (test-only, excluded per §6.2).
+export const PLAY_BODIES: ReadonlyArray<{
+  slot: number; id: string; radius: number; color: readonly [number, number, number]; kind: number;
+}> = [
+  { slot: 0, id: 'sun', radius: 20000, color: [1.0, 0.87, 0.62], kind: 1 },
+  { slot: 1, id: 'mercury', radius: 3105.7, color: [0.62, 0.57, 0.52], kind: 0 },
+  { slot: 2, id: 'venus', radius: 4870.3, color: [0.92, 0.82, 0.60], kind: 0 },
+  { slot: 3, id: 'mars', radius: 2649.3, color: [0.80, 0.45, 0.30], kind: 0 },
+  { slot: 4, id: 'jupiter', radius: 16640.2, color: [0.86, 0.70, 0.52], kind: 2 },
+  { slot: 5, id: 'saturn', radius: 15120.4, color: [0.90, 0.82, 0.62], kind: 2 },
+  { slot: 6, id: 'uranus', radius: 9980.5, color: [0.62, 0.85, 0.87], kind: 2 },
+  { slot: 7, id: 'neptune', radius: 9835.4, color: [0.38, 0.50, 0.86], kind: 0 },
+  { slot: 8, id: 'pluto', radius: 2160.8, color: [0.79, 0.72, 0.64], kind: 0 },
+];
+export const EARTH_R = 5000;
+
+/** Everything applySkyState reads; built once by createMoonWorld. */
+export interface SkyCtx {
+  core: SimulationCore;
+  kcc: AstronautKCC;
+  sky: SkyImpostorPool;
+  pool: { readonly records: readonly ChunkRecord[] };
+  moonAbs: Vec3;          // moon rail position (frozen rails, t = 0)
+  earthVec: Vec3;         // Earth − Moon, f64
+  earthDist: number;
+  earthMesh: THREE.Object3D;
+  glow: THREE.Object3D;
+  characterRoot: THREE.Object3D;
+}
+
+/** Layer counts of the last call (read-only; HUD/debug use). */
+export const skyStats = { near: 0, mid: 0, written: 0 };
+
+const _qS: Quat = { x: 0, y: 0, z: 0, w: 1 };
+const _qCam: Quat = { x: 0, y: 0, z: 0, w: 1 };
+const _vA: Vec3 = { x: 0, y: 0, z: 0 };
+const _vB: Vec3 = { x: 0, y: 0, z: 0 };
+const _geo: SkyGeometry = { dirX: 0, dirY: 0, dirZ: 0, dist: 0, theta: 0 };
+const sunGeom: SkyGeometry = { dirX: 0, dirY: 0, dirZ: 0, dist: 0, theta: 0 };
+
+/** Apply impostors, anchors and layer masks for a driver pose (render-local
+ *  position p, camera quat q). Zero allocation. */
+export function applySkyState(
+  c: SkyCtx, px: number, py: number, pz: number, qx: number, qy: number, qz: number, qw: number,
+): void {
+  // F22: horizon-cull up = ABSOLUTE radial normalize(O + local).
+  const o = c.core.getOrigin();
+  const upL = Math.hypot(px + o.x, py + o.y, pz + o.z) || 1;
+  const obsX = c.moonAbs.x + o.x + px;
+  const obsY = c.moonAbs.y + o.y + py;
+  const obsZ = c.moonAbs.z + o.z + pz;
+  let written = 0;
+  for (let i = 0; i < PLAY_BODIES.length; i++) {
+    const cb = PLAY_BODIES[i];
+    const st = c.core.getCelestialState(cb.id);
+    if (st === null) continue;
+    bodyGeometryInto(obsX, obsY, obsZ, st.absPos.x, st.absPos.y, st.absPos.z, cb.radius, _geo);
+    const el = elevationAngle(_geo.dirX, _geo.dirY, _geo.dirZ, (px + o.x) / upL, (py + o.y) / upL, (pz + o.z) / upL);
+    const cull = fullyBelowHorizon(el, _geo.theta, 0.03);
+    c.sky.setBody(cb.slot, cb.id, cb.kind, _geo.dirX, _geo.dirY, _geo.dirZ,
+      _geo.theta, _geo.dist, cb.color[0], cb.color[1], cb.color[2], 1, !cull);
+    if (!cull) written++;
+    if (i === 0) { sunGeom.dirX = _geo.dirX; sunGeom.dirY = _geo.dirY; sunGeom.dirZ = _geo.dirZ; sunGeom.theta = _geo.theta; sunGeom.dist = _geo.dist; }
+  }
+  // WHY: the harness allocated `{x,y,z,w} as Quat` here every call; a module
+  // scratch keeps the zero-GC invariant (B4a decision).
+  _qCam.x = qx; _qCam.y = qy; _qCam.z = qz; _qCam.w = qw;
+  const sunCam = rotateByQuatConjInto(_qCam, sunGeom.dirX, sunGeom.dirY, sunGeom.dirZ, _vA);
+  c.sky.update(px, py, pz, qx, qy, qz, qw, sunCam.x, sunCam.y, sunCam.z);
+  c.sky.stars.position.set(px, py, pz);
+  const sunBody = c.sky.bodies[0];
+  c.glow.position.set(sunBody.stagedPX, sunBody.stagedPY, sunBody.stagedPZ);
+  c.glow.quaternion.set(qx, qy, qz, qw);
+  const gs = (sunBody.stageD + 60) * Math.tan(thetaEdge(sunGeom.theta * 2.4));
+  c.glow.scale.set(gs, gs, 1);
+
+  // -- layer assignment (Spec 04.2) ------------------------------------------
+  skyStats.near = 0; skyStats.mid = 0;
+  c.earthMesh.position.set(c.earthVec.x - o.x, c.earthVec.y - o.y, c.earthVec.z - o.z);
+  assignObject(c.earthMesh, c.earthDist - EARTH_R, c.earthDist + EARTH_R);
+
+  // WHY: §6.2 port gotcha — the harness computed _qS inside the (removed)
+  // satellites block; the terrain loop below depends on it, so it stays here.
+  spinQuatInto(c.kcc.spinPhase, _qS);
+  const recs = c.pool.records;
+  for (let i = 0; i < recs.length; i++) {
+    const rec = recs[i];
+    if (rec.state !== 2) { rec.mesh.layers.mask = 0; continue; }
+    rotateByQuatInto(_qS, rec.originX, rec.originY, rec.originZ, _vB);
+    const brad = chunkArcWidth(rec.level) * 0.75 + HEIGHT_SLACK;
+    const dx = _vB.x - o.x - px, dy = _vB.y - o.y - py, dz = _vB.z - o.z - pz;
+    const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    assignObject(rec.mesh, d - brad, d + brad);
+  }
+  // character: Foreground always
+  c.characterRoot.layers.mask = NEAR_BIT;
+  skyStats.near++;
+  skyStats.written = written;
+}
+
+function assignObject(obj: THREE.Object3D, dn: number, df: number): void {
+  const mask = layerMaskFor(dn, df);
+  obj.layers.mask = mask;
+  if ((mask & NEAR_BIT) !== 0) skyStats.near++;
+  if ((mask & MID_BIT) !== 0) skyStats.mid++;
+}

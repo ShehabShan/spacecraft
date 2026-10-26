@@ -1,0 +1,51 @@
+{"name":"U15-3 real matrix cone theta1 beta0","pass":true,"data":{"maxAngularErrorDeg":4.543392008051893e-8,"screenWidthRatio":1.0000000454431477}}
+{"name":"U15-3 line-of-sight orientation control theta1 beta0","pass":true,"data":{"maxAngularErrorDeg":4.543392008051893e-8}}
+{"name":"U15-3 real matrix cone theta1 beta30","pass":true,"data":{"maxAngularErrorDeg":0.14144412492585492,"screenWidthRatio":0.865937502957942}}
+{"name":"U15-3 line-of-sight orientation control theta1 beta30","pass":true,"data":{"maxAngularErrorDeg":4.337033483609607e-7}}
+{"name":"U15-3 real matrix cone theta1 beta45","pass":true,"data":{"maxAngularErrorDeg":0.30147799025016125,"screenWidthRatio":0.7068913726973346}}
+{"name":"U15-3 line-of-sight orientation control theta1 beta45","pass":true,"data":{"maxAngularErrorDeg":4.5689410459956875e-8}}
+{"name":"U15-3 real matrix cone theta3.68 beta0","pass":true,"data":{"maxAngularErrorDeg":4.69671317103712e-8,"screenWidthRatio":1.0000000127979747}}
+{"name":"U15-3 line-of-sight orientation control theta3.68 beta0","pass":true,"data":{"maxAngularErrorDeg":4.69671317103712e-8}}
+{"name":"U15-3 real matrix cone theta3.68 beta30","pass":true,"data":{"maxAngularErrorDeg":0.5910638841720964,"screenWidthRatio":0.8648312878924282}}
+{"name":"U15-3 line-of-sight orientation control theta3.68 beta30","pass":true,"data":{"maxAngularErrorDeg":4.6422778742958445e-7}}
+{"name":"U15-3 real matrix cone theta3.68 beta45","pass":true,"data":{"maxAngularErrorDeg":1.1891837161075802,"screenWidthRatio":0.7041817564487809}}
+{"name":"U15-3 line-of-sight orientation control theta3.68 beta45","pass":true,"data":{"maxAngularErrorDeg":4.7904915077646035e-8}}
+{"name":"U15-3 real matrix cone theta7.39 beta0","pass":true,"data":{"maxAngularErrorDeg":5.017672008524445e-8,"screenWidthRatio":1.0000000068657042}}
+{"name":"U15-3 line-of-sight orientation control theta7.39 beta0","pass":true,"data":{"maxAngularErrorDeg":5.017672008524445e-8}}
+{"name":"U15-3 real matrix cone theta7.39 beta30","pass":true,"data":{"maxAngularErrorDeg":1.3685464810691443,"screenWidthRatio":0.8611693148623403}}
+{"name":"U15-3 line-of-sight orientation control theta7.39 beta30","pass":true,"data":{"maxAngularErrorDeg":5.04218559303753e-7}}
+{"name":"U15-3 real matrix cone theta7.39 beta45","pass":true,"data":{"maxAngularErrorDeg":2.5880166892447343,"screenWidthRatio":0.6952117995967361}}
+{"name":"U15-3 line-of-sight orientation control theta7.39 beta45","pass":true,"data":{"maxAngularErrorDeg":5.2044235245618e-8}}
+{"name":"U15-4 shared ray 30/31","pass":true,"data":{"near":{"inside":true,"coverageCoordinate":0.15747056089762426,"viewDepth":8274.873046875,"rayDistance":9603.752318032848},"far":{"inside":true,"coverageCoordinate":0.5802324373594965,"viewDepth":8228.8056640625,"rayDistance":9550.286877298584},"realNear":93637.39597536926,"realFar":295454.36627369025}}
+{"name":"U15-4 depth result 30/31","pass":true}
+{"name":"U15-4 shared ray 20/21","pass":true,"data":{"near":{"inside":true,"coverageCoordinate":0.14485413742760664,"viewDepth":8978.7626953125,"rayDistance":9585.811128349203},"far":{"inside":true,"coverageCoordinate":0.5337434934221679,"viewDepth":8962.3720703125,"rayDistance":9568.31234362159},"realNear":93637.39597536926,"realFar":295454.36627369525}}
+{"name":"U15-4 depth result 20/21","pass":true}
+{"name":"U15-4 shared ray 0/1","pass":true,"data":{"near":{"inside":true,"coverageCoordinate":0.13568613460303983,"viewDepth":9555,"rayDistance":9555.363838975716},"far":{"inside":true,"coverageCoordinate":0.49996191265471396,"viewDepth":9598.5380859375,"rayDistance":9598.903582773248},"realNear":93637.39597536926,"realFar":295454.36627369194}}
+{"name":"U15-4 depth result 0/1","pass":true}
+{"name":"U15-4 shared ray 30/29","pass":true,"data":{"near":{"inside":true,"coverageCoordinate":0.15589111135815534,"viewDepth":8274.873046875,"rayDistance":9507.461243117321},"far":{"inside":true,"coverageCoordinate":0.5744134884846115,"viewDepth":8396.349609375,"rayDistance":9647.032412774362},"realNear":93637.39597536926,"realFar":295454.36627369525}}
+{"name":"U15-4 depth result 30/29","pass":true}
+{"name":"U15-4 orientation-only control is insufficient for large disk","pass":true,"data":{"near":{"inside":true,"coverageCoordinate":0.7478555931701203,"viewDepth":7772.737470186943,"rayDistance":9607.631884410806},"far":{"inside":true,"coverageCoordinate":1.2634194763804152e-7,"viewDepth":7766.56297583728,"rayDistance":9599.999789667934}}}
+{"name":"U15-4 small half-angle does not cross rank at its limb","pass":true,"data":{"criticalHalfAngleDeg":5.549809332178026,"smallLimbDistance":9574.742319168417}}
+{"name":"U24-1 live rig speed0","pass":true,"data":{"state":"Idle","soleMinM":-4.128251296364738e-9,"soleMaxM":-2.765657564074431e-10,"horizontalStanceDriftM":0,"samples":1920}}
+{"name":"U24-1 horizontal-only gate blind speed0","pass":true,"data":{"offsetControlMinM":0.24999999587174843}}
+{"name":"U24-1 live rig speed1","pass":true,"data":{"state":"Walk","soleMinM":-0.016345373975618617,"soleMaxM":-0.0034661796931706804,"horizontalStanceDriftM":8.294960274213281e-9,"samples":528}}
+{"name":"U24-1 horizontal-only gate blind speed1","pass":true,"data":{"offsetControlMinM":0.23365462602438136}}
+{"name":"U24-1 live rig speed3.2","pass":true,"data":{"state":"Walk","soleMinM":-0.009508258208805326,"soleMaxM":0.04167771334531502,"horizontalStanceDriftM":1.9456992461641676e-8,"samples":468}}
+{"name":"U24-1 horizontal-only gate blind speed3.2","pass":true,"data":{"offsetControlMinM":0.24049174179119476}}
+{"name":"U24-1 live rig speed5","pass":true,"data":{"state":"Run","soleMinM":-0.002224371007417063,"soleMaxM":0.09217046093691039,"horizontalStanceDriftM":2.7559821091927006e-8,"samples":511}}
+{"name":"U24-1 horizontal-only gate blind speed5","pass":true,"data":{"offsetControlMinM":0.24777562899258293}}
+{"name":"U24-1 live rig speed6.5","pass":true,"data":{"state":"Run","soleMinM":0.00472971169441757,"soleMaxM":0.14523936945359983,"horizontalStanceDriftM":5.594403873487863e-8,"samples":547}}
+{"name":"U24-1 horizontal-only gate blind speed6.5","pass":true,"data":{"offsetControlMinM":0.25472971169441755}}
+{"name":"U24-3 actual normal chain side-10","pass":true,"data":{"telemetryFwd":1.160644638666631e-15,"telemetrySide":-9.999999999999996,"errorsDeg":[19.74844519556203,19.74844519556203]}}
+{"name":"U24-3 sign-only control improves but not exact -10","pass":true,"data":{"errorsDeg":[0.3150854466927742,0.3150854466927742],"expectedResidualDeg":0.3150856249929566}}
+{"name":"U24-3 normal alignment control -10","pass":true}
+{"name":"U24-3 actual normal chain side0","pass":true,"data":{"telemetryFwd":1.1430118386509513e-15,"telemetrySide":3.1805546814635168e-15,"errorsDeg":[7.8816187256807e-7,7.8816187256807e-7]}}
+{"name":"U24-3 actual normal chain side10","pass":true,"data":{"telemetryFwd":1.160644638666631e-15,"telemetrySide":9.999999999999995,"errorsDeg":[19.74844519556203,19.74844519556203]}}
+{"name":"U24-3 sign-only control improves but not exact 10","pass":true,"data":{"errorsDeg":[0.31508544669277533,0.31508544669277533],"expectedResidualDeg":0.3150856249929566}}
+{"name":"U24-3 normal alignment control 10","pass":true}
+{"name":"U24-3 actual normal chain forward-10","pass":true,"data":{"telemetryFwd":9.999999999999998,"telemetrySide":3.2296198641158433e-15,"errorsDeg":[0.0000012597312300301052,0.0000012597312300301052]}}
+{"name":"U24-3 actual normal chain forward0","pass":true,"data":{"telemetryFwd":1.1430118386509513e-15,"telemetrySide":3.1805546814635168e-15,"errorsDeg":[7.8816187256807e-7,7.8816187256807e-7]}}
+{"name":"U24-3 actual normal chain forward10","pass":true,"data":{"telemetryFwd":-9.999999999999996,"telemetrySide":0,"errorsDeg":[8.753782137440714e-7,8.753782137440714e-7]}}
+{"summary":{"passed":48,"total":48}}
+
+EXIT=0

@@ -1,0 +1,13 @@
+{
+  "base": "3081cd68d6f45073a1695fad93aad446c589e1af",
+  "node": "v24.22.0",
+  "sha256": {
+    "game/src/test/Milestone1F_TestHarness.tsx": "b081af6b6cb57ba159e84dfed326b4fe6f7cb76701d4d2ee9a8296470578aa29",
+    "game/src/render/SkyImpostorPool.ts": "b78e558d8b1f11785cf582ff81cbce9f9724f608d652f89ae7d729bd2406a85a",
+    "game/src/render/MultiCameraRig.tsx": "076f3d44d1fd3fada7019e754014783d4b063fac252d410433fb68ae414987ec",
+    "game/src/core/render/impostorMath.ts": "e7c75ae7e1a3e5904f4c4d2245712d745b4bed99f42a3ddc2b0138db55aef0e7",
+    "game/src/core/terrain/terrainField.ts": "54e21c9135dd38b245a1f89965c155c003c8cffb0198405824d3ba6b509a8647",
+    "game/src/core/terrain/noise.ts": "37a2333f81fba818a6772426013bc2bafad89c6e7b87adb749c1297d6ff8d686",
+    "game/tools/audit/u02-r1r2-validity.mjs": "c638deca7ac43fafa2a17c3a513b7fd16b82495de5dc7da35fee623d2a6c4e6e"
+  }
+}

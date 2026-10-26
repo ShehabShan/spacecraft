@@ -1,0 +1,4 @@
+logpoint: sunPx line 1202, target line 1217 (transformed source)
+logpoint set at {"scriptId":"15","lineNumber":1217,"columnNumber":21}
+
+Aborted before result: moved visibility controls after applyRenderState, which restores probe visibility.

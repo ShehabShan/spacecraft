@@ -1,0 +1,46 @@
+{
+  "build.log": {
+    "bytes": 1757,
+    "sha256": "69052231b8742d754c9ed2d8449bce12bc5d47ac192b7e640f12fdf5198eb03e"
+  },
+  "exits.txt": {
+    "bytes": 157,
+    "sha256": "daaed1921354cf28fb0ca6a3352f61a6f23988031a842fedfd4a93b5742a989c"
+  },
+  "final-1.log": {
+    "bytes": 15850,
+    "sha256": "45e6e2a4a2fcaa53761fe7150ea27e1f06e400a7b6a46bb6ea5e467c44251dde"
+  },
+  "final-2.log": {
+    "bytes": 15850,
+    "sha256": "45e6e2a4a2fcaa53761fe7150ea27e1f06e400a7b6a46bb6ea5e467c44251dde"
+  },
+  "independent-1.log": {
+    "bytes": 1107,
+    "sha256": "d4875bfb8a925fdd605af2f4122998a43127a03d266f6b2bd71e459d1fc6af3d"
+  },
+  "independent-2.log": {
+    "bytes": 15492,
+    "sha256": "17723dc41f87c134b4935718140e5005b7326bf25a33cc54c215250d7cd254ed"
+  },
+  "npm-ci.log": {
+    "bytes": 777,
+    "sha256": "a186b88d64cc2f76c571a33b8598c1188dd687744c2bd5895f56b73df8baa608"
+  },
+  "original.log": {
+    "bytes": 7360,
+    "sha256": "57d920f0344c4392ecddaab40020bfba7245b4b418b57ee866f3a1d3d136074e"
+  },
+  "protected.diff": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "self-test.log": {
+    "bytes": 15905,
+    "sha256": "76624789464c0e4de200b9ecc945a9787fec449648c6dffb77a7951ae9d30fb5"
+  },
+  "typecheck.log": {
+    "bytes": 39,
+    "sha256": "28775609de950d43fd461626451a134d74ddcd232c84e1fa74c1123152815aab"
+  }
+}

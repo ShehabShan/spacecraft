@@ -1,0 +1,32 @@
+[u08-mutate] applied timeout
+[WebServer]
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+
+
+Running 1 test using 1 worker
+
+[1/1] e2e/m1b.spec.ts:5:1 › M1B — Kepler Rails & Two-Tier Time acceptance
+  1) e2e/m1b.spec.ts:5:1 › M1B — Kepler Rails & Two-Tier Time acceptance ───────────────────────────
+
+    TimeoutError: page.waitForEvent: Timeout 20000ms exceeded while waiting for event "console"
+    =========================== logs ===========================
+    waiting for event "console"
+    ============================================================
+
+       9 |
+      10 |   const acceptanceLine = page
+    > 11 |     .waitForEvent('console', {
+         |      ^
+      12 |       predicate: (m) => /\[Milestone1B\] acceptance (PASSED|FAILED)/.test(m.text()),
+      13 |       timeout: 20_000,
+      14 |     })
+        at /tmp/u27b3a-original-b.iSCRhZ/e2e/m1b.spec.ts:11:6
+
+    Error Context: test-results/m1b-M1B-—-Kepler-Rails-Two-Tier-Time-acceptance/error-context.md
+
+
+  1 failed
+    e2e/m1b.spec.ts:5:1 › M1B — Kepler Rails & Two-Tier Time acceptance ────────────────────────────

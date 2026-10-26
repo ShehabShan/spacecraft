@@ -1,0 +1,8 @@
+baseline exit=0
+pageerror exit=0
+consoleerror exit=0
+timeout exit=1
+badgefail exit=1
+norows exit=0
+droprow exit=0
+DONE

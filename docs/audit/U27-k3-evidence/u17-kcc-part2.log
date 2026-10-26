@@ -1,0 +1,41 @@
+A.jump_theta0=takeoffUpVsRadial=17.44deg maxAirborneUpVsPlanetRadial=17.3deg flightTicks=84 landingTickUpSnap=8.222deg
+A.jump_theta0.1=takeoffUpVsRadial=17.44deg maxAirborneUpVsPlanetRadial=17.32deg flightTicks=84 landingTickUpSnap=8.359deg
+A.jump_theta0.624=takeoffUpVsRadial=17.44deg maxAirborneUpVsPlanetRadial=22.61deg flightTicks=84 landingTickUpSnap=18.11deg
+A.jump_theta1.571=takeoffUpVsRadial=17.44deg maxAirborneUpVsPlanetRadial=43.94deg flightTicks=84 landingTickUpSnap=37.32deg
+control.A_theta0_noTilt=ok
+A.zeroG10s_theta0=mode=ZERO-G start=0deg upVsPlanetRadial=5.844deg upVsWorldRadial=1.778e-15deg
+A.zeroG10s_theta1.571=mode=ZERO-G start=1.603e-15deg upVsPlanetRadial=92.8deg upVsWorldRadial=0.7412deg
+A.zeroG10s_om0_theta0=upVsPlanetRadial=1.778e-15deg
+control.A_zeroG_om0_noTilt=ok
+A.spinAngle_10s_deg=5.959
+G.parkedVehicle_T60_om0=mode=VEHICLE pLocalErr=0m upVsRadial start=17.44 now=17.44deg planetFrameUpDrift=0deg theta=0deg
+control.G_static_noDrift=ok
+G.parkedVehicle_T60_om0.0104=mode=VEHICLE pLocalErr=9.132e-13m upVsRadial start=17.44 now=44.13deg planetFrameUpDrift=34.26deg theta=35.75deg
+G.parkedVehicle_T151_om0.0104=mode=VEHICLE pLocalErr=1.909e-12m upVsRadial start=17.44 now=95.54deg planetFrameUpDrift=85.42deg theta=89.98deg
+B.jumps=120
+B.landingTickUpSnap_deg_p50_p90_max=18.84 33.09 50.79
+B.maxAirborneTickUpChange_deg_max=0.2103
+B.fracSnapOver10deg=0.8583
+B.slope25plus_takeoffSlope_vs_snap=38.39:20.92 25.79:11.86 30.55:20.77 35.37:12.15 29.71:36.07 27.22:20.14
+F.flight_T_s_vs_RK4=5.35/5.346 4.983/5.007 5.517/5.521
+F.apex_m_vs_RK4=5.568/5.605 5.21/5.25 5.748/5.789
+F.maxAbs_dT_s_dApex_m=0.0389 0.04179
+F.predictedApexBias_m=0.035
+control.F_apexBias_symplecticEuler=ok
+C.slideSites=30
+C.maxSlideSpeed_mps=5.264
+C.transitions_below45=12
+C.effDecel_mps2_p50_max=14.65 26.84
+C.speedKept_after_0.1s_p50=0.2503
+C.fracWherePhysicsStillAccelerates=1
+C.samples_slope:v0->v6:aPhys=44.98:1.524->0.3815:0.4576 44.97:2.154->0.5387:0.4572 44.94:2.622->0.6557:0.4563 44.92:1.809->0.4531:0.4558 44.95:3.236->0.8087:0.4565
+C.physicalMaxDecel_mps2_mu_g=0.972
+D.sprintJumps=60
+D.maxAbsAGLerr_m_p50_p90_max=6.276 27.91 56.19
+D.ticksReportedBelowGroundWhileTrueAbove0.2m=3851
+E.flat_fwd=speedBefore=3.2 relSpeedOnLandingTick=3.2 ticksTo90pct=1
+control.E_fwd_keeps_speed=ok
+E.flat_strafe=speedBefore=3.2 relSpeedOnLandingTick=0 ticksTo90pct=21
+E.flat_diag=speedBefore=3.197 relSpeedOnLandingTick=2.263 ticksTo90pct=15
+E.slope20to35_fwd=speedBefore=3.198 landing=3.2 |vCtl·up|/|vCtl|=0.2985
+controls=5/5
