@@ -1,0 +1,26 @@
+{"name":"finite warmed player","pass":true,"evidence":460.9139690019825}
+{"measurement":"calibration","interval":64,"arithmeticB":0,"reuseB":0,"transientB":319.99344}
+{"name":"arithmetic near zero interval64","pass":true,"evidence":0}
+{"name":"preallocated near zero interval64","pass":true,"evidence":0}
+{"name":"escaping arrays detected after GC interval64","pass":true,"evidence":319.99344}
+{"measurement":"calibration","interval":512,"arithmeticB":0,"reuseB":0.0192,"transientB":319.834}
+{"name":"arithmetic near zero interval512","pass":true,"evidence":0}
+{"name":"preallocated near zero interval512","pass":true,"evidence":0.0192}
+{"name":"escaping arrays detected after GC interval512","pass":true,"evidence":319.834}
+{"measurement":"frame-profile","interval":64,"N":2880,"BperFrame":11076.925,"terrainFraction":0.7532480559561632,"top":[{"fn":"terrainHeight","BperFrame":4059.883333333333},{"fn":"sampleSurfaceInto","BperFrame":2090.55},{"fn":"noise3","BperFrame":2044.5277777777778},{"fn":"poseInto","BperFrame":731.3166666666667},{"fn":"playFrame","BperFrame":451.25},{"fn":"hypot","BperFrame":283.11944444444447},{"fn":"applySkyState","BperFrame":180.63333333333333},{"fn":"_groundedTick","BperFrame":149.7888888888889},{"fn":"terrainNormalInto","BperFrame":148.7111111111111},{"fn":"step","BperFrame":97.29444444444445}]}
+{"name":"frame transient allocation interval64","pass":true,"evidence":11076.925}
+{"name":"terrain dominates sampled stacks interval64","pass":true,"evidence":0.7532480559561632}
+{"measurement":"frame-profile","interval":512,"N":2880,"BperFrame":10318.377777777778,"terrainFraction":0.7625595754715965,"top":[{"fn":"terrainHeight","BperFrame":4041.7055555555557},{"fn":"noise3","BperFrame":1916.0611111111111},{"fn":"sampleSurfaceInto","BperFrame":1786.9222222222222},{"fn":"poseInto","BperFrame":713.4333333333333},{"fn":"playFrame","BperFrame":438.4222222222222},{"fn":"hypot","BperFrame":267.06111111111113},{"fn":"applySkyState","BperFrame":184.36111111111111},{"fn":"terrainNormalInto","BperFrame":123.68888888888888},{"fn":"_groundedTick","BperFrame":123.15},{"fn":"_flightTick","BperFrame":72.77222222222223}]}
+{"name":"frame transient allocation interval512","pass":true,"evidence":10318.377777777778}
+{"name":"terrain dominates sampled stacks interval512","pass":true,"evidence":0.7625595754715965}
+{"name":"two sample intervals agree within 35%","pass":true,"evidence":[11076.925,10318.377777777778]}
+{"name":"GC filter rejects even positive-growth overlapping interval","pass":true,"evidence":{"syntheticHeapDelta":5000}}
+{"name":"GC filter accepts non-overlap","pass":true,"evidence":null}
+{"measurement":"heap-no-GC","batches":[{"BperFrame":13178.368,"gc":false},{"BperFrame":9737.456,"gc":false},{"BperFrame":11375.936,"gc":false},{"BperFrame":13283.888,"gc":false},{"BperFrame":8956.096,"gc":false},{"BperFrame":10678.608,"gc":false},{"BperFrame":13402.64,"gc":false},{"BperFrame":8244.192,"gc":false}],"accepted":8,"median":11375.936}
+{"name":"at least four GC-free batches","pass":true,"evidence":8}
+{"name":"profiler-off allocation agrees broadly","pass":true,"evidence":11375.936}
+{"name":"real forced GC observed and excluded","pass":true,"evidence":3}
+{"measurement":"retention-controls","churn":{"samples":[22651456,22654672,22654352,22654352,22654352,22654352,22654352,22654352,22654352,22654352,22654352],"rows":[{"pass":true,"msg":"heap delta 2896 B over 10,000 frames (bound 64 KB)"},{"pass":true,"msg":"heap trend 120 B / 1,000 frames (bound 2 KB)"}],"heldCount":0},"leak":{"samples":[22657056,24771264,26880504,28988416,31084416,33205816,35301800,37424608,39520608,41616608,43722152],"rows":[{"pass":false,"msg":"heap delta 21065096 B over 10,000 frames (bound 64 KB)"},{"pass":false,"msg":"heap trend 2106518 B / 1,000 frames (bound 2 KB)"}],"heldCount":10000}}
+{"name":"unchanged retention rows accept bounded transient allocation","pass":true,"evidence":[{"pass":true,"msg":"heap delta 2896 B over 10,000 frames (bound 64 KB)"},{"pass":true,"msg":"heap trend 120 B / 1,000 frames (bound 2 KB)"}]}
+{"name":"unchanged retention rows reject growing live heap","pass":true,"evidence":[{"pass":false,"msg":"heap delta 21065096 B over 10,000 frames (bound 64 KB)"},{"pass":false,"msg":"heap trend 2106518 B / 1,000 frames (bound 2 KB)"}]}
+CHECKS 19/19; FAILURES 0

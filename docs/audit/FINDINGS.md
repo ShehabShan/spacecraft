@@ -1,7 +1,7 @@
 # A1 ENGINE AUDIT — CONSOLIDATED FINDINGS
 
 - Task: A1 (read-only) · Branch: `a1-engine-audit` · Built from U01–U26 reports at `49e6c32`
-- Status: **U27b in progress — K1–K4 re-checked (through U27b4ba); 42/55 S0/S1 reviewed, 13 pending.** U27a built the index without rerunning repros. Fix tasks and the Lead summary remain U27c. Lead reports originals by Opus 5.5; current reviewer is platform-confirmed gpt-6-astra. Per-unit historical attribution is not independently established.
+- Status: **U27b in progress — K1–K6 re-checked (through U27b4bba); 48/55 S0/S1 reviewed, 7 pending.** U27a built the index without rerunning repros. Fix tasks and the Lead summary remain U27c. Lead reports originals by Opus 5.5; current reviewer is platform-confirmed gpt-6-astra. Per-unit historical attribution is not independently established.
 - Original evidence lives in each unit report (`docs/audit/Uxx-*.md`). This file indexes, groups and ranks it; the re-check table records later confirmation or correction without erasing original reports.
 - Regenerate the index (§4) with `python3 game/tools/audit/u27-findings-index.py --md` from the repo root. `--stats` and `--s01` print the counts and the S0/S1 list.
 
@@ -416,6 +416,18 @@ per-unit provenance.
 - **Member:** A1-U25-1. 72–78 % of the allocation is in the core `terrainHeight`, `noise3` and `sampleSurfaceInto` path.
 - **Ordering:** the K2a gate fix must land first so the fix can be measured (§13 safeguard 4). The fix shares the height service with K4.
 
+#### K5 re-check — U27b4bba (2026-10-26, base `029488c`)
+**U25-1 retained S1, Node-confirmed with qualifications.** Independent transient
+sampling:10.27–11.09KB/frame, terrain stacks75–76%; profiler-off GC-free batches
+median11.38KB/frame. Unchanged perf19/19 passes; exact retention rows accept churn
+but reject21MB retained leakage. Neither browser allocation nor visible stutter
+is measured; allocation-site cause not diagnosed. Original U25 controls2/3
+despite exit0; independent failed floating controls preserved, replaced by
+integer zero controls without relaxed bounds. Final19/19 twice exit0;
+deliberate19/20 exit1.
+[Report](U27-k5-recheck.md), [method ADR draft](U27-k5-k6-adr-draft.md);
+shared evidence `evidence/U27-k5/`. Allocation and retained growth need separate gates.
+
 ### K6 — Flight model: controls, the speed cap and landing physics — score 15.0 (5× S1)
 - **Members:**
   - A1-U18-1: yaw and roll are mirrored.
@@ -424,6 +436,23 @@ per-unit provenance.
   - A1-U19-3: any touchdown speed "lands".
   - A1-U19-4: one atmosphere for every body.
 - **T2 link:** U19-2/3/4 and U18-2 are T2 prerequisites. The Lead rulings of 2026-10-23 apply to them.
+
+#### K6 re-check — U27b4bba (2026-10-26, base `029488c`)
+
+| Finding | Disposition | Evidence / qualification |
+|---|---|---|
+| U18-1 | Retain S1, confirmed | Positive yaw/roll move left; negative/neutral and rotated-frame controls respond. Pitch correct. Manual harness, not on-foot controls. |
+| U18-2 | Retain S1, confirmed design issue | Retro45 at1880,0.009323 at1999,0 at2000 in isolated vacuum; 60s1999→1997.739. Weak belowcap, not zero; angular steering remains. Literal fade formula is implemented correctly. |
+| U19-2 | Retain S1, qualified | Density-only swaps: corrected pre-response speeds1861.740/2014.595m/s for thin cases; rho65 still descending after100s. Not actual planets or “never lands”; independent quadratic column law agrees within0.13%. |
+| U19-3 | Retain S1, narrowed | Radial5/60/140m/s contacts all LANDED; oblique140+20 control retains19.846 and is not LANDED. Apply existing soft/hard/crash ruling. |
+| U19-4 | Retain S1, integration gap | One built-in profile/no body selection or cruise regime; caller-supplied profiles and vacuum already work. Not automatic Earth atmosphere for every body. |
+
+Original U18/U19 controls5/5 and11/11 exit0; independent23/23 twice exit0,
+deliberate23/24 exit1. [Report](U27-k6-recheck.md),
+[method ADR draft](U27-k5-k6-adr-draft.md); logs `evidence/U27-k5/`.
+K5+K6 complete as one partial batch; **48/55 reviewed; K7–K9 seven remain**.
+Typecheck/build/protected diff exit0; no production changes or browser verdict.
+Historical per-unit model attribution remains unverified.
 
 ### K7 — Character controller (KCC) rules and timing — score 9.0 (3× S1)
 - **Members:**
