@@ -19,10 +19,14 @@ Every session obeys §12 SESSION BUDGET and §13 GOAL & DECISION AUTHORITY.
 ## 1. READING ORDER (a fresh session reads exactly this, in order)
 1. This brief (all of it — it is short).
 2. `notes/task.md` — task tracker + task definitions; find the ACTIVE task.
-3. The active task's plan `docs/<task>-plan.md` (now `docs/A1-plan.md`) — the FIRST UNCHECKED BOX is your
-   starting point: a planning-checklist item while the plan is being authored,
-   a build step once building has started (no plan file yet = the task is at
-   its PLAN stage, first commit).
+3. The active task's definition:
+   - a FIX TASK (F1a…, see the banner) has no plan file: its row in
+     `docs/audit/U27c-fix-tasks.md` §2 is the definition and its tracker row in
+     `notes/task.md` is the checkbox;
+   - any other task has a plan `docs/<task>-plan.md` — the FIRST UNCHECKED BOX is
+     your starting point: a planning-checklist item while the plan is being
+     authored, a build step once building has started (no plan file yet = the
+     task is at its PLAN stage, first commit).
 4. `notes/STATE.md` — NEXT ACTION (the binding pointer) and the SESSION LOG tail.
 5. The code you are about to touch, under `game/src`.
 6. If the active task is **A1 (engine audit)**: §11 AUDIT MODE below, which
