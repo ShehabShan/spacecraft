@@ -1,7 +1,7 @@
 # A1 — ENGINE AUDIT (read-only) — PLAN
 
 - Task: **A1** · Branch: `a1-engine-audit` (cut from `t1-playable-moon` @ 256d77d)
-- Stage: **BUILDING** (plan READY 7/7; Lead execute order 2026-10-21, APPROVAL LEDGER)
+- Stage: **LEAD GATE** (27/27 units done 2026-10-26; plan READY 7/7; Lead execute order 2026-10-21, APPROVAL LEDGER). Next: the Lead's acceptance and fix-task execute order.
 - Last updated: 2026-10-26
 - **Resume at the FIRST UNCHECKED BOX** (§5). Default one unit/session/commit; rechecks may batch related findings per §6.5.
 - Binding rules for this task: AGENT_BRIEF.md §11 AUDIT MODE.
@@ -180,7 +180,7 @@ see that the unit fits its budget.
 - [x] **U27b4bbbb K8–K9 four-finding re-checks** — DONE (`docs/audit/U27-k8-k9-recheck.md`): U15-3/-4 and U24-1/-3 retain S1 with corrections; actual matrix cone/common-ray depth defects, live rig stance-height and telemetry-to-sole roll mismatch. Independent48/48 twice exit0, deliberate48/49 exit1; original probes exit0, unchanged animation115/115 exit0. 55/55 evidence reviewed. No GPU verdict; model-majority condition still unresolved (U05b Opus5.5 confirmed, not majority).
   - All U27b parts: use a different model than most original audit units; record the model in SESSION LOG. U27b1 verified its current model and one prior SOLARIS model, not the historical majority; establish that provenance before declaring overall cross-model completion.
   - Re-run every S0/S1 repro cluster by cluster (`FINDINGS.md` §3), recording probe commands/exits and re-confirmed / changed / refuted per finding. No untouched cluster is implicitly signed off by a shared probe's output.
-- [ ] **U27c fix tasks + Lead summary → LEAD GATE**
+- [x] **U27c fix tasks + Lead summary → LEAD GATE** — DONE (`docs/audit/U27c-fix-tasks.md`: 27 one-session fix tasks F1a…F10b in dependency order, gates first; all 55 S0/S1 mapped exactly once (52 to F-tasks, U19-2/-3/-4 to T2); checker `game/tools/audit/u27c-coverage-check.py` exit 0 twice, `--self-test` exit 1. `docs/audit/U27c-lead-summary.md`: plain-language summary, 4 look-and-feel questions (U16 ×2, U17 ×2) with defaults, F2f needs a Lead directive naming 1F. Model-majority prerequisite carried as QUALIFIED, not claimed.)
   - Carry/resolve the historical model-majority prerequisite explicitly; 55/55 findings have recheck evidence, but majority attribution is not independently verified. Do not make an unqualified cross-model-completion claim.
   - Propose fix tasks F1, F2, … in dependency order, gates (K2) before engine. Each one is sized to fit a single 50-OLU session or is split until it does.
   - Add a plain-language summary for the Lead. U10a/U10b are already ruled on (2026-10-22 APPROVAL LEDGER), as is U19 (2026-10-23); apply those rulings, never re-ask. Collect remaining U16/U17 look-and-feel questions. Ask no technical choices (§13).
