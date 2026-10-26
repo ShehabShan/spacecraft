@@ -37,8 +37,8 @@
 | F5c | drawn vs collision terrain agree near the actor; lower lunar relief (ledger 2026-10-22) | K4 (U22-1) | F5b | 1 | L4 triangle-vs-analytic gate (U27b4ba median 0.458 m) |
 | F5d | mesh pool ≤ worker sets, drop accounting, LOD leaf budget with coarser fallback | K4 (U20-1) | F5a, F2c | 1 | 144-on-96 drop mutant red; stale ownership removed |
 | F3d | KCC on body-local state: drop private `spinOmega`, fix spin-phase wrap, planet-frame up | K3 (U16-2, U17-1) | F3c, F4a, F5b | 1 | wrap-tick false-landing gate and wrong-frame up gate red before |
-| F6a | KCC slope rule (RATIFIED): one walk/slide angle measured on the true secant; jump direction | K7 (U16-1) | F3d | 1 | needs Lead answers Q1/Q2 (summary §4); w=0 control holds the chosen angle |
-| F6b | landing orientation easing and slide slow-down | K7 (U17-3) | F3d | 1 | needs Lead answers Q3/Q4; no single-tick frame step above the chosen bound |
+| F6a | KCC slope rule (RATIFIED): one walk/slide angle measured on the true secant; jump direction | K7 (U16-1) | F3d | 1 | Lead ruling 2026-10-26: one ~45° Moon angle, jump straight up (small push only on very steep ground); w=0 control holds the chosen angle |
+| F6b | landing orientation easing and slide slow-down | K7 (U17-3) | F3d | 1 | Lead ruling 2026-10-26: lean over ~0.25 s, slide slows over ~1 s; no single-tick frame step above the chosen bound |
 | F3e | flight in the current body's frame, explicit SOI switch, speed cap measured in that frame | K3 (U18-3, U10-5) | F3c, F4a | 1 | parked-ship drift gate (179 m/10 s) red before; cap frame ADR (ledger 2026-10-22) |
 | F7a | flight controls: yaw/roll sign; retro thrust not faded by the C¹ cap (RATIFIED) | K6 (U18-1, U18-2) | F3e, F2d | 1 | mirrored-steer and 1,999 m/s braking gates red before |
 | F3f | unfreeze the play sky clock: Moon spins and orbits while walkable | K3 (U13-1) | F3d, F3e, F5c | 1 | play replay with `setTimeScale(1)`; walker stays planted |
