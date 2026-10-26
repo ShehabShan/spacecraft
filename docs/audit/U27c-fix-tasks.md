@@ -119,6 +119,8 @@ S2/S3 findings not named in the table ride with the task that touches the same f
 
 The plan asked that U27b rechecks use a different model than most original audit units. What is verified: every U27b session ran on `gpt-6-astra` (platform usage records), and the original U05b session ran on Claude Opus 5.5 (platform event 50083455). The Lead reports the originals as Opus 5.5, but per-unit attribution of the majority of U01–U26 was not independently established from platform records. Therefore: **all 55 S0/S1 findings have independent recheck evidence (commands, exits, mutants and controls, per finding); the cross-model condition is recorded as QUALIFIED, not claimed complete.** This does not change any finding's severity, because each recheck stood on its own probes, not on the original conclusion. Fix tasks keep the rule that a gate must turn red on a known-bad mutant, which does not depend on which model wrote the gate.
 
+**Update 2026-10-26 (Lead attestation):** the original audit units were done by Claude Opus 5.5 and the rechecks by gpt-6-astra; the cross-model condition is recorded as MET on the Lead's word (APPROVAL LEDGER).
+
 ## 6. Decisions taken here (to be promoted as ADRs by the fix tasks)
 
 - **D-ADR-9 (draft) — fix order.** Context: 55 S0/S1 findings with cross-cluster dependencies. Options: (a) severity order (K1 first); (b) dependency order with gates first; (c) per-subsystem order. Decision: (b), table §2. Why: the S0 (K1) cannot be proven fixed until the m1f gates (F2f) and the frame tree (F3b) exist; severity order would ship fixes that no gate can confirm. Consequences: the S0 is fixed in the 23rd fix-task session of the list (F8a); until then the play page is unaffected because Earth is always a mesh there (U21-3).

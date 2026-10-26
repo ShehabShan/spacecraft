@@ -1,7 +1,7 @@
 # A1 — ENGINE AUDIT (read-only) — PLAN
 
 - Task: **A1** · Branch: `a1-engine-audit` (cut from `t1-playable-moon` @ 256d77d)
-- Stage: **LEAD GATE** (27/27 units done 2026-10-26; plan READY 7/7; Lead execute order 2026-10-21, APPROVAL LEDGER). Next: the Lead's acceptance and fix-task execute order.
+- Stage: **DONE** — accepted by the Lead 2026-10-26 and merged into `main` (27/27 units). Next: fix task F1a on `f1a-e2e-plumbing`.
 - Last updated: 2026-10-26
 - **Resume at the FIRST UNCHECKED BOX** (§5). Default one unit/session/commit; rechecks may batch related findings per §6.5.
 - Binding rules for this task: AGENT_BRIEF.md §11 AUDIT MODE.
