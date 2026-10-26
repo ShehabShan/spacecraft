@@ -23,7 +23,8 @@
 | F1a | e2e plumbing: assert page/console errors, reject non-PASS badges, placeholders and dropped rows | K2b | — | 1 | the 9-fixture matrix of U27b3a as a regression; resolve or narrowly allow the baseline resource 404 first |
 | F1b | allocation gate: V8 sampling-heap per-frame bytes for play frame + harness loops; boot-only counters retired | K2a | F1a | 1 | leak mutant AND ~400 B/frame churn mutant both red; current tree measured (expected red until F5a) |
 | F2a | m1b orbit gate: independent raw-element oracle for mean motion, direction, period ratio | K2c (U07) | F1a | 1 | n×1.01, n×2, reversed-orbit mutants red |
-| F2b | m1a precision/rebase/timing gate: exact origins, trigger/lattice boundaries, stall attribution | K2c (U08-5/-6), K2d (U08-7) | F1a | 1 | wrong threshold/lattice, early f32, stale locals, ≥250 ms stall mutants red |
+| F2ba | m1a precision/rebase gate: exact origins, trigger/lattice boundaries (split from F2b, §12) | K2c (U08-5/-6) | F1a | 1 | wrong threshold/lattice, early f32, stale locals mutants red |
+| F2bb | m1a timing/stall gate: stall attribution, single warmup, ≥250 ms not excluded (split from F2b, §12) | K2d (U08-7) | F1a | 1 | ≥250 ms stall mutants red |
 | F2c | m1c seam gate: all 12 cube-face edges and 8 corners compared | K2c (U06-1) | F1a | 1 | U27b3b2b2b1 edge/corner fault fixtures red |
 | F2d | m1d gate: atmosphere law/Mach/wind checks, interior sweep truth, tick-deadline (fps-independent) dive | K2c (U05-1/-7), K2d (U05-2) | F1a | 1 | density-step, endpoint-only sweep and 15 fps schedule mutants red |
 | F2e | m1e KCC gate: inertial Coriolis truth, finite clearance telemetry, yaw-snap bound | K2c (U04) | F1a | 1 | tilt-artefact, sink and 4° snap mutants red |
@@ -70,9 +71,9 @@ S2/S3 findings not named in the table ride with the task that touches the same f
 | A1-U09-1 | K2a | F1b |
 | A1-U07-1 | K2c | F2a |
 | A1-U07-2 | K2c | F2a |
-| A1-U08-5 | K2c | F2b |
-| A1-U08-6 | K2c | F2b |
-| A1-U08-7 | K2d | F2b |
+| A1-U08-5 | K2c | F2ba |
+| A1-U08-6 | K2c | F2ba |
+| A1-U08-7 | K2d | F2bb |
 | A1-U06-1 | K2c | F2c |
 | A1-U05-1 | K2c | F2d |
 | A1-U05-7 | K2c | F2d |

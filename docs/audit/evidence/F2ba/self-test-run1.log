@@ -1,0 +1,11 @@
+PASS baseline-green 9/9
+PASS threshold-1023 red: trigger-boundary,locals-exact,origin-exact,celestial-locals-exact (must: trigger-boundary)
+PASS threshold-2048 red: trigger-boundary,locals-exact,post-tick-bound,tie-rounding,origin-exact,celestial-locals-exact (must: trigger-boundary,post-tick-bound)
+PASS trigger-non-strict red: trigger-boundary,locals-exact (must: trigger-boundary)
+PASS lattice-128 red: locals-exact,lattice-delta,tie-rounding,origin-exact,celestial-locals-exact (must: tie-rounding,origin-exact)
+PASS lattice-512 red: locals-exact,recentre,tie-rounding,origin-exact,celestial-locals-exact (must: origin-exact,recentre)
+PASS origin-floor-no-half red: trigger-boundary,locals-exact,recentre,tie-rounding,origin-exact,celestial-locals-exact (must: tie-rounding,origin-exact,recentre)
+PASS early-f32-rounding red: locals-exact,post-tick-bound,recentre,celestial-locals-exact (must: locals-exact,celestial-locals-exact)
+PASS stale-locals-pre-rebase-origin red: locals-exact,post-tick-bound,recentre,celestial-locals-exact (must: locals-exact,celestial-locals-exact,post-tick-bound)
+PASS production-source-unchanged 
+SELF-TEST PASS 10/10

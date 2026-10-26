@@ -1,0 +1,9 @@
+F2ba un-piped exit codes (session 111, 2026-10-26)
+test-precision-gate.mjs                           exit 0 (9/9) run1, exit 0 run2
+test-precision-gate.mjs --self-test               exit 0 (10/10) run1, exit 0 run2
+test-precision-gate.mjs --self-test --deliberate  exit 1 (10/11, intended)
+test-orbit-gate.mjs                               exit 0 (9/9)
+test-orbit-gate.mjs --self-test                   exit 0 (12/12)
+test-e2e-plumbing.mjs --out /tmp/f2ba-e2e         exit 0 (60/60, mismatches=0)
+test-alloc-loops.mjs --self-test (--expose-gc)    exit 0 (8/8)
+npm run typecheck exit 0 · npm run build exit 0 · playwright e2e/m1a.spec.ts exit 0

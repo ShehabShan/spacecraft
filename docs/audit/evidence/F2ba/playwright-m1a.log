@@ -1,0 +1,20 @@
+[WebServer] 
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+
+Running 1 test using 1 worker
+
+[m1a gate] acceptance line: [Milestone1A] acceptance PASSED — P.x={ticks} rebases=9 maxLocal={f2(avg)}ms
+[m1a gate] badges: ["PASS","PASS","PASS","PASS","PASS"]
+[m1a gate] runtime errors: []
+[m1a gate] page console transcript:
+  warning: [.WebGL-0xb0400168400]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+  warning: [.WebGL-0xb0400168400]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+  warning: [.WebGL-0xb0400168400]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+  warning: [.WebGL-0xb0400168400]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
+  log: [Milestone1A] acceptance PASSED — P.x={ticks} rebases=9 maxLocal={f2(avg)}ms
+  ✓  1 e2e/m1a.spec.ts:7:1 › M1A — Floating Origin acceptance (5.7s)
+
+  1 passed (10.2s)

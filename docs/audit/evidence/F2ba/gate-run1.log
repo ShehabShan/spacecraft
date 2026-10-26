@@ -1,0 +1,10 @@
+  PASS baseline trigger-boundary (13 obs) — ok
+  PASS baseline abs-f64-exact (2184 obs) — ok
+  PASS baseline locals-exact (2184 obs) — ok
+  PASS baseline post-tick-bound (1341 obs) — ok
+  PASS baseline recentre (135 obs) — ok
+  PASS baseline lattice-delta (135 obs) — ok
+  PASS baseline tie-rounding (5 obs) — ok
+  PASS baseline origin-exact (1323 obs) — ok
+  PASS baseline celestial-locals-exact (13311 obs) — ok
+PRECISION GATE PASS 9/9
