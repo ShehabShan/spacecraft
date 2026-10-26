@@ -11,7 +11,8 @@
  *  AUTOMATED ACCEPTANCE (auto-arms after warmup, 60 s window):
  *   [T1] renderer.info.memory.geometries absolutely constant during flight.
  *   [T2] Zero geometry/material/texture dispose and zero scene.remove calls
- *        during flight; zero main-thread buffer allocations (pool counter).
+ *        during flight. (The pool buffer counter was boot-only and is retired —
+ *        F1bcb, ADR-005.)
  *   [T3] Seamless normals: bitwise normal equality on every shared edge
  *        across chunks (same-level neighbors AND parent/child T-junctions),
  *        positions consistent to < 5e-3 m via f64-origin reconstruction,
@@ -541,8 +542,9 @@ function evaluateSuite(): void {
   const geoConst = metrics.geoMin === metrics.geoMax && metrics.geoMin > 0;
   const disposeDelta = disposeCalls - metrics.disposeStart;
   const removeDelta = sceneRemoveCalls - metrics.removeStart;
-  const allocDelta = pool.counters.bootBufferAllocs - metrics.allocStart;
-  const zeroDispose = disposeDelta === 0 && removeDelta === 0 && allocDelta === 0;
+  // WHY (F1bcb, ADR-005): bootBufferAllocs is written only in the pool constructor
+  // (A1-U06-2), so its delta was zero by construction; it no longer decides T2.
+  const zeroDispose = disposeDelta === 0 && removeDelta === 0;
   const A = metrics.audits;
   const seamsOk = A.pairs >= 8 && A.parentVerts >= 4 && A.nrmMismatch === 0
     && A.maxPosDev <= 5e-3 && metrics.roundtripErr < 1e-12;
@@ -572,8 +574,7 @@ function evaluateSuite(): void {
         pass: zeroDispose,
         detail:
           `geometry/material/texture dispose calls during flight: ${disposeDelta}; ` +
-          `scene.remove calls: ${removeDelta}; main-thread Float32Array buffer allocations: ` +
-          `${allocDelta} (pool counter frozen at ${pool.counters.bootBufferAllocs} since boot).`,
+          `scene.remove calls: ${removeDelta}.`,
       },
       'seamless': {
         pass: seamsOk,
@@ -591,7 +592,7 @@ function evaluateSuite(): void {
             `${metrics.frames.toLocaleString()} frames = ${heapPerFrame.toFixed(0)} B/frame ` +
             `(budget 1024 B; includes structured-clone envelopes + 5 Hz HUD renders).`
           : `performance.memory unavailable in this browser — N/A. Structural guarantees stand: ` +
-            `buffer allocations ${allocDelta}, dispose ${disposeDelta}, geometries constant ` +
+            `dispose ${disposeDelta}, geometries constant ` +
             `${geoConst}. Full V8 profiling remains the M1C acceptance instrument where available.`,
       },
     },

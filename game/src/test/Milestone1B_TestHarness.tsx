@@ -25,9 +25,9 @@
  *   [T3] All 7 moons parented to MOVING hosts: |r_moon−host| = a at both
  *        epochs, in-plane phase = wrap(M0 + n·t), host displacement matches
  *        the analytic 2a·sin(Δθ/2).
- *   [T4] Zero-GC: 20,000 synchronous ticks @30× — state-object identity
- *        canary (hard fail on any reallocation) + performance.memory heap
- *        guard (≤ 1 MB; API-availability aware).
+ *   [T4] State identity: 20,000 synchronous ticks @30× — state-object
+ *        identity canary (hard fail on any reallocation). Per-tick allocation
+ *        is gated in Node by tools/test-alloc-loops.mjs (F1bcb, ADR-005).
  *   [T5] M1A regression: the full M1A acceptance re-run against the
  *        updated core (2,000 m/s dummy flight, 9 rebases, local ≤ 1,024 m).
  *
@@ -376,13 +376,9 @@ const TOL_SPEED = 1e-6;      // m/s
 const TOL_RADIUS = 1e-6;     // m
 const TOL_PHASE = 1e-9;      // rad
 const TOL_DISP = 1e-6;       // m
-const HEAP_LIMIT = 1_048_576; // 1 MB over the burn
 const BURN_TICKS = 20_000;
 
 
-interface PerfMemoryHook {
-  memory?: { usedJSHeapSize: number };
-}
 
 
 function runSuite(): void {
@@ -578,12 +574,12 @@ function runSuite(): void {
     abs: s.absPos,
     loc: s.localPosF32,
   }));
-  const mem = (performance as unknown as PerfMemoryHook).memory;
-  const heapBefore = mem !== undefined ? mem.usedJSHeapSize : -1;
+  // WHY (F1bcb, ADR-005): the heap-delta clause is retired — usedJSHeapSize deltas hide
+  // transient churn (A1-U27b2). Allocation is gated by tools/test-alloc-loops.mjs (ADR-003);
+  // this row keeps only what it can really check.
   for (let i = 0; i < BURN_TICKS; i++) {
     core.tick(); // synchronous burn — nothing else can run mid-burn
   }
-  const heapAfter = mem !== undefined ? mem.usedJSHeapSize : -1;
   let identityOk = true;
   for (let i = 0; i < canary.length; i++) {
     const c = canary[i];
@@ -596,16 +592,12 @@ function runSuite(): void {
       break;
     }
   }
-  const heapDelta = heapBefore >= 0 ? heapAfter - heapBefore : -1;
-  const heapOk = heapBefore < 0 || heapDelta <= HEAP_LIMIT;
   results['zero-gc'] = {
-    pass: identityOk && heapOk,
+    pass: identityOk,
     detail:
       `${BURN_TICKS.toLocaleString()} continuous ticks @30× (10,000 s macro): ` +
-      `state identities preserved ${identityOk ? '17/17' : 'FAILED'}; ` +
-      `heap Δ ${heapDelta >= 0 ? `${heapDelta.toLocaleString()} B` : 'N/A'}` +
-      `${mem !== undefined ? '' : ' (performance.memory unavailable — identity canary stands; full V8 profiling is M1C)'} ` +
-      `— limit ${HEAP_LIMIT.toLocaleString()} B.`,
+      `state identities preserved ${identityOk ? '17/17' : 'FAILED'}. Per-tick allocation ` +
+      `is not measured here: node --expose-gc tools/test-alloc-loops.mjs (sampling heap profiler).`,
   };
 
 
@@ -1101,7 +1093,7 @@ const TEST_ORDER: Array<{ id: TestKey; label: string }> = [
   { id: 'closed-form', label: '+60 d: all 17 bodies at exact closed-form positions' },
   { id: 'reversibility', label: '−60 d: all bodies return within < 1e-9 m' },
   { id: 'parenting', label: 'Moons parent to moving host planets' },
-  { id: 'zero-gc', label: 'Zero GC allocations during 30× orbit ticks' },
+  { id: 'zero-gc', label: 'State identity preserved over 30× orbit ticks (allocation: Node gate)' },
   { id: 'm1a-regression', label: 'M1A regression: floating origin intact' },
 ];
 

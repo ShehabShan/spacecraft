@@ -1,6 +1,7 @@
 // T1 B10 Node check (plan §11.5 zero allocation, §10.7 HUD throttle): 10,000
 // shell playFrame calls at 144 Hz on fakes (stub pool, real KCC + controller +
-// camera + ProceduralAnimator + LOD) — heap delta ≈ 0 with no trend; HUD
+// camera + ProceduralAnimator + LOD) — retained (post-gc) heap ≈ 0 with no trend
+// (a leak check; allocation is tools/test-alloc-gate.mjs, ADR-005); HUD
 // publishes ≤ 10 per simulated second. Same esbuild-bundle + `document` stub
 // pattern as test-play-frame. Run: node --expose-gc tools/test-play-perf.mjs
 import { build } from 'esbuild'
@@ -100,8 +101,11 @@ const xm = 5, ym = samples.reduce((a, v) => a + v, 0) / samples.length
 let num = 0, den = 0
 for (let i = 0; i < samples.length; i++) { num += (i - xm) * (samples[i] - ym); den += (i - xm) ** 2 }
 const slope = num / den
-ok(Math.abs(dh) < 64 * 1024, `heap delta ${dh} B over 10,000 frames (bound 64 KB)`)
-ok(Math.abs(slope) < 2048, `heap trend ${slope.toFixed(0)} B / 1,000 frames (bound 2 KB)`)
+// WHY (F1bcb, ADR-005): these post-gc rows measure RETENTION (leaks) only — gc() frees
+// transient garbage first, so ~10 KB/frame of churn passes here (A1-U09-1). Per-frame
+// allocation is gated by `node --expose-gc tools/test-alloc-gate.mjs` (ADR-002).
+ok(Math.abs(dh) < 64 * 1024, `retained heap delta (post-gc) ${dh} B over 10,000 frames (bound 64 KB; leaks only)`)
+ok(Math.abs(slope) < 2048, `retained heap trend (post-gc) ${slope.toFixed(0)} B / 1,000 frames (bound 2 KB; leaks only)`)
 
 // §10.7 HUD throttle at 144 Hz
 const pubs = frame.hud.publishes - pub0, simS = 10000 * DT

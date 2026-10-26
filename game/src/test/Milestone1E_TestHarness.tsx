@@ -31,8 +31,9 @@
  *   [R3] State machine: ZERO-G entry at 31 km, RCS burn (Δv + budget),
  *        attitude rotation, deorbit fall, SURFACE re-entry, landing; VEHICLE
  *        attach/detach with exact parented compose + velocity inheritance.
- *   [R4] Zero-alloc: 30,000-tick burn on the live controller (walk, jumps,
- *        zero-G, RCS, vehicle) — identity canary + heap guard.
+ *   [R4] 30,000-tick burn on the live controller (walk, jumps, zero-G, RCS,
+ *        vehicle) — identity canary + no NaN. Allocation is gated in Node by
+ *        tools/test-alloc-loops.mjs (F1bcb, ADR-005).
  *   [R5] SPEC-CANONICAL CORIOLIS JUMP: vertical jump at the equator of the
  *        52 m/s planet — lands WEST by ~(4/3)Ωu³/g² ≈ 1.8 cm and settles to
  *        0 m/s relative within 2 ticks (no skating).
@@ -930,16 +931,18 @@ function runZeroGcBurn(): TestResult {
   B.ticks = BURN;
   B.nan = kcc.integrity.nanEvents;
   kcc.teleportSurface(FLAT_SITE.x, FLAT_SITE.y, FLAT_SITE.z);
-  const heapOk = B.heapDelta < 0 || B.heapDelta <= 1_048_576;
+  // WHY (F1bcb, ADR-005): the heap-delta clause is retired — usedJSHeapSize deltas hide
+  // transient churn (A1-U27b2). Allocation is gated by tools/test-alloc-loops.mjs (ADR-003);
+  // this row keeps only what it can really check.
   return {
-    pass: B.identityOk && heapOk && B.nan === 0,
+    pass: B.identityOk && B.nan === 0,
     detail:
       `${B.ticks.toLocaleString()} synchronous ticks on the live controller ` +
       `(walk + jumps + slides → zero-G → RCS maneuvers → deorbit landing → vehicle ` +
       `attach/detach): every state object identity preserved ` +
       `${B.identityOk ? '✓' : 'FAILED'}; ` +
-      `${B.heapDelta >= 0 ? `heap Δ ${B.heapDelta.toLocaleString()} B (limit 1 MB)` : 'performance.memory N/A — identity canary stands'}; ` +
-      `NaN events ${B.nan}. Module-scratch math, interned mode strings, indexed loops.`,
+      `NaN events ${B.nan}. Per-tick allocation is not measured here: ` +
+      `node --expose-gc tools/test-alloc-loops.mjs (sampling heap profiler).`,
   };
 }
 const staticProv = {
@@ -1392,7 +1395,7 @@ const TEST_ORDER: Array<{ id: TestKey; label: string }> = [
   { id: 'face-walk', label: 'Face-boundary walk: stable orientation, no yaw snaps' },
   { id: 'slope-step', label: 'Slope sliding & step-up/block behave predictably' },
   { id: 'state-machine', label: 'Gravity state machine (Zero-G / Vehicle / Surface)' },
-  { id: 'zero-gc', label: 'Zero JS allocations inside the KCC tick' },
+  { id: 'zero-gc', label: 'KCC-tick burn: state identity + no NaN (allocation: Node gate)' },
   { id: 'coriolis', label: 'SPEC: Coriolis jump — lands west, settles, no skating' },
   { id: 'integration', label: 'M1A Floating Origin + M1C streaming integration' },
 ];

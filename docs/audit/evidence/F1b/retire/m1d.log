@@ -1,0 +1,55 @@
+[WebServer] 
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+
+
+Running 1 test using 1 worker
+
+[1/1] e2e/m1d.spec.ts:8:1 › M1D — Flight & Aerodynamic Governor acceptance
+e2e/m1d.spec.ts:8:1 › M1D — Flight & Aerodynamic Governor acceptance
+[m1d gate] acceptance line: [Milestone1D] acceptance FAILED — v@1000m=264.7 maxDv=10.30 rebases=8 recv=49 geo=151 burnHeap=0B
+
+[m1d gate] badges: ["PASS","FAIL","PASS","PASS","PASS"]
+
+[m1d gate] runtime errors: []
+
+[m1d gate] page console transcript (tail):
+
+  warning: [.WebGL-0x3dec00150a00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+
+  warning: [.WebGL-0x3dec00150a00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+
+  warning: [.WebGL-0x3dec00150a00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+
+  warning: [.WebGL-0x3dec00150a00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
+
+  log: [Milestone1D] acceptance FAILED — v@1000m=264.7 maxDv=10.30 rebases=8 recv=49 geo=151 burnHeap=0B
+
+  1) e2e/m1d.spec.ts:8:1 › M1D — Flight & Aerodynamic Governor acceptance ──────────────────────────
+
+    Error: acceptance console line
+
+    expect(received).toMatch(expected)
+
+    Expected pattern: /\[Milestone1D\] acceptance PASSED/
+    Received string:  "[Milestone1D] acceptance FAILED — v@1000m=264.7 maxDv=10.30 rebases=8 recv=49 geo=151 burnHeap=0B"
+
+       at gate.ts:55
+
+      53 |   // Order matters only for which label a broken page reports first; every
+      54 |   // assertion is independent and each one alone rejects its defect class.
+    > 55 |   expect(line, 'acceptance console line').toMatch(new RegExp(`\\[${gate.tag}\\] acceptance PASSED`))
+         |                                           ^
+      56 |   expect(runtimeErrors, 'no page or console error').toEqual([])
+      57 |   expect(badges.length, 'badge rows scraped').toBeGreaterThan(0)
+      58 |   expect(badges.length, 'badge row count').toBe(gate.expectedRows)
+        at runAcceptanceGate (/workspace/spacecraft/game/e2e/gate.ts:55:43)
+        at /workspace/spacecraft/game/e2e/m1d.spec.ts:9:3
+
+    Error Context: test-results/m1d-M1D-—-Flight-Aerodynamic-Governor-acceptance/error-context.md
+
+
+  1 failed
+    e2e/m1d.spec.ts:8:1 › M1D — Flight & Aerodynamic Governor acceptance ───────────────────────────

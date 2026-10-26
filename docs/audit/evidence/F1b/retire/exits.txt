@@ -1,0 +1,10 @@
+build EXIT=0
+alloc-gate --self-test EXIT=0
+alloc-loops --self-test EXIT=0
+test-play-perf EXIT=0
+playwright m1b EXIT=0
+playwright m1c EXIT=0
+playwright m1d EXIT=1
+playwright m1e EXIT=0
+e2e-plumbing EXIT=0
+ALLDONE

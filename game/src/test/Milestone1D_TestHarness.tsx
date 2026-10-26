@@ -33,7 +33,8 @@
  *        with streaming frozen; grounded contact resolved analytically.
  *   [T3] Drag continuity: no hard clamping — airborne per-tick |Δv| bounded,
  *        zero velocity reversals, speed trace crosses 400 smoothly.
- *   [T4] Zero JS allocations in the physics tick (canary + heap).
+ *   [T4] State identity + no NaN over the physics-tick burn (allocation is
+ *        gated in Node by tools/test-alloc-loops.mjs — F1bcb, ADR-005).
  *   [T5] M1A/M1C integration: rebases fire, geometries absolutely constant,
  *        chunks stream, ship f32 locals <= 1,024 m, terrain offset exact.
  */
@@ -733,18 +734,18 @@ function evaluateSuite(): void {
 
   /* -- T4: zero-GC physics tick -------------------------------------------- */
   {
-    const heap = burnResult.heapDelta;
-    const heapOk = heap < 0 || heap <= 1_048_576;
-    const pass = burnResult.identityOk && heapOk && burnResult.nanEvents === 0;
+    // WHY (F1bcb, ADR-005): the heap-delta clause is retired — usedJSHeapSize deltas hide
+    // transient churn (A1-U27b2). Allocation is gated by tools/test-alloc-loops.mjs (ADR-003);
+    // this row keeps only what it can really check.
+    const pass = burnResult.identityOk && burnResult.nanEvents === 0;
     results['zero-gc'] = {
       pass,
       detail:
         `${burnResult.ticks.toLocaleString()} synchronous integrateFlight ticks on a headless ` +
         `controller (DDA active, ${burnResult.contacts} terrain contacts): every state object ` +
         `identity preserved ${burnResult.identityOk ? '✓' : 'FAILED'}; ` +
-        `${heap >= 0 ? `heap Δ = ${heap.toLocaleString()} B over the burn (limit 1 MB)` : 'performance.memory N/A — identity canary stands'}; ` +
-        `NaN events ${burnResult.nanEvents}. Scratch is module-level; loops index-based; ` +
-        `mode strings interned literals.`,
+        `NaN events ${burnResult.nanEvents}. Per-tick allocation is not measured here: ` +
+        `node --expose-gc tools/test-alloc-loops.mjs (sampling heap profiler).`,
     };
   }
 
@@ -961,7 +962,7 @@ const TEST_ORDER: Array<{ id: TestKey; label: string }> = [
   { id: 'atmosphere', label: 'Density decays smoothly surface → vacuum' },
   { id: 'governor-dive', label: 'Governor dive: ≤ 400 m/s @ 1,000 m, no ground clip (spec gate)' },
   { id: 'drag-continuity', label: 'Drag limits velocity continuously — no hard clamping' },
-  { id: 'zero-gc', label: 'Zero JS allocations inside the physics tick' },
+  { id: 'zero-gc', label: 'Physics-tick burn: state identity + no NaN (allocation: Node gate)' },
   { id: 'integration', label: 'M1A Floating Origin + M1C streaming integration' },
 ];
 

@@ -29,4 +29,4 @@ Three further runs of the play gate: walk retained −0.80 / 0.00 / 0.13 B/frame
 
 ## Consequences
 - Regression: `node --expose-gc tools/test-alloc-loops.mjs --self-test` → 8/8 exit 0 (the plain gate exits 1 on the current tree until F5a/F7a).
-- Deferred to F1bc: retiring the m1b/m1d/m1e heap-delta rows, the m1c boot-only counter and m1f R4, re-pointing `test-play-perf`, and the matching row-count/ADR-001 edits. Browser-only loops (m1c pool, m1f render passes) still need a CDP sampler.
+- Done in F1bcb (ADR-005), except m1c heap-flat and m1f R4 (browser-only). Originally deferred to F1bc: retiring the m1b/m1d/m1e heap-delta rows, the m1c boot-only counter and m1f R4, re-pointing `test-play-perf`, and the matching row-count/ADR-001 edits. Browser-only loops (m1c pool, m1f render passes) still need a CDP sampler.
