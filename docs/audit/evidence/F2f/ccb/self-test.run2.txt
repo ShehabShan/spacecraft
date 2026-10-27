@@ -1,0 +1,8 @@
+build EXIT=0
+case none: AS EXPECTED
+  [M1fR3Gate] R3a state-coupled sweep: FAIL — sweep (20 round trips, 1 m steps, rendered rules): down: 56480 holes in [220000, 225647] m; up: 0 holes; 0 doubles; 21 flips (need 21); max drawn-coverage dimming 1.000 (tol 0.010). live 60 Hz triangle (2 periods): down: 124 holes in [220062, 225569] m, [220063, 225569] m; up: 0 holes.
+  [M1fR3Gate] acceptance FAILED
+case ctl=ref: AS EXPECTED
+  [M1fR3Gate] R3a state-coupled sweep: PASS — sweep (20 round trips, 1 m steps, rendered rules): down: 0 holes; up: 0 holes; 0 doubles; 21 flips (need 21); max drawn-coverage dimming 0.010 (tol 0.010). live 60 Hz triangle (2 periods): down: 0 holes; up: 0 holes. [ctl=ref]
+  [M1fR3Gate] acceptance PASSED (ctl=ref)
+self-test PASS

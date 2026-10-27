@@ -102,3 +102,7 @@ hiding the S0 defect behind a PASS badge.
 - The verbatim extraction touches the shipped harness's controller section, but none of its rows.
 - If F2fccb does not fit in one session, it splits per §12: first R3a with the extraction and the
   spec, then R3b and R3c with the mutants.
+## Amendment (F2fccba, session 135)
+- F2fccb split per §12: F2fccba = controller extraction + R3a + spec pin; F2fccbb = R3b, R3c and the mutants. Until F2fccbb the spec pins `['FAIL']`.
+- The extraction also moves the controller out of the harness text that three audit tools parse (`game/tools/audit/u03-r3r4r5-validity.mjs`, `u27b3b2a-r3-recheck.mjs`, `u27b1-k1-recheck.mjs`). They now append `m1fHandoff.ts` to the source they read; their verdicts are unchanged.
+- Measured R3a: sweep descending hole [220000, 225647] m (56,480 hole samples over 10 descents), 0 ascending, 21 flips, 0 doubles. The live triangle samples frames, so each descending period gives its own band ([220062, 225569] m and [220063, 225569] m); the spec accepts one band per period.

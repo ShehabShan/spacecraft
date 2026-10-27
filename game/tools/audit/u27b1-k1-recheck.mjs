@@ -13,7 +13,7 @@ const R = await import('../../src/render/MultiCameraRig.tsx');
 const { SkyImpostorPool } = await import('../../src/render/SkyImpostorPool.ts');
 const { PLAY_BODIES, applySkyState } = await import('../../src/play/world/skyState.ts');
 
-const text = readFileSync(new URL('../../src/test/Milestone1F_TestHarness.tsx', import.meta.url), 'utf8');
+const text = readFileSync(new URL('../../src/test/Milestone1F_TestHarness.tsx', import.meta.url), 'utf8') + '\n' + readFileSync(new URL('../../src/test/m1fHandoff.ts', import.meta.url), 'utf8') // F2fccba: controller moved to m1fHandoff.ts (ADR-023);
 const ast = ts.createSourceFile('h.tsx', text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
 const names = new Set(['HANDOFF_D_HARD', 'HANDOFF_D_SOFT', 'HANDOFF_FADE_LO', 'HANDOFF_FADE_HI',
   'probe', 'handoffFade', 'handoffNextState', 'updateProbes', 'applyRenderState', 'assignObject']);

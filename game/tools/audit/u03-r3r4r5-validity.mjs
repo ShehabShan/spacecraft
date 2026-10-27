@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 
 const here = dirname(fileURLToPath(import.meta.url))
-const SRC = readFileSync(join(here, '../../src/test/Milestone1F_TestHarness.tsx'), 'utf8')
+const SRC = readFileSync(join(here, '../../src/test/Milestone1F_TestHarness.tsx'), 'utf8') + '\n' + readFileSync(join(here, '../../src/test/m1fHandoff.ts'), 'utf8') // F2fccba: controller moved to m1fHandoff.ts (ADR-023); appended so harness line numbers hold
 const lines = SRC.split('\n')
 const results = []
 const check = (id, cond, msg) => { results.push([id, !!cond, msg]); console.log(`[u03] ${cond ? 'CONFIRMED' : 'NOT-CONFIRMED'} ${id}: ${msg}`) }

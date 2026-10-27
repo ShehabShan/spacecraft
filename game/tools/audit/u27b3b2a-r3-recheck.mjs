@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import ts from 'typescript';
 
-const source=readFileSync(new URL('../../src/test/Milestone1F_TestHarness.tsx',import.meta.url),'utf8');
+const source=readFileSync(new URL('../../src/test/Milestone1F_TestHarness.tsx',import.meta.url),'utf8')+'\n'+readFileSync(new URL('../../src/test/m1fHandoff.ts',import.meta.url),'utf8') // F2fccba: controller moved to m1fHandoff.ts (ADR-023);
 const ast=ts.createSourceFile('h.tsx',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX);
 const nodes=[];
 function visit(n){nodes.push(n);ts.forEachChild(n,visit);}

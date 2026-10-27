@@ -601,23 +601,10 @@ sceneRoot.add(astroMesh);
 /* ============================================================================
  * 5. HANDOFF STATE MACHINE (shared by live sweep + unit test)
  * ==========================================================================*/
-export const HANDOFF_D_HARD = 240000;   // MESH -> IMPOSTOR
-export const HANDOFF_D_SOFT = 220000;   // IMPOSTOR -> MESH
-export const HANDOFF_FADE_LO = 225000;
-export const HANDOFF_FADE_HI = 236000;
-
-
-export function handoffFade(d: number): number {
-  if (d <= HANDOFF_FADE_LO) return 0;
-  if (d >= HANDOFF_FADE_HI) return 1;
-  const t = (d - HANDOFF_FADE_LO) / (HANDOFF_FADE_HI - HANDOFF_FADE_LO);
-  return t * t * (3 - 2 * t);
-}
-export function handoffNextState(d: number, mesh: boolean): boolean {
-  if (mesh && d > HANDOFF_D_HARD) return false;   // now IMPOSTOR
-  if (!mesh && d < HANDOFF_D_SOFT) return true;   // now MESH
-  return mesh;
-}
+// WHY (F2fccba, ADR-023): the controller moved verbatim into ./m1fHandoff so the rebuilt
+// ?page=m1fR3 gate tests the same code; re-exported so these exported names are unchanged.
+import { handoffFade, handoffNextState } from './m1fHandoff';
+export { HANDOFF_D_HARD, HANDOFF_D_SOFT, HANDOFF_FADE_LO, HANDOFF_FADE_HI, handoffFade, handoffNextState } from './m1fHandoff';
 
 
 const probe = {
