@@ -1,0 +1,18 @@
+sun      T       0.0 s  spin    612.905 s  tilt   7.25°  retro false  lock null
+mercury  T    4379.3 s  spin   2919.512 s  tilt   7.04°  retro false  lock null
+venus    T    6961.3 s  spin   7528.689 s  tilt 178.76°  retro true  lock null
+earth    T    8820.7 s  spin     24.083 s  tilt  23.44°  retro false  lock null
+moon     T    3072.3 s  spin   3072.288 s  tilt   0.02°  retro false  lock moon
+mars     T   12120.7 s  spin     18.101 s  tilt  25.40°  retro false  lock null
+phobos   T     575.1 s  spin    575.117 s  tilt  26.71°  retro false  lock phobos
+jupiter  T   30387.1 s  spin      2.899 s  tilt   2.22°  retro false  lock null
+io       T     634.2 s  spin    634.204 s  tilt   2.21°  retro false  lock io
+saturn   T   48144.2 s  spin      1.987 s  tilt  28.05°  retro false  lock null
+titan    T    2351.3 s  spin   2351.286 s  tilt  28.05°  retro false  lock titan
+uranus   T   81133.1 s  spin      1.898 s  tilt  97.72°  retro true  lock null
+titania  T    1805.5 s  spin   1805.468 s  tilt  97.81°  retro true  lock titania
+neptune  T  113257.9 s  spin      1.251 s  tilt  28.03°  retro false  lock null
+triton   T    1394.9 s  spin   1394.865 s  tilt 149.88°  retro true  lock triton
+pluto    T  138927.0 s  spin   3205.764 s  tilt 112.82°  retro true  lock charon
+charon   T    3205.8 s  spin   3205.764 s  tilt 112.82°  retro true  lock charon
+SPIN-LAW PASS

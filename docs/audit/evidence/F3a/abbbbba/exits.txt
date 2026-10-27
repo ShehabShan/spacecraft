@@ -1,0 +1,14 @@
+scale-law run1 EXIT=0
+scale-law run2 EXIT=0
+scale-law --self-test run1 EXIT=0
+scale-law --self-test run2 EXIT=0
+scale-law --self-test --deliberate EXIT=1
+law probe (ADR-015) EXIT=0
+real-body-data EXIT=0
+spin-law EXIT=0
+rail-validation EXIT=0
+orbit-gate EXIT=0
+orbit-gate --self-test EXIT=0
+typecheck EXIT=0
+build EXIT=0
+DONE
