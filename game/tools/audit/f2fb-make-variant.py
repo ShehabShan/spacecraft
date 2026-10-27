@@ -68,9 +68,64 @@ F12SUN_POSONLY = F12SUN_NEW.replace(
     "    const sunPose = { x: sLx, y: sLy, z: sLz,",
     "    void sLx; void sLy; void sLz;\n    const sunPose = { x: drv.x, y: drv.y, z: drv.z,")
 assert F12SUN_UPONLY != F12SUN_NEW and F12SUN_POSONLY.count('drv.x, drv.y, drv.z') == 2
+# F2fbb diagnostic (unedited 3057899 + extra A/B renders AFTER the R2 verdict is
+# computed, so R2's own numbers are untouched). Why: to find WHAT hides the Sun
+# at the render-local pose: re-render the same pose with the near/mid cameras'
+# layer masks zeroed (far/background pass only), then the absolute pose, and
+# report the Sun elevation and which near/mid meshes are visible.
+DIAG_IMPORT_NEW = "import { executePasses as RIGexecutePasses } from '../render/MultiCameraRig';\n"
+DIAG_IMPORT_OLD = DIAG_IMPORT_NEW + "import { rigCamNear as DGnear, rigCamMid as DGmid } from '../render/MultiCameraRig';\n"
+DIAG_ANCHOR = "`from θ = ${(sunGeom.theta * 180 / Math.PI).toFixed(3)}°.`,\n    };\n"
+DIAG_CODE = DIAG_ANCHOR + """    {
+      const dgCount = (buf: Uint8Array): number => {
+        let n = 0;
+        for (let y = cy0; y < cy1; y++) for (let x = cx0; x < cx1; x++) {
+          const i = (y * AB_W + x) * 4; if (buf[i] > 165 && buf[i + 1] > 120) n++;
+        }
+        return n;
+      };
+      const dgLocal = () => { RIG.poseOverride = sunPose; applyRenderState(sunPose.x, sunPose.y, sunPose.z, sunPose.qx, sunPose.qy, sunPose.qz, sunPose.qw); };
+      const nm = DGnear.layers.mask, mm = DGmid.layers.mask;
+      const dgBase = dgCount(abRender(gl, scene, dgLocal));
+      const sunActive = sky.bodies[0].active;
+      const upn = Math.hypot(drv.x, drv.y, drv.z) || 1;
+      const sunEl = elevationAngle(sunGeom.dirX, sunGeom.dirY, sunGeom.dirZ, drv.x / upn, drv.y / upn, drv.z / upn) * 180 / Math.PI;
+      const nearVis: string[] = [], midVis: string[] = [];
+      scene.traverse((ob) => {
+        if (!(ob as THREE.Mesh).isMesh || !ob.visible) return;
+        const nmx = `${ob.name || ob.type}@${ob.position.x.toFixed(0)},${ob.position.y.toFixed(0)},${ob.position.z.toFixed(0)}`;
+        if (DGnear.layers.test(ob.layers)) nearVis.push(nmx);
+        if (DGmid.layers.test(ob.layers)) midVis.push(nmx);
+      });
+      DGnear.layers.mask = 0; DGmid.layers.mask = 0;
+      const dgFarOnly = dgCount(abRender(gl, scene, dgLocal));
+      DGnear.layers.mask = 0; DGmid.layers.mask = mm;
+      const dgNoNear = dgCount(abRender(gl, scene, dgLocal));
+      DGnear.layers.mask = nm; DGmid.layers.mask = 0;
+      const dgNoMid = dgCount(abRender(gl, scene, dgLocal));
+      DGnear.layers.mask = nm; DGmid.layers.mask = mm;
+      astroMesh.visible = false;
+      const dgNoAstro = dgCount(abRender(gl, scene, dgLocal));
+      astroMesh.visible = true; spinGroup.visible = false;
+      const dgNoSpin = dgCount(abRender(gl, scene, dgLocal));
+      spinGroup.visible = true;
+      console.log(`[F2fbb-diag2] noAstro=${dgNoAstro} noSpinGroup(terrain)=${dgNoSpin}`);
+      const dgAbs = dgCount(abRender(gl, scene, () => {
+        RIG.poseOverride = { x: drv.x, y: drv.y, z: drv.z, qx: sunPose.qx, qy: sunPose.qy, qz: sunPose.qz, qw: sunPose.qw };
+        applyRenderState(drv.x, drv.y, drv.z, sunPose.qx, sunPose.qy, sunPose.qz, sunPose.qw);
+      }));
+      dgLocal(); RIG.poseOverride = null;
+      const oD = core.getOrigin();
+      console.log(`[F2fbb-diag] O=(${oD.x.toFixed(1)},${oD.y.toFixed(1)},${oD.z.toFixed(1)}) |drv|=${upn.toFixed(1)} local=(${sunPose.x.toFixed(1)},${sunPose.y.toFixed(1)},${sunPose.z.toFixed(1)}) ` +
+        `sunEl=${sunEl.toFixed(3)}deg sunActive=${sunActive} theta=${sunGeom.theta.toExponential(3)} proj=(${_proj.px.toFixed(1)},${_proj.py.toFixed(1)}) expectR=${expectR.toFixed(1)} ` +
+        `counts: R2=${count} base=${dgBase} farOnly=${dgFarOnly} noNear=${dgNoNear} noMid=${dgNoMid} absPose=${dgAbs} ` +
+        `masks near=${nm} mid=${mm} | nearVis=[${nearVis.join(' ')}] | midVis=[${midVis.join(' ')}]`);
+    }
+"""
 VARIANTS = {'F12sun': [(F12SUN_NEW, F12SUN_OLD)], 'F01': [(F01_NEW, F01_OLD)],
             'F12sunUp': [(F12SUN_NEW, F12SUN_UPONLY)], 'F12sunPos': [(F12SUN_NEW, F12SUN_POSONLY)],
-            'F07': [(F07_NEW, F07_OLD)], 'NONE': []}
+            'F07': [(F07_NEW, F07_OLD)], 'NONE': [],
+            'F12diag': [(DIAG_IMPORT_NEW, DIAG_IMPORT_OLD), (DIAG_ANCHOR, DIAG_CODE)]}
 
 def main():
     if len(sys.argv) != 3 or sys.argv[2] not in VARIANTS:
