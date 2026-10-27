@@ -1,0 +1,8 @@
+baseline defect (validation removed, moon e=1.5): finite state = false
+RED    mutant validation-call-removed — 30 failing checks (e.g. reject moon e=1)
+RED    mutant e<=1-accepted — 2 failing checks (e.g. reject moon e=1)
+RED    mutant negative-e-accepted — 2 failing checks (e.g. reject moon e=-0.1)
+RED    mutant a=0-accepted — 2 failing checks (e.g. reject moon a=0)
+RED    mutant finite-check-skipped — 12 failing checks (e.g. reject moon a=Infinity)
+RED    mutant muHost-check-removed — 2 failing checks (e.g. reject moon muHost=0)
+rail-validation self-test: 6/6 mutants red PASS
