@@ -44,3 +44,8 @@ The engine-independent probe `game/tools/audit/f3abbbba-scale-laws.mjs` uses pin
 - The play Moon terrain, its KCC and the 14.7° look are unchanged.
 - Earth's radius becomes 4,124 m, and its Moon distance becomes 32,047 m. The angle is preserved.
 - **Approximation:** the radius law compresses the giants (Jupiter is 3.2× Earth, not 11×), so that moons sit outside their parents at a playable distance scale. This is documented as a look-and-feel tradeoff inside the existing rulings.
+
+## Addendum — wiring (F3abbbbbb, session 123)
+
+`celestialData.ts` now takes radiusGame, a, T, muHost, gravityRange and portalDist from `deriveScaledBodies`; `SUN_ORBITAL_MU` and `hostMuFor` are gone; n = ±2π/T; body-own μ = g·R² is kept (KCC gravity). `SimulationCore._macroTimeScale` is 1 (the 30× default is absorbed into the T_real/360 law). Resulting catalog: Earth R 4,124.4 m, Moon orbit 32,047 m, Earth year 87,662 s, Moon period 6,557 s, Moon gravityRange 8,187 m (unchanged, 6R). Gates: the orbit gate pins S = 360 and real periods (JPL / NSSDC literals) instead of SUN_MU and parent g·R²; its `period-ratio` row now checks sibling measured-rate ratios against the T_real ratios (row count kept: Kepler III in game units cannot hold under a ∝ a_real^0.491 with T ∝ T_real). The m1b closed-form clause checks T = T_real/360 instead of (T_p/T_e)² = (a_p/a_e)³ (row count kept, ADR-001). `test-play-spawn` Sun elevation pin 36.41° → 35.93° because the Moon orbit moved; Earth elevation 8.67° and the spawn pin are unchanged.
+

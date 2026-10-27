@@ -16,9 +16,15 @@ const args = process.argv.slice(2)
 const SELF = args.includes('--self-test'), DELIB = args.includes('--deliberate')
 
 // ---- pinned independent facts (change only with an ADR in the same commit) ----------------
-// WHY: the Sun has surfaceGravity 0 in the catalog; its orbital μ is a separate design contract
-// (celestialData SUN_ORBITAL_MU = 274 · 20,000²). Pinned here so a wrong μ_sun cannot pass.
-const SUN_MU = 274 * 20000 * 20000
+// WHY (ADR-015): orbit rates are NOT derived from a parent g*R^2 any more. Every orbit
+// period is T_game = T_real / S with S = 360 pinned here, T_real from pinned real literals
+// (JPL Table 1 heliocentric a + GM_sun; NSSDC sidereal days for moons), and the host mu follows
+// Kepler III from (a, T). Pinned independently of scaleLaw.ts so a wrong law cannot pass.
+const S = 360, GM_SUN = 1.32712440041279e11, AU = 149597870.7
+const AAU = { mercury: 0.38709927, venus: 0.72333566, earth: 1.00000261, mars: 1.52371034, jupiter: 5.202887, saturn: 9.53667594,
+  uranus: 19.18916464, neptune: 30.06992276, pluto: 39.48168677 }
+const MOON_DAYS = { moon: 27.322, phobos: 0.319, io: 1.769, titan: 15.945, titania: 8.706, triton: 5.877, charon: 6.387 }
+const realPeriod = (id) => (MOON_DAYS[id] !== undefined ? MOON_DAYS[id] * 86400 : 2 * Math.PI * Math.sqrt((AAU[id] * AU) ** 3 / GM_SUN))
 // WHY: direction must come from a fact OUTSIDE the engine. Comparing against sign(n) is useless:
 // a sign bug changes n and the motion together (A1-U07-2 recheck). Real-world fact: Triton is
 // the only retrograde orbit in this catalog.
@@ -49,16 +55,15 @@ const PRODUCTION = JSON.stringify(CELESTIAL_CONFIGS)
 
 // ---- oracle truth from RAW inputs only ----------------------------------------------------
 function truthFrom(cfgs) {
-  const byId = new Map(cfgs.map((c) => [c.id, c]))
   const bodies = []
   for (const c of cfgs) {
     if (!c.orbit) continue
-    const host = c.parentId ? byId.get(c.parentId) : null
-    const mu = host && host.type !== 'star' ? host.surfaceGravity * host.radiusGame ** 2 : SUN_MU
     const { a, e, i, Omega, omega, M0 } = c.orbit
     const dir = RETROGRADE.has(c.id) ? -1 : 1
-    const rate = Math.sqrt(mu / a ** 3)          // |n| from μ and a alone
-    bodies.push({ id: c.id, parent: c.parentId, a, e, i, Omega, omega, M0, mu, dir, rate, period: TAU / rate })
+    const Treal = realPeriod(c.id)
+    const rate = (2 * Math.PI * S) / Treal       // |n| from the pinned real period and S alone
+    const mu = 4 * Math.PI ** 2 * a ** 3 / (Treal / S) ** 2   // Kepler III host mu
+    bodies.push({ id: c.id, parent: c.parentId, a, e, i, Omega, omega, M0, mu, dir, rate, period: TAU / rate, Treal })
   }
   return bodies
 }
@@ -132,16 +137,17 @@ function evaluateGate(core, cfg) {
   put('period', bad.period.length === 0, bad.period.join(' ') || '16/16 return after one oracle period')
   put('first-return', bad.firstReturn.length === 0, bad.firstReturn.join(' ') || '16/16 no return before one period (720 samples)')
   put('derived-tables', bad.meta.length === 0, bad.meta.join(' ') || 'n, T, muHost, retrograde = physics')
-  // (6) Kepler III on MEASURED rates, μ-independent: siblings of one host, (ω_i/ω_j) = (a_j/a_i)^1.5
+  // (6) time-scale law on MEASURED rates, mu-independent: for two orbits sharing a host,
+  // omega_i / omega_j = T_real_j / T_real_i (one time scale S for every body, ADR-015).
   const groups = new Map()
   for (const b of T) { const k = b.parent ?? 'sun'; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(b) }
   const ratioBad = []; let pairs = 0
   for (const g of groups.values()) for (let x = 0; x < g.length; x++) for (let y = x + 1; y < g.length; y++) {
     pairs++
-    const want = (g[y].a / g[x].a) ** 1.5, got = measured.get(g[x].id) / measured.get(g[y].id)
+    const want = g[y].Treal / g[x].Treal, got = measured.get(g[x].id) / measured.get(g[y].id)
     if (!(Math.abs(got / want - 1) < RATIO_REL)) ratioBad.push(`${g[x].id}/${g[y].id}`)
   }
-  put('period-ratio', ratioBad.length === 0 && pairs > 0, ratioBad.length ? `${ratioBad.length}/${pairs} pairs off: ${ratioBad.slice(0, 6).join(' ')}` : `${pairs}/${pairs} sibling pairs`)
+  put('period-ratio', ratioBad.length === 0 && pairs > 0, ratioBad.length ? `${ratioBad.length}/${pairs} pairs off: ${ratioBad.slice(0, 6).join(' ')}` : `${pairs}/${pairs} sibling pairs follow T_real ratios`)
   // (7) day clock: fastForward(d) = setSimTime(t + d · 86400)
   const e = T.find((b) => b.id === 'earth'), t0 = 1234.5
   core.setSimTime(t0); core.fastForward(60)

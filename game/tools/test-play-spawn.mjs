@@ -68,7 +68,8 @@ ok(slope < 1, `spawn slope < 1°: got ${slope}`)
 const elev = (v) => Math.asin(d.x * v.x + d.y * v.y + d.z * v.z) * 180 / Math.PI
 near(site.earthElevDeg, 8.67, 0.01, 'Earth elevation')
 near(elev(earthDir), 8.67, 0.01, 'Earth elevation (recomputed)')
-near(elev(sunDir), 36.41, 0.01, 'Sun elevation')
+// WHY: F3abbbbbb (ADR-015) moves the Moon orbit 38,850 -> 32,047 m, so the Moon->Sun direction at t=0 shifts; Earth elevation (design anchor) and the spawn pin are unchanged.
+near(elev(sunDir), 35.93, 0.01, 'Sun elevation')
 
 // ---- override parse ---------------------------------------------------
 const o = parseSpawnOverride('?spawn=1,0,0')

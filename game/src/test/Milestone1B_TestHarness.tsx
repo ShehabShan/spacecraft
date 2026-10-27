@@ -17,8 +17,8 @@
  *  AUTOMATED ACCEPTANCE (auto-runs ~0.75 s after mount; RE-RUN button):
  *   [T1] +60 d fast-forward: all 17 bodies match an INDEPENDENT closed-form
  *        reference (bit-matched expression shapes); Kepler solver residual
- *        ≤ 1e-12 rad over e ∈ {0, 0.2, 0.45, 0.72}; Kepler-3 ratio
- *        (T_p/T_e)² = (a_p/a_e)³ ≤ 1e-12; vis-viva speeds consistent.
+ *        ≤ 1e-12 rad over e ∈ {0, 0.2, 0.45, 0.72}; every period T = T_real/360
+ *        (ADR-015 time law) to ≤ 1e-12; vis-viva speeds consistent.
  *   [T2] ±60 d round trip from anchor 0 returns every body bit-identically
  *        (0 + D = D, D − D = 0 exactly); exact-restore from a non-zero
  *        anchor via saved-double setSimTime: also bit-identical.
@@ -59,6 +59,7 @@ import {
   wrapAngle,
 } from '../core/orbit/KeplerRail';
 import type { CelestialState } from '../core/orbit/types';
+import { realOrbitSeconds } from '../core/orbit/spinLaw';
 
 
 /* ---------------------------------------------------------------------------
@@ -424,29 +425,24 @@ function runSuite(): void {
       }
     }
   }
-  // Kepler's Third Law across all planets (single mu_sun):
-  // (T_p / T_e)^2 === (a_p / a_e)^3
-  const earth = RAIL.getState('earth');
-  const earthOrbit = earth !== null ? earth.config.orbit : null;
+  // ADR-015 time law (replaces the single-mu_sun Kepler-3 ratio, F3abbbbbb): every orbit
+  // period is T_game = T_real / 360, and muHost follows Kepler III from (a, T).
   let maxRatioErr = 0;
   let maxSpeedErr = 0;
-  if (earthOrbit !== null) {
-    for (let i = 0; i < BODIES.length; i++) {
-      const o = BODIES[i].config.orbit;
-      if (o === null || BODIES[i].config.parentId !== null) {
-        continue; // heliocentric planets only
-      }
-      const lhs = (o.T / earthOrbit.T) ** 2;
-      const rhs = (o.a / earthOrbit.a) ** 3;
-      const rel = Math.abs(lhs - rhs) / rhs;
-      if (rel > maxRatioErr) {
-        maxRatioErr = rel;
-      }
-      if (o.e === 0) {
-        const se = Math.abs(BODIES[i].orbitalSpeed - Math.sqrt(o.muHost / o.a));
-        if (se > maxSpeedErr) {
-          maxSpeedErr = se;
-        }
+  for (let i = 0; i < BODIES.length; i++) {
+    const o = BODIES[i].config.orbit;
+    if (o === null) {
+      continue;
+    }
+    const want = (realOrbitSeconds(BODIES[i].config.id) ?? 0) / 360;
+    const rel = Math.abs(o.T - want) / want;
+    if (rel > maxRatioErr) {
+      maxRatioErr = rel;
+    }
+    if (o.e === 0) {
+      const se = Math.abs(BODIES[i].orbitalSpeed - Math.sqrt(o.muHost / o.a));
+      if (se > maxSpeedErr) {
+        maxSpeedErr = se;
       }
     }
   }
@@ -461,7 +457,7 @@ function runSuite(): void {
       `17/17 bodies match the independent closed-form reference (max err ` +
       `${maxPosErr > 0 ? ` @ ${worstBody}` : ' — bit-exact'}); ` +
       `simTime = ${tJump} s exactly; Newton residual ≤ ${maxResidual.toExponential(1)} rad ` +
-      `over ${probeE.length * probeM.length} probes (e ≤ 0.72); Kepler-3 ratio dev ≤ ` +
+      `over ${probeE.length * probeM.length} probes (e ≤ 0.72); T = T_real/360 law dev ≤ ` +
       `${maxRatioErr.toExponential(1)}; vis-viva speed dev ≤ ${maxSpeedErr.toExponential(1)} m/s.`,
   };
 

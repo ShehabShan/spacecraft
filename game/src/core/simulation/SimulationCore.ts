@@ -105,7 +105,7 @@ export class SimulationCore {
    *  Negative values are a valid closed-form domain (reverse jumps past 0). */
   private _simTime = 0;
   /** Macro time scale (Spec 02.6). 0 = orbits paused; micro never pauses. */
-  private _macroTimeScale = 30;
+  private _macroTimeScale = 1;
   /** Closed-form celestial rails (topologically ordered). */
   private readonly _rail: KeplerRail;
   /** id -> celestial state (render-extract lookup for the adapter). */
