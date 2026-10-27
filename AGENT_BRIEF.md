@@ -32,6 +32,19 @@ Every session obeys §12 SESSION BUDGET and §13 GOAL & DECISION AUTHORITY.
 6. If the active task is **A1 (engine audit)**: §11 AUDIT MODE below, which
    overrides parts of §2, §3 and §8 for that task only.
 
+LEAN READ (Lead, 2026-10-27; binds every session). Read only what the steps above
+need. The process files are mostly history, and reading them in full costs ~25 OLU:
+- `notes/task.md`: the TRACKER header plus the ACTIVE task's row
+  (`grep -n '^| <task>' notes/task.md`). Skip DONE rows (the A1 row alone is ~10 KB)
+  and the TASK DEFINITIONS of tasks that are not active.
+- `docs/audit/U27c-fix-tasks.md`: the active task's §2 row only. Before the first
+  commit, also read the S2/S3 rows of its cluster in FINDINGS §4, as §2 requires.
+- `notes/STATE.md`: the bold NEXT ACTION paragraph and any RECON paragraph directly
+  under it, plus the last 3 SESSION LOG rows. Skip the "… DONE (session N …"
+  history paragraphs and every section below SESSION LOG. Check the APPROVAL LEDGER
+  by `grep` only, when a decision may already have been ruled.
+- Never `cat` a whole process file; use `sed -n`/`grep` ranges.
+
 ## 2. FILE MAP — what to read, what never to read
 - `game/` — THE GAME. Source of truth for all behavior, constants, structure.
 - `notes/task.md` + `docs/<Tn>-plan.md` + `notes/STATE.md` — the task system (§4).
@@ -203,6 +216,10 @@ suspected lost work, or deleting the Lead's work.
   requires `git ls-remote origin` before cutting a task branch. Why: a split
   F2b's NEXT ACTION lived only on its branch, `main` still said "cut from main",
   and a second session redid the work as a duplicate session 111.
+
+- 2026-10-27 Lean read (Lead, session 121): §1 gained the LEAN READ rule. Why:
+  sessions 120 and 121 each spent ~28 of 50 OLU on bootstrap reading (full tracker,
+  full STATE.md history) and could not start a unit. No other rule changed.
 
 ## 11. AUDIT MODE (binds only while the active task is A1)
 Why: the milestone specs were written by GLM 5.3 and the engine by GLM 5.3 Flash
