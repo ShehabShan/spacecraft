@@ -1,0 +1,8 @@
+RED   no-retrograde-flip
+RED   obliquity-not-applied
+RED   axis-map-unswapped
+RED   tidal-lock-off
+RED   mutual-lock-off
+RED   ratio-inverted
+RED   sun-uses-real-seconds
+baseline green; mutants red 7/7

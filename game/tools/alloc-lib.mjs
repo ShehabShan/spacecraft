@@ -67,7 +67,10 @@ export async function createInstrument({ bundleUrl, modOf }) {
   async function calibrate() {
     const ring = new Array(16)
     const ctlNoop = (n) => { let s = 0; for (let i = 0; i < n; i++) s += Math.sqrt(i); return s }
-    const ctlObj = (n) => { for (let i = 0; i < n; i++) ring[i & 15] = { x: i, y: i, z: i } }
+    // WHY (F3abbba, ADR-014): instrument-private keys. A shared {x,y,z} shape goes to double
+    // field representation once ANY double {x,y,z} exists in the isolate (spinLaw axis, F3abba),
+    // and then this integer control boxes 3 HeapNumbers: 48 → 96 B/iter, a false exit 2.
+    const ctlObj = (n) => { for (let i = 0; i < n; i++) ring[i & 15] = { calX: i, calY: i, calZ: i } }
     const ctlF64 = (n) => { for (let i = 0; i < n; i++) ring[i & 15] = new Float64Array(16) }
     for (let i = 0; i < 5; i++) { ctlNoop(1e5); ctlObj(1e5); ctlF64(1e4) }
     const pr = await sampled(() => { ctlNoop(2e5); ctlObj(2e5); ctlF64(2e4) })

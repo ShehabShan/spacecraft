@@ -124,7 +124,8 @@ const show = (tag, r) => {
 // ---- instrument calibration (known allocation rates)
 const ring = new Array(16)
 function ctlNoop(n) { let s = 0; for (let i = 0; i < n; i++) s += Math.sqrt(i); return s }
-function ctlObj(n) { for (let i = 0; i < n; i++) ring[i & 15] = { x: i, y: i, z: i } }
+// WHY (F3abbba, ADR-014): private keys keep the control off the game's shared {x,y,z} shape.
+function ctlObj(n) { for (let i = 0; i < n; i++) ring[i & 15] = { calX: i, calY: i, calZ: i } }
 function ctlF64(n) { for (let i = 0; i < n; i++) ring[i & 15] = new Float64Array(16) }
 for (let i = 0; i < 5; i++) { ctlNoop(1e5); ctlObj(1e5); ctlF64(1e4) }
 const cal = {}

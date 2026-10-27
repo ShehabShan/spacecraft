@@ -1,0 +1,15 @@
+{"id":"profile-pinned","pass":true,"evidence":{"drift":[]}}
+{"id":"jump-smooth-truth","pass":true,"evidence":{"landed":true,"airS":1.05,"truthS":1.0792279137620975,"westKcc":0.01920178493702456,"westTruth":0.020180760086354617,"errM":0.0009789751493300552,"finite":true,"closedFormFlatG":0.018011259115169185}}
+{"id":"jump-smooth-converges","pass":true,"evidence":{"err60":0.0009789751493300552,"err240":0.0002468215282256797}}
+{"id":"jump-smooth-zero-spin","pass":true,"evidence":{"landed":true,"airS":1,"truthS":1.019722627283613,"westKcc":0,"westTruth":0,"errM":0,"finite":true}}
+{"id":"jump-smooth-reversed","pass":true,"evidence":{"pos":0.01920178493702456,"neg":-0.01920178493702456}}
+{"id":"jump-real-truth","pass":true,"evidence":{"slopeDeg":6.6695958307244165,"landed":true,"airS":1.0666666666666667,"truthS":1.0863144763594743,"westKcc":-0.4526363229439627,"westTruth":-0.45964474315803067,"errM":0.009870782807431311,"finite":true}}
+{"id":"jump-real-converges","pass":true,"evidence":{"err60":0.009870782807431311,"err240":0.0015659890218183575}}
+{"id":"clearance-walk-corner","pass":true,"evidence":{"ticks":30000,"observed":30000,"grounded":30000,"air":0,"minClr":0.01999999998400881,"maxClrDev":1.737589586103816e-11,"bad":0,"pathM":4757.646197644969}}
+{"id":"frame-walk-corner","pass":true,"evidence":{"maxAbsErrM":9.382818876893886e-9}}
+{"id":"yaw-walk-corner","pass":true,"evidence":{"maxResidualDeg":0.015183417290776085,"worstResOverDelta2":0.2500005937552037,"bad":0,"boundK":0.5}}
+{"id":"clearance-walk-steep","pass":true,"evidence":{"ticks":6000,"observed":6000,"grounded":6000,"air":0,"minClr":0.01999999999709967,"maxClrDev":3.723705371827535e-12,"bad":0,"pathM":826.7393702272088}}
+{"id":"frame-walk-steep","pass":true,"evidence":{"maxAbsErrM":5.625004153456572e-10}}
+{"id":"yaw-walk-steep","pass":true,"evidence":{"maxResidualDeg":0.000048958057958317786,"worstResOverDelta2":0.24999999457871397,"bad":0,"boundK":0.5}}
+{"gate":{"passed":13,"total":13,"failed":[]}}
+{"productionSha256":"72b645cd390cad4ede2d3456d10361148f00af19f03fd6f9a515743f815ef0a1:57191926d2673f214bfcbdc1a7ff1033a602a8b1961351958eaf998e6c337270:54e21c9135dd38b245a1f89965c155c003c8cffb0198405824d3ba6b509a8647","unchanged":true}
