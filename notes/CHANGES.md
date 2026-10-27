@@ -10,6 +10,9 @@ applicable, code fixes proven by failing acceptance output.
 
 ---
 
+## 2026-10-27 — F2fcaba (session 131b): rebuilt m1f R2 gate, rows R2a + R2b
+- `game/src/test/M1fR2Gate.tsx` (new page `?page=m1fR2`), `game/src/main.tsx` (+1 static-map entry), `game/e2e/m1f-r2.spec.ts` (new), `game/tools/test-m1f-r2-gate.mjs` (new mutant self-test) · F2f/U27c §2 · why: the shipped m1f R2 row mixes the angular law with Sun visibility at an unchecked pose (ADR-019/020) · evidence `docs/audit/evidence/F2f/cab/` · ADR-021 (amended). No production code, shipped harness row or shipped spec changed.
+
 ## 2026-10-27 — F2fa (session 127): m1f R2 bisect
 - `game/tools/audit/f2fa-m1f-observe.mjs` (new, read-only observer), `f2fa-observe-both.sh`, `f2fa-r2-bisect.sh` · bisect A1-U01-1 · why: the shipped m1f spec's 240 s wait expires before `c0ae8bf` reaches a verdict on the bot VM (262 s) · evidence `docs/audit/evidence/F2f/a/` (first bad commit for R2 = `3057899`, confirmed) · ADR-018. No harness, spec or production code changed.
 

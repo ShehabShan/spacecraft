@@ -24,3 +24,9 @@ Each claim gets a pose where its premise holds, and the premise is checked. The 
 - `main.tsx` gains one static-map entry. The shipped harness and `e2e/m1f.spec.ts` are unchanged, and R5 stays waived.
 - Implementation is F2fcab. It may split further per §12, for example R2a/R2b first and R2c plus mutants second.
 - R1, R3, R4 and R5 rebuilds follow the same page-plus-spec pattern. Carry the R3 0-px silhouette flake into R3.
+
+## Amendment (session 131b, F2fcaba)
+- **R2a uses a pinned 8-body fixture, not the catalog.** The page feeds `SkyImpostorPool.setBody` pinned directions, θ and distances (Sun θ = 0.02 rad, planets 0.001–0.009 rad, gas giants kind 2) and checks the staged instances against the pinned literals: quad half-angle atan(half/D) and the `aDisk.x` edge attribute against θe = 1.06·θ + 0.0035, `aDisk.y` against θ, all < 1e-6 rad; staged direction < 1e-9 rad; staged D in [500, 9600] m. Why: the claim under test is the impostor staging law; booting SimulationCore and the catalog would add the rail code to the trust base without testing anything R2 claims. Catalog θ = asin(R/D) correctness belongs to the F3a scale-law gates.
+- **Direction error uses atan2(|u×d|, u·d).** acos of the dot product floors at about 2e-8 rad in f64, which is above the 1e-9 tolerance and failed the unmutated page.
+- **R2b checks two poses** (Sun centred, and 12° off-axis) so the coverage reference, a 128-gon of projected boundary rays, is exercised off the optical axis. Measured coverage is about 109% at both.
+- **Mutants are URL flags** on the same page: `?mut=theta` (θ×1.2 fed to the pool) and `?mut=pose` (staging origin 1,380 m off the camera, the F2fbba absolute-pose accident). R2c and its two mutants come in F2fcabb.
