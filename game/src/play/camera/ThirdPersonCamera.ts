@@ -55,6 +55,25 @@ export class ThirdPersonCamera {
     this.hasPrev = false;
   }
 
+  /** WHY (ADR-017, Lead 2026-10-27): the spawn view must put `target` (the
+   *  Earth) near the view axis. reset() keeps the harness 0.35 rad look-down,
+   *  which left the Earth 31.9° off axis; here the pitch is chosen so the
+   *  target sits camSpawnAimAbove above the axis. Zero allocation (respawn). */
+  frameToward(kcc: AstronautKCC, target: Vec3, targetDist: number, ctrl?: FirstPersonSink): void {
+    this.reset(kcc, target, ctrl);
+    const T = PLAY_TUNING, u = kcc.up, p = kcc.pLocal;
+    // WHY: target is a planet-centre direction; seen from the surface the Earth
+    // sits ~2.3° lower (parallax R/D at 1,365 m / 33 km), so aim at the
+    // topocentric vector target·dist − pLocal (planet frame, scalars only).
+    const tx = target.x * targetDist - p.x, ty = target.y * targetDist - p.y, tz = target.z * targetDist - p.z;
+    const l = Math.hypot(tx, ty, tz) || 1;
+    const s = (tx * u.x + ty * u.y + tz * u.z) / l;
+    const elev = Math.asin(s < -1 ? -1 : s > 1 ? 1 : s);
+    // view elevation = −pitch, so target − axis = elev + pitch.
+    const pt = T.camSpawnAimAbove - elev;
+    this.pitch = pt < T.camPitchMin ? T.camPitchMin : pt > T.camPitchMax ? T.camPitchMax : pt;
+  }
+
   /** Stage 3: parallel transport + orbit / pitch / zoom / V toggle. Consumes
    *  lookDY / zoomDelta always and lookDX in TP (in FP the controller reads
    *  lookDX at stage 4 as body yaw). Zero allocation. */

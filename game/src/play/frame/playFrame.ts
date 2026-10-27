@@ -85,7 +85,7 @@ export function createPlayFrame(w: MoonWorld, cam: ThirdPersonCamera, shell?: Pl
       if (input.respawnEdge) {
         // §9.3 respawn: KCC placement, then controller + camera reset; the
         // respawn frame runs dt = 0 (no catch-up ticks on the new pose).
-        w.respawnPlayer(); ctrl.reset(); cam.reset(kcc, w.earthDir, ctrl); clock.forceZero();
+        w.respawnPlayer(); ctrl.reset(); cam.frameToward(kcc, w.earthDir, w.earthDist, ctrl); clock.forceZero();
       }
       if (input.toggleHudEdge) st.toggleHud();
       // 3. camera pre-step. WHY (B7c decision): PLAYING only — input only

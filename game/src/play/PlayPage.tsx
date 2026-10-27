@@ -56,7 +56,7 @@ export default function PlayPage(): JSX.Element {
   const { world, input, onFrame } = useMemo(() => {
     const w = createMoonWorld({ spawnOverride: parseSpawnOverride(window.location.search) });
     const cam = new ThirdPersonCamera();
-    cam.reset(w.kcc, w.earthDir);
+    cam.frameToward(w.kcc, w.earthDir, w.earthDist);
     const inp = new InputState();
     const frame = createPlayFrame(w, cam, { input: inp, store: usePlayStore });
     // WHY (B7c decision): read-only test probe for tools/check-play-b7.mjs,

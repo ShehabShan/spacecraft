@@ -53,7 +53,7 @@ let lodCalls = 0
 const lodUpdate = w.lod.update.bind(w.lod)
 w.lod.update = (x, y, z) => { lodCalls++; lodUpdate(x, y, z) }
 const cam = new M.ThirdPersonCamera()
-cam.reset(w.kcc, w.earthDir)
+cam.frameToward(w.kcc, w.earthDir, w.earthDist); cam.pitchAtSpawn = cam.pitch
 const frame = M.createPlayFrame(w, cam)
 frame(1 / 60)
 
@@ -74,8 +74,12 @@ const fe = fwd.x * e.x + fwd.y * e.y + fwd.z * e.z
 ok(fe > 0, `Earth behind the camera (fwd·earth ${fe})`)
 const ef = new THREE.Vector3(w.earthMesh.position.x - d.x, w.earthMesh.position.y - d.y, w.earthMesh.position.z - d.z).normalize()
 const elAngle = Math.acos(Math.max(-1, Math.min(1, fwd.dot(ef)))) * 180 / Math.PI
-// WHY: F3abbbbbc (ADR-016) puts the spawn Earth 31.9° off axis; its disc half-angle there is ~7.3°, so the disc (not its centre) must be inside the 31° half-height.
-ok(elAngle < 31 + 7, `Earth ${elAngle.toFixed(1)}° off the view axis (FOV half-height 31° + disc half-angle ~7°)`)
+ok(elAngle < 31, `Earth ${elAngle.toFixed(1)}° off the view axis (FOV half-height 31°)`)
+// WHY (ADR-017, Lead 2026-10-27): the spawn view frames the Earth near the centre, camSpawnAimAbove above the axis.
+const aimDeg = T.camSpawnAimAbove * 180 / Math.PI
+ok(Math.abs(elAngle - aimDeg) < 1.5, `Earth ${elAngle.toFixed(2)}° off axis, aim ${aimDeg.toFixed(1)}° ± 1.5°`)
+const camUp = new THREE.Vector3(0, 1, 0).applyQuaternion(new THREE.Quaternion(d.qx, d.qy, d.qz, d.qw))
+ok(camUp.dot(ef) > 0, `Earth below the view axis (up·earth ${camUp.dot(ef)})`)
 ok(w.sky.bodies[0].active === true, 'Sun inactive')
 ok(lodCalls === 1 && fp.pumps === 1, `lod ${lodCalls} pump ${fp.pumps} after 1 frame`)
 for (let i = 0; i < 59; i++) frame(1 / 60)
@@ -107,7 +111,7 @@ const inp = { moveX: 0, moveY: 0, sprint: false, crouch: false, jumpPressed: fal
     this.respawnEdge = false; this.pauseEdge = false; this.toggleHudEdge = false }, exitLock() {} }
 const fp2 = fakePool(M.cfg.PLAY_POOL_OPTS.meshCount)
 const w2 = M.createMoonWorld({ spawnOverride: null, makePool: () => fp2 })
-const cam2 = new M.ThirdPersonCamera(); cam2.reset(w2.kcc, w2.earthDir)
+const cam2 = new M.ThirdPersonCamera(); cam2.frameToward(w2.kcc, w2.earthDir, w2.earthDist)
 const f2 = M.createPlayFrame(w2, cam2, { input: inp, store: { getState: () => st }, now: () => 0 })
 f2(1 / 60)
 ok(f2.lastTicks === 0, `first PLAYING frame ran ${f2.lastTicks} ticks (resume rule: 0)`)
@@ -145,6 +149,8 @@ inp.respawnEdge = true; f2(1 / 60)
 const sp = w2.spawnDir, al = Math.hypot(k2.absPos.x, k2.absPos.y, k2.absPos.z)
 const sdot = (k2.pLocal.x * sp.x + k2.pLocal.y * sp.y + k2.pLocal.z * sp.z) / Math.hypot(k2.pLocal.x, k2.pLocal.y, k2.pLocal.z)
 ok(f2.lastTicks === 0 && sdot > 0.999999 && !cam2.firstPerson, `respawn: ticks ${f2.lastTicks}, spawn·dir ${sdot}`)
+// WHY (ADR-017): respawn re-frames the Earth exactly as the first spawn did (same pitch).
+ok(Math.abs(cam2.pitch - cam.pitchAtSpawn) < 1e-12, `respawn pitch ${cam2.pitch} vs spawn ${cam.pitchAtSpawn}`)
 // zero-GC on the shell path (walking in a circle: W + steady orbit)
 let heap2 = NaN
 if (typeof globalThis.gc === 'function') {

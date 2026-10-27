@@ -50,6 +50,10 @@ export const PLAY_TUNING = {
   lookSens: 0.0022,          // rad/px — harness SENS (~654)
   camDistance: 7, camDistMin: 1.2, camDistMax: 12,       // harness cam.dist 7 (§9.4)
   camPitchMin: -1.2, camPitchMax: 1.2, camPitchDefault: 0.35, // harness cam.pitch 0.35
+  // WHY (ADR-017, Lead 2026-10-27): spawn/respawn frame the Earth this far
+  // above the view axis (13°): near the centre, its disc (~7.3° half-angle)
+  // clear of the helmet (~3.8° above the axis at a 7 m boom).
+  camSpawnAimAbove: (13 * Math.PI) / 180,
   camClearance: 0.4,         // m above terrain (harness 4-sample clearance)
   camPosTau: 0.08, camRotTau: 0, // §9.4: pivot lag; look is raw (0 reserved)
   pivotHeight: 1.4,          // m look-at height above the feet (§9.4)
