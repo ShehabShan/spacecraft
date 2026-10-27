@@ -6,7 +6,9 @@
 # the hunk text is not found (exit 3), never silently produce an unedited tree.
 # Usage: python3 tools/audit/f2fb-make-variant.py <worktree-dir> <variant>
 #   variants: F12sun (Sun suite pose only), F01 (sky observer +O only),
-#             F07 (LIVE fixed-step accumulator only), NONE (unedited 3057899)
+#             F07 (LIVE fixed-step accumulator only), NONE (unedited 3057899),
+#             F12sunUp / F12sunPos (one F-12 expression each), F12diag (F2fbba
+#             post-verdict A/B renders), F12ray (F12diag + F2fbbb sightline probe)
 import subprocess, sys, pathlib
 
 REPO = pathlib.Path(__file__).resolve().parents[3]
@@ -122,7 +124,79 @@ DIAG_CODE = DIAG_ANCHOR + """    {
         `masks near=${nm} mid=${mm} | nearVis=[${nearVis.join(' ')}] | midVis=[${midVis.join(' ')}]`);
     }
 """
+# F2fbbb diagnostic (F12diag + one more read-only block, still AFTER the R2
+# verdict). Why: F2fbba showed near-pass terrain hides the Sun at the
+# render-local pose although the Sun is +33 deg above the radial horizon. This
+# block decides between "real occlusion" and "frame/pose bug": (1) does the
+# rendered spinGroup match spinQuatInto(kcc.spinPhase) and -O at readback time;
+# (2) analytic heightfield march along camera->Sun, in the spin-correct planet
+# frame and (counterfactual) unspun; (3) terrain horizon elevation toward the
+# Sun azimuth; (4) THREE.Raycaster against the actual terrain meshes; (5) camera
+# and astronaut clearance above the heightfield.
+RAY_ANCHOR = "      dgLocal(); RIG.poseOverride = null;\n"
+RAY_CODE = RAY_ANCHOR + """      {
+        const qNow = { x: 0, y: 0, z: 0, w: 1 } as Quat;
+        spinQuatInto(kcc.spinPhase, qNow);
+        const sg = spinGroup.quaternion, oR = core.getOrigin();
+        const qDot = Math.abs(qNow.x * sg.x + qNow.y * sg.y + qNow.z * sg.z + qNow.w * sg.w);
+        const spinErrDeg = 2 * Math.acos(Math.min(1, qDot)) * 180 / Math.PI;
+        const posErr = Math.hypot(spinGroup.position.x + oR.x, spinGroup.position.y + oR.y, spinGroup.position.z + oR.z);
+        const rv = { x: 0, y: 0, z: 0 };
+        const clr = (x: number, y: number, z: number, spun: boolean): number => {
+          const r = Math.hypot(x, y, z) || 1;
+          if (spun) rotateByQuatConjInto(qNow, x / r, y / r, z / r, rv); else { rv.x = x / r; rv.y = y / r; rv.z = z / r; }
+          return r - (R + terrainHeight(rv.x, rv.y, rv.z));
+        };
+        const march = (spun: boolean): string => {
+          let minC = Infinity, minT = 0, firstHit = -1;
+          for (let t = 0; t <= 3000; t += 0.5) {
+            const c = clr(drv.x + sunGeom.dirX * t, drv.y + sunGeom.dirY * t, drv.z + sunGeom.dirZ * t, spun);
+            if (c < minC) { minC = c; minT = t; }
+            if (c < 0 && firstHit < 0) firstHit = t;
+          }
+          return `cam=${clr(drv.x, drv.y, drv.z, spun).toFixed(2)}m min=${minC.toFixed(2)}m@${minT}m firstHit=${firstHit}m`;
+        };
+        const ur = Math.hypot(drv.x, drv.y, drv.z) || 1;
+        const ux = drv.x / ur, uy = drv.y / ur, uz = drv.z / ur;
+        const sd = sunGeom.dirX * ux + sunGeom.dirY * uy + sunGeom.dirZ * uz;
+        let hx = sunGeom.dirX - sd * ux, hy = sunGeom.dirY - sd * uy, hz = sunGeom.dirZ - sd * uz;
+        const hl = Math.hypot(hx, hy, hz) || 1; hx /= hl; hy /= hl; hz /= hl;
+        const horizon = (spun: boolean): string => {
+          let maxEl = -90, atS = 0, atH = 0;
+          for (let s = 1; s <= 3000; s += 1) {
+            const px = drv.x + hx * s, py = drv.y + hy * s, pz = drv.z + hz * s;
+            const pr = Math.hypot(px, py, pz);
+            if (spun) rotateByQuatConjInto(qNow, px / pr, py / pr, pz / pr, rv); else { rv.x = px / pr; rv.y = py / pr; rv.z = pz / pr; }
+            const h = terrainHeight(rv.x, rv.y, rv.z);
+            const k = (R + h) / pr;
+            const ex = px * k - drv.x, ey = py * k - drv.y, ez = pz * k - drv.z;
+            const el = Math.asin(Math.max(-1, Math.min(1, (ex * ux + ey * uy + ez * uz) / (Math.hypot(ex, ey, ez) || 1)))) * 180 / Math.PI;
+            if (el > maxEl) { maxEl = el; atS = s; atH = h; }
+          }
+          return `maxEl=${maxEl.toFixed(2)}deg@${atS}m(h=${atH.toFixed(1)}m)`;
+        };
+        sceneRoot.updateMatrixWorld(true);
+        const rc = new THREE.Raycaster();
+        rc.layers.mask = 0xffffffff;
+        rc.near = 0; rc.far = 5000;
+        rc.set(new THREE.Vector3(sunPose.x, sunPose.y, sunPose.z), new THREE.Vector3(sunGeom.dirX, sunGeom.dirY, sunGeom.dirZ).normalize());
+        const hits = rc.intersectObject(spinGroup, true);
+        let hitInfo = 'none';
+        if (hits.length > 0) {
+          const h0 = hits[0], p = h0.point, op = h0.object.position;
+          hitInfo = `d=${h0.distance.toFixed(2)}m obj=${h0.object.name || h0.object.type}@(${op.x.toFixed(0)},${op.y.toFixed(0)},${op.z.toFixed(0)}) ` +
+            `hitClrSpun=${clr(p.x + oR.x, p.y + oR.y, p.z + oR.z, true).toFixed(2)}m hitClrUnspun=${clr(p.x + oR.x, p.y + oR.y, p.z + oR.z, false).toFixed(2)}m`;
+        }
+        const ap = kcc.absPos;
+        const boom = Math.hypot(drv.x - ap.x, drv.y - ap.y, drv.z - ap.z);
+        console.log(`[F2fbbb-ray] fp=${camFirstPerson} spinPhase=${kcc.spinPhase.toFixed(6)} spinGroupVsNow=${spinErrDeg.toExponential(2)}deg spinGroupPosErr=${posErr.toExponential(2)}m ` +
+          `boom=${boom.toFixed(2)}m astroClrSpun=${clr(ap.x, ap.y, ap.z, true).toFixed(2)}m sunEl=${(Math.asin(sd) * 180 / Math.PI).toFixed(3)}deg | ` +
+          `march spun: ${march(true)} | march unspun: ${march(false)} | horizon spun: ${horizon(true)} | horizon unspun: ${horizon(false)} | ` +
+          `meshHits=${hits.length} first: ${hitInfo}`);
+      }
+"""
 VARIANTS = {'F12sun': [(F12SUN_NEW, F12SUN_OLD)], 'F01': [(F01_NEW, F01_OLD)],
+            'F12ray': [(DIAG_IMPORT_NEW, DIAG_IMPORT_OLD), (DIAG_ANCHOR, DIAG_CODE), (RAY_ANCHOR, RAY_CODE)],
             'F12sunUp': [(F12SUN_NEW, F12SUN_UPONLY)], 'F12sunPos': [(F12SUN_NEW, F12SUN_POSONLY)],
             'F07': [(F07_NEW, F07_OLD)], 'NONE': [],
             'F12diag': [(DIAG_IMPORT_NEW, DIAG_IMPORT_OLD), (DIAG_ANCHOR, DIAG_CODE)]}

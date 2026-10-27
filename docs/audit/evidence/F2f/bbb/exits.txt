@@ -1,0 +1,6 @@
+F2fbbb (session 130) exit codes, unpiped:
+f2fb-make-variant.py /workspace/wt-ray F12ray  -> MK_EXIT=0
+tsc --noEmit (worktree 3057899 + F12ray)        -> TSC_EXIT=0
+f2fa-m1f-observe.mjs run 1 (port 4181)           -> OBS_EXIT=0 (verdict FAILED after 240.2 s; badges PASS,FAIL,FAIL,PASS,FAIL; R3 = known 0-px flake)
+f2fa-m1f-observe.mjs run 2 (port 4182)           -> OBS_EXIT=0 (verdict FAILED after 238.7 s; badges PASS,FAIL,PASS,PASS,FAIL)
+R5 FAIL is waived (brief §8). OBS_EXIT=0 means "verdict captured", not "gate passed".

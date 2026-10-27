@@ -1411,3 +1411,5 @@ Observations (NO change made — recorded for the Lead):
 
 - 2026-10-27 · F2fba · `game/tools/audit/f2fb-make-variant.py` (new, audit tool only; no game code changed) · builds a 3057899 worktree with one batch hunk reverted to its c0ae8bf text · attribute the m1f R2 regression (A1-U01-1) · R2 cause = F-12 Sun-pose position `drv − O`; up vector innocent; 6 observer runs `docs/audit/evidence/F2f/b/` · ADR-018 method, session 128
 - 2026-10-27 · F2fbba · game/tools/audit/f2fb-make-variant.py · new `F12diag` variant: diagnostic-only A/B renders after the m1f R2 verdict (layer masks, group visibility, absolute pose) · find what hides the Sun at the render-local pose · docs/audit/evidence/F2f/bb/ (2 runs, observer exit 0) · ADR-019
+
+- 2026-10-27 · F2f (F2fbbb, session 130) · `game/tools/audit/f2fb-make-variant.py` · new variant `F12ray` (F12diag + a read-only post-verdict sightline probe: spin-law check, heightfield march, Sun-azimuth horizon, Raycaster, boom clearance) · to decide whether the R2(b) terrain occlusion is a frame bug or real · evidence `docs/audit/evidence/F2f/bbb/` (×2 identical: horizon 61° > Sun 33°, spinGroup error 0) · ADR-020
