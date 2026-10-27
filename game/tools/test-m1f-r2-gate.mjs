@@ -6,9 +6,12 @@ import { chromium } from 'playwright'
 
 const PORT = '4182'
 const CASES = [
-  { mut: '', expect: { 'R2a angular law': 'PASS', 'R2b far-pass Sun footprint': 'PASS' }, verdict: 'PASSED' },
+  { mut: '', expect: { 'R2a angular law': 'PASS', 'R2b far-pass Sun footprint': 'PASS', 'R2c composite Sun visibility': 'PASS' }, verdict: 'PASSED' },
   { mut: 'theta', expect: { 'R2a angular law': 'FAIL', 'R2b far-pass Sun footprint': 'FAIL' }, verdict: 'FAILED' },
   { mut: 'pose', expect: { 'R2b far-pass Sun footprint': 'FAIL' }, verdict: 'FAILED' },
+  // F2fcabb: R2c mutants. horizon = clearance proof bypassed at an occluded site; noray = raycast skipped, camera clamped into the mesh
+  { mut: 'horizon', expect: { 'R2c composite Sun visibility': 'FAIL' }, verdict: 'FAILED' },
+  { mut: 'noray', expect: { 'R2c composite Sun visibility': 'FAIL' }, verdict: 'FAILED' },
 ]
 const b = spawnSync('npx', ['vite', 'build'], { encoding: 'utf8' })
 console.log(`build EXIT=${b.status}`)

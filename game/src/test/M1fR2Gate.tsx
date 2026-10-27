@@ -13,6 +13,8 @@ import { useEffect, useState } from 'react';
 import * as THREE from 'three';
 import { SkyImpostorPool } from '../render/SkyImpostorPool';
 import { RIG, executePasses, rigCamNear, rigCamMid, rigCamFar } from '../render/MultiCameraRig';
+import { TerrainMeshPool } from '../render/TerrainMeshPool';
+import { initTerrainField, terrainHeight, chunkOriginInto, type TerrainParams } from '../core/terrain/terrainField';
 
 const W = 1280, H = 720, FOV = 62;
 const EDGE_SCALE = 1.06, EDGE_MARGIN = 0.0035;   // pinned edge law (change only with an ADR)
@@ -21,6 +23,21 @@ const MUT = new URLSearchParams(window.location.search).get('mut') ?? '';
 type Row = { pass: boolean; detail: string };
 type V3 = { x: number; y: number; z: number };
 type Q = { x: number; y: number; z: number; w: number };
+
+// R2c fixture moon: the M1F harness literals (pinned here, not imported from the harness under audit).
+// WHY (F2fcabb, ADR-021): the composite claim needs real terrain, so R2c loads all 96 level-2 chunks
+// through TerrainMeshPool. The moon frame IS the render frame (identity spin), so the
+// "spin-correct" horizon frame of ADR-021 is trivially the frame the mesh is drawn in.
+const MOON: TerrainParams = {
+  name: 'm1fR2 fixture moon', radius: 1364.5, seed: 20240119,
+  continentFreq: 2.3, continentAmp: 95, maskFreq: 3.7,
+  mountainFreq: 6.5, mountainAmp: 230, detailFreq: 22, detailAmp: 16,
+};
+initTerrainField(MOON);
+const CHUNK_LEVEL = 2;                                   // 6 faces × 4 × 4 = 96 chunks = pool size
+const RAD = Math.PI / 180;
+const SUN_ELEV = 35 * RAD, OCC_ELEV = 10 * RAD, MARGIN = 2 * RAD;
+const BASE_H = 2, RAISE_STEP = 5, RAISE_MAX = 200, MARCH = 3000, CLAMP = 0.3;
 
 const unit = (x: number, y: number, z: number): V3 => { const l = Math.hypot(x, y, z); return { x: x / l, y: y / l, z: z / l }; };
 // Pinned fixture: id, kind (0 planet, 1 sun, 2 gas giant), dir, θ (rad), true distance, colour.
@@ -68,7 +85,104 @@ function idealArea(q: Q, d: V3, th: number): number {
   return Math.abs(A) / 2;
 }
 
-function runGate(gl: THREE.WebGLRenderer): Array<[string, Row]> {
+const dot = (a: V3, b: V3): number => a.x * b.x + a.y * b.y + a.z * b.z;
+const scale = (a: V3, k: number): V3 => ({ x: a.x * k, y: a.y * k, z: a.z * k });
+const add = (a: V3, b: V3): V3 => ({ x: a.x + b.x, y: a.y + b.y, z: a.z + b.z });
+const deg = (r: number): string => (r / RAD).toFixed(2);
+const surf = (s: V3): number => MOON.radius + terrainHeight(s.x, s.y, s.z);
+/** Unit site direction where the Sun (direction d) stands `e` above the radial horizon, azimuth φ. */
+function siteDir(d: V3, e: number, phi: number): V3 {
+  const a = Math.abs(d.x) < 0.9 ? unit(0, d.z, -d.y) : unit(-d.z, 0, d.x);
+  const b = { x: d.y * a.z - d.z * a.y, y: d.z * a.x - d.x * a.z, z: d.x * a.y - d.y * a.x };
+  const c = Math.cos(phi), sn = Math.sin(phi), ce = Math.cos(e), se = Math.sin(e);
+  return unit(d.x * se + (a.x * c + b.x * sn) * ce, d.y * se + (a.y * c + b.y * sn) * ce, d.z * se + (a.z * c + b.z * sn) * ce);
+}
+/** Analytic terrain horizon elevation (rad) seen from planet-relative p in the vertical plane of d:
+ *  1 m steps along the sightline, surface point radially under each step, up to MARCH m. */
+function horizonElev(p: V3, d: V3): number {
+  const u = unit(p.x, p.y, p.z);
+  let best = -Math.PI / 2;
+  for (let k = 1; k <= MARCH; k++) {
+    const q = add(p, scale(d, k)), qn = Math.hypot(q.x, q.y, q.z);
+    if (qn > MOON.radius + 420 && dot(q, d) > 0) break;  // above all terrain and climbing
+    const t = scale(q, surf(scale(q, 1 / qn)) / qn), v = { x: t.x - p.x, y: t.y - p.y, z: t.z - p.z };
+    const e = Math.asin(dot(v, u) / Math.hypot(v.x, v.y, v.z));
+    if (e > best) best = e;
+  }
+  return best;
+}
+type Footprint = (q: Q, label: string, cam: V3, composite: boolean) => { pass: boolean; text: string };
+/** R2c: all three passes with terrain, at a pose whose Sun sightline is PROVEN clear first (ADR-020/021). */
+async function compositeRow(scene: THREE.Scene, footprint: Footprint, d: V3): Promise<Row> {
+  const tg = new THREE.Group();
+  scene.add(tg);
+  const pool = new TerrainMeshPool({ meshCount: 96, workerCount: 2, workerPoolSets: 96, maxBatch: 6, inFlightPerWorker: 12, params: MOON });
+  pool.attach(tg as unknown as THREE.Scene);
+  try {
+    const o = { x: 0, y: 0, z: 0 };
+    for (let f = 0; f < 6; f++) for (let ix = 0; ix < 4; ix++) for (let iy = 0; iy < 4; iy++) {
+      chunkOriginInto(f, CHUNK_LEVEL, ix, iy, o);
+      if (pool.acquire(f, CHUNK_LEVEL, ix, iy, o.x, o.y, o.z) < 0) return { pass: false, detail: 'terrain pool full' };
+    }
+    const t0 = performance.now();
+    while (pool.activeCount() < 96) {
+      pool.pump();
+      if (performance.now() - t0 > 30_000) return { pass: false, detail: `terrain load timeout (${pool.activeCount()}/96 chunks)` };
+      await new Promise((r) => setTimeout(r, 16));
+    }
+    const meshes = pool.records.filter((r) => r.state === 2).map((r) => r.mesh);
+    const rc = new THREE.Raycaster();
+    const firstHit = (from: V3, dir: V3, far: number): number => {
+      rc.set(new THREE.Vector3(from.x, from.y, from.z), new THREE.Vector3(dir.x, dir.y, dir.z));
+      rc.near = 0; rc.far = far;
+      const h = rc.intersectObjects(meshes, false);   // DoubleSide: a camera under the mesh hits its back face
+      return h.length > 0 ? h[0].distance : -1;
+    };
+    const occ = MUT === 'horizon';
+    let s = siteDir(d, SUN_ELEV, 0), occHz = NaN;
+    if (occ) {   // mutant: low Sun, the most occluded of 24 azimuths, clearance proof bypassed
+      let best = -9;
+      for (let k = 0; k < 24; k++) {
+        const c = siteDir(d, OCC_ELEV, (2 * Math.PI * k) / 24), z = horizonElev(scale(c, surf(c) + BASE_H), d);
+        if (z > best) { best = z; s = c; }
+      }
+      occHz = best;
+    }
+    const g = surf(s);
+    tg.position.set(-s.x * g, -s.y * g, -s.z * g);    // site ground at the render origin (floating origin)
+    tg.updateMatrixWorld(true);
+    const sunE = Math.asin(dot(s, d));
+    let H = NaN, hz = NaN, note = '', tries = 0;
+    if (MUT === 'noray') {   // mutant: raycast skipped, camera clamped into the mesh, no raise
+      const dn = firstHit(scale(s, 600), scale(s, -1), 1200);
+      const meshH = 600 - dn;
+      tries = 1; hz = horizonElev(scale(s, g + meshH - CLAMP), d);
+      note = `raycast skipped; camera clamped ${CLAMP} m under the mesh (mesh ${meshH.toFixed(2)} m above analytic ground)`;
+      if (dn >= 0 && hz <= sunE - MARGIN) H = meshH - CLAMP;
+    } else if (occ) {
+      tries = 1; hz = occHz; H = BASE_H; note = 'clearance proof bypassed';
+    } else {
+      for (let h = BASE_H; h <= BASE_H + RAISE_MAX; h += RAISE_STEP) {
+        tries++;
+        hz = horizonElev(scale(s, g + h), d);
+        if (hz > sunE - MARGIN) { note = `last reject: horizon ${deg(hz)}°`; continue; }
+        const hit = firstHit(scale(s, h), d, MARCH);
+        if (hit >= 0) { note = `last reject: mesh hit at ${hit.toFixed(2)} m`; continue; }
+        H = h; note = 'horizon march + mesh raycast clear'; break;
+      }
+    }
+    const where = `Sun elev ${deg(sunE)}°, terrain horizon ${deg(hz)}° (margin ≥ 2°)`;
+    if (!Number.isFinite(H)) return { pass: false, detail: `sightline not clear after ${tries} pose(s), raise ≤ ${RAISE_MAX} m: ${where}; ${note}` };
+    const cam = scale(s, H);
+    const fp = footprint(lookQuat(cam, add(cam, d), s), 'composite', cam, true);
+    return { pass: fp.pass, detail: `camera ${H.toFixed(2)} m above analytic ground after ${tries} pose(s) (${note}); ${where}; ${fp.text} (tol ±15%, 1.5 px)` };
+  } finally {
+    pool.disposeAll();
+    scene.remove(tg);
+  }
+}
+
+async function runGate(gl: THREE.WebGLRenderer): Promise<Array<[string, Row]>> {
   const scene = new THREE.Scene();
   const sky = new SkyImpostorPool(0);
   scene.add(sky.mesh);
@@ -80,16 +194,16 @@ function runGate(gl: THREE.WebGLRenderer): Array<[string, Row]> {
   const up = unit(0.05, 1, 0.1);
   const sun = FIX[0];
 
-  const stage = (q: Q): void => {
+  const stage = (q: Q, cam: V3 = drv): void => {
     const off = MUT === 'pose' ? 1380 : 0;
     const sc = rotConj(q, sun.d);
-    sky.update(drv.x + off, drv.y, drv.z, q.x, q.y, q.z, q.w, sc.x, sc.y, sc.z);
+    sky.update(cam.x + off, cam.y, cam.z, q.x, q.y, q.z, q.w, sc.x, sc.y, sc.z);
   };
-  const footprint = (q: Q, label: string): { pass: boolean; text: string } => {
-    stage(q);
-    RIG.poseOverride = { x: drv.x, y: drv.y, z: drv.z, qx: q.x, qy: q.y, qz: q.z, qw: q.w };
+  const footprint = (q: Q, label: string, cam: V3 = drv, composite = false): { pass: boolean; text: string } => {
+    stage(q, cam);
+    RIG.poseOverride = { x: cam.x, y: cam.y, z: cam.z, qx: q.x, qy: q.y, qz: q.z, qw: q.w };
     const nm = rigCamNear.layers.mask, mm = rigCamMid.layers.mask;
-    rigCamNear.layers.mask = 0; rigCamMid.layers.mask = 0;          // FAR pass only (ADR-019)
+    if (!composite) { rigCamNear.layers.mask = 0; rigCamMid.layers.mask = 0; }   // FAR pass only (ADR-019); R2c draws all three
     gl.setRenderTarget(rt); executePasses(gl, scene); gl.setRenderTarget(null);
     rigCamNear.layers.mask = nm; rigCamMid.layers.mask = mm; RIG.poseOverride = null;
     gl.readRenderTargetPixels(rt, 0, 0, W, H, buf);
@@ -136,8 +250,9 @@ function runGate(gl: THREE.WebGLRenderer): Array<[string, Row]> {
   const qB = lookQuat(drv, { x: drv.x + sun.d.x + 0.21 * perp.x, y: drv.y + sun.d.y, z: drv.z + sun.d.z + 0.21 * perp.z }, up);
   const fa = footprint(qA, 'centred'), fb = footprint(qB, 'off-axis');
   const r2b: Row = { pass: fa.pass && fb.pass, detail: `${fa.text}; ${fb.text} (tol ±15%, 1.5 px)` };
+  const r2c = await compositeRow(scene, footprint, sun.d);
   rt.dispose();
-  return [['R2a angular law', r2a], ['R2b far-pass Sun footprint', r2b]];
+  return [['R2a angular law', r2a], ['R2b far-pass Sun footprint', r2b], ['R2c composite Sun visibility', r2c]];
 }
 
 export default function M1fR2Gate() {
@@ -146,14 +261,14 @@ export default function M1fR2Gate() {
     const canvas = document.createElement('canvas');
     const gl = new THREE.WebGLRenderer({ canvas, antialias: false });
     gl.setPixelRatio(1); gl.setSize(W, H, false);
-    try {
-      const res = runGate(gl);
+    void (async () => { try {
+      const res = await runGate(gl);
       setRows(res);
       for (const [k, r] of res) console.log(`[M1fR2Gate] ${k}: ${r.pass ? 'PASS' : 'FAIL'} — ${r.detail}`);
       console.log(`[M1fR2Gate] acceptance ${res.every((e) => e[1].pass) ? 'PASSED' : 'FAILED'}${MUT ? ` (mut=${MUT})` : ''}`);
     } catch (e) {
       console.log(`[M1fR2Gate] acceptance FAILED (exception ${String(e)})`);
-    }
+    } })();
   }, []);
   return (
     <div style={{ fontFamily: 'monospace', padding: 16 }}>
