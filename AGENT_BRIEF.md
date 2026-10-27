@@ -148,6 +148,10 @@ The engine is unusual BY DESIGN. When code looks odd, assume there is a reason
   - NEXT: the next step;
   - VERIFIED: commands + observed results; exit codes UNPIPED — a "clean" claim
     requires an observed exit 0.
+- PUSH AUTHORITY (Lead, 2026-10-27; APPROVAL LEDGER): push verified commits
+  without asking, every time. The same holds for the §4 fast-forward into `main`
+  unless NEXT ACTION or the task row says to wait for the Lead. Push through the
+  `__github` integration proxy (STATE.md SESSION LOG row 129 has the command).
 - Never amend pushed commits; never force-push; never stage `Design_specs/` or
   `Milestone/`.
 
