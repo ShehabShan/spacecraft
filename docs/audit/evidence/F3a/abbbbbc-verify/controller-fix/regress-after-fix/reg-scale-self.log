@@ -1,0 +1,13 @@
+PASS baseline-green 11/11
+PASS time-scale-x12-consistent-mu red: time-law,host-mu-kepler (must: time-law)
+PASS radius-linear red: earth-angle-kept,radius-law,clearances (must: radius-law)
+PASS distance-q-0.5 red: earth-angle-kept,distance-law,host-mu-kepler,clearances (must: distance-law)
+PASS mars-mercury-swapped red: radius-law,radius-order (must: radius-law,radius-order)
+PASS muHost-x1.01 red: host-mu-kepler (must: host-mu-kepler)
+PASS gravityRange-5R red: gravity-portal (must: gravity-portal)
+PASS portal-floor-60000 red: gravity-portal (must: gravity-portal)
+PASS io-inside-jupiter red: distance-law,host-mu-kepler,clearances (must: distance-law,clearances)
+PASS moon-orbit-x2 red: earth-angle-kept,distance-law,host-mu-kepler (must: earth-angle-kept,distance-law)
+PASS q-0.5-constant red: constants (must: constants)
+PASS S-30 red: constants (must: constants)
+SELF-TEST PASS 12/12

@@ -376,6 +376,9 @@ function script(hz) {
   console.log(`[test-play-controller] info: rim slope ${bestS.toFixed(2)} m/5 m, orbit ${orbitFrames} frames, min clearance ${minClear.toFixed(3)} m, min boom ${minBoom.toFixed(3)} m, compressed ${cut} frames`)
   // Zero-GC: camera pre/post steps over 10k frames
   if (globalThis.gc) {
+    // WHY (F3a follow-up 5, session 125): without a warm-up the delta caught one-off JIT/IC tiering (+66..122 KB,
+    // not scaling with frames: cold 50k ~ cold 10k), failing ~9/14 runs. Same 2000-frame warm-up as the zero-GC check above.
+    for (let i = 0; i < 2000; i++) { ci.lookDX = 3; ci.lookDY = (i & 1) ? 2 : -2; r.cam.preStep(r.kcc, ci, r.ctrl); r.cam.poseInto(r.kcc, 1 / 60) }
     gc(); const h0m = process.memoryUsage().heapUsed
     for (let i = 0; i < 10000; i++) { ci.lookDX = 3; ci.lookDY = (i & 1) ? 2 : -2; r.cam.preStep(r.kcc, ci, r.ctrl); r.cam.poseInto(r.kcc, 1 / 60) }
     gc(); const dh = process.memoryUsage().heapUsed - h0m
