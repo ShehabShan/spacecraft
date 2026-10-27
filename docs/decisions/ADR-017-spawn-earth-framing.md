@@ -1,6 +1,6 @@
 # ADR-017 — Spawn view frames the Earth near the centre (F3a-follow-up 2)
 
-**Status:** accepted (session 126, 2026-10-27). Lead ruling 2026-10-27 (APPROVAL LEDGER): "re-pin so Earth sits near the centre of the view".
+**Status:** accepted (session 126, 2026-10-27). Lead ruling 2026-10-27 (APPROVAL LEDGER): "re-pin so Earth sits near the centre of the view". Look and feel confirmed by the Lead 2026-10-27 (APPROVAL LEDGER): keep the resulting near-level opening shot.
 
 ## Context
 After ADR-016 gave the Moon its real orbit elements, the t=0 Moon→Earth direction moved. At the deterministic Earthrise spawn the Earth stands 14.35° above the horizon (centre direction; 14.15° from the KCC up, ~12° topocentric). The camera reset used the harness look-down pitch 0.35 rad (20°), so the Earth sat 31.93° off the view axis: at the edge of the 62° FOV (half-height 31°). F3abbbbbc loosened `test-play-frame.mjs` to `< 31 + 7` to keep it green.
