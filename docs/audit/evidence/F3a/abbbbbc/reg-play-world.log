@@ -1,0 +1,6 @@
+[test-play-world] info: KCC r 1348.637 m (surface 1362.189), resident 94, within 300 m 18, near 95 mid 1 impostors 9, heap delta 10464 B
+[test-play-world] FAIL 23/27
+  - spawn pin: got {"x":0.8349753337306719,"y":-0.07279905191367053,"z":0.5454507219738775}
+  - KCC direction off spawn by 0.6532462599713073
+  - KCC radius 1348.636614498094 vs surface 1362.188641081617
+  - residentAround after warm-up = 0.6666666666666666

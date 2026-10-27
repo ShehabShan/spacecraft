@@ -314,6 +314,32 @@ function maybePublishTelemetry(nowMs: number): void {
  * ------------------------------------------------------------------------- */
 
 
+/* WHY (F3abbbbbc, ADR-016): catalog orbits are real ellipses, so the reference solves Kepler's
+ * equation by its OWN bisection (monotone f(E) = E - e sin E - M), not the rail's Newton solver. */
+function refSolveE(M: number, e: number): number {
+  let lo = M - 1;
+  let hi = M + 1;
+  for (let k = 0; k < 200; k++) {
+    const mid = 0.5 * (lo + hi);
+    if (mid - e * Math.sin(mid) - M < 0) {
+      lo = mid;
+    } else {
+      hi = mid;
+    }
+  }
+  return 0.5 * (lo + hi);
+}
+
+/** Reference radius and true anomaly of an orbit at time t (independent of the rail). */
+function refRadiusAndNu(o: NonNullable<CelestialState['config']['orbit']>, t: number): { r: number; nu: number } {
+  const E = refSolveE(wrapAngle(o.M0 + o.n * t), o.e);
+  return {
+    r: o.a * (1 - o.e * Math.cos(E)),
+    nu: 2 * Math.atan2(Math.sqrt(1 + o.e) * Math.sin(E / 2), Math.sqrt(1 - o.e) * Math.cos(E / 2)),
+  };
+}
+
+
 function referencePosition(
   state: CelestialState,
   t: number,
@@ -331,8 +357,9 @@ function referencePosition(
     return;
   }
   const M = wrapAngle(o.M0 + o.n * t);
-  const px = o.a * (Math.cos(M) - o.e);
-  const py = state.semiMinor * Math.sin(M);
+  const E = refSolveE(M, o.e);
+  const px = o.a * (Math.cos(E) - o.e);
+  const py = o.a * Math.sqrt(1 - o.e * o.e) * Math.sin(E);
   const P = state.basisP;
   const Q = state.basisQ;
   ref[i3] = parentX + (px * P.x + py * Q.x);
@@ -370,7 +397,8 @@ function maxDiff(a: Float64Array, b: Float64Array): number {
  * ------------------------------------------------------------------------- */
 
 
-const TOL_POS = 1e-9;        // m
+const TOL_POS = 1e-9;        // m (rail vs rail: bit-exact round trips)
+const TOL_POS_REF = 2e-8;    // m: rail Newton vs reference bisection on real ellipses
 const TOL_RESIDUAL = 1e-12;  // rad
 const TOL_RATIO = 1e-12;     // relative
 const TOL_SPEED = 1e-6;      // m/s
@@ -411,7 +439,7 @@ function runSuite(): void {
       worstBody = s.config.name;
     }
   }
-  // Elliptical solver teeth (catalog orbits are circular; probe the solver).
+  // Elliptical solver teeth (probe the solver beyond catalog eccentricities).
   let maxResidual = 0;
   const probeM = [-3.0, -2.1, -1.2, -0.4, -0.02, 0, 0.02, 0.4, 1.2, 2.1, 3.0];
   const probeE = [0, 0.2, 0.45, 0.72];
@@ -449,7 +477,7 @@ function runSuite(): void {
   results['closed-form'] = {
     pass:
       tJump === JUMP_DAYS * DAY_SECONDS &&
-      maxPosErr <= TOL_POS &&
+      maxPosErr <= TOL_POS_REF &&
       maxResidual <= TOL_RESIDUAL &&
       maxRatioErr <= TOL_RATIO &&
       maxSpeedErr <= TOL_SPEED,
@@ -496,6 +524,8 @@ function runSuite(): void {
   const B = capturePositions();
   const D = JUMP_DAYS * DAY_SECONDS;
   let moonCount = 0;
+  const hostA = new Float64Array(BODIES.length * 3);
+  const hostB = new Float64Array(BODIES.length * 3);
   let maxRadiusDev = 0;
   let maxPhaseDev = 0;
   let maxDispDev = 0;
@@ -510,12 +540,12 @@ function runSuite(): void {
     moonNames += `{s.config.name}`;
     const p3 = s.parentIndex * 3;
     const i3 = i * 3;
-    // Moon -> parent radius at both epochs (circular: exactly a).
-    for (const cap of [A, B]) {
+    // Moon -> parent radius at both epochs against the reference ellipse radius.
+    for (const [cap, tt] of [[A, 0], [B, D]] as const) {
       const rx = cap[i3] - cap[p3];
       const ry = cap[i3 + 1] - cap[p3 + 1];
       const rz = cap[i3 + 2] - cap[p3 + 2];
-      const dev = Math.abs(Math.sqrt(rx * rx + ry * ry + rz * rz) - o.a);
+      const dev = Math.abs(Math.sqrt(rx * rx + ry * ry + rz * rz) - refRadiusAndNu(o, tt).r);
       if (dev > maxRadiusDev) {
         maxRadiusDev = dev;
       }
@@ -527,7 +557,7 @@ function runSuite(): void {
     const px = rbx * s.basisP.x + rby * s.basisP.y + rbz * s.basisP.z;
     const py = rbx * s.basisQ.x + rby * s.basisQ.y + rbz * s.basisQ.z;
     const phaseDev = Math.abs(
-      wrapAngle(Math.atan2(py, px) - wrapAngle(o.M0 + o.n * D)),
+      wrapAngle(Math.atan2(py, px) - refRadiusAndNu(o, D).nu),
     );
     if (phaseDev > maxPhaseDev) {
       maxPhaseDev = phaseDev;
@@ -539,8 +569,11 @@ function runSuite(): void {
       const dy = B[p3 + 1] - A[p3 + 1];
       const dz = B[p3 + 2] - A[p3 + 2];
       const disp = Math.sqrt(dx * dx + dy * dy + dz * dz);
-      const expected =
-        2 * hostOrbit.a * Math.abs(Math.sin(wrapAngle(hostOrbit.n * D) / 2));
+      // Host displacement from the reference ellipse at both epochs (F3abbbbbc: hosts are eccentric/inclined).
+      referencePosition(BODIES[s.parentIndex], 0, hostA);
+      referencePosition(BODIES[s.parentIndex], D, hostB);
+      const hi3 = s.parentIndex * 3;
+      const expected = Math.hypot(hostB[hi3] - hostA[hi3], hostB[hi3 + 1] - hostA[hi3 + 1], hostB[hi3 + 2] - hostA[hi3 + 2]);
       const dev = Math.abs(disp - expected);
       if (dev > maxDispDev) {
         maxDispDev = dev;
@@ -556,7 +589,7 @@ function runSuite(): void {
     detail:
       `{moonNames}) verified against MOVING hosts: ` +
       `orbit-radius dev ≤ ${maxRadiusDev.toExponential(1)} m; in-plane phase dev ≤ ` +
-      `${maxPhaseDev.toExponential(1)} rad (incl. retrograde Triton, n < 0); ` +
+      `${maxPhaseDev.toExponential(1)} rad (incl. retrograde Triton, i = 130.7°); ` +
       `host chord displacement matches 2a·sin(Δθ/2) to ≤ ${maxDispDev.toExponential(1)} m.`,
   };
 

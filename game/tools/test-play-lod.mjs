@@ -35,7 +35,7 @@ function fakePool(meshCount) {
 initTerrainField(cfg.MOON_PARAMS)
 const R = cfg.MOON_R
 // Spawn pin from B2 (test-play-spawn, 1e-9).
-const S = { x: 0.32058829107484366, y: -0.03682548816622783, z: 0.9465025256421825 }
+const S = { x: 0.8349753337306719, y: -0.07279905191367053, z: 0.5454507219738775 } // re-pinned F3abbbbbc (ADR-016)
 const rr = R + terrainHeight(S.x, S.y, S.z) + 1.4
 const cam = { x: S.x * rr, y: S.y * rr, z: S.z * rr }
 

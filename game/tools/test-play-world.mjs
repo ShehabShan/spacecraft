@@ -59,7 +59,8 @@ const w = M.createMoonWorld({ spawnOverride: null, makePool: () => fp })
 const R = M.cfg.MOON_R
 
 // ---- spawn = B2 pin, KCC at it -----------------------------------------
-const S = { x: 0.32058829107484366, y: -0.03682548816622783, z: 0.9465025256421825 }
+// WHY: re-pinned by F3abbbbbc (ADR-016): real Moon elements move the earthrise spawn.
+const S = { x: 0.8349753337306719, y: -0.07279905191367053, z: 0.5454507219738775 }
 ok(Math.abs(w.spawnDir.x - S.x) < 1e-9 && Math.abs(w.spawnDir.y - S.y) < 1e-9 && Math.abs(w.spawnDir.z - S.z) < 1e-9,
   `spawn pin: got ${JSON.stringify(w.spawnDir)}`)
 const a = w.kcc.absPos, aL = Math.hypot(a.x, a.y, a.z)

@@ -1,0 +1,11 @@
+[test-play-spawn] spawn (0.8349753337306719, -0.07279905191367053, 0.5454507219738775) score 15.738 h -15.88 m slope 0.39° earth 14.35° sun 46.21° search 202 ms
+[test-play-spawn] FAIL 61/70
+  spawn.x (§6.1): got 0.8349753337306719, want 0.320588 ±0.000001
+  spawn.y (§6.1): got -0.07279905191367053, want -0.036825 ±0.000001
+  spawn.z (§6.1): got 0.5454507219738775, want 0.946503 ±0.000001
+  spawn.x pin: got 0.8349753337306719, want 0.32058829107484366 ±1e-9
+  spawn.y pin: got -0.07279905191367053, want -0.03682548816622783 ±1e-9
+  spawn.z pin: got 0.5454507219738775, want 0.9465025256421825 ±1e-9
+  Earth elevation: got 14.348800542166106, want 8.67 ±0.01
+  Earth elevation (recomputed): got 14.348800542166106, want 8.67 ±0.01
+  Sun elevation: got 46.2126675379069, want 35.93 ±0.01

@@ -20,6 +20,7 @@ import type { BodyType, CelestialConfig, OrbitParams } from './types';
 import { TWO_PI } from './KeplerRail';
 import { deriveSpins } from './spinLaw';
 import { deriveScaledBodies } from './scaleLaw';
+import { deriveOrbitElements } from './orbitElements';
 
 
 /**
@@ -27,7 +28,6 @@ import { deriveScaledBodies } from './scaleLaw';
  * arrangements are OUT OF SCOPE per Spec 00.4 — this is the documented
  * placeholder that keeps bodies from clustering at t = 0.
  */
-const GOLDEN_ANGLE = 2.399963229728653;
 
 
 interface RawCatalogEntry {
@@ -38,9 +38,6 @@ interface RawCatalogEntry {
   surfaceGravity: number;
   atmosphereHeight: number;
   facts: Record<string, string>;
-  /** True for retrograde ORBITS (Triton). Venus's retrograde is SPIN and
-   *  deliberately does NOT set this — spin is parented-compose territory. */
-  retrogradeOrbit?: boolean;
 }
 
 
@@ -121,7 +118,6 @@ const RAW: RawCatalogEntry[] = [
     id: 'triton', name: 'Triton', type: 'moon', parentId: 'neptune',
     surfaceGravity: 0.717, atmosphereHeight: 100,
     facts: { mass: '2.14e22 kg', orbit: 'Retrograde' },
-    retrogradeOrbit: true, // catalog fact: retrograde ORBIT -> n < 0
   },
   {
     id: 'pluto', name: 'Pluto', type: 'planet',
@@ -138,13 +134,14 @@ const RAW: RawCatalogEntry[] = [
 
 // WHY: radius/orbit/range come from the ADR-015 laws applied to sourced real data (boot-only).
 const SCALED = deriveScaledBodies(RAW.map((r) => ({ id: r.id, parentId: r.parentId ?? null, type: r.type })));
+const ELEMENTS = deriveOrbitElements(RAW.map((r) => ({ id: r.id, parentId: r.parentId ?? null, type: r.type })));
 
 
 /**
  * Fully derived celestial configs, in catalog (hierarchical) order.
  * KeplerRail's constructor topologically verifies this ordering.
  */
-const BASE_CONFIGS = RAW.map((raw, index) => {
+const BASE_CONFIGS = RAW.map((raw) => {
   const sc = SCALED[raw.id];
   // Spec 02.3: μ = g_real · R_game². (Real mass is NEVER used — facts only.)
   const mu = raw.surfaceGravity * sc.radiusGame * sc.radiusGame;
@@ -154,17 +151,20 @@ const BASE_CONFIGS = RAW.map((raw, index) => {
   if (raw.type !== 'star' && sc.T !== null && sc.muHost !== null && sc.a > 0) {
     // WHY: T and a are set by the ADR-015 laws; muHost = 4π²a³/T² is derived so Kepler III holds by construction.
     const nMag = TWO_PI / sc.T;
+    // WHY (ADR-016): real e/i/Omega/omega/M0 from REAL_BODY_DATA. n is always positive;
+    // retrograde motion (Triton) comes from i > 90 deg, not from the sign of n.
+    const el = ELEMENTS[raw.id];
     orbit = {
       a: sc.a,
-      e: 0,        // circular canon until F3abbbbbc brings real elements
-      i: 0,
-      Omega: 0,
-      omega: 0,
-      M0: (index * GOLDEN_ANGLE) % TWO_PI,
+      e: el.e,
+      i: el.i,
+      Omega: el.Omega,
+      omega: el.omega,
+      M0: el.M0,
       T: sc.T,
-      n: raw.retrogradeOrbit === true ? -nMag : nMag,
+      n: nMag,
       muHost: sc.muHost,
-      retrograde: raw.retrogradeOrbit === true,
+      retrograde: el.i > Math.PI / 2,
     };
   }
 

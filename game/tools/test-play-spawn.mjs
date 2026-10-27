@@ -60,16 +60,17 @@ const site = findEarthriseSpawn(earthDir, sunDir)
 const ms_ = performance.now() - t0
 const d = site.dir
 // Pinned at B2 (full precision observed in Node 24, 2026-10-20).
-const PIN = { x: 0.32058829107484366, y: -0.03682548816622783, z: 0.9465025256421825 }
-near(d.x, 0.320588, 1e-6, 'spawn.x (§6.1)'); near(d.y, -0.036825, 1e-6, 'spawn.y (§6.1)'); near(d.z, 0.946503, 1e-6, 'spawn.z (§6.1)')
+const PIN = { x: 0.8349753337306719, y: -0.07279905191367053, z: 0.5454507219738775 }
+near(d.x, 0.834975, 1e-6, 'spawn.x (§6.1)'); near(d.y, -0.072799, 1e-6, 'spawn.y (§6.1)'); near(d.z, 0.545451, 1e-6, 'spawn.z (§6.1)')
 near(d.x, PIN.x, 1e-9, 'spawn.x pin'); near(d.y, PIN.y, 1e-9, 'spawn.y pin'); near(d.z, PIN.z, 1e-9, 'spawn.z pin')
 const slope = slopeFromNormal(d)
 ok(slope < 1, `spawn slope < 1°: got ${slope}`)
 const elev = (v) => Math.asin(d.x * v.x + d.y * v.y + d.z * v.z) * 180 / Math.PI
-near(site.earthElevDeg, 8.67, 0.01, 'Earth elevation')
-near(elev(earthDir), 8.67, 0.01, 'Earth elevation (recomputed)')
+near(site.earthElevDeg, 14.3488, 0.01, 'Earth elevation')
+near(elev(earthDir), 14.3488, 0.01, 'Earth elevation (recomputed)')
 // WHY: F3abbbbbb (ADR-015) moves the Moon orbit 38,850 -> 32,047 m, so the Moon->Sun direction at t=0 shifts; Earth elevation (design anchor) and the spawn pin are unchanged.
-near(elev(sunDir), 35.93, 0.01, 'Sun elevation')
+// WHY: F3abbbbbc (ADR-016) gives the Moon its real e/i/omega/M0, so the t=0 Moon->Earth/Sun directions move again; spawn pin, Earth 14.35 deg and Sun 46.21 deg re-pinned (search unchanged).
+near(elev(sunDir), 46.2127, 0.01, 'Sun elevation')
 
 // ---- override parse ---------------------------------------------------
 const o = parseSpawnOverride('?spawn=1,0,0')

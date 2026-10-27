@@ -34,7 +34,8 @@ const ok = (cond, msg) => { n++; if (!cond) fails.push(msg) }
 // facing / timing checks are not confounded by terrain slope.
 M.initTerrainField({ ...M.cfg.MOON_PARAMS, continentAmp: 0, mountainAmp: 0, detailAmp: 0 })
 ok(Math.abs(M.terrainHeight(0.3, -0.04, 0.95)) < 1e-9, `flat field height ${M.terrainHeight(0.3, -0.04, 0.95)}`)
-const SP = { x: 0.32058829107484366, y: -0.03682548816622783, z: 0.9465025256421825 } // B2 spawn pin
+// WHY: re-pinned by F3abbbbbc (ADR-016): real Moon elements move the earthrise spawn.
+const SP = { x: 0.8349753337306719, y: -0.07279905191367053, z: 0.5454507219738775 } // spawn pin
 
 const inpStub = () => ({ moveX: 0, moveY: 0, sprint: false, crouch: false, jumpPressed: false, lookDX: 0 })
 function rig() {

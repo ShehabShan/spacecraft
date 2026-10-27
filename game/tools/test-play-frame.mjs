@@ -74,7 +74,8 @@ const fe = fwd.x * e.x + fwd.y * e.y + fwd.z * e.z
 ok(fe > 0, `Earth behind the camera (fwd·earth ${fe})`)
 const ef = new THREE.Vector3(w.earthMesh.position.x - d.x, w.earthMesh.position.y - d.y, w.earthMesh.position.z - d.z).normalize()
 const elAngle = Math.acos(Math.max(-1, Math.min(1, fwd.dot(ef)))) * 180 / Math.PI
-ok(elAngle < 31, `Earth ${elAngle.toFixed(1)}° off the view axis (FOV half-height 31°)`)
+// WHY: F3abbbbbc (ADR-016) puts the spawn Earth 31.9° off axis; its disc half-angle there is ~7.3°, so the disc (not its centre) must be inside the 31° half-height.
+ok(elAngle < 31 + 7, `Earth ${elAngle.toFixed(1)}° off the view axis (FOV half-height 31° + disc half-angle ~7°)`)
 ok(w.sky.bodies[0].active === true, 'Sun inactive')
 ok(lodCalls === 1 && fp.pumps === 1, `lod ${lodCalls} pump ${fp.pumps} after 1 frame`)
 for (let i = 0; i < 59; i++) frame(1 / 60)

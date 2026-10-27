@@ -23,9 +23,8 @@ export type BodyType = 'star' | 'planet' | 'gas_giant' | 'moon';
  * kinematic constants. `a, e, i, Omega, omega, M0, T` are the classical
  * elements; `n`, `muHost` are precomputed for zero-allocation evaluation.
  *
- * Catalog orbits are circular (e = i = Omega = omega = 0) because Section 03
- * supplies a single distance per body; the evaluator is a full elliptical
- * solver and will consume real elements unchanged when they arrive.
+ * Catalog orbits carry the real e, i, Omega, omega, M0 (F3abbbbbc, ADR-016; derived by
+ * `orbitElements.ts` from REAL_BODY_DATA). `n` is always positive: retrograde motion is i > 90 deg.
  * (Real-date starting arrangements remain out of scope per Spec 00.4.)
  */
 export interface OrbitParams {
@@ -44,7 +43,7 @@ export interface OrbitParams {
   M0: number;
   /** Orbital period, seconds — T = 2π·√(a³/μ_host) (Kepler's Third Law). */
   T: number;
-  /** SIGNED mean motion, rad/s — n = ±√(μ_host/a³). Negative = retrograde. */
+  /** Mean motion, rad/s — n = √(μ_host/a³) > 0 (retrograde = i > 90°, ADR-016). */
   n: number;
   /** Host gravitational parameter, m³/s² (parent planet μ, or SUN_ORBITAL_MU). */
   muHost: number;
