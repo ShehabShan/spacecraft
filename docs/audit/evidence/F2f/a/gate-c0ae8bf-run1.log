@@ -1,0 +1,31 @@
+[WebServer] 
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+
+
+Running 1 test using 1 worker
+
+[1/1] e2e/m1f.spec.ts:9:1 › M1F — 3-Camera Layers & Sky Impostors acceptance
+  1) e2e/m1f.spec.ts:9:1 › M1F — 3-Camera Layers & Sky Impostors acceptance ────────────────────────
+
+    TimeoutError: page.waitForEvent: Timeout 240000ms exceeded while waiting for event "console"
+    =========================== logs ===========================
+    waiting for event "console"
+    ============================================================
+
+      13 |
+      14 |   const acceptanceLine = page
+    > 15 |     .waitForEvent('console', {
+         |      ^
+      16 |       predicate: (m) => /\[Milestone1F\] acceptance (PASSED|FAILED)/.test(m.text()),
+      17 |       timeout: 240_000,
+      18 |     })
+        at /workspace/wt-c0ae8bf/game/e2e/m1f.spec.ts:15:6
+
+    Error Context: test-results/m1f-M1F-—-3-Camera-Layers-Sky-Impostors-acceptance/error-context.md
+
+
+  1 failed
+    e2e/m1f.spec.ts:9:1 › M1F — 3-Camera Layers & Sky Impostors acceptance ─────────────────────────

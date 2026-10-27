@@ -1,0 +1,12 @@
+m1f gate @c0ae8bf run1 EXIT=1
+m1f gate @3057899 run1 EXIT=1
+  @3057899 run1 badges: ["PASS","FAIL","PASS","PASS","FAIL"]
+observe @c0ae8bf EXIT=0
+  @c0ae8bf verdict [Milestone1F] acceptance FAILED after 262.1 s
+  @c0ae8bf badges ["PASS","PASS","PASS","PASS","FAIL"]
+observe @3057899 EXIT=0
+  @3057899 verdict [Milestone1F] acceptance FAILED after 231.6 s
+  @3057899 badges ["PASS","FAIL","PASS","PASS","FAIL"]
+OBSERVE-DONE
+observe @c0ae8bf run2 EXIT=0
+typecheck (main tree, branch) EXIT=0

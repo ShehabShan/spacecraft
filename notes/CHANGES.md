@@ -10,6 +10,10 @@ applicable, code fixes proven by failing acceptance output.
 
 ---
 
+## 2026-10-27 — F2fa (session 127): m1f R2 bisect
+- `game/tools/audit/f2fa-m1f-observe.mjs` (new, read-only observer), `f2fa-observe-both.sh`, `f2fa-r2-bisect.sh` · bisect A1-U01-1 · why: the shipped m1f spec's 240 s wait expires before `c0ae8bf` reaches a verdict on the bot VM (262 s) · evidence `docs/audit/evidence/F2f/a/` (first bad commit for R2 = `3057899`, confirmed) · ADR-018. No harness, spec or production code changed.
+
+
 ## 2026-10-14 — Scaffolding (pre-1A)
 
 1. 2026-10-14 · scaffold · game/package.json · Replaced the create-vite
