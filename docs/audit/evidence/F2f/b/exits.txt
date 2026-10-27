@@ -1,0 +1,20 @@
+observe F12sun run2 EXIT=0
+observe F12sunUp EXIT=0
+  @F12sunUp verdict [Milestone1F] acceptance FAILED after 237.5 s
+  @F12sunUp badges ["PASS","FAIL","PASS","PASS","FAIL"]
+observe F12sunPos EXIT=0
+  @F12sunPos verdict [Milestone1F] acceptance FAILED after 243.4 s
+  @F12sunPos badges ["PASS","PASS","PASS","PASS","FAIL"]
+observe F12sunPos run2 EXIT=0
+  @F12sunPos run2 verdict [Milestone1F] acceptance FAILED after 236.4 s
+  @F12sunPos run2 badges ["PASS","PASS","FAIL","PASS","FAIL"]
+observe F12sunUp run2 EXIT=0
+  @F12sunUp run2 verdict [Milestone1F] acceptance FAILED after 236.3 s
+  @F12sunUp run2 badges ["PASS","FAIL","FAIL","PASS","FAIL"]
+RUN2-DONE
+observe F12sun run1 EXIT=0 (foreground run; exit read from the shell result)
+  @F12sun run1 verdict [Milestone1F] acceptance FAILED after 242.1 s
+  @F12sun run1 badges ["PASS","PASS","PASS","PASS","FAIL"]
+  @F12sun run2 verdict [Milestone1F] acceptance FAILED after 244.2 s
+  @F12sun run2 badges ["PASS","PASS","FAIL","PASS","FAIL"]
+typecheck (branch tree) EXIT=0
