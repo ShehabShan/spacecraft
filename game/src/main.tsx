@@ -15,6 +15,7 @@ const pages: Record<string, () => Promise<{ default: ComponentType }>> = {
   m1d: () => import('./test/Milestone1D_TestHarness'),
   m1e: () => import('./test/Milestone1E_TestHarness'),
   m1f: () => import('./test/Milestone1F_TestHarness'),
+  m1fR2: () => import('./test/M1fR2Gate'), // F2fcab rebuilt R2 gate (ADR-021)
   play: () => import('./play/PlayPage'),
 }
 
