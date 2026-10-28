@@ -4,7 +4,7 @@ Rulings: `notes/LEDGER.md`. History: `docs/history/SESSIONS.md`; the last full p
 
 ## NEXT ACTION
 
-**NEXT ACTION (session 155 S6):** T4 BUILDING, build 7/9. S6 is DONE: the `notes/task.md` tracker has one ≤ 200-char row per DONE task, and the DONE definitions (A1, T1, T3) are out (verbatim: `git show pre-t4:notes/task.md`). The pre-T4 entries in `notes/CHANGES.md` are now one digest line per task or milestone (verbatim: `git show pre-t4:notes/CHANGES.md`); new entries are appended under "## Entries". Next: a fresh bot runs S7 in `docs/T4-plan.md` (the AGENT_BRIEF.md trim; the CHANGES.md header points at §2 for the format). Gate: from `game/`, `node tools/check-repo-refs.mjs --max 100000` before and after (no NEW dangling; touched files 0). Push: GIT RECIPE below. T5/T6 planners read `docs/T5-T6-ideas.md`. Product goal: AAA browser game (AGENT_BRIEF §13).
+**NEXT ACTION (session 155 S6):** T4 BUILDING, build 7/9. S6 is DONE: the `notes/task.md` tracker has one ≤ 200-char row per DONE task, and the DONE definitions (A1, T1, T3) are out (verbatim: `git show pre-t4:notes/task.md`). The pre-T4 entries in `notes/CHANGES.md` are now one digest line per task or milestone (verbatim: `git show pre-t4:notes/CHANGES.md`); new entries are appended under "## Entries". Next: a fresh bot runs S7 in `docs/T4-plan.md` (the AGENT_BRIEF.md trim; the CHANGES.md header points at §2 for the format). Gate: from `game/`, `node tools/check-repo-refs.mjs --max 100000` before and after (no NEW dangling; touched files 0). Push: GIT RECIPE below. T5/T6 planners read `docs/T5-T6-ideas.md`. ORDER after T4 (Lead, `notes/LEDGER.md` 2026-10-28): T5 → T6 → F3b. Product goal: AAA browser game (AGENT_BRIEF §13).
 
 ## SESSION SETUP
 

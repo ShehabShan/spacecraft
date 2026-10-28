@@ -30,6 +30,8 @@ starting point.
 Note: "Last commit" = the commit BEFORE the newest checkpoint (a file cannot
 contain its own hash); current HEAD: `git log -1`.
 
+ORDER (Lead ruling 2026-10-28, `notes/LEDGER.md`): T4 → T5 → T6 → F3b. F3b (U27c §2) starts only after the Moon and character changes (T5, T6) reach the AAA look.
+
 ## PARKED (carried from phase 1 — resume ONLY by a Lead directive naming the item)
 | Item | State | Note |
 |------|-------|------|
