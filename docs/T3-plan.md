@@ -1,7 +1,7 @@
 # T3 — BETTER MOON (PLAYABLE TERRAIN) — PLAN
 
 - Task: T3 · Branch: `t3-better-moon` (cut from `main` @ e0bc76d, session 147)
-- Stage: BUILDING (the Lead's 2026-10-28 order is the execute order; there is no plan gate)
+- Stage: DONE (accepted by the Lead 2026-10-28, session 150c; `t3-better-moon` fast-forwarded into `main`)
 - Last updated: 2026-10-28 (session 147)
 - Resume at the FIRST UNCHECKED BOX (planning item or build step).
 
@@ -134,7 +134,7 @@ with no game code edited; logs are `feasibility-probe.log` and `feasibility-prob
   evidence. Run all nine play Node tests, `e2e/play.spec.ts` and the build.
 - [x] **S3** (sessions 149–150: mare albedo 0.6 by shader injection, ADR-029 accepted; gate 16/16, self-test 4/4; check-play-b4/b5/b6/b7/b9 and test-play-perf exit 0; frame time spawn 1.000, rim 1.052 accepted by the Lead 2026-10-28) Look: darker mare albedo from the basin mask (shader or vertex attribute),
   plus a crater-rim readability check. Screenshots via check-play-b4…b9, and test-play-perf.
-- [ ] **S4** (session 150: §13 matrix green on 9c129c0, evidence `docs/audit/evidence/T3/S4/`; WAITING on the Lead's play acceptance) Close-out: the full §13 matrix (tsc, build, play Node tests,
+- [x] **S4** (session 150: §13 matrix green on 9c129c0, evidence `docs/audit/evidence/T3/S4/`; the Lead accepted T3 on 2026-10-28; fast-forwarded into `main`) Close-out: the full §13 matrix (tsc, build, play Node tests,
   kcc-default-trace, kcc-gate, play.spec, m1e, m1f-r with R5 waived). Then the Lead's
   play acceptance and a fast-forward into `main`.
 
