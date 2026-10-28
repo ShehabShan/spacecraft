@@ -10,6 +10,9 @@ applicable, code fixes proven by failing acceptance output.
 
 ---
 
+## 2026-10-28 — §1 LEAN READ code rule (Lead ruling, docs only)
+- `AGENT_BRIEF.md` §1 LEAN READ (+1 bullet), `notes/STATE.md` APPROVAL LEDGER (+1 row) · why: the code-reading rule lived only in the session starter prompt; moving it into the brief lets that prompt shrink · source: Lead, 2026-10-28.
+
 ## 2026-10-28 — §6 END REPORT (Lead ruling, docs only)
 - `AGENT_BRIEF.md` §6 (+1 bullet), `notes/STATE.md` APPROVAL LEDGER (+1 row) · why: end-of-session reports ran long because only the start report was capped (§5 step 3, ≤5 sentences) · source: Lead, 2026-10-28.
 

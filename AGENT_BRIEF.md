@@ -44,6 +44,9 @@ need. The process files are mostly history, and reading them in full costs ~25 O
   history paragraphs and every section below SESSION LOG. Check the APPROVAL LEDGER
   by `grep` only, when a decision may already have been ruled.
 - Never `cat` a whole process file; use `sed -n`/`grep` ranges.
+- Code: find it with `grep -rn` on the names in the active task's definition row,
+  then read only those functions with `sed -n` ranges. Never read whole large
+  files (`game/src` is ~690 KB).
 
 ## 2. FILE MAP — what to read, what never to read
 - `game/` — THE GAME. Source of truth for all behavior, constants, structure.
@@ -231,6 +234,14 @@ suspected lost work, or deleting the Lead's work.
 - 2026-10-27 Lean read (Lead, session 121): §1 gained the LEAN READ rule. Why:
   sessions 120 and 121 each spent ~28 of 50 OLU on bootstrap reading (full tracker,
   full STATE.md history) and could not start a unit. No other rule changed.
+
+- 2026-10-28 End report (Lead): §6 gained the END REPORT rule (final message ≤4
+  short lines, no tables). Why: only the start report was capped, so end reports
+  ran long. No other rule changed.
+
+- 2026-10-28 Lean code read (Lead): §1 LEAN READ gained the code bullet (`grep -rn`
+  + `sed -n` ranges, never whole large files). Why: the rule lived only in the
+  session starter prompt, which the Lead is shortening. No other rule changed.
 
 ## 11. AUDIT MODE (binds only while the active task is A1)
 Why: the milestone specs were written by GLM 5.3 and the engine by GLM 5.3 Flash
