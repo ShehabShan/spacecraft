@@ -1,0 +1,17 @@
+[WebServer] 
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+
+Running 1 test using 1 worker
+
+[m1fR5 gate] acceptance line: [M1fR5Gate] acceptance PASSED
+[m1fR5 gate] badges: ["PASS"]
+[m1fR5 gate] runtime errors: []
+[m1fR5 gate] page console transcript (tail):
+  log: [M1fR5Gate] R5a rebase lattice on a continuous route: PASS — 2 shifts on a 4000 m continuous route (36924 ticks, oracle 2); Δ (-1024,1024,1024) (-1024,0,0); max local 1023.998 m (clearance 0.002); max step 0.1083 m; identity max 1.1e-13 m; f32 focus/celestial mismatches 0/0 over 17 celestials; fails: [];
+  log: [M1fR5Gate] acceptance PASSED
+  ✓  1 e2e/m1f-r5.spec.ts:9:1 › M1F R5 rebuilt gate (R5a) (535ms)
+
+  1 passed (6.1s)

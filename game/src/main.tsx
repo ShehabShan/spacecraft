@@ -19,6 +19,7 @@ const pages: Record<string, () => Promise<{ default: ComponentType }>> = {
   m1fR1: () => import('./test/M1fR1Gate'), // F2fcb rebuilt R1 gate (ADR-022)
   m1fR3: () => import('./test/M1fR3Gate'), // F2fccba rebuilt R3 gate (ADR-023)
   m1fR4: () => import('./test/M1fR4Gate'), // F2fcda rebuilt R4 gate (ADR-024)
+  m1fR5: () => import('./test/M1fR5Gate'), // F2fcea rebuilt R5 gate (ADR-025)
   play: () => import('./play/PlayPage'),
 }
 
