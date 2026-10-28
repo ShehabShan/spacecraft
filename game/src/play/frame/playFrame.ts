@@ -103,6 +103,7 @@ export function createPlayFrame(w: MoonWorld, cam: ThirdPersonCamera, shell?: Pl
     spinQuatInto(kcc.spinPhase, qS);
     w.spinGroup.position.set(-o.x, -o.y, -o.z);
     w.spinGroup.quaternion.set(qS.x, qS.y, qS.z, qS.w);
+    w.terrainMaterial.setFrame(o.x, o.y, o.z, qS.x, qS.y, qS.z, qS.w); // T3 S3 mare mask frame
     w.adapter.update();
     const alp = w.astroState.localPosF32;
     w.characterRoot.position.set(alp[0], alp[1], alp[2]);

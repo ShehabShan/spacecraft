@@ -15,6 +15,7 @@ import {
   MAX_TERRAIN_H, MOON_ASTRONAUT, MOON_PARAMS, MOON_R, PLAY_POOL_OPTS,
 } from './moonConfig';
 import { findEarthriseSpawn } from './spawn';
+import { createMoonTerrainMaterial, type MoonTerrainMaterial } from './moonMaterial';
 import { MoonLod, type LodPool } from './MoonLod';
 import { EARTH_R, PLAY_BODIES, type SkyCtx } from './skyState';
 import type { CharacterAnimator } from '../character/CharacterAnimator';
@@ -44,6 +45,8 @@ export interface MoonWorld extends SkyCtx {
   /** The KCC's core entity (render-local `localPosF32` after adapter.update). */
   astroState: ReturnType<SimulationCore['registerEntity']>;
   pool: PlayPool;
+  /** T3 S3 terrain material (mare albedo); stage 6 calls setFrame. */
+  terrainMaterial: MoonTerrainMaterial;
   lod: MoonLod;
   sceneRoot: THREE.Group;
   spinGroup: THREE.Group;
@@ -67,9 +70,11 @@ export function createMoonWorld(opts: MoonWorldOptions): MoonWorld {
   core.setTimeScale(0);
   const adapter = new FloatingOriginAdapter(core);
   // 4–5. terrain pool (workers spawn here) + sky impostors
+  // WHY (T3 S3, ADR-029): the pool owns and disposes the material.
+  const terrainMaterial = createMoonTerrainMaterial(MOON_PARAMS.moon);
   const pool: PlayPool = opts.makePool !== undefined
     ? opts.makePool()
-    : new TerrainMeshPool({ ...PLAY_POOL_OPTS, params: MOON_PARAMS });
+    : new TerrainMeshPool({ ...PLAY_POOL_OPTS, params: MOON_PARAMS, material: terrainMaterial.material });
   const sky = new SkyImpostorPool();
   // 6. astronaut KCC + entity write-through
   const kcc = new AstronautKCC(MOON_ASTRONAUT);
@@ -140,7 +145,7 @@ export function createMoonWorld(opts: MoonWorldOptions): MoonWorld {
   const lod = new MoonLod(pool, MOON_R);
 
   const world: MoonWorld = {
-    core, adapter, astroState, kcc, sky, pool, lod, moonAbs: moonState.absPos, earthVec, earthDist,
+    core, adapter, astroState, kcc, sky, pool, terrainMaterial, lod, moonAbs: moonState.absPos, earthVec, earthDist,
     earthMesh, glow, characterRoot, sceneRoot, spinGroup, skyGroup, earthDir, sunDir, spawnDir, animator,
     respawnPlayer() { kcc.teleportSurface(spawnDir.x, spawnDir.y, spawnDir.z); syncEntity(); },
     dispose() {

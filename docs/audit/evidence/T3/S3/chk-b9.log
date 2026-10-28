@@ -1,0 +1,2 @@
+[B9] start Idle; W: Walk; jump: JumpLaunch→JumpRise→Fall→Land→Idle; air true → ground true (4.95 sim s); paused PAUSED Idle/Idle; errors 0
+[B9] walk true jump true PASS
