@@ -16,14 +16,13 @@ import { useEffect, useState } from 'react';
 import { SimulationCore, FIXED_DT } from '../core/simulation/SimulationCore';
 
 const MUT = new URLSearchParams(window.location.search).get('mut') ?? '';
-// Pinned fixture. WHY: R = shipped moon radius 1,364.5 m + 180 m terrain (the U27 grid's
-// middle height). Start +X, tangent (0,1,1)/√2: an independent sweep of the oracle gives 0 shifts
+// Pinned fixture. WHY: R = shipped moon radius 1,364.5 m + terrain h ∈ {0, 180, 360} m (the U27
+// grid heights). Start +X, tangent (0,1,1)/√2: an independent sweep of the oracle gives 0 shifts
 // over the shipped nadir arc and 2 over 4,000 m (a (1,1,1) start gave 2 even on the nadir arc, so
 // the nadir mutant could not discriminate). The start is >1,024 from the zero origin, so one warm
 // tick at rest settles the origin first and only shifts AFTER it are counted as walking shifts.
-const R = 1364.5 + 180;
+const HEIGHTS: Array<[number, number]> = [[0, 1278.304], [180, 1374.391], [360, 1459.296]];   // terrain h, nadir arc (U27 K2d recheck)
 const SPEED = 6.5;                                       // sprint, m/s (shipped KCC)
-const ROUTE_M = MUT === 'nadir' ? 1374.391 : 4000;       // nadir arc at 180 m (U27 K2d recheck)
 const TELEPORT_AT = 2000, TELEPORT_M = 300;
 // Independent oracle constants (NOT imported from precisionMath, on purpose).
 const LAT = 256, TRIG = 1024;
@@ -32,7 +31,7 @@ type V = { x: number; y: number; z: number };
 
 const s2 = 1 / Math.sqrt(2);
 const U: V = { x: 1, y: 0, z: 0 }, Wt: V = { x: 0, y: s2, z: s2 };   // start dir, tangent (U·Wt = 0)
-function routeInto(s: number, o: V): V {
+function routeInto(R: number, s: number, o: V): V {
   const th = s / R, c = Math.cos(th), n = Math.sin(th);
   o.x = R * (c * U.x + n * Wt.x); o.y = R * (c * U.y + n * Wt.y); o.z = R * (c * U.z + n * Wt.z);
   return o;
@@ -40,9 +39,10 @@ function routeInto(s: number, o: V): V {
 const maxAbs = (x: number, y: number, z: number): number => Math.max(Math.abs(x), Math.abs(y), Math.abs(z));
 const isLattice = (v: number): boolean => Number.isInteger(v / LAT);
 
-function rowR5a(): Row {
+function rowR5aAt(h: number, nadir: number): Row {
+  const R = 1364.5 + h, ROUTE_M = MUT === 'nadir' ? nadir : 4000;   // nadir mutant = shipped fixture's arc
   const core = new SimulationCore();
-  const p0 = routeInto(0, { x: 0, y: 0, z: 0 });
+  const p0 = routeInto(R, 0, { x: 0, y: 0, z: 0 });
   const e = core.registerEntity('walker', { absPos: { x: p0.x, y: p0.y, z: p0.z }, velocity: { x: 0, y: 0, z: 0 } });
   const events: Array<{ count: number; d: V; o: V }> = [];
   core.onRebase((ev) => {
@@ -68,7 +68,7 @@ function rowR5a(): Row {
     let s = Math.min(ROUTE_M, k * SPEED * FIXED_DT);
     if (MUT === 'teleport' && jump === 0 && s >= TELEPORT_AT) jump = TELEPORT_M;   // permanent 300 m offset
     s += jump;
-    routeInto(s, tgt);
+    routeInto(R, s, tgt);
     core.setVelocity('walker', (tgt.x - e.absPos.x) / FIXED_DT, (tgt.y - e.absPos.y) / FIXED_DT, (tgt.z - e.absPos.z) / FIXED_DT);
     const evBefore = events.length;
     core.tick();
@@ -120,11 +120,18 @@ function rowR5a(): Row {
   const ds = events.map((v) => `(${v.d.x},${v.d.y},${v.d.z})`).join(' ');
   return {
     pass: fails.length === 0,
-    detail: `${shifts} shifts on a ${ROUTE_M} m continuous route (${ticks} ticks, oracle ${oracleShifts}); Δ ${ds || 'none'}; ` +
+    detail: `h ${h} m: ${shifts} shifts on a ${ROUTE_M} m continuous route (${ticks} ticks, oracle ${oracleShifts}); Δ ${ds || 'none'}; ` +
       `max local ${maxLocal.toFixed(3)} m (clearance ${minClear.toFixed(3)}); max step ${maxStep.toFixed(4)} m; ` +
       `identity max ${maxIdent.toExponential(1)} m; f32 focus/celestial mismatches ${f32Bad}/${celF32Bad} over ${cel.length} celestials; ` +
       `fails: [${fails.join('; ')}];`,
   };
+}
+
+// WHY: three terrain heights so the verdict does not rest on one fixture radius (K2d); the oracle
+// sweep gives 0 shifts on every nadir arc and 2/2/3 over 4,000 m.
+function rowR5a(): Row {
+  const r = HEIGHTS.map(([h, n]) => rowR5aAt(h, n));
+  return { pass: r.every((x) => x.pass), detail: r.map((x) => x.detail).join(' | ') };
 }
 
 export default function M1fR5Gate() {

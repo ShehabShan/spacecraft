@@ -28,7 +28,7 @@ R5 stays waived (Lead, 2026-10-20), and shipped harness rows are never edited.
 Option 2, split per §12. F2fcea delivers R5a, the spec and the self-test; F2fceb delivers R5b.
 
 R5a (`game/src/test/M1fR5Gate.tsx`):
-- **Route.** A great circle of radius 1,364.5 + 180 m, starting at +X with tangent (0,1,1)/√2.
+- **Route.** A great circle of radius 1,364.5 + h m, run at each U27 grid height h ∈ {0, 180, 360} m (all three must pass), starting at +X with tangent (0,1,1)/√2.
   It runs 4,000 m at sprint speed 6.5 m/s, which is 36,924 ticks. Each tick, the walker's velocity
   is set so that it lands exactly on the route point.
 - **Warm tick.** One warm tick at rest settles the origin first, because the start is more than
@@ -45,7 +45,7 @@ R5a (`game/src/test/M1fR5Gate.tsx`):
   - the world step per tick ≤ sprint·dt;
   - the f64 local step equals the world step − ΣΔ, to within 1e-9 m.
 - **Mutants.**
-  - `nadir`: the route stops at the shipped nadir arc, 1,374.391 m. It fails on "shifts 0 < 2".
+  - `nadir`: the route stops at the shipped nadir arc for that height (1,278.304 / 1,374.391 / 1,459.296 m). It fails on "shifts 0 < 2".
   - `skew`: a rebase listener nudges the live, writable origin by 1 m (A1-U11-3). It fails on
     the oracle, lattice, Δ and identity checks.
   - `teleport`: a permanent 300 m jump mid-route. It fails on "world step on 1 tick".
@@ -60,7 +60,7 @@ R5a (`game/src/test/M1fR5Gate.tsx`):
 - The every-tick oracle and the count-equality checks remove the zero-sample pass (A1-U03-6).
 
 ## Consequences
-- R5a PASS: 2 shifts, Δ (−1024, 1024, 1024) and (−1024, 0, 0), max local 1,023.998 m.
+- R5a PASS at all three heights: 2 / 2 / 3 shifts over 4,000 m, each equal to the oracle. The nadir mutant gives 0 shifts at every height.
 - The spec `game/e2e/m1f-r5.spec.ts` has `expectedRows` 1, which F2fceb bumps to 2.
 - The self-test is `game/tools/test-m1f-r5-gate.mjs` on port 4185.
 - R5a does not check the rendered sky. That check (Sun continuity on every frame) is part of R5b.

@@ -1,5 +1,6 @@
 // F2fcea self-test (ADR-025): builds the game, serves it, and runs ?page=m1fR5
-// unmutated (R5a must PASS) and with each mutant (R5a must turn red for the named reason).
+// unmutated (R5a must PASS) and with each mutant (R5a must turn red for the named reason
+// at all three terrain heights: the reason must match 3 times).
 // Run from game/: node tools/test-m1f-r5-gate.mjs   (exit 0 = all as expected, 1 = not)
 import { spawn, spawnSync } from 'node:child_process'
 import { chromium } from 'playwright'
@@ -36,7 +37,7 @@ try {
     await page.goto(`http://localhost:${PORT}/?page=m1fR5${c.mut ? `&mut=${c.mut}` : ''}`)
     const verdict = await v
     const row = lines.find((l) => l.startsWith(`[M1fR5Gate] ${ROW}: `)) ?? ''
-    const good = verdict.includes(`acceptance ${c.verdict}`) && row.startsWith(`[M1fR5Gate] ${ROW}: ${c.want}`) && c.reason.test(row) && errors.length === 0
+    const good = verdict.includes(`acceptance ${c.verdict}`) && row.startsWith(`[M1fR5Gate] ${ROW}: ${c.want}`) && (row.match(new RegExp(c.reason.source, 'g')) ?? []).length === 3 && errors.length === 0
     console.log(`case mut=${c.mut || 'none'}: ${good ? 'AS EXPECTED' : 'UNEXPECTED'}`)
     lines.forEach((l) => console.log(`  ${l}`)); errors.forEach((l) => console.log(`  ERROR ${l}`))
     if (!good) ok = false
