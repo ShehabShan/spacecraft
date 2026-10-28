@@ -50,6 +50,7 @@ export class PlayerController {
   recoverT = 0;
   private wasGrounded: boolean;
   private lastLandings: number;
+  private lastCoyote: number;
 
   constructor(
     readonly kcc: AstronautKCC,
@@ -58,6 +59,7 @@ export class PlayerController {
   ) {
     this.wasGrounded = kcc.grounded;
     this.lastLandings = kcc.integrity.landings;
+    this.lastCoyote = kcc.coyoteJumps;
   }
 
   private acc = 0;
@@ -128,7 +130,8 @@ export class PlayerController {
     // §9.3 jump buffer (play layer, Q5). WHY: jump is re-derived every frame
     // (not latched) so a stale flag from a 0-substep frame cannot outlive the buffer.
     if (inp.jumpPressed) { this.buffer = T.jumpBufferS; inp.jumpPressed = false; }
-    ki.jump = this.buffer > 0 && k.grounded && !inp.crouch;
+    // WHY (B11, ADR-027): an open KCC coyote window also accepts the buffered press.
+    ki.jump = this.buffer > 0 && (k.grounded || k.coyoteLeft > 0) && !inp.crouch;
     this.buffer = Math.max(0, this.buffer - dt);
   }
 
@@ -136,6 +139,12 @@ export class PlayerController {
   postSimulate(): void {
     const k = this.kcc;
     if (this.wasGrounded && !k.grounded && kccVertSpeed(k, this.spinOmega) > 0.5) {
+      this.buffer = 0; this.jumpedThisFrame = true; k.input.jump = false;
+    }
+    // WHY (B11): a coyote jump launches from the air, so the grounded→air edge
+    // above cannot see it; the KCC counter is the launch edge instead.
+    if (k.coyoteJumps !== this.lastCoyote) {
+      this.lastCoyote = k.coyoteJumps;
       this.buffer = 0; this.jumpedThisFrame = true; k.input.jump = false;
     }
     const L = k.integrity.landings;

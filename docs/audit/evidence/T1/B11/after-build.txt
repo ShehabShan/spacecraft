@@ -1,0 +1,41 @@
+
+> game@0.0.0 build
+> vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 122 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                    0.57 kB │ gzip:   0.38 kB
+dist/assets/terrainWorker-B4kmEuN9.js              6.30 kB
+dist/assets/m1fHandoff-DT1Bu_Jw.js                 0.24 kB │ gzip:   0.19 kB
+dist/assets/FloatingOriginAdapter-BSvMtUsb.js      0.87 kB │ gzip:   0.41 kB
+dist/assets/sphericalFrame-CnZVQY0G.js             1.93 kB │ gzip:   0.90 kB
+dist/assets/MultiCameraRig-C5hZNWHT.js             1.99 kB │ gzip:   0.94 kB
+dist/assets/index-UbIytPnt.js                      3.59 kB │ gzip:   1.57 kB
+dist/assets/M1fR1Gate-Dp6wDHuS.js                  5.99 kB │ gzip:   3.23 kB
+dist/assets/SkyImpostorPool-sb6OED2H.js            6.37 kB │ gzip:   2.86 kB
+dist/assets/react-three-fiber.esm-D9tLfxjW.js      7.03 kB │ gzip:   2.87 kB
+dist/assets/M1fR4Gate-DPIJ84Qv.js                  8.14 kB │ gzip:   3.75 kB
+dist/assets/M1fR2Gate-CvRHv8kc.js                  8.46 kB │ gzip:   4.43 kB
+dist/assets/M1fR3Gate-_ATw7dGD.js                  8.88 kB │ gzip:   4.44 kB
+dist/assets/M1fR5Gate-Bz4DqSmW.js                  9.86 kB │ gzip:   4.91 kB
+dist/assets/TerrainMeshPool-CQy9kGFR.js           11.18 kB │ gzip:   4.53 kB
+dist/assets/Milestone1A_TestHarness-g6a13HpN.js   14.83 kB │ gzip:   5.65 kB
+dist/assets/SimulationCore-DK09Iqgf.js            17.70 kB │ gzip:   6.57 kB
+dist/assets/astronautKCC-CtM8nvlT.js              21.49 kB │ gzip:   6.21 kB
+dist/assets/Milestone1C_TestHarness-Df26-fIf.js   21.71 kB │ gzip:   8.21 kB
+dist/assets/Milestone1B_TestHarness-Be5OCJ2w.js   22.89 kB │ gzip:   8.93 kB
+dist/assets/Milestone1E_TestHarness-CTqSFLEH.js   35.40 kB │ gzip:  13.91 kB
+dist/assets/Milestone1D_TestHarness-CU3AQygK.js   38.91 kB │ gzip:  14.68 kB
+dist/assets/Milestone1F_TestHarness-DwcHsr4F.js   42.92 kB │ gzip:  17.44 kB
+dist/assets/PlayPage-CY63Uhz4.js                  46.90 kB │ gzip:  18.49 kB
+dist/assets/index-DUh0zT4i.js                    146.73 kB │ gzip:  47.71 kB
+dist/assets/events-776716bd.esm-DqxURhnk.js      798.78 kB │ gzip: 214.68 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 3.06s

@@ -386,5 +386,96 @@ function script(hz) {
     console.log(`[test-play-controller] info: camera heap delta ${(dh / 1024).toFixed(1)} KB / 10k frames`)
   } else ok(false, 'run with node --expose-gc')
 }
+// ---- B11 (ADR-027): coyote time + air control (opt-in KCC fields, play values) ----
+{
+  const FLAT = { ...M.cfg.MOON_PARAMS, continentAmp: 0, mountainAmp: 0, detailAmp: 0 }
+  const MA = M.cfg.MOON_ASTRONAUT, dt = 1 / 60
+  ok(MA.coyoteTime === T.coyoteS && MA.airControl === T.airControl, `MOON_ASTRONAUT coyote/air ${MA.coyoteTime}/${MA.airControl} != PLAY_TUNING`)
+  // WHY: a ledge without a mesh — spawn on a Moon-field rise of h m, then swap in the
+  // flat field, so the first step forward is a walk-off of h m (cliff path, -dH > snap).
+  M.initTerrainField(M.cfg.MOON_PARAMS)
+  let L = null
+  for (let i = 0; i < 4000 && !L; i++) {
+    const a = i * 2.399963, z = 1 - 2 * (i + 0.5) / 4000, q = Math.sqrt(1 - z * z)
+    const d = { x: q * Math.cos(a), y: z, z: q * Math.sin(a) }, h = M.terrainHeight(d.x, d.y, d.z)
+    // WHY: a near-level rise (|grad h| < 0.1), so the coyote hop is about vertical.
+    const e1 = Math.abs(d.y) < 0.9 ? { x: -d.z, y: 0, z: d.x } : { x: 1, y: 0, z: 0 }, l1 = Math.hypot(e1.x, e1.y, e1.z)
+    const e2 = { x: d.y * e1.z - d.z * e1.y, y: d.z * e1.x - d.x * e1.z, z: d.x * e1.y - d.y * e1.x }, l2 = Math.hypot(e2.x, e2.y, e2.z)
+    const s2 = 2 / MA.planetRadius, g = (e, l) => { const q = { x: d.x + e.x / l * s2, y: d.y + e.y / l * s2, z: d.z + e.z / l * s2 }; return Math.abs(M.terrainHeight(q.x, q.y, q.z) - h) / 2 }
+    if (h > 1.5 && h < 4 && g(e1, l1) < 0.1 && g(e2, l2) < 0.1) L = { d, h }
+  }
+  ok(L !== null, 'B11: no ledge site found')
+  const walkOff = (cfg) => {
+    M.initTerrainField(M.cfg.MOON_PARAMS)
+    const k = new M.AstronautKCC(cfg); k.teleportSurface(L.d.x, L.d.y, L.d.z)
+    M.initTerrainField(FLAT)
+    k.input.moveF = 1
+    for (let t = 0; t < 60 && k.grounded; t++) k.integrateTick(dt)
+    k.input.moveF = 0
+    return k
+  }
+  const vr = (k) => { const p = k.absPos, v = k.absVel; return (v.x * p.x + v.y * p.y + v.z * p.z) / Math.hypot(p.x, p.y, p.z) }
+  const vt = (k) => { const p = k.absPos, v = k.absVel, l = Math.hypot(p.x, p.y, p.z), r = vr(k); return Math.hypot(v.x - r * p.x / l, v.y - r * p.y / l, v.z - r * p.z / l) }
+  const pressAt = (cfg, wait) => {
+    const k = walkOff(cfg), off = !k.grounded, open = k.coyoteLeft
+    for (let t = 0; t < wait; t++) k.integrateTick(dt)
+    k.input.jump = true; k.integrateTick(dt)
+    return { off, open, fired: k.coyoteJumps, vr: vr(k) }
+  }
+  const p0 = pressAt(MA, 0)
+  ok(p0.off && Math.abs(p0.open - MA.coyoteTime) < 1e-12, `B11: walk-off ${p0.off}, window ${p0.open} != ${MA.coyoteTime}`)
+  for (let w = 0; w <= 5; w++) { // press on air tick w+1 = (w+1)/60 s ≤ 0.10 s after the walk-off
+    const p = pressAt(MA, w)
+    ok(p.fired === 1 && p.vr > 0.7 * MA.jumpSpeed, `B11: coyote press ${((w + 1) / 60).toFixed(3)} s fired ${p.fired}, vr ${p.vr.toFixed(3)}`)
+  }
+  const late = pressAt(MA, 6)
+  ok(late.fired === 0 && late.vr < 0, `B11: press 0.117 s after walk-off fired ${late.fired} (vr ${late.vr.toFixed(3)})`)
+  const off0 = pressAt({ ...MA, coyoteTime: 0 }, 0)
+  ok(off0.fired === 0 && off0.open === 0, `B11: coyoteTime 0 fired ${off0.fired}, window ${off0.open}`)
+  // Through the controller: a buffered press inside the window launches and raises the jump edge.
+  const ctlRig = (k) => ({ kcc: k, ctrl: new M.PlayerController(k), cam: { heading: { x: k.fwd.x, y: k.fwd.y, z: k.fwd.z } }, inp: inpStub(), tel: M.createTelemetry() })
+  { const r = ctlRig(walkOff(MA)); r.inp.jumpPressed = true; frame(r, dt)
+    ok(r.tel.jumped && r.kcc.coyoteJumps === 1 && vr(r.kcc) > 0, `B11: controller coyote press jumped ${r.tel.jumped}, coyote ${r.kcc.coyoteJumps}`) }
+  { const r = ctlRig(walkOff(MA)); let jumped = false, f = 0
+    for (; f < 8; f++) frame(r, dt)
+    r.inp.jumpPressed = true
+    for (; f < 600 && !r.tel.landed; f++) { frame(r, dt); jumped = jumped || r.tel.jumped }
+    ok(!jumped && r.kcc.coyoteJumps === 0 && r.tel.landed, `B11: controller late press jumped ${jumped}, coyote ${r.kcc.coyoteJumps}, landed ${r.tel.landed}`) }
+  // A ground jump never opens the window.
+  M.initTerrainField(FLAT)
+  { const k = new M.AstronautKCC(MA); k.teleportSurface(SP.x, SP.y, SP.z); k.input.jump = true; k.integrateTick(dt)
+    ok(!k.grounded && k.coyoteLeft === 0, `B11: ground jump left window ${k.coyoteLeft}`) }
+  // Air control: a standing hop steered by the stick.
+  const hop = (cfg, steer, sprint) => {
+    const k = new M.AstronautKCC(cfg); k.teleportSurface(SP.x, SP.y, SP.z)
+    k.input.jump = true; k.integrateTick(dt)
+    k.input.moveF = steer; k.input.sprint = sprint
+    let vmax = 0, vlast = 0, n = 0
+    while (!k.grounded && n < 900) { k.integrateTick(dt); n++; if (!k.grounded) { vlast = vt(k); vmax = Math.max(vmax, vlast) } }
+    return { k, vmax, vlast, n }
+  }
+  const hs = hop(MA, 1, false), h0 = hop({ ...MA, airControl: 0 }, 1, false), hsp = hop(MA, 1, true)
+  // WHY: the ballistic arc on a small body turns fall speed into tangential speed
+  // (~|v_r|·v_t·dt/R per tick, ~1e-4 m/s), which the 3.3 %/tick steer settles ~0.1 %
+  // above the target; the steer itself never exceeds it. Hence the 0.2 % tolerance.
+  const TOL = 1.002
+  ok(hs.vlast > 0.9 * MA.walkSpeed && hs.vmax <= MA.walkSpeed * TOL, `B11: air steer reached ${hs.vlast.toFixed(3)} (max ${hs.vmax.toFixed(3)}) of walk ${MA.walkSpeed}`)
+  ok(h0.vmax < 1e-6, `B11: airControl 0 steered ${h0.vmax}`)
+  ok(hsp.vmax <= MA.sprintSpeed * TOL && hsp.vmax > 0.9 * MA.sprintSpeed, `B11: sprint air steer max ${hsp.vmax.toFixed(3)} vs cap ${MA.sprintSpeed}`)
+  const a = hop(MA, 0, false).k, b = hop({ ...MA, airControl: 0 }, 0, false).k
+  ok(a.absPos.x === b.absPos.x && a.absPos.y === b.absPos.y && a.absPos.z === b.absPos.z && a.absVel.x === b.absVel.x,
+    'B11: no stick input in the air changed the hop (air control must be input-only)')
+  console.log(`[test-play-controller] info: B11 ledge h ${L.h.toFixed(2)} m, R ${MA.planetRadius} m; air steer ${hs.vlast.toFixed(3)} m/s (walk ${MA.walkSpeed}), sprint max ${hsp.vmax.toFixed(3)} m/s, hop ${hs.n} ticks`)
+  // Zero-GC on the new paths (air control every air tick).
+  if (globalThis.gc) {
+    const k = new M.AstronautKCC(MA); k.teleportSurface(SP.x, SP.y, SP.z)
+    const burn = (N) => { for (let i = 0; i < N; i++) { if (k.grounded) k.input.jump = true; k.input.moveF = 1; k.input.moveR = (i & 64) ? 1 : -1; k.integrateTick(dt) } }
+    burn(2000); gc(); const h0m = process.memoryUsage().heapUsed
+    burn(20000); gc(); const dh = process.memoryUsage().heapUsed - h0m
+    ok(dh < 64 * 1024, `B11: KCC air-control heap delta ${dh} B over 20k ticks`)
+    console.log(`[test-play-controller] info: B11 KCC heap delta ${(dh / 1024).toFixed(1)} KB / 20k ticks`)
+  }
+  M.initTerrainField(FLAT)
+}
 if (fails.length) { console.error(`test-play-controller FAIL ${n - fails.length}/${n}`); for (const f of fails) console.error('  - ' + f); process.exit(1) }
 console.log(`test-play-controller PASS ${n}/${n}`)

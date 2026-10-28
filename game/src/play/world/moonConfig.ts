@@ -37,6 +37,9 @@ export const MOON_ASTRONAUT: AstronautConfig = {
   maxWalkSlopeDeg: 50, slideAngleDeg: 45, kineticFriction: 0.6, slideGripTau: 0.06,
   eyeHeight: 1.62, crouchEyeHeight: 0.95, upBlendWeight: 0.65, airborneUpTau: 2.0,
   autoTurnRate: 6, rcsAccel: 1.2, rcsBudgetMax: 20, rcsRegen: 0.5, sweepGap: 0.25,
+  // WHY (B11, ADR-027): the opt-in KCC fields, ruled Q2a/Q3 (2026-10-20). Literals,
+  // not PLAY_TUNING refs (declared below); test-play-controller pins them equal.
+  coyoteTime: 0.10, airControl: 0.3,
 };
 
 // WHY: harness TerrainMeshPool options (~116–118); params are supplied at

@@ -110,6 +110,10 @@ export interface AstronautConfig {
   rcsBudgetMax: number;
   rcsRegen: number;
   sweepGap: number;
+  /** B11 (T1 Q2a, ADR-027): jump grace after walking off a ledge, s. Absent/0 = off. */
+  coyoteTime?: number;
+  /** B11 (T1 Q3, ADR-027): airborne steering fraction of the ground response. Absent/0 = off. */
+  airControl?: number;
 }
 
 
@@ -205,6 +209,10 @@ const _tmp: Vec3 = { x: 0, y: 0, z: 0 };
 const _tmp2: Vec3 = { x: 0, y: 0, z: 0 };
 const _qSpin: Quat = { x: 0, y: 0, z: 0, w: 1 };
 const _qTmp: Quat = { x: 0, y: 0, z: 0, w: 1 };
+// B11 (ADR-027): coyote / air-control scratch, separate from the shared temps.
+const _b11A: Vec3 = { x: 0, y: 0, z: 0 };
+const _b11B: Vec3 = { x: 0, y: 0, z: 0 };
+const _b11C: Vec3 = { x: 0, y: 0, z: 0 };
 
 
 const _nanSnap = {
@@ -268,6 +276,13 @@ export class AstronautKCC {
   private readonly _vehUp: Vec3 = { x: 0, y: 1, z: 0 };
   private readonly _vehFwd: Vec3 = { x: 1, y: 0, z: 0 };
   private _accumulator = 0;
+  // WHY (B11, ADR-027): coyote window left after a walk-off (s) and the planet-frame
+  // up (normal/radial blend) walked off. Written only when cfg.coyoteTime > 0, so the default path
+  // never reads a non-zero value.
+  private _coyoteLeft = 0;
+  private readonly _coyoteN: Vec3 = { x: 0, y: 1, z: 0 };
+  /** B11: coyote jumps fired so far (the play layer reads it as a launch edge). */
+  coyoteJumps = 0;
   // M1A entity write-through (setup path).
   private _wtPos: Vec3 | null = null;
   private _wtVel: Vec3 | null = null;
@@ -291,6 +306,8 @@ export class AstronautKCC {
   get mode(): AstronautMode { return this._mode; }
   get grounded(): boolean { return this._grounded; }
   get spinPhase(): number { return this._theta; }
+  /** B11: seconds left in the coyote window (0 when closed or disabled). */
+  get coyoteLeft(): number { return this._coyoteLeft; }
 
 
   attachVehicle(provider: VehicleProvider): void {
@@ -308,6 +325,7 @@ export class AstronautKCC {
     this._vehicle = provider;
     this._mode = 'VEHICLE';
     this._grounded = false;
+    this._coyoteLeft = 0;
   }
 
 
@@ -327,6 +345,7 @@ export class AstronautKCC {
     this.absPos.x = px; this.absPos.y = py; this.absPos.z = pz;
     this.absVel.x = vx; this.absVel.y = vy; this.absVel.z = vz;
     this._grounded = false;
+    this._coyoteLeft = 0;
     this._vCtl.x = 0; this._vCtl.y = 0; this._vCtl.z = 0;
     this._vSlide.x = 0; this._vSlide.y = 0; this._vSlide.z = 0;
     // Planet-frame mirror + radial-aligned frame (continuous, deterministic).
@@ -357,6 +376,7 @@ export class AstronautKCC {
     this._vCtl.x = 0; this._vCtl.y = 0; this._vCtl.z = 0;
     this._vSlide.x = 0; this._vSlide.y = 0; this._vSlide.z = 0;
     this._grounded = true;
+    this._coyoteLeft = 0;
     this._mode = 'SURFACE';
     this._vehicle = null;
     this._composeGrounded(0, 0, 0);
@@ -692,6 +712,16 @@ export class AstronautKCC {
           this._rcsBudget + cfg.rcsRegen * dt);
       }
     }
+    // WHY (B11, ADR-027): still airborne here = a walk-off (the jump path returned
+    // above), so open the coyote window with the character up just left (the
+    // normal/radial blend, upBlendWeight; plan §5.3). With coyoteTime 0 nothing is written.
+    if (!this._grounded) {
+      const ct = cfg.coyoteTime ?? 0;
+      if (ct > 0) {
+        this._coyoteLeft = ct;
+        this._coyoteN.x = this.up.x; this._coyoteN.y = this.up.y; this._coyoteN.z = this.up.z;
+      }
+    }
     void cliff;
   }
 
@@ -816,6 +846,13 @@ export class AstronautKCC {
     this.absVel.z += _g.z * dt;
 
 
+    // B11 (ADR-027): opt-in coyote jump and air control. Both are guarded before
+    // any arithmetic, so the default config (fields absent/0) runs the pre-B11 path.
+    if (this._coyoteLeft > 0) this._coyoteStep(dt);
+    const ac = cfg.airControl ?? 0;
+    if (ac > 0 && this._mode === 'SURFACE' && !launchTick) this._airControl(ac, dt);
+
+
     // ZERO-G RCS pack (limited — Spec 00.4: zero-g recovery only).
     if (this._mode === 'ZERO-G' && this._rcsBudget > 0) {
       let ax = this.input.rcsF, ay = this.input.rcsU, az = this.input.rcsR;
@@ -880,6 +917,85 @@ export class AstronautKCC {
     rotateByQuatConjInto(_qSpin,
       this.absPos.x / r1, this.absPos.y / r1, this.absPos.z / r1, _dS);
     this.pLocal.x = _dS.x * r1; this.pLocal.y = _dS.y * r1; this.pLocal.z = _dS.z * r1;
+  }
+
+
+  /**
+   * B11 coyote jump (ADR-027). A press inside the window fires the ground jump
+   * (jumpSpeed along the up walked off, at the tick-start spin phase, as F18)
+   * and first removes any fall speed along that normal, so the hop is as high as
+   * a grounded jump. Otherwise the window counts down.
+   */
+  private _coyoteStep(dt: number): void {
+    const cfg = this.cfg;
+    if (this._mode === 'SURFACE' && this.input.jump && !this.input.crouch) {
+      spinQuatInto(this._thetaPrev, _qSpin);
+      rotateByQuatInto(_qSpin, this._coyoteN.x, this._coyoteN.y, this._coyoteN.z, _b11A);
+      transportVelocityInto(cfg.spinOmega, this.absPos.x, this.absPos.y,
+        this.absPos.z, _b11B);
+      const vn = (this.absVel.x - _b11B.x) * _b11A.x +
+        (this.absVel.y - _b11B.y) * _b11A.y + (this.absVel.z - _b11B.z) * _b11A.z;
+      const dv = cfg.jumpSpeed - (vn < 0 ? vn : 0);
+      this.absVel.x += _b11A.x * dv;
+      this.absVel.y += _b11A.y * dv;
+      this.absVel.z += _b11A.z * dv;
+      this._coyoteLeft = 0;
+      this.coyoteJumps++;
+      return;
+    }
+    this._coyoteLeft -= dt;
+    if (this._coyoteLeft < 1e-9) this._coyoteLeft = 0;
+  }
+
+
+  /**
+   * B11 air control (ADR-027): with stick input, steer the ground-relative
+   * TANGENTIAL velocity toward the walk target at airControl·(vDes − vT)/accelTau.
+   * WHY: no input = no change, so a running jump keeps its ballistic momentum
+   * (a Moon hop lasts ~5 s; braking toward 0 would kill it). The result is capped
+   * at max(sprintSpeed, current tangential speed): steering never adds speed
+   * beyond a sprint, and never brakes a faster launch by itself.
+   */
+  private _airControl(ac: number, dt: number): void {
+    const cfg = this.cfg;
+    let inF = this.input.moveF, inR = this.input.moveR;
+    const inLen = Math.sqrt(inF * inF + inR * inR);
+    if (inLen < 0.01) return;
+    if (inLen > 1) { inF /= inLen; inR /= inLen; }
+    const speed = this.input.crouch ? cfg.crouchSpeed
+      : this.input.sprint ? cfg.sprintSpeed : cfg.walkSpeed;
+    // Desired velocity from the character frame (planet frame, as the RCS uses it).
+    const rgx = this.fwd.y * this.up.z - this.fwd.z * this.up.y;
+    const rgy = this.fwd.z * this.up.x - this.fwd.x * this.up.z;
+    const rgz = this.fwd.x * this.up.y - this.fwd.y * this.up.x;
+    let dsx = (this.fwd.x * inF + rgx * inR) * speed;
+    let dsy = (this.fwd.y * inF + rgy * inR) * speed;
+    let dsz = (this.fwd.z * inF + rgz * inR) * speed;
+    // Ground-relative velocity and the radial, both in the planet frame.
+    spinQuatInto(this._thetaPrev, _qSpin);
+    transportVelocityInto(cfg.spinOmega, this.absPos.x, this.absPos.y,
+      this.absPos.z, _b11A);
+    rotateByQuatConjInto(_qSpin, this.absVel.x - _b11A.x,
+      this.absVel.y - _b11A.y, this.absVel.z - _b11A.z, _b11B);
+    const r = Math.sqrt(this.absPos.x * this.absPos.x + this.absPos.y * this.absPos.y +
+      this.absPos.z * this.absPos.z) || 1;
+    rotateByQuatConjInto(_qSpin, this.absPos.x / r, this.absPos.y / r,
+      this.absPos.z / r, _b11C);
+    const rh = _b11C, rv = _b11B;
+    const vr = rv.x * rh.x + rv.y * rh.y + rv.z * rh.z;
+    const tx = rv.x - vr * rh.x, ty = rv.y - vr * rh.y, tz = rv.z - vr * rh.z;
+    const dr = dsx * rh.x + dsy * rh.y + dsz * rh.z;
+    dsx -= dr * rh.x; dsy -= dr * rh.y; dsz -= dr * rh.z;
+    const k = (ac * dt) / cfg.accelTau;
+    let nx = tx + (dsx - tx) * k, ny = ty + (dsy - ty) * k, nz = tz + (dsz - tz) * k;
+    const m0 = Math.sqrt(tx * tx + ty * ty + tz * tz);
+    const m1 = Math.sqrt(nx * nx + ny * ny + nz * nz);
+    const cap = m0 > cfg.sprintSpeed ? m0 : cfg.sprintSpeed;
+    if (m1 > cap) { const s = cap / m1; nx *= s; ny *= s; nz *= s; }
+    rotateByQuatInto(_qSpin, nx - tx, ny - ty, nz - tz, _b11A);
+    this.absVel.x += _b11A.x;
+    this.absVel.y += _b11A.y;
+    this.absVel.z += _b11A.z;
   }
 
 
@@ -1015,6 +1131,7 @@ export class AstronautKCC {
     }
     this._vSlide.x = 0; this._vSlide.y = 0; this._vSlide.z = 0;
     this._grounded = true;
+    this._coyoteLeft = 0;
     this._mode = 'SURFACE';
     this.integrity.landings++;
     this._refreshUpFwd(_dS.x, _dS.y, _dS.z);
