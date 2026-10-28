@@ -2,7 +2,7 @@
 
 - Task: **T1** (playable moon) — definition: `notes/task.md` § "T1 — PLAYABLE MOON"
 - Branch: `t1-playable-moon`
-- Stage: **BUILDING — awaiting Lead acceptance** — plan READY (7/7); build 13/13 done (B1–B13); stage → DONE after the Lead accepts
+- Stage: **DONE** (accepted by the Lead 2026-10-28; fast-forwarded into `main`) — plan READY (7/7); build 13/13 done (B1–B13)
 - Last updated: 2026-10-21
 - **Resume at the FIRST UNCHECKED BOX** (planning item or build step).
 - Rules: planning changes NO game code (plan + process files only); each checked
