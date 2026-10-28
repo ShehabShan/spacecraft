@@ -67,6 +67,36 @@ stay exactly as it is.
 - Heights must stay within ±(`MAX_TERRAIN_H` − 20 m). The engine invariants hold
   (pure core, zero-GC, no new library).
 
+### 3.1 Feasibility (P0 quality, session 147)
+Probe: `docs/audit/evidence/T3/P0/feasibility-probe.mjs`. It is a standalone prototype
+with no game code edited; logs are `feasibility-probe.log` and `feasibility-probe.run2.log`.
+- **Default-path pins** (taken on the unedited tree; SHA-256 of `terrainHeight` Float64
+  bytes on 4,096 Fibonacci directions). S1's gate must reproduce both exactly:
+  - `TEST_PLANET` `412ed993c2fe088cc1f2f65116c9330ec4ddbe49a477f7a4e2d49b676a755e02`
+  - harness MOON (the `MOON_PARAMS` values) `b7403bae174f81c8a8be7ddd587ab16445cfc33cfc06815f76d293a794a170b6`
+- **S1 starting candidate "G-prune":**
+  - Basins: 7 with radii 0.62/0.52/0.45/0.40/0.36/0.32/0.28 rad × 1.15, placed without
+    overlap by `mulberry32(0x7a3e)`, with basin 0 at (0,0,1); S2 rotates it under the spawn.
+  - Shore: smoothstep width 0.08 rad.
+  - Rim: Gaussian with σ 0.05 rad at r + 0.024, amplitude 25 + 45·r/0.62 m.
+  - Mare floor: −25 m + fBm(freq 8)·1.2 m.
+  - Highlands: `MOON_PARAMS` with mountainAmp ×0.12 and detailAmp ×0.35, blended by (1 − mask) and skipped at mask 1.
+  - Craters: on a 3D cell lattice in two layers:
+    - F 9, occupancy 0.55, r 18–60 m;
+    - F 32, occupancy 0.45, r 8–16 m.
+  - Crater profile: bowl depth 0.18·r, rim 0.05·r, damped ×(1 − 0.9·mask) on mare.
+  - Pruning: chord distance, cell-box prune and a basin-cone prune.
+- **Results** (20k directions):
+  - Slope: <5° 32.6% · <45° 92.3% · ≥50° 3.9% · ≥30° 29.1%.
+  - Mare: 33.0% of the surface (94% of it <5°).
+  - Height: −72…+165 m.
+  - Cost: 1.98× baseline in run 1.
+
+  For comparison, the baseline is <5° 0.9% · <45° 51.8% · ≥50° 40.9%. Every §8 S1 target
+  passes. The cost (≤2×) is the tight one. Two lessons from the probe:
+  - The floor must be low-frequency: freq 22 / 3 m left only 38% of the mare under 5°.
+  - Craters dominate the cost: without craters the cost is 1.20×.
+
 ## 4. Scope IN
 - `MoonProfile` type and opt-in evaluation in `terrainField.ts` (basins, craters,
   softened highlands), with `// WHY:` comments.
