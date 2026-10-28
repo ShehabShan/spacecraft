@@ -57,8 +57,11 @@ test('S1 play page: CLICK_TO_PLAY ≤ 20 s, non-blank canvas, autoplay inert, no
   console.log(`[S1] CLICK_TO_PLAY ${Date.now() - t0} ms after the shell mounted`)
   const st = await canvasStats(page)
   console.log(`[S1] canvas colours=${st.colours} lit=${(st.litShare * 100).toFixed(2)}%`)
-  expect(st.colours, 'canvas has more than a few colours').toBeGreaterThan(16)
-  expect(st.litShare, 'canvas is not all black').toBeGreaterThan(0.01)
+  // WHY: thresholds sit far above what the DOM overlay alone draws. With the
+  // canvas hidden (mutant `blank`), the overlay text measured 410 colours and
+  // 1.3 % lit; the rendered scene measures ~3,750 colours and ~80 % lit.
+  expect(st.colours, 'canvas shows a rendered scene, not just overlay text').toBeGreaterThan(1000)
+  expect(st.litShare, 'canvas is not mostly black').toBeGreaterThan(0.25)
   await page.waitForTimeout(2000)
   expect(await phaseOf(page), 'without ?autoplay the shell waits for a click').toBe('CLICK_TO_PLAY')
   expect(errs, errs.join('\n')).toEqual([])

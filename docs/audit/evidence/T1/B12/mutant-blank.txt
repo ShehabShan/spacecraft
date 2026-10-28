@@ -1,0 +1,37 @@
+[WebServer] 
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+
+Running 2 tests using 1 worker
+
+[S1] CLICK_TO_PLAY 352 ms after the shell mounted
+[S1] canvas colours=410 lit=1.30%
+  ✘  1 e2e/play.spec.ts:50:1 › S1 play page: CLICK_TO_PLAY ≤ 20 s, non-blank canvas, autoplay inert, no errors (1.1s)
+  -  2 e2e/play.spec.ts:70:1 › S2 ?autoplay=1: PLAYING without a click, HUD speed > 0 after W, no errors
+
+
+  1) e2e/play.spec.ts:50:1 › S1 play page: CLICK_TO_PLAY ≤ 20 s, non-blank canvas, autoplay inert, no errors 
+
+    Error: canvas shows a rendered scene, not just overlay text
+
+    expect(received).toBeGreaterThan(expected)
+
+    Expected: > 1000
+    Received:   410
+
+      61 |   // canvas hidden (mutant `blank`), the overlay text measured 410 colours and
+      62 |   // 1.3 % lit; the rendered scene measures ~3,750 colours and ~80 % lit.
+    > 63 |   expect(st.colours, 'canvas shows a rendered scene, not just overlay text').toBeGreaterThan(1000)
+         |                                                                              ^
+      64 |   expect(st.litShare, 'canvas is not mostly black').toBeGreaterThan(0.25)
+      65 |   await page.waitForTimeout(2000)
+      66 |   expect(await phaseOf(page), 'without ?autoplay the shell waits for a click').toBe('CLICK_TO_PLAY')
+        at /workspace/spacecraft/game/e2e/play.spec.ts:63:78
+
+    Error Context: test-results/play-S1-play-page-CLICK-TO-e8f72-as-autoplay-inert-no-errors/error-context.md
+
+  1 failed
+    e2e/play.spec.ts:50:1 › S1 play page: CLICK_TO_PLAY ≤ 20 s, non-blank canvas, autoplay inert, no errors 
+  1 did not run
