@@ -1,0 +1,17 @@
+[WebServer] 
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+
+Running 1 test using 1 worker
+
+[m1fR4 gate] acceptance line: [M1fR4Gate] acceptance PASSED
+[m1fR4 gate] badges: ["PASS"]
+[m1fR4 gate] runtime errors: []
+[m1fR4 gate] page console transcript (tail):
+  log: [M1fR4Gate] R4a boot identity: PASS — 75 boot references compared with === after 3,000 pure frames (24× setBody + update + layerMaskFor + driver pose) and 300 executePasses renders: 0 changed; GPU geometries 3→3, textures 1→1, programs 3→3; shipped shape predicate holds.
+  log: [M1fR4Gate] acceptance PASSED
+  ✓  1 e2e/m1f-r4.spec.ts:8:1 › M1F R4 rebuilt gate (R4a) (506ms)
+
+  1 passed (6.1s)
