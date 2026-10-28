@@ -138,6 +138,6 @@ Each kept probe run from `game/` (the two `.py` tools from the repo root) on 7b3
 | `u27-k2d-recheck.mjs` | 1 | 13/14 (U27-k2d report recorded 14/14 exit 0); same at `pre-t4` |
 | `u27-k4-recheck.mjs` | 1 | SUMMARY 14/19; same at `pre-t4` |
 | `u27b2-k2a-recheck.mjs` (`--expose-gc`) | 1 | `Error: heap clauses large`; same at `pre-t4` |
-| `u27b3a-k2b-recheck.mjs` | 1 | ENOENT `game/e2e/m1f.spec.ts` (spec retired by ADR-026); same at `pre-t4` |
+| `u27b3a-k2b-recheck.mjs` | 1 | ENOENT `102a5b8:game/e2e/m1f.spec.ts` (spec retired by ADR-026); same at `pre-t4` |
 
 Not run standalone: `f2fa-m1f-observe.mjs` (needs a worktree and port), `f2fb-make-variant.py` (builds a worktree variant), `r4-cdp-driver.mjs` (driven by the m1f-r4 spec), `u27b1-ts-loader.mjs` and `u01-gate-run1.log` (inputs to other probes).
