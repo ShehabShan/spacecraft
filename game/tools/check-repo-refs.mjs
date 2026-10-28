@@ -12,7 +12,8 @@ import { fileURLToPath } from 'node:url'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
 const EXT = /\.(md|ts|tsx|mjs|js|sh|json|py)$/
-const SKIP = new Set(['game/package-lock.json'])
+// WHY: the lockfile has no repo paths; this file's self-test fixtures are fake paths on purpose.
+const SKIP = new Set(['game/package-lock.json', 'game/tools/check-repo-refs.mjs'])
 // WHY: the lookbehind drops URL/absolute-path tails (…/x/docs/…) and words like "mydocs/".
 const TOKEN = /(?<![A-Za-z0-9_\-.\/])((?:\.\.?\/)*)(docs|notes|game|Milestone|Design_specs)\/([A-Za-z0-9_.\-\/]*)/g
 const PLACEHOLDER = /^[<*{$\[]/ // char right after the token: `docs/<task>-plan.md`, `docs/audit/*.md`

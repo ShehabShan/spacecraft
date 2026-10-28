@@ -21,6 +21,6 @@ At bb73503 the tracked tree is 11.44 MB / 1,531 files. About 8 MB is finished-ta
 The tag is immutable and needs no upkeep. One pointer form can be grepped and machine-checked. The gate turns "no dangling reference" from a promise into an exit code, and it lands before the first deletion (§13 safeguard 3).
 
 ## Consequences
-- The baseline at S0 is red: 56 dangling tokens at the S0 commit (`--summary` per area in its commit message). The T4 plan and this ADR name paths that S1–S5 create (`docs/history/`, `notes/LEDGER.md`), so they count until then. Most are in files that later T4 steps delete or compact, and the rest are rewritten. S8 requires 0 over the whole tree, and every later commit runs the gate.
+- The baseline at S0 is red: 48 dangling tokens after the self-skip fix (`--summary` per area in the S0 and S0-fix commit messages; the S0 commit itself also counted the gate's own 11 self-test fixtures). The T4 plan and this ADR name paths that S1–S5 create (`docs/history/`, `notes/LEDGER.md`), so they count until then. Most are in files that later T4 steps delete or compact, and the rest are rewritten. S8 requires 0 over the whole tree, and every later commit runs the gate.
 - Prefix matching accepts stems such as `docs/decisions/ADR-015`, so a dangling stem that happens to prefix a real file passes. This is accepted, because a false pass on a stem that names a real file is harmless.
 - Untracked files (for example `node_modules`) count only when present on disk.
