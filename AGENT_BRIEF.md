@@ -247,6 +247,8 @@ suspected lost work, or deleting the Lead's work.
   `notes/{reports,patches,archive}/` removed from the tree; §2 lists them as removed;
   references point at `pre-t4:<path>` (ADR-030); "never stage" became "never re-add".
   No other rule changed.
+- 2026-10-28 Product goal (Lead, session 153c): §13 gained the AAA product-goal
+  bullet (publishable AAA browser game, not a prototype).
 
 ## 11. AUDIT MODE (binds only while the active task is A1)
 Why: the milestone specs were written by GLM 5.3 and the engine by GLM 5.3 Flash
@@ -286,6 +288,10 @@ the existing code cannot audit it.
   bot, so a reused bot starts above 0.
 
 ## 13. PROJECT GOAL & DECISION AUTHORITY (Lead, 2026-10-21; binds every task)
+- **Product goal (Lead, 2026-10-28).** SOLARIS is a publishable AAA browser game,
+  not a prototype or a "vibe" game. Every design and technical choice aims at
+  shipped commercial quality in look, feel, performance and stability. A finished
+  task leaves no placeholder or stopgap in place of the real thing.
 - **Goal.** A game that looks like a real solar system: every planet and moon
   rotates and orbits, computed in real time. The engine must be optimised,
   flexible, high-performance and a solid foundation, so later features (e.g.
