@@ -1,7 +1,7 @@
-[C1] first phase LOADING after 347 ms — PASS
-[C2] CLICK_TO_PLAY after 701 ms — PASS
+[C1] first phase LOADING after 336 ms — PASS
+[C2] CLICK_TO_PLAY after 708 ms — PASS
 [C3] click → lock=CANVAS phase=PLAYING — PASS
-[C4] P → phase=PAUSED read0 disabled=false @3501ms since pause; read1 disabled=false @4706ms; unlocked=true — PASS
+[C4] P → phase=PAUSED read0 disabled=false @4781ms since pause; read1 disabled=false @5998ms; unlocked=true — PASS
 [C4b] Resume → phase=PLAYING
 [C5] play errors (favicon excluded): 0 — PASS
 [C6] m1f&manual=1 boots; errors (favicon excluded): 0 — PASS

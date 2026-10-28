@@ -132,7 +132,7 @@ with no game code edited; logs are `feasibility-probe.log` and `feasibility-prob
   direction. Re-pin test-play-spawn (field count 11, new spawn) and the moon trace of
   test-kcc-default-trace (TEST_PLANET pins unchanged), with an ADR-028 amendment and
   evidence. Run all nine play Node tests, `e2e/play.spec.ts` and the build.
-- [ ] **S3** Look: darker mare albedo from the basin mask (shader or vertex attribute),
+- [x] **S3** (sessions 149–150: mare albedo 0.6 by shader injection, ADR-029 accepted; gate 16/16, self-test 4/4; check-play-b4/b5/b6/b7/b9 and test-play-perf exit 0; frame time spawn 1.000, rim 1.052 accepted by the Lead 2026-10-28) Look: darker mare albedo from the basin mask (shader or vertex attribute),
   plus a crater-rim readability check. Screenshots via check-play-b4…b9, and test-play-perf.
 - [ ] **S4** Close-out: the full §13 matrix (tsc, build, play Node tests,
   kcc-default-trace, kcc-gate, play.spec, m1e, m1f-r with R5 waived). Then the Lead's

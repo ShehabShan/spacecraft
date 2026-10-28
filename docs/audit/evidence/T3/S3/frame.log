@@ -1,4 +1,4 @@
 [test-play-frame] info (B7c): shell-path heap delta 10072 B
 [test-play-frame] info (B7c): W 2 s → 5.946 m; |abs| 1340.2
-[test-play-frame] info: boom 7.000 m, cam–char 7.119 m, fwd·earth 0.9649, Earth 12.99° off-axis, heap delta 43984 B
+[test-play-frame] info: boom 7.000 m, cam–char 7.119 m, fwd·earth 0.9649, Earth 12.99° off-axis, heap delta 45984 B
 [test-play-frame] PASS 26/26

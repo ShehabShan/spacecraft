@@ -1,6 +1,6 @@
 # ADR-029 — T3 S3: darker mare albedo through shader injection
 
-Status: proposed (session 149, 2026-10-28) · Task: T3 S3 · Authority: Lead delegated T3 design decisions (task definition, 2026-10-28)
+Status: accepted (proposed session 149; accepted 2026-10-28 with the Lead's ruling on the rim frame-time result, recorded session 150) · Task: T3 S3 · Authority: Lead delegated T3 design decisions (task definition, 2026-10-28)
 
 ## Context
 After S2 the play Moon has mare basins in the height field (ADR-028), but the terrain uses TerrainMeshPool's default
