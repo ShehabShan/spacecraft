@@ -10,6 +10,9 @@ applicable, code fixes proven by failing acceptance output.
 
 ---
 
+## 2026-10-28 — T3 S1: opt-in Moon terrain profile (ADR-028)
+- `game/src/core/terrain/terrainField.ts`: optional `TerrainParams.moon` / `MoonProfile`; `terrainHeight` dispatches to `moonHeight` (basins, craters, softened highlands) only when it is set, and the pre-T3 field is unchanged as `fieldHeight`; new export `moonMareMask` · `game/tools/test-moon-profile.mjs` (new gate, `--self-test`) · `docs/decisions/ADR-028-moon-terrain-profile.md` · why: the play Moon was 40.9% unwalkable (≥50°) and had no flat ground · evidence: gate PASS 13/13 (<5° 32.6%, ≥50° 3.9%, mare 33.0%, 1.88×), self-test 4/4, default-path pins match; tsc, kcc-default-trace, kcc-gate and play Node tests exit 0 · source: Lead T3 order, 2026-10-28.
+
 ## 2026-10-28 — §1 LEAN READ code rule (Lead ruling, docs only)
 - `AGENT_BRIEF.md` §1 LEAN READ (+1 bullet), `notes/STATE.md` APPROVAL LEDGER (+1 row) · why: the code-reading rule lived only in the session starter prompt; moving it into the brief lets that prompt shrink · source: Lead, 2026-10-28.
 

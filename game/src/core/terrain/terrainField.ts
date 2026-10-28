@@ -52,6 +52,28 @@ export interface TerrainParams {
   mountainAmp: number;   // metres
   detailFreq: number;
   detailAmp: number;     // metres
+  // WHY (T3, ADR-028): opt-in Moon profile. Absent → the pre-T3 field, bit-identical.
+  moon?: MoonProfile;
+}
+
+
+/**
+ * Moon profile (T3, ADR-028): mare basins (flat floors + rim rings) and
+ * procedural craters over a softened highland field. Plain numbers / number
+ * arrays only — params are structured-cloned to workers verbatim.
+ */
+export interface MoonProfile {
+  basins: number[];      // flat [dx, dy, dz, angularRadius(rad)] × n, unit dirs
+  shoreWidth: number;    // rad, smoothstep band inside the basin edge
+  rimSigma: number;      // rad, Gaussian width of the rim ring
+  rimOffset: number;     // rad, ring centre outside the basin edge
+  rimAmp0: number;       // m, rim height at radius 0
+  rimAmpPerRad: number;  // m per rad of basin radius
+  floorHeight: number;   // m, mare floor level
+  floorFreq: number;     // fBm frequency of floor undulation (low → flat)
+  floorAmp: number;      // m
+  mareCraterDamp: number; // craters × (1 − damp·mask) on mare
+  craters: number[];     // flat [F, pOcc, rMin, rMax, depthK, rimK, seed] × layers
 }
 
 
@@ -76,6 +98,7 @@ let P: TerrainParams = TEST_PLANET;
 export function initTerrainField(params: TerrainParams): void {
   P = params;
   initNoise(params.seed);
+  prepareMoon(params.moon);
 }
 
 
@@ -126,6 +149,15 @@ export function skirtDepthFor(level: number): number {
  * fine detail. Max amplitude ~±900 m for TEST_PLANET.
  */
 export function terrainHeight(dx: number, dy: number, dz: number): number {
+  // WHY (T3, ADR-028): without P.moon the field below is evaluated exactly as
+  // before T3 (default-path SHA-256 pins in tools/test-moon-profile.mjs).
+  if (P.moon !== undefined) return moonHeight(dx, dy, dz);
+  return fieldHeight(dx, dy, dz);
+}
+
+
+/** The pre-T3 field: continents + masked ridges + detail (unchanged). */
+function fieldHeight(dx: number, dy: number, dz: number): number {
   const c = fbm3(dx * P.continentFreq, dy * P.continentFreq, dz * P.continentFreq, 4, 2, 0.5);
   const m = fbm3(
     dx * P.maskFreq + 17.31, dy * P.maskFreq - 9.17, dz * P.maskFreq + 4.73, 3, 2, 0.5,
@@ -136,6 +168,134 @@ export function terrainHeight(dx: number, dy: number, dz: number): number {
   mask = mask * mask * (3 - 2 * mask);
   const d = fbm3(dx * P.detailFreq, dy * P.detailFreq, dz * P.detailFreq, 3, 2, 0.5);
   return c * P.continentAmp + r * mask * P.mountainAmp + d * P.detailAmp;
+}
+
+
+/* -- Opt-in Moon profile (T3, ADR-028) -------------------------------------
+ * Boot-time tables (allocated in initTerrainField only); evaluation is pure
+ * in d and zero-allocation, so seams stay bit-exact across chunks/LOD/workers.
+ */
+let _bas = new Float64Array(0); // [dx, dy, dz, r, cosCull, rimAmp] × basins
+let _crt = new Float64Array(0); // [F, pOcc, rMin, rMax, depthK, rimK, seed, reach²] × layers
+let _mask = 0;
+let _rim = 0;
+
+
+function prepareMoon(m: MoonProfile | undefined): void {
+  if (m === undefined) { _bas = new Float64Array(0); _crt = new Float64Array(0); return; }
+  const nb = (m.basins.length / 4) | 0;
+  _bas = new Float64Array(nb * 6);
+  for (let i = 0; i < nb; i++) {
+    const x = m.basins[i * 4], y = m.basins[i * 4 + 1], z = m.basins[i * 4 + 2];
+    const r = m.basins[i * 4 + 3], inv = 1 / Math.sqrt(x * x + y * y + z * z);
+    _bas[i * 6] = x * inv; _bas[i * 6 + 1] = y * inv; _bas[i * 6 + 2] = z * inv;
+    _bas[i * 6 + 3] = r;
+    // WHY: beyond r + offset + 3σ the mask is 0 and the rim < 1.3e-4·amp → skip acos.
+    _bas[i * 6 + 4] = Math.cos(r + m.rimOffset + 3 * m.rimSigma);
+    _bas[i * 6 + 5] = m.rimAmp0 + m.rimAmpPerRad * r;
+  }
+  const nl = (m.craters.length / 7) | 0;
+  _crt = new Float64Array(nl * 8);
+  for (let l = 0; l < nl; l++) {
+    for (let k = 0; k < 7; k++) _crt[l * 8 + k] = m.craters[l * 7 + k];
+    // WHY: a crater influences ≤ 1.8·r (rim Gaussian < 0.6% there), in lattice units.
+    const reach = (1.8 * m.craters[l * 7 + 3] / P.radius) * m.craters[l * 7];
+    _crt[l * 8 + 7] = reach * reach;
+  }
+}
+
+
+/** Basin mask (max over basins, 1 = mare floor) and summed rim height → _mask/_rim. */
+function basinsInto(dx: number, dy: number, dz: number, m: MoonProfile): void {
+  const w = m.shoreWidth, sig = m.rimSigma, off = m.rimOffset;
+  let mask = 0, rim = 0;
+  for (let i = 0; i < _bas.length; i += 6) {
+    const ca = dx * _bas[i] + dy * _bas[i + 1] + dz * _bas[i + 2];
+    if (ca < _bas[i + 4]) continue;
+    const a = Math.acos(ca > 1 ? 1 : ca);
+    const r = _bas[i + 3];
+    let t = (a - (r - w)) / w;
+    t = t < 0 ? 0 : t > 1 ? 1 : t;
+    const mk = 1 - t * t * (3 - 2 * t);
+    if (mk > mask) mask = mk;
+    const g = (a - r - off) / sig;
+    rim += _bas[i + 5] * Math.exp(-g * g);
+  }
+  _mask = mask; _rim = rim;
+}
+
+
+function hash01(ix: number, iy: number, iz: number, s: number): number {
+  let h = Math.imul(ix, 0x8da6b343) ^ Math.imul(iy, 0xd8163841) ^ Math.imul(iz, 0xcb1ab31f) ^ s;
+  h = Math.imul(h ^ (h >>> 15), 0x2c1b3c6d);
+  h = Math.imul(h ^ (h >>> 12), 0x297a2d39);
+  h ^= h >>> 15;
+  return (h >>> 0) / 4294967296;
+}
+
+
+/** One crater layer: 3D cell lattice of d (continuous across cube faces), 3×3×3
+ *  neighbourhood with a cell-box prune; bowl (depthK·r) + Gaussian rim (rimK·r). */
+function craterLayer(dx: number, dy: number, dz: number, i: number): number {
+  const F = _crt[i], pOcc = _crt[i + 1], rMin = _crt[i + 2], rMax = _crt[i + 3];
+  const depthK = _crt[i + 4], rimK = _crt[i + 5], seed = _crt[i + 6] | 0, r2 = _crt[i + 7];
+  const R = P.radius;
+  const px = dx * F, py = dy * F, pz = dz * F;
+  const cx = Math.floor(px), cy = Math.floor(py), cz = Math.floor(pz);
+  const fx = px - cx, fy = py - cy, fz = pz - cz;
+  let h = 0;
+  for (let a = -1; a <= 1; a++) {
+    const gx = a < 0 ? fx : a > 0 ? 1 - fx : 0;
+    if (gx * gx > r2) continue;
+    for (let b = -1; b <= 1; b++) {
+      const gy = b < 0 ? fy : b > 0 ? 1 - fy : 0;
+      if (gx * gx + gy * gy > r2) continue;
+      for (let c = -1; c <= 1; c++) {
+        const gz = c < 0 ? fz : c > 0 ? 1 - fz : 0;
+        if (gx * gx + gy * gy + gz * gz > r2) continue;
+        const ix = cx + a, iy = cy + b, iz = cz + c;
+        if (hash01(ix, iy, iz, seed) > pOcc) continue;
+        const ox = (ix + hash01(ix, iy, iz, seed + 1)) / F;
+        const oy = (iy + hash01(ix, iy, iz, seed + 2)) / F;
+        const oz = (iz + hash01(ix, iy, iz, seed + 3)) / F;
+        const ol = Math.sqrt(ox * ox + oy * oy + oz * oz);
+        if (Math.abs(ol - 1) > 0.5 / F) continue; // centre must lie near the sphere
+        const u = hash01(ix, iy, iz, seed + 4);
+        const rm = rMin + (rMax - rMin) * u * u, rA = rm / R;
+        // WHY: chord ≈ arc for rA ≤ 0.05 rad (error < 0.1%) — no acos per crater.
+        const ex = dx - ox / ol, ey = dy - oy / ol, ez = dz - oz / ol;
+        const x2 = (ex * ex + ey * ey + ez * ez) / (rA * rA);
+        if (x2 > 3.24) continue;
+        const x = Math.sqrt(x2);
+        if (x < 1) h += rm * depthK * (x2 - 1);
+        const g = (x - 1) / 0.35;
+        h += rm * rimK * Math.exp(-g * g);
+      }
+    }
+  }
+  return h;
+}
+
+
+function moonHeight(dx: number, dy: number, dz: number): number {
+  const m = P.moon as MoonProfile;
+  basinsInto(dx, dy, dz, m);
+  const mask = _mask;
+  const hh = mask < 1 ? fieldHeight(dx, dy, dz) : 0;  // mare floor replaces it fully
+  const ff = m.floorFreq;
+  const fl = mask > 0 ? m.floorHeight + fbm3(dx * ff, dy * ff, dz * ff, 3, 2, 0.5) * m.floorAmp : 0;
+  let cr = 0;
+  for (let i = 0; i < _crt.length; i += 8) cr += craterLayer(dx, dy, dz, i);
+  return hh * (1 - mask) + fl * mask + _rim + (1 - m.mareCraterDamp * mask) * cr;
+}
+
+
+/** Mare mask at unit d (1 = basin floor, 0 = highland); 0 without a Moon profile. */
+export function moonMareMask(dx: number, dy: number, dz: number): number {
+  const m = P.moon;
+  if (m === undefined) return 0;
+  basinsInto(dx, dy, dz, m);
+  return _mask;
 }
 
 

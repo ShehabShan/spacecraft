@@ -124,7 +124,7 @@ with no game code edited; logs are `feasibility-probe.log` and `feasibility-prob
 
 ## 7. Steps (one commit each; verify per §8)
 - [x] **P0** Plan (this file), branch cut, tracker and STATE.md.
-- [ ] **S1** Core Moon profile in `terrainField.ts` plus the new gate
+- [x] **S1** (session 147: gate 13/13, self-test 4/4, cost 1.88×; ADR-028. The candidate lives in the gate, not in `moonConfig`. S2 moves it to `MOON_PARAMS.moon` and flips the gate assertion that `MOON_PARAMS.moon` is unset.) Core Moon profile in `terrainField.ts` plus the new gate
   `tools/test-moon-profile.mjs` and ADR-028. It is not yet wired to play: the gate
   evaluates a candidate profile object defined in the gate and `moonConfig` (exported
   but unused until S2).
