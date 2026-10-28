@@ -41,17 +41,21 @@ function run(cfg, starts, ticks, seed) {
     const k = new M.K.AstronautKCC(cfg)
     const a = rnd() * Math.PI * 2, z = rnd() * 2 - 1, q = Math.sqrt(1 - z * z)
     k.teleportSurface(q * Math.cos(a), z, q * Math.sin(a))
+    let forceJump = 0
     for (let t = 0; t < ticks; t++) {
       if (t % 40 === 0) {
         k.input.moveF = rnd() * 2 - 1; k.input.moveR = rnd() * 2 - 1
         k.input.sprint = rnd() < 0.6; k.input.crouch = rnd() < 0.08
         k.input.turnRate = rnd() < 0.3 ? (rnd() - 0.5) * 2 : 0
       }
-      const jump = rnd() < 1 / 90
+      // WHY: hold jump for 8 ticks after every walk-off, so an opened coyote window
+      // is always probed (the old core ignores airborne presses: F14 clears them).
+      const rj = rnd() < 1 / 90, jump = forceJump > 0 || rj
+      if (forceJump > 0) forceJump--
       k.input.jump = jump
       const g0 = k.grounded
       k.integrateTick(1 / 60)
-      if (g0 && !k.grounded) { if (jump && !k.input.crouch) jumps++; else walkOffs++ }
+      if (g0 && !k.grounded) { if (jump && !k.input.crouch) jumps++; else { walkOffs++; forceJump = 8 } }
       const p = k.absPos, v = k.absVel, l = k.pLocal, u = k.up, f = k.fwd
       buf[0] = p.x; buf[1] = p.y; buf[2] = p.z; buf[3] = v.x; buf[4] = v.y; buf[5] = v.z
       buf[6] = l.x; buf[7] = l.y; buf[8] = l.z; buf[9] = u.x; buf[10] = u.y; buf[11] = u.z
