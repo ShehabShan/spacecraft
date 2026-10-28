@@ -36,3 +36,6 @@ The 404 came from Chrome's automatic `/favicon.ico` request: `game/index.html` d
 - A spec that truly fails now fails earlier and louder. A harness with a pre-existing red row (for example the m1d governor dive) stays red for the same reason as before.
 - The m1f R5 waiver (AGENT_BRIEF §8) is not changed. The waiver lives in task verification, not in the spec. The m1f spec was already red on R5 and stays red.
 - New badge texts such as `SKIP` or `N/A` would now fail. Any future harness that needs them must change this ADR.
+
+## Amendment (2026-10-28, F2f close-out, ADR-026)
+The shipped `m1f.spec.ts` is archived. The plumbing gate now runs the three rebuilt 1F specs on this contract (`m1f-r1`, `m1f-r2`, `m1f-r5`) in its place: 10 cases × 8 specs = 80 runs, exit 0; the `--specs-from 6ce1d08` mutant control still exits 1. `m1f-r3`/`m1f-r4` pin known-red vectors with their own assertions and are outside the matrix.

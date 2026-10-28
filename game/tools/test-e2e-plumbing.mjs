@@ -1,7 +1,7 @@
 // F1a (ADR-001): regression gate for the e2e acceptance plumbing.
 // Runs the REAL spec files (copied byte-for-byte into a scratch lab) against
 // deterministic browser fixtures and requires: the clean fixture passes in all
-// six specs, and every defect fixture is rejected AT ITS INTENDED ASSERTION.
+// contract specs, and every defect fixture is rejected AT ITS INTENDED ASSERTION.
 // Derived from the A1 probe game/tools/audit/u27b3a-k2b-recheck.mjs (9-case
 // matrix) plus one new case (resource404) for the error class F1a removed.
 //
@@ -22,9 +22,23 @@ import { chromium } from 'playwright';
 
 const self = fileURLToPath(import.meta.url);
 const game = resolve(dirname(self), '..');
-// WHY: expected row counts are fixed here (TEST_ORDER lengths at A:591 B:1100
-// C:787 D:960 E:1391 F:1597), not read from the specs under test.
-const counts = { m1a: 5, m1b: 5, m1c: 4, m1d: 5, m1e: 6, m1f: 5 };
+// WHY: expected row counts are fixed here (TEST_ORDER lengths of each page),
+// not read from the specs under test. F2f close-out (ADR-026): the shipped m1f
+// spec is archived; the rebuilt m1f gates on the runAcceptanceGate contract
+// (R1, R2, R5) replace it. R3/R4 pin known-red vectors with their own
+// assertions, so they are not contract specs and are not in this matrix.
+const specs = {
+  m1a: { page: 'm1a', tag: 'Milestone1A', rows: 5 },
+  m1b: { page: 'm1b', tag: 'Milestone1B', rows: 5 },
+  m1c: { page: 'm1c', tag: 'Milestone1C', rows: 4 },
+  m1d: { page: 'm1d', tag: 'Milestone1D', rows: 5 },
+  m1e: { page: 'm1e', tag: 'Milestone1E', rows: 6 },
+  'm1f-r1': { page: 'm1fR1', tag: 'M1fR1Gate', rows: 2 },
+  'm1f-r2': { page: 'm1fR2', tag: 'M1fR2Gate', rows: 3 },
+  'm1f-r5': { page: 'm1fR5', tag: 'M1fR5Gate', rows: 2 },
+};
+const counts = Object.fromEntries(Object.entries(specs).map(([k, v]) => [k, v.rows]));
+const byPage = Object.fromEntries(Object.entries(specs).map(([k, v]) => [v.page, k]));
 // case → assertion label that must reject it (null = must pass).
 const intended = {
   baseline: null,
@@ -48,7 +62,7 @@ function fixture(spec, mode) {
   if (mode === 'placeholders') badges.fill('·····');
   if (mode === 'missingrow') badges.pop();
   if (mode === 'errbadge') badges.fill('ERR');
-  const tag = `Milestone1${spec.at(-1).toUpperCase()}`;
+  const tag = specs[spec].tag;
   // Errors are raised BEFORE the verdict line (no timing race with the gate).
   const injection =
     mode === 'pageerror' ? `<script>throw new Error('F1a pageerror')</script>` :
@@ -73,7 +87,7 @@ if (process.argv[2] === '--serve') {
   const server = createServer((req, res) => {
     const url = new URL(req.url, 'http://localhost');
     if (url.pathname === '/f1a-missing.png') { res.statusCode = 404; res.end('not found'); return; }
-    const spec = url.searchParams.get('page');
+    const spec = byPage[url.searchParams.get('page')];
     const mode = req.headers['x-audit-case'];
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     if (!counts[spec] || !cases.includes(mode)) { res.end('fixture server'); return; }
@@ -134,13 +148,13 @@ if (process.argv[2] === '--serve') {
       page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
       page.on('console', (m) => {
         if (m.type() === 'error') errors.push(`error: ${m.text()}`);
-        if (m.text().startsWith('[Milestone')) lines.push(m.text());
+        if (/^\[\w+\] acceptance /.test(m.text())) lines.push(m.text());
       });
-      await page.goto(`${baseURL}/?page=${spec}`);
+      await page.goto(`${baseURL}/?page=${specs[spec].page}`);
       await page.waitForFunction(() => window.fixtureDone === true);
       const badges = await page.locator('.badge').allTextContents();
       const clean = errors.length === 0 && lines.length === 1 &&
-        lines[0] === `[Milestone1${spec.at(-1).toUpperCase()}] acceptance PASSED` &&
+        lines[0] === `[${specs[spec].tag}] acceptance PASSED` &&
         badges.length === counts[spec] && badges.every((b) => b === 'PASS');
       assert.equal(clean, mode === 'baseline', `${mode}/${spec}: fixture is not what its name says`);
       observations.push({ mode, spec, badges, errors, lines, clean });

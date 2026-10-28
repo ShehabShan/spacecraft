@@ -1,0 +1,34 @@
+MISMATCH pageerror/m1a: status=passed want=no page or console error :: 
+MISMATCH consoleerror/m1a: status=passed want=no page or console error :: 
+MISMATCH resource404/m1a: status=passed want=no page or console error :: 
+MISMATCH placeholders/m1a: status=passed want=every badge is exactly PASS :: 
+MISMATCH missingrow/m1a: status=passed want=badge row count :: 
+MISMATCH errbadge/m1a: status=passed want=every badge is exactly PASS :: 
+MISMATCH pageerror/m1b: status=passed want=no page or console error :: 
+MISMATCH consoleerror/m1b: status=passed want=no page or console error :: 
+MISMATCH resource404/m1b: status=passed want=no page or console error :: 
+MISMATCH placeholders/m1b: status=passed want=every badge is exactly PASS :: 
+MISMATCH missingrow/m1b: status=passed want=badge row count :: 
+MISMATCH errbadge/m1b: status=passed want=every badge is exactly PASS :: 
+MISMATCH pageerror/m1c: status=passed want=no page or console error :: 
+MISMATCH consoleerror/m1c: status=passed want=no page or console error :: 
+MISMATCH resource404/m1c: status=passed want=no page or console error :: 
+MISMATCH placeholders/m1c: status=passed want=every badge is exactly PASS :: 
+MISMATCH missingrow/m1c: status=passed want=badge row count :: 
+MISMATCH errbadge/m1c: status=passed want=every badge is exactly PASS :: 
+MISMATCH pageerror/m1d: status=passed want=no page or console error :: 
+MISMATCH consoleerror/m1d: status=passed want=no page or console error :: 
+MISMATCH resource404/m1d: status=passed want=no page or console error :: 
+MISMATCH placeholders/m1d: status=passed want=every badge is exactly PASS :: 
+MISMATCH missingrow/m1d: status=passed want=badge row count :: 
+MISMATCH errbadge/m1d: status=passed want=every badge is exactly PASS :: 
+MISMATCH pageerror/m1e: status=passed want=no page or console error :: 
+MISMATCH consoleerror/m1e: status=passed want=no page or console error :: 
+MISMATCH resource404/m1e: status=passed want=no page or console error :: 
+MISMATCH placeholders/m1e: status=passed want=every badge is exactly PASS :: 
+MISMATCH missingrow/m1e: status=passed want=badge row count :: 
+MISMATCH errbadge/m1e: status=passed want=every badge is exactly PASS :: 
+MISMATCH: 50 results, expected 80
+20/80 expected dispositions (5 clean PASS, 15 defects rejected at the intended assertion); mismatches=31; raw playwright exit=1
+Evidence: /workspace/spacecraft/docs/audit/evidence/F2f/close/plumbing-mutant-6ce1d08
+MUT_EXIT=1

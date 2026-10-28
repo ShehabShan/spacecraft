@@ -1,0 +1,3374 @@
+{
+  "config": {
+    "argv": [
+      "/usr/local/bin/node",
+      "/workspace/spacecraft/game/node_modules/playwright/cli.js",
+      "test",
+      "--config",
+      "/tmp/f1a-e2e-faq3Ko/playwright.config.cjs",
+      "--reporter=json"
+    ],
+    "configFile": "/tmp/f1a-e2e-faq3Ko/playwright.config.cjs",
+    "rootDir": "/tmp/f1a-e2e-faq3Ko/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/tmp/f1a-e2e-faq3Ko/results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "baseline",
+        "name": "baseline",
+        "testDir": "/tmp/f1a-e2e-faq3Ko/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/tmp/f1a-e2e-faq3Ko/results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "failbadge",
+        "name": "failbadge",
+        "testDir": "/tmp/f1a-e2e-faq3Ko/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/tmp/f1a-e2e-faq3Ko/results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "failedverdict",
+        "name": "failedverdict",
+        "testDir": "/tmp/f1a-e2e-faq3Ko/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/tmp/f1a-e2e-faq3Ko/results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "zerorows",
+        "name": "zerorows",
+        "testDir": "/tmp/f1a-e2e-faq3Ko/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/tmp/f1a-e2e-faq3Ko/results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "pageerror",
+        "name": "pageerror",
+        "testDir": "/tmp/f1a-e2e-faq3Ko/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/tmp/f1a-e2e-faq3Ko/results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "consoleerror",
+        "name": "consoleerror",
+        "testDir": "/tmp/f1a-e2e-faq3Ko/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/tmp/f1a-e2e-faq3Ko/results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "resource404",
+        "name": "resource404",
+        "testDir": "/tmp/f1a-e2e-faq3Ko/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/tmp/f1a-e2e-faq3Ko/results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "placeholders",
+        "name": "placeholders",
+        "testDir": "/tmp/f1a-e2e-faq3Ko/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/tmp/f1a-e2e-faq3Ko/results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "missingrow",
+        "name": "missingrow",
+        "testDir": "/tmp/f1a-e2e-faq3Ko/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/tmp/f1a-e2e-faq3Ko/results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "errbadge",
+        "name": "errbadge",
+        "testDir": "/tmp/f1a-e2e-faq3Ko/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/tmp/f1a-e2e-faq3Ko/results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "baseline",
+        "testDir": "/tmp/f1a-e2e-faq3Ko/e2e",
+        "snapshotDir": "/tmp/f1a-e2e-faq3Ko/e2e",
+        "testIgnore": [],
+        "testMatch": "**/*.@(spec|test).?(c|m)[jt]s?(x)",
+        "timeout": 30000,
+        "use": {
+          "channel": "chrome",
+          "headless": true,
+          "baseURL": "http://127.0.0.1:44179",
+          "extraHTTPHeaders": {
+            "x-audit-case": "baseline"
+          }
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "baseline"
+      },
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/tmp/f1a-e2e-faq3Ko/results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "failbadge",
+        "testDir": "/tmp/f1a-e2e-faq3Ko/e2e",
+        "snapshotDir": "/tmp/f1a-e2e-faq3Ko/e2e",
+        "testIgnore": [],
+        "testMatch": "**/*.@(spec|test).?(c|m)[jt]s?(x)",
+        "timeout": 30000,
+        "use": {
+          "channel": "chrome",
+          "headless": true,
+          "baseURL": "http://127.0.0.1:44179",
+          "extraHTTPHeaders": {
+            "x-audit-case": "failbadge"
+          }
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "failbadge"
+      },
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/tmp/f1a-e2e-faq3Ko/results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "failedverdict",
+        "testDir": "/tmp/f1a-e2e-faq3Ko/e2e",
+        "snapshotDir": "/tmp/f1a-e2e-faq3Ko/e2e",
+        "testIgnore": [],
+        "testMatch": "**/*.@(spec|test).?(c|m)[jt]s?(x)",
+        "timeout": 30000,
+        "use": {
+          "channel": "chrome",
+          "headless": true,
+          "baseURL": "http://127.0.0.1:44179",
+          "extraHTTPHeaders": {
+            "x-audit-case": "failedverdict"
+          }
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "failedverdict"
+      },
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/tmp/f1a-e2e-faq3Ko/results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "zerorows",
+        "testDir": "/tmp/f1a-e2e-faq3Ko/e2e",
+        "snapshotDir": "/tmp/f1a-e2e-faq3Ko/e2e",
+        "testIgnore": [],
+        "testMatch": "**/*.@(spec|test).?(c|m)[jt]s?(x)",
+        "timeout": 30000,
+        "use": {
+          "channel": "chrome",
+          "headless": true,
+          "baseURL": "http://127.0.0.1:44179",
+          "extraHTTPHeaders": {
+            "x-audit-case": "zerorows"
+          }
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "zerorows"
+      },
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/tmp/f1a-e2e-faq3Ko/results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "pageerror",
+        "testDir": "/tmp/f1a-e2e-faq3Ko/e2e",
+        "snapshotDir": "/tmp/f1a-e2e-faq3Ko/e2e",
+        "testIgnore": [],
+        "testMatch": "**/*.@(spec|test).?(c|m)[jt]s?(x)",
+        "timeout": 30000,
+        "use": {
+          "channel": "chrome",
+          "headless": true,
+          "baseURL": "http://127.0.0.1:44179",
+          "extraHTTPHeaders": {
+            "x-audit-case": "pageerror"
+          }
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "pageerror"
+      },
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/tmp/f1a-e2e-faq3Ko/results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "consoleerror",
+        "testDir": "/tmp/f1a-e2e-faq3Ko/e2e",
+        "snapshotDir": "/tmp/f1a-e2e-faq3Ko/e2e",
+        "testIgnore": [],
+        "testMatch": "**/*.@(spec|test).?(c|m)[jt]s?(x)",
+        "timeout": 30000,
+        "use": {
+          "channel": "chrome",
+          "headless": true,
+          "baseURL": "http://127.0.0.1:44179",
+          "extraHTTPHeaders": {
+            "x-audit-case": "consoleerror"
+          }
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "consoleerror"
+      },
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/tmp/f1a-e2e-faq3Ko/results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "resource404",
+        "testDir": "/tmp/f1a-e2e-faq3Ko/e2e",
+        "snapshotDir": "/tmp/f1a-e2e-faq3Ko/e2e",
+        "testIgnore": [],
+        "testMatch": "**/*.@(spec|test).?(c|m)[jt]s?(x)",
+        "timeout": 30000,
+        "use": {
+          "channel": "chrome",
+          "headless": true,
+          "baseURL": "http://127.0.0.1:44179",
+          "extraHTTPHeaders": {
+            "x-audit-case": "resource404"
+          }
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "resource404"
+      },
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/tmp/f1a-e2e-faq3Ko/results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "placeholders",
+        "testDir": "/tmp/f1a-e2e-faq3Ko/e2e",
+        "snapshotDir": "/tmp/f1a-e2e-faq3Ko/e2e",
+        "testIgnore": [],
+        "testMatch": "**/*.@(spec|test).?(c|m)[jt]s?(x)",
+        "timeout": 30000,
+        "use": {
+          "channel": "chrome",
+          "headless": true,
+          "baseURL": "http://127.0.0.1:44179",
+          "extraHTTPHeaders": {
+            "x-audit-case": "placeholders"
+          }
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "placeholders"
+      },
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/tmp/f1a-e2e-faq3Ko/results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "missingrow",
+        "testDir": "/tmp/f1a-e2e-faq3Ko/e2e",
+        "snapshotDir": "/tmp/f1a-e2e-faq3Ko/e2e",
+        "testIgnore": [],
+        "testMatch": "**/*.@(spec|test).?(c|m)[jt]s?(x)",
+        "timeout": 30000,
+        "use": {
+          "channel": "chrome",
+          "headless": true,
+          "baseURL": "http://127.0.0.1:44179",
+          "extraHTTPHeaders": {
+            "x-audit-case": "missingrow"
+          }
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "missingrow"
+      },
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/tmp/f1a-e2e-faq3Ko/results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "errbadge",
+        "testDir": "/tmp/f1a-e2e-faq3Ko/e2e",
+        "snapshotDir": "/tmp/f1a-e2e-faq3Ko/e2e",
+        "testIgnore": [],
+        "testMatch": "**/*.@(spec|test).?(c|m)[jt]s?(x)",
+        "timeout": 30000,
+        "use": {
+          "channel": "chrome",
+          "headless": true,
+          "baseURL": "http://127.0.0.1:44179",
+          "extraHTTPHeaders": {
+            "x-audit-case": "errbadge"
+          }
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "errbadge"
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "m1a.spec.ts",
+      "file": "m1a.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "M1A — Floating Origin acceptance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "baseline",
+              "projectName": "baseline",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 313,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[m1a gate] acceptance line: [Milestone1A] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1a gate] badges: [\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\"]\n"
+                    },
+                    {
+                      "text": "[m1a gate] page console transcript:\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1A] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:09.210Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1d5c7a9cb6bd30ea18c8-a722bf6c71b24cf6f470",
+          "file": "m1a.spec.ts",
+          "line": 5,
+          "column": 5
+        },
+        {
+          "title": "M1A — Floating Origin acceptance",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "failbadge",
+              "projectName": "failbadge",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 329,
+                  "error": {
+                    "message": "Error: no FAIL badge may remain\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mnot\u001b[2m.\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: not \u001b[32m\"FAIL\"\u001b[39m\nReceived string:        \u001b[31m\"\u001b[7mFAIL\u001b[27m | PASS | PASS | PASS | PASS\"\u001b[39m",
+                    "stack": "Error: no FAIL badge may remain\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mnot\u001b[2m.\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: not \u001b[32m\"FAIL\"\u001b[39m\nReceived string:        \u001b[31m\"\u001b[7mFAIL\u001b[27m | PASS | PASS | PASS | PASS\"\u001b[39m\n    at /tmp/f1a-e2e-faq3Ko/e2e/m1a.spec.ts:30:62",
+                    "location": {
+                      "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1a.spec.ts",
+                      "column": 62,
+                      "line": 30
+                    },
+                    "snippet": "  28 |   expect(line, 'acceptance console line').toContain('PASSED')\n  29 |   expect(badges.length, 'badge rows scraped').toBeGreaterThan(0)\n> 30 |   expect(badges.join(' | '), 'no FAIL badge may remain').not.toContain('FAIL')\n     |                                                              ^\n  31 | })\n  32 |"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1a.spec.ts",
+                        "column": 62,
+                        "line": 30
+                      },
+                      "message": "Error: no FAIL badge may remain\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mnot\u001b[2m.\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: not \u001b[32m\"FAIL\"\u001b[39m\nReceived string:        \u001b[31m\"\u001b[7mFAIL\u001b[27m | PASS | PASS | PASS | PASS\"\u001b[39m\n\n  28 |   expect(line, 'acceptance console line').toContain('PASSED')\n  29 |   expect(badges.length, 'badge rows scraped').toBeGreaterThan(0)\n> 30 |   expect(badges.join(' | '), 'no FAIL badge may remain').not.toContain('FAIL')\n     |                                                              ^\n  31 | })\n  32 |\n    at /tmp/f1a-e2e-faq3Ko/e2e/m1a.spec.ts:30:62"
+                    }
+                  ],
+                  "stdout": [
+                    {
+                      "text": "[m1a gate] acceptance line: [Milestone1A] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1a gate] badges: [\"FAIL\",\"PASS\",\"PASS\",\"PASS\",\"PASS\"]\n"
+                    },
+                    {
+                      "text": "[m1a gate] page console transcript:\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1A] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:11.181Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/tmp/f1a-e2e-faq3Ko/results/m1a-M1A-—-Floating-Origin-acceptance-failbadge/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1a.spec.ts",
+                    "column": 62,
+                    "line": 30
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "1d5c7a9cb6bd30ea18c8-8a7788879aefee754183",
+          "file": "m1a.spec.ts",
+          "line": 5,
+          "column": 5
+        },
+        {
+          "title": "M1A — Floating Origin acceptance",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "failedverdict",
+              "projectName": "failedverdict",
+              "results": [
+                {
+                  "workerIndex": 6,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 309,
+                  "error": {
+                    "message": "Error: acceptance console line\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"PASSED\"\u001b[39m\nReceived string:    \u001b[31m\"[Milestone1A] acceptance FAILED\"\u001b[39m",
+                    "stack": "Error: acceptance console line\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"PASSED\"\u001b[39m\nReceived string:    \u001b[31m\"[Milestone1A] acceptance FAILED\"\u001b[39m\n    at /tmp/f1a-e2e-faq3Ko/e2e/m1a.spec.ts:28:43",
+                    "location": {
+                      "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1a.spec.ts",
+                      "column": 43,
+                      "line": 28
+                    },
+                    "snippet": "  26 |   for (const l of consoleLines) console.log(`  ${l}`)\n  27 |\n> 28 |   expect(line, 'acceptance console line').toContain('PASSED')\n     |                                           ^\n  29 |   expect(badges.length, 'badge rows scraped').toBeGreaterThan(0)\n  30 |   expect(badges.join(' | '), 'no FAIL badge may remain').not.toContain('FAIL')\n  31 | })"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1a.spec.ts",
+                        "column": 43,
+                        "line": 28
+                      },
+                      "message": "Error: acceptance console line\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"PASSED\"\u001b[39m\nReceived string:    \u001b[31m\"[Milestone1A] acceptance FAILED\"\u001b[39m\n\n  26 |   for (const l of consoleLines) console.log(`  ${l}`)\n  27 |\n> 28 |   expect(line, 'acceptance console line').toContain('PASSED')\n     |                                           ^\n  29 |   expect(badges.length, 'badge rows scraped').toBeGreaterThan(0)\n  30 |   expect(badges.join(' | '), 'no FAIL badge may remain').not.toContain('FAIL')\n  31 | })\n    at /tmp/f1a-e2e-faq3Ko/e2e/m1a.spec.ts:28:43"
+                    }
+                  ],
+                  "stdout": [
+                    {
+                      "text": "[m1a gate] acceptance line: [Milestone1A] acceptance FAILED\n"
+                    },
+                    {
+                      "text": "[m1a gate] badges: [\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\"]\n"
+                    },
+                    {
+                      "text": "[m1a gate] page console transcript:\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1A] acceptance FAILED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:15.716Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/tmp/f1a-e2e-faq3Ko/results/m1a-M1A-—-Floating-Origin-acceptance-failedverdict/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1a.spec.ts",
+                    "column": 43,
+                    "line": 28
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "1d5c7a9cb6bd30ea18c8-75d504944d32dc381150",
+          "file": "m1a.spec.ts",
+          "line": 5,
+          "column": 5
+        },
+        {
+          "title": "M1A — Floating Origin acceptance",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "zerorows",
+              "projectName": "zerorows",
+              "results": [
+                {
+                  "workerIndex": 11,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 335,
+                  "error": {
+                    "message": "Error: badge rows scraped\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m",
+                    "stack": "Error: badge rows scraped\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m\n    at /tmp/f1a-e2e-faq3Ko/e2e/m1a.spec.ts:29:47",
+                    "location": {
+                      "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1a.spec.ts",
+                      "column": 47,
+                      "line": 29
+                    },
+                    "snippet": "  27 |\n  28 |   expect(line, 'acceptance console line').toContain('PASSED')\n> 29 |   expect(badges.length, 'badge rows scraped').toBeGreaterThan(0)\n     |                                               ^\n  30 |   expect(badges.join(' | '), 'no FAIL badge may remain').not.toContain('FAIL')\n  31 | })\n  32 |"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1a.spec.ts",
+                        "column": 47,
+                        "line": 29
+                      },
+                      "message": "Error: badge rows scraped\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m\n\n  27 |\n  28 |   expect(line, 'acceptance console line').toContain('PASSED')\n> 29 |   expect(badges.length, 'badge rows scraped').toBeGreaterThan(0)\n     |                                               ^\n  30 |   expect(badges.join(' | '), 'no FAIL badge may remain').not.toContain('FAIL')\n  31 | })\n  32 |\n    at /tmp/f1a-e2e-faq3Ko/e2e/m1a.spec.ts:29:47"
+                    }
+                  ],
+                  "stdout": [
+                    {
+                      "text": "[m1a gate] acceptance line: [Milestone1A] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1a gate] badges: []\n"
+                    },
+                    {
+                      "text": "[m1a gate] page console transcript:\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1A] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:20.094Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/tmp/f1a-e2e-faq3Ko/results/m1a-M1A-—-Floating-Origin-acceptance-zerorows/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1a.spec.ts",
+                    "column": 47,
+                    "line": 29
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "1d5c7a9cb6bd30ea18c8-baa5b40d14b38c64ef0f",
+          "file": "m1a.spec.ts",
+          "line": 5,
+          "column": 5
+        },
+        {
+          "title": "M1A — Floating Origin acceptance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "pageerror",
+              "projectName": "pageerror",
+              "results": [
+                {
+                  "workerIndex": 16,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 275,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[m1a gate] acceptance line: [Milestone1A] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1a gate] badges: [\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\"]\n"
+                    },
+                    {
+                      "text": "[m1a gate] page console transcript:\n"
+                    },
+                    {
+                      "text": "  pageerror: F1a pageerror\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1A] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:24.514Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1d5c7a9cb6bd30ea18c8-dbd3fa79de215d5b536b",
+          "file": "m1a.spec.ts",
+          "line": 5,
+          "column": 5
+        },
+        {
+          "title": "M1A — Floating Origin acceptance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "consoleerror",
+              "projectName": "consoleerror",
+              "results": [
+                {
+                  "workerIndex": 17,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 301,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[m1a gate] acceptance line: [Milestone1A] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1a gate] badges: [\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\"]\n"
+                    },
+                    {
+                      "text": "[m1a gate] page console transcript:\n"
+                    },
+                    {
+                      "text": "  error: F1a consoleerror\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1A] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:26.412Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1d5c7a9cb6bd30ea18c8-2bfc9693eb625fe5b9fb",
+          "file": "m1a.spec.ts",
+          "line": 5,
+          "column": 5
+        },
+        {
+          "title": "M1A — Floating Origin acceptance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "resource404",
+              "projectName": "resource404",
+              "results": [
+                {
+                  "workerIndex": 18,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 304,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[m1a gate] acceptance line: [Milestone1A] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1a gate] badges: [\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\"]\n"
+                    },
+                    {
+                      "text": "[m1a gate] page console transcript:\n"
+                    },
+                    {
+                      "text": "  error: Failed to load resource: the server responded with a status of 404 (Not Found)\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1A] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:28.404Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1d5c7a9cb6bd30ea18c8-51081867f4bf38399503",
+          "file": "m1a.spec.ts",
+          "line": 5,
+          "column": 5
+        },
+        {
+          "title": "M1A — Floating Origin acceptance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "placeholders",
+              "projectName": "placeholders",
+              "results": [
+                {
+                  "workerIndex": 19,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 284,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[m1a gate] acceptance line: [Milestone1A] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1a gate] badges: [\"·····\",\"·····\",\"·····\",\"·····\",\"·····\"]\n"
+                    },
+                    {
+                      "text": "[m1a gate] page console transcript:\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1A] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:30.403Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1d5c7a9cb6bd30ea18c8-5666a45a7903eddac3ca",
+          "file": "m1a.spec.ts",
+          "line": 5,
+          "column": 5
+        },
+        {
+          "title": "M1A — Floating Origin acceptance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "missingrow",
+              "projectName": "missingrow",
+              "results": [
+                {
+                  "workerIndex": 20,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 284,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[m1a gate] acceptance line: [Milestone1A] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1a gate] badges: [\"PASS\",\"PASS\",\"PASS\",\"PASS\"]\n"
+                    },
+                    {
+                      "text": "[m1a gate] page console transcript:\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1A] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:32.386Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1d5c7a9cb6bd30ea18c8-6aff5cf054aaa03df310",
+          "file": "m1a.spec.ts",
+          "line": 5,
+          "column": 5
+        },
+        {
+          "title": "M1A — Floating Origin acceptance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "errbadge",
+              "projectName": "errbadge",
+              "results": [
+                {
+                  "workerIndex": 21,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 308,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[m1a gate] acceptance line: [Milestone1A] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1a gate] badges: [\"ERR\",\"ERR\",\"ERR\",\"ERR\",\"ERR\"]\n"
+                    },
+                    {
+                      "text": "[m1a gate] page console transcript:\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1A] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:34.292Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1d5c7a9cb6bd30ea18c8-c728222d57df1ef44443",
+          "file": "m1a.spec.ts",
+          "line": 5,
+          "column": 5
+        }
+      ]
+    },
+    {
+      "title": "m1b.spec.ts",
+      "file": "m1b.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "M1B — Kepler Rails & Two-Tier Time acceptance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "baseline",
+              "projectName": "baseline",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 245,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[m1b gate] acceptance line: [Milestone1B] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1b gate] badges: [\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\"]\n"
+                    },
+                    {
+                      "text": "[m1b gate] page console transcript:\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1B] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:09.701Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "44f23c1c7d5563c592d0-100b998612b9a7190749",
+          "file": "m1b.spec.ts",
+          "line": 5,
+          "column": 5
+        },
+        {
+          "title": "M1B — Kepler Rails & Two-Tier Time acceptance",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "failbadge",
+              "projectName": "failbadge",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 308,
+                  "error": {
+                    "message": "Error: no FAIL badge may remain\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mnot\u001b[2m.\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: not \u001b[32m\"FAIL\"\u001b[39m\nReceived string:        \u001b[31m\"\u001b[7mFAIL\u001b[27m | PASS | PASS | PASS | PASS\"\u001b[39m",
+                    "stack": "Error: no FAIL badge may remain\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mnot\u001b[2m.\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: not \u001b[32m\"FAIL\"\u001b[39m\nReceived string:        \u001b[31m\"\u001b[7mFAIL\u001b[27m | PASS | PASS | PASS | PASS\"\u001b[39m\n    at /tmp/f1a-e2e-faq3Ko/e2e/m1b.spec.ts:28:62",
+                    "location": {
+                      "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1b.spec.ts",
+                      "column": 62,
+                      "line": 28
+                    },
+                    "snippet": "  26 |   expect(line, 'acceptance console line').toContain('PASSED')\n  27 |   expect(badges.length, 'badge rows scraped').toBeGreaterThan(0)\n> 28 |   expect(badges.join(' | '), 'no FAIL badge may remain').not.toContain('FAIL')\n     |                                                              ^\n  29 | })\n  30 |"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1b.spec.ts",
+                        "column": 62,
+                        "line": 28
+                      },
+                      "message": "Error: no FAIL badge may remain\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mnot\u001b[2m.\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: not \u001b[32m\"FAIL\"\u001b[39m\nReceived string:        \u001b[31m\"\u001b[7mFAIL\u001b[27m | PASS | PASS | PASS | PASS\"\u001b[39m\n\n  26 |   expect(line, 'acceptance console line').toContain('PASSED')\n  27 |   expect(badges.length, 'badge rows scraped').toBeGreaterThan(0)\n> 28 |   expect(badges.join(' | '), 'no FAIL badge may remain').not.toContain('FAIL')\n     |                                                              ^\n  29 | })\n  30 |\n    at /tmp/f1a-e2e-faq3Ko/e2e/m1b.spec.ts:28:62"
+                    }
+                  ],
+                  "stdout": [
+                    {
+                      "text": "[m1b gate] acceptance line: [Milestone1B] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1b gate] badges: [\"FAIL\",\"PASS\",\"PASS\",\"PASS\",\"PASS\"]\n"
+                    },
+                    {
+                      "text": "[m1b gate] page console transcript:\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1B] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:12.089Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/tmp/f1a-e2e-faq3Ko/results/m1b-M1B-—-Kepler-Rails-Two-Tier-Time-acceptance-failbadge/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1b.spec.ts",
+                    "column": 62,
+                    "line": 28
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "44f23c1c7d5563c592d0-8c7d123987e88dab9c69",
+          "file": "m1b.spec.ts",
+          "line": 5,
+          "column": 5
+        },
+        {
+          "title": "M1B — Kepler Rails & Two-Tier Time acceptance",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "failedverdict",
+              "projectName": "failedverdict",
+              "results": [
+                {
+                  "workerIndex": 7,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 327,
+                  "error": {
+                    "message": "Error: acceptance console line\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"PASSED\"\u001b[39m\nReceived string:    \u001b[31m\"[Milestone1B] acceptance FAILED\"\u001b[39m",
+                    "stack": "Error: acceptance console line\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"PASSED\"\u001b[39m\nReceived string:    \u001b[31m\"[Milestone1B] acceptance FAILED\"\u001b[39m\n    at /tmp/f1a-e2e-faq3Ko/e2e/m1b.spec.ts:26:43",
+                    "location": {
+                      "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1b.spec.ts",
+                      "column": 43,
+                      "line": 26
+                    },
+                    "snippet": "  24 |   for (const l of consoleLines) console.log(`  ${l}`)\n  25 |\n> 26 |   expect(line, 'acceptance console line').toContain('PASSED')\n     |                                           ^\n  27 |   expect(badges.length, 'badge rows scraped').toBeGreaterThan(0)\n  28 |   expect(badges.join(' | '), 'no FAIL badge may remain').not.toContain('FAIL')\n  29 | })"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1b.spec.ts",
+                        "column": 43,
+                        "line": 26
+                      },
+                      "message": "Error: acceptance console line\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"PASSED\"\u001b[39m\nReceived string:    \u001b[31m\"[Milestone1B] acceptance FAILED\"\u001b[39m\n\n  24 |   for (const l of consoleLines) console.log(`  ${l}`)\n  25 |\n> 26 |   expect(line, 'acceptance console line').toContain('PASSED')\n     |                                           ^\n  27 |   expect(badges.length, 'badge rows scraped').toBeGreaterThan(0)\n  28 |   expect(badges.join(' | '), 'no FAIL badge may remain').not.toContain('FAIL')\n  29 | })\n    at /tmp/f1a-e2e-faq3Ko/e2e/m1b.spec.ts:26:43"
+                    }
+                  ],
+                  "stdout": [
+                    {
+                      "text": "[m1b gate] acceptance line: [Milestone1B] acceptance FAILED\n"
+                    },
+                    {
+                      "text": "[m1b gate] badges: [\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\"]\n"
+                    },
+                    {
+                      "text": "[m1b gate] page console transcript:\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1B] acceptance FAILED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:16.576Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/tmp/f1a-e2e-faq3Ko/results/m1b-M1B-—-Kepler-Rails-Two-Tier-Time-acceptance-failedverdict/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1b.spec.ts",
+                    "column": 43,
+                    "line": 26
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "44f23c1c7d5563c592d0-64e33cc7f942fe4cc73a",
+          "file": "m1b.spec.ts",
+          "line": 5,
+          "column": 5
+        },
+        {
+          "title": "M1B — Kepler Rails & Two-Tier Time acceptance",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "zerorows",
+              "projectName": "zerorows",
+              "results": [
+                {
+                  "workerIndex": 12,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 334,
+                  "error": {
+                    "message": "Error: badge rows scraped\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m",
+                    "stack": "Error: badge rows scraped\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m\n    at /tmp/f1a-e2e-faq3Ko/e2e/m1b.spec.ts:27:47",
+                    "location": {
+                      "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1b.spec.ts",
+                      "column": 47,
+                      "line": 27
+                    },
+                    "snippet": "  25 |\n  26 |   expect(line, 'acceptance console line').toContain('PASSED')\n> 27 |   expect(badges.length, 'badge rows scraped').toBeGreaterThan(0)\n     |                                               ^\n  28 |   expect(badges.join(' | '), 'no FAIL badge may remain').not.toContain('FAIL')\n  29 | })\n  30 |"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1b.spec.ts",
+                        "column": 47,
+                        "line": 27
+                      },
+                      "message": "Error: badge rows scraped\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m\n\n  25 |\n  26 |   expect(line, 'acceptance console line').toContain('PASSED')\n> 27 |   expect(badges.length, 'badge rows scraped').toBeGreaterThan(0)\n     |                                               ^\n  28 |   expect(badges.join(' | '), 'no FAIL badge may remain').not.toContain('FAIL')\n  29 | })\n  30 |\n    at /tmp/f1a-e2e-faq3Ko/e2e/m1b.spec.ts:27:47"
+                    }
+                  ],
+                  "stdout": [
+                    {
+                      "text": "[m1b gate] acceptance line: [Milestone1B] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1b gate] badges: []\n"
+                    },
+                    {
+                      "text": "[m1b gate] page console transcript:\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1B] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:20.985Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/tmp/f1a-e2e-faq3Ko/results/m1b-M1B-—-Kepler-Rails-Two-Tier-Time-acceptance-zerorows/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1b.spec.ts",
+                    "column": 47,
+                    "line": 27
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "44f23c1c7d5563c592d0-b417756ec672611892ba",
+          "file": "m1b.spec.ts",
+          "line": 5,
+          "column": 5
+        },
+        {
+          "title": "M1B — Kepler Rails & Two-Tier Time acceptance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "pageerror",
+              "projectName": "pageerror",
+              "results": [
+                {
+                  "workerIndex": 16,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 238,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[m1b gate] acceptance line: [Milestone1B] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1b gate] badges: [\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\"]\n"
+                    },
+                    {
+                      "text": "[m1b gate] page console transcript:\n"
+                    },
+                    {
+                      "text": "  pageerror: F1a pageerror\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1B] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:24.983Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "44f23c1c7d5563c592d0-0916be4113056de50f18",
+          "file": "m1b.spec.ts",
+          "line": 5,
+          "column": 5
+        },
+        {
+          "title": "M1B — Kepler Rails & Two-Tier Time acceptance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "consoleerror",
+              "projectName": "consoleerror",
+              "results": [
+                {
+                  "workerIndex": 17,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 286,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[m1b gate] acceptance line: [Milestone1B] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1b gate] badges: [\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\"]\n"
+                    },
+                    {
+                      "text": "[m1b gate] page console transcript:\n"
+                    },
+                    {
+                      "text": "  error: F1a consoleerror\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1B] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:26.898Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "44f23c1c7d5563c592d0-ce55a53bc26041aed505",
+          "file": "m1b.spec.ts",
+          "line": 5,
+          "column": 5
+        },
+        {
+          "title": "M1B — Kepler Rails & Two-Tier Time acceptance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "resource404",
+              "projectName": "resource404",
+              "results": [
+                {
+                  "workerIndex": 18,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 242,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[m1b gate] acceptance line: [Milestone1B] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1b gate] badges: [\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\"]\n"
+                    },
+                    {
+                      "text": "[m1b gate] page console transcript:\n"
+                    },
+                    {
+                      "text": "  error: Failed to load resource: the server responded with a status of 404 (Not Found)\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1B] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:28.887Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "44f23c1c7d5563c592d0-16fdb5d715c84a550904",
+          "file": "m1b.spec.ts",
+          "line": 5,
+          "column": 5
+        },
+        {
+          "title": "M1B — Kepler Rails & Two-Tier Time acceptance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "placeholders",
+              "projectName": "placeholders",
+              "results": [
+                {
+                  "workerIndex": 19,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 234,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[m1b gate] acceptance line: [Milestone1B] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1b gate] badges: [\"·····\",\"·····\",\"·····\",\"·····\",\"·····\"]\n"
+                    },
+                    {
+                      "text": "[m1b gate] page console transcript:\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1B] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:30.876Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "44f23c1c7d5563c592d0-59c1b9b1ad52afee3120",
+          "file": "m1b.spec.ts",
+          "line": 5,
+          "column": 5
+        },
+        {
+          "title": "M1B — Kepler Rails & Two-Tier Time acceptance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "missingrow",
+              "projectName": "missingrow",
+              "results": [
+                {
+                  "workerIndex": 20,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 236,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[m1b gate] acceptance line: [Milestone1B] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1b gate] badges: [\"PASS\",\"PASS\",\"PASS\",\"PASS\"]\n"
+                    },
+                    {
+                      "text": "[m1b gate] page console transcript:\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1B] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:32.872Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "44f23c1c7d5563c592d0-9b20074e4f8bc75de863",
+          "file": "m1b.spec.ts",
+          "line": 5,
+          "column": 5
+        },
+        {
+          "title": "M1B — Kepler Rails & Two-Tier Time acceptance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "errbadge",
+              "projectName": "errbadge",
+              "results": [
+                {
+                  "workerIndex": 21,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 227,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[m1b gate] acceptance line: [Milestone1B] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1b gate] badges: [\"ERR\",\"ERR\",\"ERR\",\"ERR\",\"ERR\"]\n"
+                    },
+                    {
+                      "text": "[m1b gate] page console transcript:\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1B] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:34.786Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "44f23c1c7d5563c592d0-b019ebf07a9594248b96",
+          "file": "m1b.spec.ts",
+          "line": 5,
+          "column": 5
+        }
+      ]
+    },
+    {
+      "title": "m1c.spec.ts",
+      "file": "m1c.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "M1C — Web Worker Terrain & Zero-GC Pool acceptance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "baseline",
+              "projectName": "baseline",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 255,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[m1c gate] acceptance line: [Milestone1C] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1c gate] badges: [\"PASS\",\"PASS\",\"PASS\",\"PASS\"]\n"
+                    },
+                    {
+                      "text": "[m1c gate] page console transcript (tail):\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1C] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:09.964Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "48b517ea0118e77bff71-109a4e8126d5d3c31a10",
+          "file": "m1c.spec.ts",
+          "line": 6,
+          "column": 5
+        },
+        {
+          "title": "M1C — Web Worker Terrain & Zero-GC Pool acceptance",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "failbadge",
+              "projectName": "failbadge",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 309,
+                  "error": {
+                    "message": "Error: no FAIL badge may remain\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mnot\u001b[2m.\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: not \u001b[32m\"FAIL\"\u001b[39m\nReceived string:        \u001b[31m\"\u001b[7mFAIL\u001b[27m | PASS | PASS | PASS\"\u001b[39m",
+                    "stack": "Error: no FAIL badge may remain\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mnot\u001b[2m.\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: not \u001b[32m\"FAIL\"\u001b[39m\nReceived string:        \u001b[31m\"\u001b[7mFAIL\u001b[27m | PASS | PASS | PASS\"\u001b[39m\n    at /tmp/f1a-e2e-faq3Ko/e2e/m1c.spec.ts:29:62",
+                    "location": {
+                      "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1c.spec.ts",
+                      "column": 62,
+                      "line": 29
+                    },
+                    "snippet": "  27 |   expect(line, 'acceptance console line').toContain('PASSED')\n  28 |   expect(badges.length, 'badge rows scraped').toBeGreaterThan(0)\n> 29 |   expect(badges.join(' | '), 'no FAIL badge may remain').not.toContain('FAIL')\n     |                                                              ^\n  30 | })\n  31 |"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1c.spec.ts",
+                        "column": 62,
+                        "line": 29
+                      },
+                      "message": "Error: no FAIL badge may remain\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mnot\u001b[2m.\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: not \u001b[32m\"FAIL\"\u001b[39m\nReceived string:        \u001b[31m\"\u001b[7mFAIL\u001b[27m | PASS | PASS | PASS\"\u001b[39m\n\n  27 |   expect(line, 'acceptance console line').toContain('PASSED')\n  28 |   expect(badges.length, 'badge rows scraped').toBeGreaterThan(0)\n> 29 |   expect(badges.join(' | '), 'no FAIL badge may remain').not.toContain('FAIL')\n     |                                                              ^\n  30 | })\n  31 |\n    at /tmp/f1a-e2e-faq3Ko/e2e/m1c.spec.ts:29:62"
+                    }
+                  ],
+                  "stdout": [
+                    {
+                      "text": "[m1c gate] acceptance line: [Milestone1C] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1c gate] badges: [\"FAIL\",\"PASS\",\"PASS\",\"PASS\"]\n"
+                    },
+                    {
+                      "text": "[m1c gate] page console transcript (tail):\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1C] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:13.014Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/tmp/f1a-e2e-faq3Ko/results/m1c-M1C-—-Web-Worker-Terrain-Zero-GC-Pool-acceptance-failbadge/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1c.spec.ts",
+                    "column": 62,
+                    "line": 29
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "48b517ea0118e77bff71-8e0b5567e1e41eb1c1ec",
+          "file": "m1c.spec.ts",
+          "line": 6,
+          "column": 5
+        },
+        {
+          "title": "M1C — Web Worker Terrain & Zero-GC Pool acceptance",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "failedverdict",
+              "projectName": "failedverdict",
+              "results": [
+                {
+                  "workerIndex": 8,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 298,
+                  "error": {
+                    "message": "Error: acceptance console line\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"PASSED\"\u001b[39m\nReceived string:    \u001b[31m\"[Milestone1C] acceptance FAILED\"\u001b[39m",
+                    "stack": "Error: acceptance console line\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"PASSED\"\u001b[39m\nReceived string:    \u001b[31m\"[Milestone1C] acceptance FAILED\"\u001b[39m\n    at /tmp/f1a-e2e-faq3Ko/e2e/m1c.spec.ts:27:43",
+                    "location": {
+                      "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1c.spec.ts",
+                      "column": 43,
+                      "line": 27
+                    },
+                    "snippet": "  25 |   for (const l of consoleLines.slice(-12)) console.log(`  ${l}`)\n  26 |\n> 27 |   expect(line, 'acceptance console line').toContain('PASSED')\n     |                                           ^\n  28 |   expect(badges.length, 'badge rows scraped').toBeGreaterThan(0)\n  29 |   expect(badges.join(' | '), 'no FAIL badge may remain').not.toContain('FAIL')\n  30 | })"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1c.spec.ts",
+                        "column": 43,
+                        "line": 27
+                      },
+                      "message": "Error: acceptance console line\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"PASSED\"\u001b[39m\nReceived string:    \u001b[31m\"[Milestone1C] acceptance FAILED\"\u001b[39m\n\n  25 |   for (const l of consoleLines.slice(-12)) console.log(`  ${l}`)\n  26 |\n> 27 |   expect(line, 'acceptance console line').toContain('PASSED')\n     |                                           ^\n  28 |   expect(badges.length, 'badge rows scraped').toBeGreaterThan(0)\n  29 |   expect(badges.join(' | '), 'no FAIL badge may remain').not.toContain('FAIL')\n  30 | })\n    at /tmp/f1a-e2e-faq3Ko/e2e/m1c.spec.ts:27:43"
+                    }
+                  ],
+                  "stdout": [
+                    {
+                      "text": "[m1c gate] acceptance line: [Milestone1C] acceptance FAILED\n"
+                    },
+                    {
+                      "text": "[m1c gate] badges: [\"PASS\",\"PASS\",\"PASS\",\"PASS\"]\n"
+                    },
+                    {
+                      "text": "[m1c gate] page console transcript (tail):\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1C] acceptance FAILED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:17.478Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/tmp/f1a-e2e-faq3Ko/results/m1c-M1C-—-Web-Worker-Terrain-Zero-GC-Pool-acceptance-failedverdict/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1c.spec.ts",
+                    "column": 43,
+                    "line": 27
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "48b517ea0118e77bff71-f67bbc20ad2ce177e4f6",
+          "file": "m1c.spec.ts",
+          "line": 6,
+          "column": 5
+        },
+        {
+          "title": "M1C — Web Worker Terrain & Zero-GC Pool acceptance",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "zerorows",
+              "projectName": "zerorows",
+              "results": [
+                {
+                  "workerIndex": 13,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 329,
+                  "error": {
+                    "message": "Error: badge rows scraped\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m",
+                    "stack": "Error: badge rows scraped\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m\n    at /tmp/f1a-e2e-faq3Ko/e2e/m1c.spec.ts:28:47",
+                    "location": {
+                      "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1c.spec.ts",
+                      "column": 47,
+                      "line": 28
+                    },
+                    "snippet": "  26 |\n  27 |   expect(line, 'acceptance console line').toContain('PASSED')\n> 28 |   expect(badges.length, 'badge rows scraped').toBeGreaterThan(0)\n     |                                               ^\n  29 |   expect(badges.join(' | '), 'no FAIL badge may remain').not.toContain('FAIL')\n  30 | })\n  31 |"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1c.spec.ts",
+                        "column": 47,
+                        "line": 28
+                      },
+                      "message": "Error: badge rows scraped\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m\n\n  26 |\n  27 |   expect(line, 'acceptance console line').toContain('PASSED')\n> 28 |   expect(badges.length, 'badge rows scraped').toBeGreaterThan(0)\n     |                                               ^\n  29 |   expect(badges.join(' | '), 'no FAIL badge may remain').not.toContain('FAIL')\n  30 | })\n  31 |\n    at /tmp/f1a-e2e-faq3Ko/e2e/m1c.spec.ts:28:47"
+                    }
+                  ],
+                  "stdout": [
+                    {
+                      "text": "[m1c gate] acceptance line: [Milestone1C] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1c gate] badges: []\n"
+                    },
+                    {
+                      "text": "[m1c gate] page console transcript (tail):\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1C] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:21.858Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/tmp/f1a-e2e-faq3Ko/results/m1c-M1C-—-Web-Worker-Terrain-Zero-GC-Pool-acceptance-zerorows/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1c.spec.ts",
+                    "column": 47,
+                    "line": 28
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "48b517ea0118e77bff71-ef44b7996c15ca9e251b",
+          "file": "m1c.spec.ts",
+          "line": 6,
+          "column": 5
+        },
+        {
+          "title": "M1C — Web Worker Terrain & Zero-GC Pool acceptance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "pageerror",
+              "projectName": "pageerror",
+              "results": [
+                {
+                  "workerIndex": 16,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 261,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[m1c gate] acceptance line: [Milestone1C] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1c gate] badges: [\"PASS\",\"PASS\",\"PASS\",\"PASS\"]\n"
+                    },
+                    {
+                      "text": "[m1c gate] page console transcript (tail):\n"
+                    },
+                    {
+                      "text": "  pageerror: F1a pageerror\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1C] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:25.238Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "48b517ea0118e77bff71-d4c6d1ec00ae81b0edfa",
+          "file": "m1c.spec.ts",
+          "line": 6,
+          "column": 5
+        },
+        {
+          "title": "M1C — Web Worker Terrain & Zero-GC Pool acceptance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "consoleerror",
+              "projectName": "consoleerror",
+              "results": [
+                {
+                  "workerIndex": 17,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 241,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[m1c gate] acceptance line: [Milestone1C] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1c gate] badges: [\"PASS\",\"PASS\",\"PASS\",\"PASS\"]\n"
+                    },
+                    {
+                      "text": "[m1c gate] page console transcript (tail):\n"
+                    },
+                    {
+                      "text": "  error: F1a consoleerror\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1C] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:27.204Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "48b517ea0118e77bff71-78714f372c532670ec83",
+          "file": "m1c.spec.ts",
+          "line": 6,
+          "column": 5
+        },
+        {
+          "title": "M1C — Web Worker Terrain & Zero-GC Pool acceptance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "resource404",
+              "projectName": "resource404",
+              "results": [
+                {
+                  "workerIndex": 18,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 283,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[m1c gate] acceptance line: [Milestone1C] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1c gate] badges: [\"PASS\",\"PASS\",\"PASS\",\"PASS\"]\n"
+                    },
+                    {
+                      "text": "[m1c gate] page console transcript (tail):\n"
+                    },
+                    {
+                      "text": "  error: Failed to load resource: the server responded with a status of 404 (Not Found)\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1C] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:29.149Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "48b517ea0118e77bff71-4a6cdb2a7307ae280046",
+          "file": "m1c.spec.ts",
+          "line": 6,
+          "column": 5
+        },
+        {
+          "title": "M1C — Web Worker Terrain & Zero-GC Pool acceptance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "placeholders",
+              "projectName": "placeholders",
+              "results": [
+                {
+                  "workerIndex": 19,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 253,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[m1c gate] acceptance line: [Milestone1C] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1c gate] badges: [\"·····\",\"·····\",\"·····\",\"·····\"]\n"
+                    },
+                    {
+                      "text": "[m1c gate] page console transcript (tail):\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1C] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:31.130Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "48b517ea0118e77bff71-724d608ba6fef1d179b3",
+          "file": "m1c.spec.ts",
+          "line": 6,
+          "column": 5
+        },
+        {
+          "title": "M1C — Web Worker Terrain & Zero-GC Pool acceptance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "missingrow",
+              "projectName": "missingrow",
+              "results": [
+                {
+                  "workerIndex": 20,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 243,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[m1c gate] acceptance line: [Milestone1C] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1c gate] badges: [\"PASS\",\"PASS\",\"PASS\"]\n"
+                    },
+                    {
+                      "text": "[m1c gate] page console transcript (tail):\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1C] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:33.130Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "48b517ea0118e77bff71-deb8fc6dc729a134d8c6",
+          "file": "m1c.spec.ts",
+          "line": 6,
+          "column": 5
+        },
+        {
+          "title": "M1C — Web Worker Terrain & Zero-GC Pool acceptance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "errbadge",
+              "projectName": "errbadge",
+              "results": [
+                {
+                  "workerIndex": 21,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 269,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[m1c gate] acceptance line: [Milestone1C] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1c gate] badges: [\"ERR\",\"ERR\",\"ERR\",\"ERR\"]\n"
+                    },
+                    {
+                      "text": "[m1c gate] page console transcript (tail):\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1C] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:35.029Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "48b517ea0118e77bff71-1f2608aa41558dda8697",
+          "file": "m1c.spec.ts",
+          "line": 6,
+          "column": 5
+        }
+      ]
+    },
+    {
+      "title": "m1d.spec.ts",
+      "file": "m1d.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "M1D — Flight & Aerodynamic Governor acceptance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "baseline",
+              "projectName": "baseline",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 243,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[m1d gate] acceptance line: [Milestone1D] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1d gate] badges: [\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\"]\n"
+                    },
+                    {
+                      "text": "[m1d gate] page console transcript (tail):\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1D] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:10.243Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "8f8404335b5f535a58bb-6f6249dfa97b7473306e",
+          "file": "m1d.spec.ts",
+          "line": 6,
+          "column": 5
+        },
+        {
+          "title": "M1D — Flight & Aerodynamic Governor acceptance",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "failbadge",
+              "projectName": "failbadge",
+              "results": [
+                {
+                  "workerIndex": 4,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 368,
+                  "error": {
+                    "message": "Error: no FAIL badge may remain\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mnot\u001b[2m.\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: not \u001b[32m\"FAIL\"\u001b[39m\nReceived string:        \u001b[31m\"\u001b[7mFAIL\u001b[27m | PASS | PASS | PASS | PASS\"\u001b[39m",
+                    "stack": "Error: no FAIL badge may remain\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mnot\u001b[2m.\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: not \u001b[32m\"FAIL\"\u001b[39m\nReceived string:        \u001b[31m\"\u001b[7mFAIL\u001b[27m | PASS | PASS | PASS | PASS\"\u001b[39m\n    at /tmp/f1a-e2e-faq3Ko/e2e/m1d.spec.ts:29:62",
+                    "location": {
+                      "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1d.spec.ts",
+                      "column": 62,
+                      "line": 29
+                    },
+                    "snippet": "  27 |   expect(line, 'acceptance console line').toContain('PASSED')\n  28 |   expect(badges.length, 'badge rows scraped').toBeGreaterThan(0)\n> 29 |   expect(badges.join(' | '), 'no FAIL badge may remain').not.toContain('FAIL')\n     |                                                              ^\n  30 | })\n  31 |"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1d.spec.ts",
+                        "column": 62,
+                        "line": 29
+                      },
+                      "message": "Error: no FAIL badge may remain\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mnot\u001b[2m.\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: not \u001b[32m\"FAIL\"\u001b[39m\nReceived string:        \u001b[31m\"\u001b[7mFAIL\u001b[27m | PASS | PASS | PASS | PASS\"\u001b[39m\n\n  27 |   expect(line, 'acceptance console line').toContain('PASSED')\n  28 |   expect(badges.length, 'badge rows scraped').toBeGreaterThan(0)\n> 29 |   expect(badges.join(' | '), 'no FAIL badge may remain').not.toContain('FAIL')\n     |                                                              ^\n  30 | })\n  31 |\n    at /tmp/f1a-e2e-faq3Ko/e2e/m1d.spec.ts:29:62"
+                    }
+                  ],
+                  "stdout": [
+                    {
+                      "text": "[m1d gate] acceptance line: [Milestone1D] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1d gate] badges: [\"FAIL\",\"PASS\",\"PASS\",\"PASS\",\"PASS\"]\n"
+                    },
+                    {
+                      "text": "[m1d gate] page console transcript (tail):\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1D] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:13.906Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/tmp/f1a-e2e-faq3Ko/results/m1d-M1D-—-Flight-Aerodynamic-Governor-acceptance-failbadge/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1d.spec.ts",
+                    "column": 62,
+                    "line": 29
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "8f8404335b5f535a58bb-00babbc61e568f5fd0d9",
+          "file": "m1d.spec.ts",
+          "line": 6,
+          "column": 5
+        },
+        {
+          "title": "M1D — Flight & Aerodynamic Governor acceptance",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "failedverdict",
+              "projectName": "failedverdict",
+              "results": [
+                {
+                  "workerIndex": 9,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 307,
+                  "error": {
+                    "message": "Error: acceptance console line\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"PASSED\"\u001b[39m\nReceived string:    \u001b[31m\"[Milestone1D] acceptance FAILED\"\u001b[39m",
+                    "stack": "Error: acceptance console line\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"PASSED\"\u001b[39m\nReceived string:    \u001b[31m\"[Milestone1D] acceptance FAILED\"\u001b[39m\n    at /tmp/f1a-e2e-faq3Ko/e2e/m1d.spec.ts:27:43",
+                    "location": {
+                      "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1d.spec.ts",
+                      "column": 43,
+                      "line": 27
+                    },
+                    "snippet": "  25 |   for (const l of consoleLines.slice(-12)) console.log(`  ${l}`)\n  26 |\n> 27 |   expect(line, 'acceptance console line').toContain('PASSED')\n     |                                           ^\n  28 |   expect(badges.length, 'badge rows scraped').toBeGreaterThan(0)\n  29 |   expect(badges.join(' | '), 'no FAIL badge may remain').not.toContain('FAIL')\n  30 | })"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1d.spec.ts",
+                        "column": 43,
+                        "line": 27
+                      },
+                      "message": "Error: acceptance console line\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"PASSED\"\u001b[39m\nReceived string:    \u001b[31m\"[Milestone1D] acceptance FAILED\"\u001b[39m\n\n  25 |   for (const l of consoleLines.slice(-12)) console.log(`  ${l}`)\n  26 |\n> 27 |   expect(line, 'acceptance console line').toContain('PASSED')\n     |                                           ^\n  28 |   expect(badges.length, 'badge rows scraped').toBeGreaterThan(0)\n  29 |   expect(badges.join(' | '), 'no FAIL badge may remain').not.toContain('FAIL')\n  30 | })\n    at /tmp/f1a-e2e-faq3Ko/e2e/m1d.spec.ts:27:43"
+                    }
+                  ],
+                  "stdout": [
+                    {
+                      "text": "[m1d gate] acceptance line: [Milestone1D] acceptance FAILED\n"
+                    },
+                    {
+                      "text": "[m1d gate] badges: [\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\"]\n"
+                    },
+                    {
+                      "text": "[m1d gate] page console transcript (tail):\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1D] acceptance FAILED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:18.334Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/tmp/f1a-e2e-faq3Ko/results/m1d-M1D-—-Flight-Aerodynamic-Governor-acceptance-failedverdict/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1d.spec.ts",
+                    "column": 43,
+                    "line": 27
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "8f8404335b5f535a58bb-4e45c037b25bd8ba2789",
+          "file": "m1d.spec.ts",
+          "line": 6,
+          "column": 5
+        },
+        {
+          "title": "M1D — Flight & Aerodynamic Governor acceptance",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "zerorows",
+              "projectName": "zerorows",
+              "results": [
+                {
+                  "workerIndex": 14,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 319,
+                  "error": {
+                    "message": "Error: badge rows scraped\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m",
+                    "stack": "Error: badge rows scraped\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m\n    at /tmp/f1a-e2e-faq3Ko/e2e/m1d.spec.ts:28:47",
+                    "location": {
+                      "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1d.spec.ts",
+                      "column": 47,
+                      "line": 28
+                    },
+                    "snippet": "  26 |\n  27 |   expect(line, 'acceptance console line').toContain('PASSED')\n> 28 |   expect(badges.length, 'badge rows scraped').toBeGreaterThan(0)\n     |                                               ^\n  29 |   expect(badges.join(' | '), 'no FAIL badge may remain').not.toContain('FAIL')\n  30 | })\n  31 |"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1d.spec.ts",
+                        "column": 47,
+                        "line": 28
+                      },
+                      "message": "Error: badge rows scraped\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m\n\n  26 |\n  27 |   expect(line, 'acceptance console line').toContain('PASSED')\n> 28 |   expect(badges.length, 'badge rows scraped').toBeGreaterThan(0)\n     |                                               ^\n  29 |   expect(badges.join(' | '), 'no FAIL badge may remain').not.toContain('FAIL')\n  30 | })\n  31 |\n    at /tmp/f1a-e2e-faq3Ko/e2e/m1d.spec.ts:28:47"
+                    }
+                  ],
+                  "stdout": [
+                    {
+                      "text": "[m1d gate] acceptance line: [Milestone1D] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1d gate] badges: []\n"
+                    },
+                    {
+                      "text": "[m1d gate] page console transcript (tail):\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1D] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:22.766Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/tmp/f1a-e2e-faq3Ko/results/m1d-M1D-—-Flight-Aerodynamic-Governor-acceptance-zerorows/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1d.spec.ts",
+                    "column": 47,
+                    "line": 28
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "8f8404335b5f535a58bb-57b94925fda1c90c207e",
+          "file": "m1d.spec.ts",
+          "line": 6,
+          "column": 5
+        },
+        {
+          "title": "M1D — Flight & Aerodynamic Governor acceptance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "pageerror",
+              "projectName": "pageerror",
+              "results": [
+                {
+                  "workerIndex": 16,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 234,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[m1d gate] acceptance line: [Milestone1D] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1d gate] badges: [\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\"]\n"
+                    },
+                    {
+                      "text": "[m1d gate] page console transcript (tail):\n"
+                    },
+                    {
+                      "text": "  pageerror: F1a pageerror\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1D] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:25.513Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "8f8404335b5f535a58bb-df70a933e29b773b2791",
+          "file": "m1d.spec.ts",
+          "line": 6,
+          "column": 5
+        },
+        {
+          "title": "M1D — Flight & Aerodynamic Governor acceptance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "consoleerror",
+              "projectName": "consoleerror",
+              "results": [
+                {
+                  "workerIndex": 17,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 241,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[m1d gate] acceptance line: [Milestone1D] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1d gate] badges: [\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\"]\n"
+                    },
+                    {
+                      "text": "[m1d gate] page console transcript (tail):\n"
+                    },
+                    {
+                      "text": "  error: F1a consoleerror\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1D] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:27.469Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "8f8404335b5f535a58bb-719a7ea3a68a91093fdb",
+          "file": "m1d.spec.ts",
+          "line": 6,
+          "column": 5
+        },
+        {
+          "title": "M1D — Flight & Aerodynamic Governor acceptance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "resource404",
+              "projectName": "resource404",
+              "results": [
+                {
+                  "workerIndex": 18,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 249,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[m1d gate] acceptance line: [Milestone1D] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1d gate] badges: [\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\"]\n"
+                    },
+                    {
+                      "text": "[m1d gate] page console transcript (tail):\n"
+                    },
+                    {
+                      "text": "  error: Failed to load resource: the server responded with a status of 404 (Not Found)\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1D] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:29.465Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "8f8404335b5f535a58bb-8404c8e0ddbdebd49a9a",
+          "file": "m1d.spec.ts",
+          "line": 6,
+          "column": 5
+        },
+        {
+          "title": "M1D — Flight & Aerodynamic Governor acceptance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "placeholders",
+              "projectName": "placeholders",
+              "results": [
+                {
+                  "workerIndex": 19,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 273,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[m1d gate] acceptance line: [Milestone1D] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1d gate] badges: [\"·····\",\"·····\",\"·····\",\"·····\",\"·····\"]\n"
+                    },
+                    {
+                      "text": "[m1d gate] page console transcript (tail):\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1D] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:31.396Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "8f8404335b5f535a58bb-28a5879435c8323ccbe7",
+          "file": "m1d.spec.ts",
+          "line": 6,
+          "column": 5
+        },
+        {
+          "title": "M1D — Flight & Aerodynamic Governor acceptance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "missingrow",
+              "projectName": "missingrow",
+              "results": [
+                {
+                  "workerIndex": 20,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 226,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[m1d gate] acceptance line: [Milestone1D] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1d gate] badges: [\"PASS\",\"PASS\",\"PASS\",\"PASS\"]\n"
+                    },
+                    {
+                      "text": "[m1d gate] page console transcript (tail):\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1D] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:33.386Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "8f8404335b5f535a58bb-57afd55cd297494585b1",
+          "file": "m1d.spec.ts",
+          "line": 6,
+          "column": 5
+        },
+        {
+          "title": "M1D — Flight & Aerodynamic Governor acceptance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "errbadge",
+              "projectName": "errbadge",
+              "results": [
+                {
+                  "workerIndex": 21,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 233,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[m1d gate] acceptance line: [Milestone1D] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1d gate] badges: [\"ERR\",\"ERR\",\"ERR\",\"ERR\",\"ERR\"]\n"
+                    },
+                    {
+                      "text": "[m1d gate] page console transcript (tail):\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1D] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:35.320Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "8f8404335b5f535a58bb-bb6685d21181580772e4",
+          "file": "m1d.spec.ts",
+          "line": 6,
+          "column": 5
+        }
+      ]
+    },
+    {
+      "title": "m1e.spec.ts",
+      "file": "m1e.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "M1E — Spherical Astronaut acceptance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "baseline",
+              "projectName": "baseline",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 269,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[m1e gate] acceptance line: [Milestone1E] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1e gate] badges: [\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\"]\n"
+                    },
+                    {
+                      "text": "[m1e gate] page console transcript (tail):\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1E] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:10.502Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "01b93cf47d899d5ee7c2-0ff4ae26a746ee6e109f",
+          "file": "m1e.spec.ts",
+          "line": 8,
+          "column": 5
+        },
+        {
+          "title": "M1E — Spherical Astronaut acceptance",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "failbadge",
+              "projectName": "failbadge",
+              "results": [
+                {
+                  "workerIndex": 5,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 315,
+                  "error": {
+                    "message": "Error: no FAIL badge may remain\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mnot\u001b[2m.\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: not \u001b[32m\"FAIL\"\u001b[39m\nReceived string:        \u001b[31m\"\u001b[7mFAIL\u001b[27m | PASS | PASS | PASS | PASS | PASS\"\u001b[39m",
+                    "stack": "Error: no FAIL badge may remain\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mnot\u001b[2m.\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: not \u001b[32m\"FAIL\"\u001b[39m\nReceived string:        \u001b[31m\"\u001b[7mFAIL\u001b[27m | PASS | PASS | PASS | PASS | PASS\"\u001b[39m\n    at /tmp/f1a-e2e-faq3Ko/e2e/m1e.spec.ts:31:62",
+                    "location": {
+                      "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1e.spec.ts",
+                      "column": 62,
+                      "line": 31
+                    },
+                    "snippet": "  29 |   expect(line, 'acceptance console line').toContain('PASSED')\n  30 |   expect(badges.length, 'badge rows scraped').toBeGreaterThan(0)\n> 31 |   expect(badges.join(' | '), 'no FAIL badge may remain').not.toContain('FAIL')\n     |                                                              ^\n  32 | })\n  33 |"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1e.spec.ts",
+                        "column": 62,
+                        "line": 31
+                      },
+                      "message": "Error: no FAIL badge may remain\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mnot\u001b[2m.\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: not \u001b[32m\"FAIL\"\u001b[39m\nReceived string:        \u001b[31m\"\u001b[7mFAIL\u001b[27m | PASS | PASS | PASS | PASS | PASS\"\u001b[39m\n\n  29 |   expect(line, 'acceptance console line').toContain('PASSED')\n  30 |   expect(badges.length, 'badge rows scraped').toBeGreaterThan(0)\n> 31 |   expect(badges.join(' | '), 'no FAIL badge may remain').not.toContain('FAIL')\n     |                                                              ^\n  32 | })\n  33 |\n    at /tmp/f1a-e2e-faq3Ko/e2e/m1e.spec.ts:31:62"
+                    }
+                  ],
+                  "stdout": [
+                    {
+                      "text": "[m1e gate] acceptance line: [Milestone1E] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1e gate] badges: [\"FAIL\",\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\"]\n"
+                    },
+                    {
+                      "text": "[m1e gate] page console transcript (tail):\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1E] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:14.816Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/tmp/f1a-e2e-faq3Ko/results/m1e-M1E-—-Spherical-Astronaut-acceptance-failbadge/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1e.spec.ts",
+                    "column": 62,
+                    "line": 31
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "01b93cf47d899d5ee7c2-68b16ad1fb546fc2c62c",
+          "file": "m1e.spec.ts",
+          "line": 8,
+          "column": 5
+        },
+        {
+          "title": "M1E — Spherical Astronaut acceptance",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "failedverdict",
+              "projectName": "failedverdict",
+              "results": [
+                {
+                  "workerIndex": 10,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 305,
+                  "error": {
+                    "message": "Error: acceptance console line\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"PASSED\"\u001b[39m\nReceived string:    \u001b[31m\"[Milestone1E] acceptance FAILED\"\u001b[39m",
+                    "stack": "Error: acceptance console line\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"PASSED\"\u001b[39m\nReceived string:    \u001b[31m\"[Milestone1E] acceptance FAILED\"\u001b[39m\n    at /tmp/f1a-e2e-faq3Ko/e2e/m1e.spec.ts:29:43",
+                    "location": {
+                      "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1e.spec.ts",
+                      "column": 43,
+                      "line": 29
+                    },
+                    "snippet": "  27 |   for (const l of consoleLines.slice(-12)) console.log(`  ${l}`)\n  28 |\n> 29 |   expect(line, 'acceptance console line').toContain('PASSED')\n     |                                           ^\n  30 |   expect(badges.length, 'badge rows scraped').toBeGreaterThan(0)\n  31 |   expect(badges.join(' | '), 'no FAIL badge may remain').not.toContain('FAIL')\n  32 | })"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1e.spec.ts",
+                        "column": 43,
+                        "line": 29
+                      },
+                      "message": "Error: acceptance console line\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"PASSED\"\u001b[39m\nReceived string:    \u001b[31m\"[Milestone1E] acceptance FAILED\"\u001b[39m\n\n  27 |   for (const l of consoleLines.slice(-12)) console.log(`  ${l}`)\n  28 |\n> 29 |   expect(line, 'acceptance console line').toContain('PASSED')\n     |                                           ^\n  30 |   expect(badges.length, 'badge rows scraped').toBeGreaterThan(0)\n  31 |   expect(badges.join(' | '), 'no FAIL badge may remain').not.toContain('FAIL')\n  32 | })\n    at /tmp/f1a-e2e-faq3Ko/e2e/m1e.spec.ts:29:43"
+                    }
+                  ],
+                  "stdout": [
+                    {
+                      "text": "[m1e gate] acceptance line: [Milestone1E] acceptance FAILED\n"
+                    },
+                    {
+                      "text": "[m1e gate] badges: [\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\"]\n"
+                    },
+                    {
+                      "text": "[m1e gate] page console transcript (tail):\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1E] acceptance FAILED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:19.217Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/tmp/f1a-e2e-faq3Ko/results/m1e-M1E-—-Spherical-Astronaut-acceptance-failedverdict/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1e.spec.ts",
+                    "column": 43,
+                    "line": 29
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "01b93cf47d899d5ee7c2-5fb5756ad3bde0abcdbc",
+          "file": "m1e.spec.ts",
+          "line": 8,
+          "column": 5
+        },
+        {
+          "title": "M1E — Spherical Astronaut acceptance",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "zerorows",
+              "projectName": "zerorows",
+              "results": [
+                {
+                  "workerIndex": 15,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 295,
+                  "error": {
+                    "message": "Error: badge rows scraped\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m",
+                    "stack": "Error: badge rows scraped\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m\n    at /tmp/f1a-e2e-faq3Ko/e2e/m1e.spec.ts:30:47",
+                    "location": {
+                      "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1e.spec.ts",
+                      "column": 47,
+                      "line": 30
+                    },
+                    "snippet": "  28 |\n  29 |   expect(line, 'acceptance console line').toContain('PASSED')\n> 30 |   expect(badges.length, 'badge rows scraped').toBeGreaterThan(0)\n     |                                               ^\n  31 |   expect(badges.join(' | '), 'no FAIL badge may remain').not.toContain('FAIL')\n  32 | })\n  33 |"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1e.spec.ts",
+                        "column": 47,
+                        "line": 30
+                      },
+                      "message": "Error: badge rows scraped\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m\n\n  28 |\n  29 |   expect(line, 'acceptance console line').toContain('PASSED')\n> 30 |   expect(badges.length, 'badge rows scraped').toBeGreaterThan(0)\n     |                                               ^\n  31 |   expect(badges.join(' | '), 'no FAIL badge may remain').not.toContain('FAIL')\n  32 | })\n  33 |\n    at /tmp/f1a-e2e-faq3Ko/e2e/m1e.spec.ts:30:47"
+                    }
+                  ],
+                  "stdout": [
+                    {
+                      "text": "[m1e gate] acceptance line: [Milestone1E] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1e gate] badges: []\n"
+                    },
+                    {
+                      "text": "[m1e gate] page console transcript (tail):\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1E] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:23.645Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/tmp/f1a-e2e-faq3Ko/results/m1e-M1E-—-Spherical-Astronaut-acceptance-zerorows/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/tmp/f1a-e2e-faq3Ko/e2e/m1e.spec.ts",
+                    "column": 47,
+                    "line": 30
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "01b93cf47d899d5ee7c2-2378e65ca7a064267c87",
+          "file": "m1e.spec.ts",
+          "line": 8,
+          "column": 5
+        },
+        {
+          "title": "M1E — Spherical Astronaut acceptance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "pageerror",
+              "projectName": "pageerror",
+              "results": [
+                {
+                  "workerIndex": 16,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 222,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[m1e gate] acceptance line: [Milestone1E] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1e gate] badges: [\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\"]\n"
+                    },
+                    {
+                      "text": "[m1e gate] page console transcript (tail):\n"
+                    },
+                    {
+                      "text": "  pageerror: F1a pageerror\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1E] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:25.781Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "01b93cf47d899d5ee7c2-8fb3d65fd4f1fe621965",
+          "file": "m1e.spec.ts",
+          "line": 8,
+          "column": 5
+        },
+        {
+          "title": "M1E — Spherical Astronaut acceptance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "consoleerror",
+              "projectName": "consoleerror",
+              "results": [
+                {
+                  "workerIndex": 17,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 217,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[m1e gate] acceptance line: [Milestone1E] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1e gate] badges: [\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\"]\n"
+                    },
+                    {
+                      "text": "[m1e gate] page console transcript (tail):\n"
+                    },
+                    {
+                      "text": "  error: F1a consoleerror\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1E] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:27.725Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "01b93cf47d899d5ee7c2-5fd109a6c2f382528fdf",
+          "file": "m1e.spec.ts",
+          "line": 8,
+          "column": 5
+        },
+        {
+          "title": "M1E — Spherical Astronaut acceptance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "resource404",
+              "projectName": "resource404",
+              "results": [
+                {
+                  "workerIndex": 18,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 226,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[m1e gate] acceptance line: [Milestone1E] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1e gate] badges: [\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\"]\n"
+                    },
+                    {
+                      "text": "[m1e gate] page console transcript (tail):\n"
+                    },
+                    {
+                      "text": "  error: Failed to load resource: the server responded with a status of 404 (Not Found)\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1E] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:29.733Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "01b93cf47d899d5ee7c2-28a3f09c33d5db44e6ed",
+          "file": "m1e.spec.ts",
+          "line": 8,
+          "column": 5
+        },
+        {
+          "title": "M1E — Spherical Astronaut acceptance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "placeholders",
+              "projectName": "placeholders",
+              "results": [
+                {
+                  "workerIndex": 19,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 264,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[m1e gate] acceptance line: [Milestone1E] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1e gate] badges: [\"·····\",\"·····\",\"·····\",\"·····\",\"·····\",\"·····\"]\n"
+                    },
+                    {
+                      "text": "[m1e gate] page console transcript (tail):\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1E] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:31.709Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "01b93cf47d899d5ee7c2-a47af868caccbff5e596",
+          "file": "m1e.spec.ts",
+          "line": 8,
+          "column": 5
+        },
+        {
+          "title": "M1E — Spherical Astronaut acceptance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "missingrow",
+              "projectName": "missingrow",
+              "results": [
+                {
+                  "workerIndex": 20,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 233,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[m1e gate] acceptance line: [Milestone1E] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1e gate] badges: [\"PASS\",\"PASS\",\"PASS\",\"PASS\",\"PASS\"]\n"
+                    },
+                    {
+                      "text": "[m1e gate] page console transcript (tail):\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1E] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:33.652Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "01b93cf47d899d5ee7c2-f42d030f2c319c0473e6",
+          "file": "m1e.spec.ts",
+          "line": 8,
+          "column": 5
+        },
+        {
+          "title": "M1E — Spherical Astronaut acceptance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "errbadge",
+              "projectName": "errbadge",
+              "results": [
+                {
+                  "workerIndex": 21,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 224,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[m1e gate] acceptance line: [Milestone1E] acceptance PASSED\n"
+                    },
+                    {
+                      "text": "[m1e gate] badges: [\"ERR\",\"ERR\",\"ERR\",\"ERR\",\"ERR\",\"ERR\"]\n"
+                    },
+                    {
+                      "text": "[m1e gate] page console transcript (tail):\n"
+                    },
+                    {
+                      "text": "  log: [Milestone1E] acceptance PASSED\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T07:55:35.585Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "01b93cf47d899d5ee7c2-85af572d553537b0c169",
+          "file": "m1e.spec.ts",
+          "line": 8,
+          "column": 5
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-28T07:55:08.724Z",
+    "duration": 27174.231,
+    "expected": 35,
+    "skipped": 0,
+    "unexpected": 15,
+    "flaky": 0
+  }
+}

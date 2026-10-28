@@ -1,0 +1,1202 @@
+[
+  {
+    "mode": "baseline",
+    "spec": "m1a",
+    "badges": [
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS"
+    ],
+    "errors": [],
+    "lines": [
+      "[Milestone1A] acceptance PASSED"
+    ],
+    "clean": true
+  },
+  {
+    "mode": "baseline",
+    "spec": "m1b",
+    "badges": [
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS"
+    ],
+    "errors": [],
+    "lines": [
+      "[Milestone1B] acceptance PASSED"
+    ],
+    "clean": true
+  },
+  {
+    "mode": "baseline",
+    "spec": "m1c",
+    "badges": [
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS"
+    ],
+    "errors": [],
+    "lines": [
+      "[Milestone1C] acceptance PASSED"
+    ],
+    "clean": true
+  },
+  {
+    "mode": "baseline",
+    "spec": "m1d",
+    "badges": [
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS"
+    ],
+    "errors": [],
+    "lines": [
+      "[Milestone1D] acceptance PASSED"
+    ],
+    "clean": true
+  },
+  {
+    "mode": "baseline",
+    "spec": "m1e",
+    "badges": [
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS"
+    ],
+    "errors": [],
+    "lines": [
+      "[Milestone1E] acceptance PASSED"
+    ],
+    "clean": true
+  },
+  {
+    "mode": "baseline",
+    "spec": "m1f-r1",
+    "badges": [
+      "PASS",
+      "PASS"
+    ],
+    "errors": [],
+    "lines": [
+      "[M1fR1Gate] acceptance PASSED"
+    ],
+    "clean": true
+  },
+  {
+    "mode": "baseline",
+    "spec": "m1f-r2",
+    "badges": [
+      "PASS",
+      "PASS",
+      "PASS"
+    ],
+    "errors": [],
+    "lines": [
+      "[M1fR2Gate] acceptance PASSED"
+    ],
+    "clean": true
+  },
+  {
+    "mode": "baseline",
+    "spec": "m1f-r5",
+    "badges": [
+      "PASS",
+      "PASS"
+    ],
+    "errors": [],
+    "lines": [
+      "[M1fR5Gate] acceptance PASSED"
+    ],
+    "clean": true
+  },
+  {
+    "mode": "failbadge",
+    "spec": "m1a",
+    "badges": [
+      "FAIL",
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS"
+    ],
+    "errors": [],
+    "lines": [
+      "[Milestone1A] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "failbadge",
+    "spec": "m1b",
+    "badges": [
+      "FAIL",
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS"
+    ],
+    "errors": [],
+    "lines": [
+      "[Milestone1B] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "failbadge",
+    "spec": "m1c",
+    "badges": [
+      "FAIL",
+      "PASS",
+      "PASS",
+      "PASS"
+    ],
+    "errors": [],
+    "lines": [
+      "[Milestone1C] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "failbadge",
+    "spec": "m1d",
+    "badges": [
+      "FAIL",
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS"
+    ],
+    "errors": [],
+    "lines": [
+      "[Milestone1D] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "failbadge",
+    "spec": "m1e",
+    "badges": [
+      "FAIL",
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS"
+    ],
+    "errors": [],
+    "lines": [
+      "[Milestone1E] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "failbadge",
+    "spec": "m1f-r1",
+    "badges": [
+      "FAIL",
+      "PASS"
+    ],
+    "errors": [],
+    "lines": [
+      "[M1fR1Gate] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "failbadge",
+    "spec": "m1f-r2",
+    "badges": [
+      "FAIL",
+      "PASS",
+      "PASS"
+    ],
+    "errors": [],
+    "lines": [
+      "[M1fR2Gate] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "failbadge",
+    "spec": "m1f-r5",
+    "badges": [
+      "FAIL",
+      "PASS"
+    ],
+    "errors": [],
+    "lines": [
+      "[M1fR5Gate] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "failedverdict",
+    "spec": "m1a",
+    "badges": [
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS"
+    ],
+    "errors": [],
+    "lines": [
+      "[Milestone1A] acceptance FAILED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "failedverdict",
+    "spec": "m1b",
+    "badges": [
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS"
+    ],
+    "errors": [],
+    "lines": [
+      "[Milestone1B] acceptance FAILED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "failedverdict",
+    "spec": "m1c",
+    "badges": [
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS"
+    ],
+    "errors": [],
+    "lines": [
+      "[Milestone1C] acceptance FAILED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "failedverdict",
+    "spec": "m1d",
+    "badges": [
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS"
+    ],
+    "errors": [],
+    "lines": [
+      "[Milestone1D] acceptance FAILED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "failedverdict",
+    "spec": "m1e",
+    "badges": [
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS"
+    ],
+    "errors": [],
+    "lines": [
+      "[Milestone1E] acceptance FAILED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "failedverdict",
+    "spec": "m1f-r1",
+    "badges": [
+      "PASS",
+      "PASS"
+    ],
+    "errors": [],
+    "lines": [
+      "[M1fR1Gate] acceptance FAILED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "failedverdict",
+    "spec": "m1f-r2",
+    "badges": [
+      "PASS",
+      "PASS",
+      "PASS"
+    ],
+    "errors": [],
+    "lines": [
+      "[M1fR2Gate] acceptance FAILED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "failedverdict",
+    "spec": "m1f-r5",
+    "badges": [
+      "PASS",
+      "PASS"
+    ],
+    "errors": [],
+    "lines": [
+      "[M1fR5Gate] acceptance FAILED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "zerorows",
+    "spec": "m1a",
+    "badges": [],
+    "errors": [],
+    "lines": [
+      "[Milestone1A] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "zerorows",
+    "spec": "m1b",
+    "badges": [],
+    "errors": [],
+    "lines": [
+      "[Milestone1B] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "zerorows",
+    "spec": "m1c",
+    "badges": [],
+    "errors": [],
+    "lines": [
+      "[Milestone1C] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "zerorows",
+    "spec": "m1d",
+    "badges": [],
+    "errors": [],
+    "lines": [
+      "[Milestone1D] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "zerorows",
+    "spec": "m1e",
+    "badges": [],
+    "errors": [],
+    "lines": [
+      "[Milestone1E] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "zerorows",
+    "spec": "m1f-r1",
+    "badges": [],
+    "errors": [],
+    "lines": [
+      "[M1fR1Gate] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "zerorows",
+    "spec": "m1f-r2",
+    "badges": [],
+    "errors": [],
+    "lines": [
+      "[M1fR2Gate] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "zerorows",
+    "spec": "m1f-r5",
+    "badges": [],
+    "errors": [],
+    "lines": [
+      "[M1fR5Gate] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "pageerror",
+    "spec": "m1a",
+    "badges": [
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS"
+    ],
+    "errors": [
+      "pageerror: F1a pageerror"
+    ],
+    "lines": [
+      "[Milestone1A] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "pageerror",
+    "spec": "m1b",
+    "badges": [
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS"
+    ],
+    "errors": [
+      "pageerror: F1a pageerror"
+    ],
+    "lines": [
+      "[Milestone1B] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "pageerror",
+    "spec": "m1c",
+    "badges": [
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS"
+    ],
+    "errors": [
+      "pageerror: F1a pageerror"
+    ],
+    "lines": [
+      "[Milestone1C] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "pageerror",
+    "spec": "m1d",
+    "badges": [
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS"
+    ],
+    "errors": [
+      "pageerror: F1a pageerror"
+    ],
+    "lines": [
+      "[Milestone1D] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "pageerror",
+    "spec": "m1e",
+    "badges": [
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS"
+    ],
+    "errors": [
+      "pageerror: F1a pageerror"
+    ],
+    "lines": [
+      "[Milestone1E] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "pageerror",
+    "spec": "m1f-r1",
+    "badges": [
+      "PASS",
+      "PASS"
+    ],
+    "errors": [
+      "pageerror: F1a pageerror"
+    ],
+    "lines": [
+      "[M1fR1Gate] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "pageerror",
+    "spec": "m1f-r2",
+    "badges": [
+      "PASS",
+      "PASS",
+      "PASS"
+    ],
+    "errors": [
+      "pageerror: F1a pageerror"
+    ],
+    "lines": [
+      "[M1fR2Gate] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "pageerror",
+    "spec": "m1f-r5",
+    "badges": [
+      "PASS",
+      "PASS"
+    ],
+    "errors": [
+      "pageerror: F1a pageerror"
+    ],
+    "lines": [
+      "[M1fR5Gate] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "consoleerror",
+    "spec": "m1a",
+    "badges": [
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS"
+    ],
+    "errors": [
+      "error: F1a consoleerror"
+    ],
+    "lines": [
+      "[Milestone1A] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "consoleerror",
+    "spec": "m1b",
+    "badges": [
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS"
+    ],
+    "errors": [
+      "error: F1a consoleerror"
+    ],
+    "lines": [
+      "[Milestone1B] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "consoleerror",
+    "spec": "m1c",
+    "badges": [
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS"
+    ],
+    "errors": [
+      "error: F1a consoleerror"
+    ],
+    "lines": [
+      "[Milestone1C] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "consoleerror",
+    "spec": "m1d",
+    "badges": [
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS"
+    ],
+    "errors": [
+      "error: F1a consoleerror"
+    ],
+    "lines": [
+      "[Milestone1D] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "consoleerror",
+    "spec": "m1e",
+    "badges": [
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS"
+    ],
+    "errors": [
+      "error: F1a consoleerror"
+    ],
+    "lines": [
+      "[Milestone1E] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "consoleerror",
+    "spec": "m1f-r1",
+    "badges": [
+      "PASS",
+      "PASS"
+    ],
+    "errors": [
+      "error: F1a consoleerror"
+    ],
+    "lines": [
+      "[M1fR1Gate] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "consoleerror",
+    "spec": "m1f-r2",
+    "badges": [
+      "PASS",
+      "PASS",
+      "PASS"
+    ],
+    "errors": [
+      "error: F1a consoleerror"
+    ],
+    "lines": [
+      "[M1fR2Gate] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "consoleerror",
+    "spec": "m1f-r5",
+    "badges": [
+      "PASS",
+      "PASS"
+    ],
+    "errors": [
+      "error: F1a consoleerror"
+    ],
+    "lines": [
+      "[M1fR5Gate] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "resource404",
+    "spec": "m1a",
+    "badges": [
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS"
+    ],
+    "errors": [
+      "error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "lines": [
+      "[Milestone1A] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "resource404",
+    "spec": "m1b",
+    "badges": [
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS"
+    ],
+    "errors": [
+      "error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "lines": [
+      "[Milestone1B] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "resource404",
+    "spec": "m1c",
+    "badges": [
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS"
+    ],
+    "errors": [
+      "error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "lines": [
+      "[Milestone1C] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "resource404",
+    "spec": "m1d",
+    "badges": [
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS"
+    ],
+    "errors": [
+      "error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "lines": [
+      "[Milestone1D] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "resource404",
+    "spec": "m1e",
+    "badges": [
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS"
+    ],
+    "errors": [
+      "error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "lines": [
+      "[Milestone1E] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "resource404",
+    "spec": "m1f-r1",
+    "badges": [
+      "PASS",
+      "PASS"
+    ],
+    "errors": [
+      "error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "lines": [
+      "[M1fR1Gate] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "resource404",
+    "spec": "m1f-r2",
+    "badges": [
+      "PASS",
+      "PASS",
+      "PASS"
+    ],
+    "errors": [
+      "error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "lines": [
+      "[M1fR2Gate] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "resource404",
+    "spec": "m1f-r5",
+    "badges": [
+      "PASS",
+      "PASS"
+    ],
+    "errors": [
+      "error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "lines": [
+      "[M1fR5Gate] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "placeholders",
+    "spec": "m1a",
+    "badges": [
+      "·····",
+      "·····",
+      "·····",
+      "·····",
+      "·····"
+    ],
+    "errors": [],
+    "lines": [
+      "[Milestone1A] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "placeholders",
+    "spec": "m1b",
+    "badges": [
+      "·····",
+      "·····",
+      "·····",
+      "·····",
+      "·····"
+    ],
+    "errors": [],
+    "lines": [
+      "[Milestone1B] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "placeholders",
+    "spec": "m1c",
+    "badges": [
+      "·····",
+      "·····",
+      "·····",
+      "·····"
+    ],
+    "errors": [],
+    "lines": [
+      "[Milestone1C] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "placeholders",
+    "spec": "m1d",
+    "badges": [
+      "·····",
+      "·····",
+      "·····",
+      "·····",
+      "·····"
+    ],
+    "errors": [],
+    "lines": [
+      "[Milestone1D] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "placeholders",
+    "spec": "m1e",
+    "badges": [
+      "·····",
+      "·····",
+      "·····",
+      "·····",
+      "·····",
+      "·····"
+    ],
+    "errors": [],
+    "lines": [
+      "[Milestone1E] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "placeholders",
+    "spec": "m1f-r1",
+    "badges": [
+      "·····",
+      "·····"
+    ],
+    "errors": [],
+    "lines": [
+      "[M1fR1Gate] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "placeholders",
+    "spec": "m1f-r2",
+    "badges": [
+      "·····",
+      "·····",
+      "·····"
+    ],
+    "errors": [],
+    "lines": [
+      "[M1fR2Gate] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "placeholders",
+    "spec": "m1f-r5",
+    "badges": [
+      "·····",
+      "·····"
+    ],
+    "errors": [],
+    "lines": [
+      "[M1fR5Gate] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "missingrow",
+    "spec": "m1a",
+    "badges": [
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS"
+    ],
+    "errors": [],
+    "lines": [
+      "[Milestone1A] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "missingrow",
+    "spec": "m1b",
+    "badges": [
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS"
+    ],
+    "errors": [],
+    "lines": [
+      "[Milestone1B] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "missingrow",
+    "spec": "m1c",
+    "badges": [
+      "PASS",
+      "PASS",
+      "PASS"
+    ],
+    "errors": [],
+    "lines": [
+      "[Milestone1C] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "missingrow",
+    "spec": "m1d",
+    "badges": [
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS"
+    ],
+    "errors": [],
+    "lines": [
+      "[Milestone1D] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "missingrow",
+    "spec": "m1e",
+    "badges": [
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS",
+      "PASS"
+    ],
+    "errors": [],
+    "lines": [
+      "[Milestone1E] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "missingrow",
+    "spec": "m1f-r1",
+    "badges": [
+      "PASS"
+    ],
+    "errors": [],
+    "lines": [
+      "[M1fR1Gate] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "missingrow",
+    "spec": "m1f-r2",
+    "badges": [
+      "PASS",
+      "PASS"
+    ],
+    "errors": [],
+    "lines": [
+      "[M1fR2Gate] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "missingrow",
+    "spec": "m1f-r5",
+    "badges": [
+      "PASS"
+    ],
+    "errors": [],
+    "lines": [
+      "[M1fR5Gate] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "errbadge",
+    "spec": "m1a",
+    "badges": [
+      "ERR",
+      "ERR",
+      "ERR",
+      "ERR",
+      "ERR"
+    ],
+    "errors": [],
+    "lines": [
+      "[Milestone1A] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "errbadge",
+    "spec": "m1b",
+    "badges": [
+      "ERR",
+      "ERR",
+      "ERR",
+      "ERR",
+      "ERR"
+    ],
+    "errors": [],
+    "lines": [
+      "[Milestone1B] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "errbadge",
+    "spec": "m1c",
+    "badges": [
+      "ERR",
+      "ERR",
+      "ERR",
+      "ERR"
+    ],
+    "errors": [],
+    "lines": [
+      "[Milestone1C] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "errbadge",
+    "spec": "m1d",
+    "badges": [
+      "ERR",
+      "ERR",
+      "ERR",
+      "ERR",
+      "ERR"
+    ],
+    "errors": [],
+    "lines": [
+      "[Milestone1D] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "errbadge",
+    "spec": "m1e",
+    "badges": [
+      "ERR",
+      "ERR",
+      "ERR",
+      "ERR",
+      "ERR",
+      "ERR"
+    ],
+    "errors": [],
+    "lines": [
+      "[Milestone1E] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "errbadge",
+    "spec": "m1f-r1",
+    "badges": [
+      "ERR",
+      "ERR"
+    ],
+    "errors": [],
+    "lines": [
+      "[M1fR1Gate] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "errbadge",
+    "spec": "m1f-r2",
+    "badges": [
+      "ERR",
+      "ERR",
+      "ERR"
+    ],
+    "errors": [],
+    "lines": [
+      "[M1fR2Gate] acceptance PASSED"
+    ],
+    "clean": false
+  },
+  {
+    "mode": "errbadge",
+    "spec": "m1f-r5",
+    "badges": [
+      "ERR",
+      "ERR"
+    ],
+    "errors": [],
+    "lines": [
+      "[M1fR5Gate] acceptance PASSED"
+    ],
+    "clean": false
+  }
+]

@@ -62,7 +62,10 @@ need. The process files are mostly history, and reading them in full costs ~25 O
 - OPTIONAL BACKGROUND: `Design_specs/` — the original design vision. Consult for
   feature context if useful; the CODE wins every conflict. Never edit it.
 - `game/src/test/Milestone1X_TestHarness.tsx` — assembly acceptance pages, still
-  runnable (`?page=m1a` … `?page=m1f`). They are your REGRESSION suite (§3).
+  runnable (`?page=m1a` … `?page=m1e`). With the rebuilt 1F gates `?page=m1fR1` …
+  `?page=m1fR5` (`npx playwright test e2e/m1f-r`) they are your REGRESSION suite
+  (§3). The shipped `?page=m1f` rows are retired (ADR-026); the page stays for
+  manual mode and tools.
 
 ## 3. ENGINE INVARIANTS — these still bind; protect them
 The engine is unusual BY DESIGN. When code looks odd, assume there is a reason
@@ -242,6 +245,9 @@ suspected lost work, or deleting the Lead's work.
 - 2026-10-28 Lean code read (Lead): §1 LEAN READ gained the code bullet (`grep -rn`
   + `sed -n` ranges, never whole large files). Why: the rule lived only in the
   session starter prompt, which the Lead is shortening. No other rule changed.
+
+- 2026-10-28 F2f close-out (session 142): §2 regression bullet now names the rebuilt
+  1F gates instead of the retired shipped m1f rows (ADR-026). No rule changed.
 
 ## 11. AUDIT MODE (binds only while the active task is A1)
 Why: the milestone specs were written by GLM 5.3 and the engine by GLM 5.3 Flash

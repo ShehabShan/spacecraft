@@ -1581,6 +1581,10 @@ function Scene() {
 /* ============================================================================
  * 12. HUD
  * ==========================================================================*/
+// WHY (F2f close-out, ADR-026): these five shipped rows are RETIRED as acceptance —
+// superseded by the rebuilt gates ?page=m1fR1…m1fR5 (e2e/m1f-r*.spec.ts); the old
+// spec is archived at notes/archive/m1f.spec.ts. The page stays for manual mode and
+// the audit/diag tools; rows are kept verbatim, not edited.
 const TEST_ORDER: Array<{ id: TestKey; label: string }> = [
   { id: 'depth-compositing', label: 'Z-fighting eliminated (geometry overlap audit + determinism)' },
   { id: 'impostor-angular', label: 'Impostors preserve exact angular scale (f64 → screen)' },
