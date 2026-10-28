@@ -23,7 +23,7 @@ starting point.
 | T2 atmospheres + manual landing + cruise speed | (not cut) | NOT STARTED — defined 2026-10-23 (Lead); no plan yet | NOT STARTED | — | — | Starts only on a Lead order; gap audited by A1-U19 (pre-t4:docs/audit/U19-aero-atmosphere.md: A1-U19-1..4 are T2 prerequisites; Lead look-and-feel rulings 2026-10-23: thin glowing atmosphere; soft/hard/crash landing) |
 | T3 better Moon (playable terrain) | `t3-better-moon` | `docs/T3-plan.md` | DONE 2026-10-28 · merged · ADR-028, 029 · gate `tools/test-moon-profile.mjs` | 5/5 | 7018e56 | — |
 | T4 repo cleanup (AI-oriented compaction) | `t4-repo-cleanup` | `docs/T4-plan.md` | DONE 2026-10-28 · ff-merged s156b · ADR-030 · gate `tools/check-repo-refs.mjs` | 9/9 | S8 (this commit) | — |
-| T5 bigger Moon | (not cut) | NOT STARTED — Lead directive 2026-10-28; starts after T4 | NOT STARTED | — | — | — (Lead ruled 2026-10-28: real size, radius 1,737 km) |
+| T5 bigger Moon | `t5-bigger-moon` (cut s156c) | NOT STARTED — Lead directive 2026-10-28; starts after T4 | NOT STARTED | — | — | — (Lead ruled 2026-10-28: real size, radius 1,737 km) |
 | T6 look-and-feel overhaul (animation, sound, textures, objects, colour) | (not cut) | NOT STARTED — Lead directive 2026-10-28; starts after T5 | NOT STARTED | — | — | — (Lead ruled 2026-10-28: cinematic style + sci-fi extras; in-helmet audio + ambient score; see STATE.md ledger) |
 
 
@@ -75,6 +75,27 @@ Lead look-and-feel rulings (2026-10-23, A1-U19 Q1/Q2 — defaults accepted; neve
   the body's radius), but thick enough that the player feels the air slow the ship on descent.
 - Touchdown: under ~5 m/s clean landing; 5–15 m/s hard landing with camera shake; faster =
   crash (short explosion, then respawn in orbit above the body). Exact numbers: planning ADR.
+
+### T5 — BIGGER MOON (REAL SIZE) — NOT STARTED
+Source: Lead directive 2026-10-28 (session 150d, item 2) and ruling (b) (150e), `notes/LEDGER.md`; supersedes the 2026-10-22 "keep the small play Moon" ruling.
+Requirement: the play Moon gets its real radius, 1,737 km, with real g, so the curve is no longer visible right in front of the player.
+Terrain detail, LOD reach, precision and gates are rebuilt for that scale with no fps regression (§13 safeguard 4), and the spawn is re-derived.
+Inputs: `docs/T5-T6-ideas.md` §0, §1 and §6.
+Prerequisites: F5a–F5d; the planner decides, with an ADR, whether to fold them into T5 or run them first.
+Out of scope: look and feel (T6).
+Order: plan → READY → the Lead's "execute the T5 plan".
+
+### T6 — LOOK-AND-FEEL OVERHAUL (MOON + CHARACTER TO AAA) — NOT STARTED
+Source: Lead directive 150d (item 3), rulings (c) and (d) (150e), style reference 150f, neutral grey 150g and order 155, all 2026-10-28, `notes/LEDGER.md`.
+Requirement: animation, sound, textures, many object types and colour for the Moon and the astronaut. Looking good beats real-Moon accuracy, game extras are allowed, and the sessions decide the design.
+Fixed by the Lead:
+- neutral grey regolith as in the eight NASA photos;
+- sharp shadows;
+- boulder fields, glowing minerals and a crashed lander;
+- in-helmet audio and a soft ambient score;
+- CC0 assets only, with the source URL recorded per file.
+Inputs: `docs/T5-T6-ideas.md` §2–§6. The planner asks the open questions in §5 with their defaults.
+Order: starts after T5 is merged into `main`; F3b comes after T6.
 
 ## PLAN FILE SCHEMA (every `docs/<task>-plan.md` follows this exactly)
 Audit plans (A-tasks) use audit units (Uxx, default one per session; recheck batches per active plan) instead of build

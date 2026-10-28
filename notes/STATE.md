@@ -4,7 +4,7 @@ Rulings: `notes/LEDGER.md`. History: `docs/history/SESSIONS.md`; the last full p
 
 ## NEXT ACTION
 
-**NEXT ACTION (session 156b S8):** T4 is DONE and fast-forwarded into `main` (S8: full §13 matrix green, checker 0, tracked 11.47 MB / 1,533 files → 1.78 MB / 188; evidence `docs/evidence/T4/S8.txt`). Next: a fresh bot starts T5 bigger Moon in the PLAN stage (AGENT_BRIEF §4): cut the T5 branch from `main`, first planning commit creates its plan file `docs/<Tn>-plan.md` per the PLAN FILE SCHEMA in `notes/task.md`. Inputs: `docs/T5-T6-ideas.md`; Lead ruling 2026-10-28 real size, radius 1,737 km (`notes/LEDGER.md`). LEAD GATE at plan READY. ORDER (Lead, `notes/LEDGER.md` 2026-10-28): T5 → T6 → F3b. Push: GIT RECIPE below. Product goal: AAA browser game (AGENT_BRIEF §13).
+**NEXT ACTION (session 156c):** T4 is DONE and merged (787b9d4). Branch `t5-bigger-moon` has been cut from `main`. Its first commit polished the T5/T6 inputs in `docs/T5-T6-ideas.md` (§0 prerequisites F5a–F5d, float32 precision and gate re-pin rows, sound, character, §5 open look-and-feel questions with defaults) and added the T5 and T6 definitions to `notes/task.md`. Next: a fresh bot starts the T5 PLAN stage (AGENT_BRIEF §4) on `t5-bigger-moon`. Its first planning commit creates the plan file `docs/<Tn>-plan.md` per the PLAN FILE SCHEMA. LEAD GATE at plan READY. T6 planning starts after T5 is merged. ORDER (Lead, `notes/LEDGER.md` 2026-10-28): T5 → T6 → F3b. Push: GIT RECIPE below. Product goal: AAA browser game (AGENT_BRIEF §13).
 
 ## SESSION SETUP
 
@@ -20,6 +20,6 @@ GIT RECIPE (VM, sessions 58–154): always `export GIT_CONFIG_GLOBAL=/dev/null` 
 
 | # | Date | Goal | Outcome | Handoff note |
 |---|------|------|---------|--------------|
-| 155 | 2026-10-28 | T4 S6 (bot 50f382f8, same VM; Lead: run it here) | `notes/task.md` 53825 → 11747 B, `notes/CHANGES.md` 125513 → 5854 B (21 digest lines). Open rows, T2 def, PARKED/BACKLOG, schema and resume byte-identical; tracker ids identical; checker: touched 0, tree 3 (S8 forward refs); tsc + build 0. Commits 878920e + process-file follow-up. | NEXT: T4 S7 (brief) in a fresh bot. |
 | 156 | 2026-10-28 | T4 S7 (bot 76a23ebc, VM v2 2 vCPU/4 GB) | Bootstrap: `t4-repo-cleanup` (bb9637d) the only branch ahead of `main`; no drift. GitHub integration was not enabled (404); the Lead connected it, proxy 200. `AGENT_BRIEF.md` 21035 → 12138 B; rule map in the S7 commit; `notes/task.md` resume step 1 no longer names §11; checker: touched 0, tree 3 (S8 forward refs). | NEXT: T4 S8 close-out in a fresh bot. |
 | 156b | 2026-10-28 | T4 S8 (same bot 76a23ebc; Lead: run it here) | Matrix green on 80b2161 (plain alloc-gate red as ADR-002 expects; `--self-test` 8/8); m1f-r 5 passed, R5 waived; checker 0; T4 fast-forwarded into `main`. Kill a stale `vite preview` on :4173 by port, never `pkill -f` (it kills the calling shell). | NEXT: T5 plan in a fresh bot. |
+| 156c | 2026-10-28 | T5/T6 inputs polish (same bot 76a23ebc; Lead: "polish them" before T5/T6 planning) | Cut `t5-bigger-moon` from `main`. `docs/T5-T6-ideas.md` re-checked on 787b9d4 and extended: §0 F5a–F5d prerequisites, float32 and gate re-pin rows, sound, character, §5 open questions with defaults. T5/T6 definitions added to `notes/task.md`. Docs only. | NEXT: T5 plan in a fresh bot. |
