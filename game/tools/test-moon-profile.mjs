@@ -57,18 +57,15 @@ function makeBasins(radii, seed) {
   }
   return out.flatMap(o => [o.d[0], o.d[1], o.d[2], o.r])
 }
-const RADII = [0.62, 0.52, 0.45, 0.40, 0.36, 0.32, 0.28].map(r => r * (MUT === 'r0' ? 0 : 1.15))
-const DEPTH = 0.18 * (MUT === 'deep' ? 10 : 1)
-const CAND = {
-  ...HARNESS_MOON, name: 'T3 S1 candidate G-prune',
-  mountainAmp: HARNESS_MOON.mountainAmp * 0.12, detailAmp: HARNESS_MOON.detailAmp * 0.35,
-  moon: {
-    basins: makeBasins(RADII, 0x7a3e), shoreWidth: 0.08, rimSigma: 0.05, rimOffset: 0.024,
-    rimAmp0: 25, rimAmpPerRad: 45 / 0.62, floorHeight: -25, floorFreq: 8, floorAmp: 1.2,
-    mareCraterDamp: 0.9,
-    craters: [9, 0.55, 18, 60, DEPTH, 0.05, 0x51a7, 32, 0.45, 8, 16, DEPTH, 0.05, 0x3c91],
-  },
-}
+// WHY (T3 S2, ADR-028 amendment): the gate evaluates the REAL play params
+// (MOON_PARAMS); mutants perturb a structured clone of them. S1_BASINS is the S1
+// candidate set (basin 0 at +Z); the rotated MOON_PARAMS literal must keep its
+// pairwise angles and radii (a rigid rotation onto the spawn base direction).
+const RADII = [0.62, 0.52, 0.45, 0.40, 0.36, 0.32, 0.28].map(r => r * 1.15)
+const S1_BASINS = makeBasins(RADII, 0x7a3e)
+const CAND = structuredClone(MC.MOON_PARAMS)
+if (MUT === 'r0') for (let i = 3; i < CAND.moon.basins.length; i += 4) CAND.moon.basins[i] = 0
+if (MUT === 'deep') { CAND.moon.craters[4] *= 10; CAND.moon.craters[11] *= 10 }
 if (MUT === 'off') delete CAND.moon
 
 function fibDir(i, N) {
@@ -87,7 +84,21 @@ const TP = MUT === 'default' ? { ...TF.TEST_PLANET, detailAmp: TF.TEST_PLANET.de
 const hTP = heightHash(TP), hHM = heightHash(HARNESS_MOON)
 ok(hTP === PIN_TEST_PLANET, `TEST_PLANET hash ${hTP.slice(0, 12)}… != pin ${PIN_TEST_PLANET.slice(0, 12)}…`)
 ok(hHM === PIN_HARNESS_MOON, `harness MOON hash ${hHM.slice(0, 12)}… != pin ${PIN_HARNESS_MOON.slice(0, 12)}…`)
-ok(MC.MOON_PARAMS.moon === undefined, 'MOON_PARAMS.moon must stay unset until S2')
+// ---- 1b. the play params ARE the S1 candidate (S2 wiring) -----------------
+const MP = MC.MOON_PARAMS, mb = MP.moon ? MP.moon.basins : []
+ok(MP.moon !== undefined, 'MOON_PARAMS.moon must be set (S2 wires the profile into play)')
+ok(Math.abs(MP.mountainAmp - 230 * 0.12) < 1e-9 && Math.abs(MP.detailAmp - 16 * 0.35) < 1e-9,
+  `MOON_PARAMS amps ${MP.mountainAmp}/${MP.detailAmp} != S1 candidate 27.6/5.6`)
+ok(mb.length === S1_BASINS.length, `basin list length ${mb.length} != ${S1_BASINS.length}`)
+let rigidErr = 0
+for (let i = 0; i < mb.length / 4; i++) {
+  rigidErr = Math.max(rigidErr, Math.abs(mb[4 * i + 3] - S1_BASINS[4 * i + 3]))
+  for (let j = i + 1; j < mb.length / 4; j++) {
+    const dot = (A, p, q) => A[4 * p] * A[4 * q] + A[4 * p + 1] * A[4 * q + 1] + A[4 * p + 2] * A[4 * q + 2]
+    rigidErr = Math.max(rigidErr, Math.abs(Math.acos(Math.min(1, dot(mb, i, j))) - Math.acos(Math.min(1, dot(S1_BASINS, i, j)))))
+  }
+}
+ok(rigidErr < 1e-5, `MOON_PARAMS basins are not a rigid rotation of the S1 set (max err ${rigidErr})`)
 
 // ---- 2. determinism + structured clone (worker path) ----------------------
 const hC1 = heightHash(CAND), hC2 = heightHash(TF.TEST_PLANET) && heightHash(CAND), hC3 = heightHash(structuredClone(CAND))

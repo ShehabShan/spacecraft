@@ -32,7 +32,8 @@ const ok = (cond, msg) => { n++; if (!cond) fails.push(msg) }
 
 // WHY: zero-amplitude field = a perfect sphere of radius MOON_R, so mapping /
 // facing / timing checks are not confounded by terrain slope.
-M.initTerrainField({ ...M.cfg.MOON_PARAMS, continentAmp: 0, mountainAmp: 0, detailAmp: 0 })
+// WHY (T3 S2): the flat patch also drops the opt-in `moon` profile (basins/craters add relief by themselves).
+M.initTerrainField({ ...M.cfg.MOON_PARAMS, continentAmp: 0, mountainAmp: 0, detailAmp: 0, moon: undefined })
 ok(Math.abs(M.terrainHeight(0.3, -0.04, 0.95)) < 1e-9, `flat field height ${M.terrainHeight(0.3, -0.04, 0.95)}`)
 // WHY: re-pinned by F3abbbbbc (ADR-016): real Moon elements move the earthrise spawn.
 const SP = { x: 0.8349753337306719, y: -0.07279905191367053, z: 0.5454507219738775 } // spawn pin
@@ -388,7 +389,7 @@ function script(hz) {
 }
 // ---- B11 (ADR-027): coyote time + air control (opt-in KCC fields, play values) ----
 {
-  const FLAT = { ...M.cfg.MOON_PARAMS, continentAmp: 0, mountainAmp: 0, detailAmp: 0 }
+  const FLAT = { ...M.cfg.MOON_PARAMS, continentAmp: 0, mountainAmp: 0, detailAmp: 0, moon: undefined }
   const MA = M.cfg.MOON_ASTRONAUT, dt = 1 / 60
   ok(MA.coyoteTime === T.coyoteS && MA.airControl === T.airControl, `MOON_ASTRONAUT coyote/air ${MA.coyoteTime}/${MA.airControl} != PLAY_TUNING`)
   // WHY: a ledge without a mesh — spawn on a Moon-field rise of h m, then swap in the

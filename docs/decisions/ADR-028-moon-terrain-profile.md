@@ -59,3 +59,39 @@ The default-path SHA-256 pins match those taken on the unedited tree:
 - S2 will move the play pins: test-play-spawn (field count 10 → 11, spawn site) and the moon half of
   test-kcc-default-trace. It needs an amendment here with before/after evidence. TEST_PLANET pins must not move.
 - The worker build cost per vertex rises about 1.9× on the play Moon only.
+
+## Amendment 1 — S2: the profile wired into play (session 148, 2026-10-28)
+**Decision.** `MOON_PARAMS` (play only) now carries the S1 candidate "G-prune": `mountainAmp` 230 → 27.6,
+`detailAmp` 16 → 5.6, plus the `moon` profile as literals. The S1 basin set (mulberry32(0x7a3e), radii ×1.15)
+is rigidly rotated so basin 0 is centred on the spawn search base (Earth direction rotated 75° about E×S,
+`spawn.ts`). A rotation keeps every pairwise basin angle and radius, so the non-overlap and coverage of S1
+are unchanged. The spawn search is unchanged, and it now lands on mare floor. The harness MOON and
+TEST_PLANET are untouched. Generator: `docs/audit/evidence/T3/S2/basins-gen.mjs`.
+
+**Why.** Playability first: the player starts on flat mare ground, with basin-rim mountains in view.
+Rotating the set instead of re-searching for basin placements keeps S1's measured coverage valid.
+
+**Gate change.** `tools/test-moon-profile.mjs` now evaluates the real `MOON_PARAMS` (mutants perturb a
+structured clone of it). The S1 check "`MOON_PARAMS.moon` unset" became: profile set, amplitudes = the
+candidate, basins = a rigid rotation of the S1 set (max angle/radius error < 1e-5).
+
+**Evidence (before → after).**
+
+| Check | Before S2 | After S2 |
+|---|---|---|
+| Spawn dir | (0.834975, −0.072799, 0.545451) | (0.844316, −0.128624, 0.520178) |
+| Spawn slope / height / mare mask | < 1° / — / — | 0.01° / −24.36 m / 1.0 |
+| Max slope within 60 m of spawn | — | 3.24° (832 samples; limit 15°) |
+| Earth / Sun elevation at spawn | 14.35° / 46.21° | 16.06° / 44.41° |
+| Play slope <5° · <45° · ≥50° | 0.9% · — · 40.9% (P0 baseline) | 32.5% · 92.1% · 4.0% |
+| Mare · max h · cost | — | 33.0% · 170.2 m · 1.92× |
+| kcc-default-trace `play` | `8c39022f…` | `db41fe5a…` |
+| kcc-default-trace `harness` | `caebaab8…` | `caebaab8…` (unchanged) |
+| TEST_PLANET / harness MOON hashes | `412ed993…` / `b7403bae…` | unchanged |
+
+The play trace has 0 walk-offs after S2 (1 before); the harness trace keeps 4, so the coyote site stays
+covered. The flat synthetic patches in test-play-controller now also set `moon: undefined`.
+
+**Consequences.** Re-pinned: test-play-spawn (field count 11, spawn, Earth/Sun elevations, new 60 m ring
+check), test-play-world (spawn pin), kcc-default-trace `play`. The worker build cost per vertex rises about
+1.9× on the play Moon only. S3 adds the darker mare albedo.

@@ -128,7 +128,7 @@ with no game code edited; logs are `feasibility-probe.log` and `feasibility-prob
   `tools/test-moon-profile.mjs` and ADR-028. It is not yet wired to play: the gate
   evaluates a candidate profile object defined in the gate and `moonConfig` (exported
   but unused until S2).
-- [ ] **S2** Wire `MOON_PARAMS.moon` into play. Place basin 0 under the spawn base
+- [x] **S2** (session 148: spawn on mare, slope 0.01°, max 3.24° within 60 m; gate 16/16 on the real `MOON_PARAMS`; ADR-028 amendment 1) Wire `MOON_PARAMS.moon` into play. Place basin 0 under the spawn base
   direction. Re-pin test-play-spawn (field count 11, new spawn) and the moon trace of
   test-kcc-default-trace (TEST_PLANET pins unchanged), with an ADR-028 amendment and
   evidence. Run all nine play Node tests, `e2e/play.spec.ts` and the build.

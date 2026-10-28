@@ -16,11 +16,16 @@ const near = (a, b, tol, msg) => ok(Math.abs(a - b) <= tol, `${msg}: got ${a}, w
 
 // ---- A1 terrain params (harness ~100) ---------------------------------
 const P = cfg.MOON_PARAMS
+// WHY: T3 S2 (ADR-028 amendment) softens the ridged/detail terms (230→27.6, 16→5.6)
+// and adds the opt-in `moon` profile (field 11); the profile itself is gated by
+// tools/test-moon-profile.mjs. The harness MOON literal is unchanged.
 const A1 = { radius: 1364.5, seed: 20240119, continentFreq: 2.3, continentAmp: 95, maskFreq: 3.7,
-  mountainFreq: 6.5, mountainAmp: 230, detailFreq: 22, detailAmp: 16 }
+  mountainFreq: 6.5, mountainAmp: 27.6, detailFreq: 22, detailAmp: 5.6 }
 for (const k of Object.keys(A1)) eq(P[k], A1[k], `MOON_PARAMS.${k}`)
 eq(P.name, 'Play Moon', 'MOON_PARAMS.name')
-eq(Object.keys(P).length, 10, 'MOON_PARAMS field count')
+eq(Object.keys(P).length, 11, 'MOON_PARAMS field count')
+ok(P.moon !== undefined && P.moon.basins.length === 28 && P.moon.craters.length === 14,
+  'MOON_PARAMS.moon: 7 basins, 2 crater layers')
 eq(cfg.MOON_R, 1364.5, 'MOON_R')
 eq(cfg.MOON_MU, 1.62 * 1364.5 * 1364.5, 'MOON_MU')
 eq(cfg.MAX_TERRAIN_H, 360, 'MAX_TERRAIN_H')
@@ -62,18 +67,30 @@ const t0 = performance.now()
 const site = findEarthriseSpawn(earthDir, sunDir)
 const ms_ = performance.now() - t0
 const d = site.dir
-// Pinned at B2 (full precision observed in Node 24, 2026-10-20).
-const PIN = { x: 0.8349753337306719, y: -0.07279905191367053, z: 0.5454507219738775 }
-near(d.x, 0.834975, 1e-6, 'spawn.x (§6.1)'); near(d.y, -0.072799, 1e-6, 'spawn.y (§6.1)'); near(d.z, 0.545451, 1e-6, 'spawn.z (§6.1)')
+// Pinned at B2 (full precision observed in Node 24, 2026-10-20); re-pinned at T3 S2
+// (ADR-028 amendment): the search is unchanged, the terrain under it is the new
+// profile, and basin 0 is centred on the search base, so the spawn is on mare.
+// Pre-S2 pin (0.8349753337306719, -0.07279905191367053, 0.5454507219738775), Earth 14.3488°.
+const PIN = { x: 0.8443164170956022, y: -0.1286239534656922, z: 0.5201784947666526 }
+near(d.x, 0.844316, 1e-6, 'spawn.x (§6.1)'); near(d.y, -0.128624, 1e-6, 'spawn.y (§6.1)'); near(d.z, 0.520178, 1e-6, 'spawn.z (§6.1)')
 near(d.x, PIN.x, 1e-9, 'spawn.x pin'); near(d.y, PIN.y, 1e-9, 'spawn.y pin'); near(d.z, PIN.z, 1e-9, 'spawn.z pin')
 const slope = slopeFromNormal(d)
 ok(slope < 1, `spawn slope < 1°: got ${slope}`)
+// T3 plan §8 S2: the spawn is playable ground — every sample within 60 m < 15°.
+const tg = unit(-d.z, 0, d.x), bt = { x: d.y * tg.z - d.z * tg.y, y: d.z * tg.x - d.x * tg.z, z: d.x * tg.y - d.y * tg.x }
+let ring = 0
+for (let r = 5; r <= 60; r += 5) for (let k = 0; k < 64; k++) {
+  const a = k * Math.PI / 32, q = r / cfg.MOON_R, ca = Math.cos(a) * q, sa = Math.sin(a) * q
+  ring = Math.max(ring, slopeFromNormal(unit(d.x + tg.x * ca + bt.x * sa, d.y + tg.y * ca + bt.y * sa, d.z + tg.z * ca + bt.z * sa)))
+}
+ok(ring < 15, `max slope within 60 m < 15°: got ${ring}`)
 const elev = (v) => Math.asin(d.x * v.x + d.y * v.y + d.z * v.z) * 180 / Math.PI
-near(site.earthElevDeg, 14.3488, 0.01, 'Earth elevation')
-near(elev(earthDir), 14.3488, 0.01, 'Earth elevation (recomputed)')
+near(site.earthElevDeg, 16.0649, 0.01, 'Earth elevation')
+near(elev(earthDir), 16.0649, 0.01, 'Earth elevation (recomputed)')
 // WHY: F3abbbbbb (ADR-015) moves the Moon orbit 38,850 -> 32,047 m, so the Moon->Sun direction at t=0 shifts; Earth elevation (design anchor) and the spawn pin are unchanged.
 // WHY: F3abbbbbc (ADR-016) gives the Moon its real e/i/omega/M0, so the t=0 Moon->Earth/Sun directions move again; spawn pin, Earth 14.35 deg and Sun 46.21 deg re-pinned (search unchanged).
-near(elev(sunDir), 46.2127, 0.01, 'Sun elevation')
+// WHY: T3 S2 moves the spawn ~0.06 rad (~84 m of arc), so Earth 14.35→16.06° and Sun 46.21→44.41°.
+near(elev(sunDir), 44.4052, 0.01, 'Sun elevation')
 
 // ---- override parse ---------------------------------------------------
 const o = parseSpawnOverride('?spawn=1,0,0')

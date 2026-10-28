@@ -1,0 +1,62 @@
+# T3 S2 verification, session 148, 2026-10-28T15:30:45Z, tree = t3-better-moon@ba5ee3d + S2 edits
+## spawn probe
+spawn {"x":0.8443164170956022,"y":-0.1286239534656922,"z":0.5201784947666526} score 0.4145939901730839 search ms 158
+slope 0.010332307021674645 h -24.362194006270798 mare 1
+earth 16.06490098834746 sun 44.40520755998821
+within 60 m: 832 samples, max slope 3.242
+PROBE_EXIT=0
+## basins-gen
+base 0.840679977475292, -0.07741157690072094, 0.5359707298294251
+basin0·base 1.0000000000000002
+max pairwise-angle change (rad) 0
+basins: [
+  0.84068, -0.077412, 0.535971, 0.713,
+  -0.311829, -0.42262, -0.850973, 0.598,
+  0.033073, -0.99859, -0.041535, 0.5175,
+  -0.98542, 0.104232, 0.134471, 0.46,
+  0.603086, 0.34976, -0.716907, 0.414,
+  -0.148562, -0.655397, 0.74053, 0.368,
+  -0.395219, 0.879273, 0.26586, 0.322,
+]
+GEN_EXIT=0
+## test-moon-profile
+[test-moon-profile] <5° 32.5% · <45° 92.1% · ≥50° 4.0% · ≥30° 29.6% · mare 33.0% · h -70.7..170.2 m · cost 1441/765 ns = 1.88× · candidate d3e3f549f66b…
+[test-moon-profile] PASS 16/16
+PROFILE_EXIT=0
+[test-moon-profile] mutant off: exit 1 caught [test-moon-profile] FAIL slope <5° 3.1% < 30%
+[test-moon-profile] mutant r0: exit 1 caught [test-moon-profile] FAIL slope <5° 2.9% < 30%
+[test-moon-profile] mutant deep: exit 1 caught [test-moon-profile] FAIL slope <5° 26.8% < 30%
+[test-moon-profile] mutant default: exit 1 caught [test-moon-profile] FAIL TEST_PLANET hash c18f1181884b… != pin 412ed993c2fe…
+[test-moon-profile] SELF-TEST PASS 4/4
+SELF_EXIT=0
+## kcc-default-trace
+[kcc-default-trace] harness caebaab87639085742f543e46e8274f03323e44cb402cbe451e4415a1450b64a (walk-offs 4, jumps 991, landings 968)
+[kcc-default-trace] harness fields=0 caebaab87639085742f543e46e8274f03323e44cb402cbe451e4415a1450b64a
+[kcc-default-trace] play fields=0 db41fe5aabd7e21e7d4c42f2dac57c7b53a998a6dd7eb4de042caef9f40ead1f (walk-offs 0, jumps 443, landings 369)
+kcc-default-trace PASS
+TRACE_EXIT=0
+## kcc-gate (tail)
+KCC_GATE_EXIT=0
+{"productionSha256":"5082dbff7478f0de7d9abc2ba46cd78723adee4b4bdd17e8272161fcbbf6912e:57191926d2673f214bfcbdc1a7ff1033a602a8b1961351958eaf998e6c337270:bf7914ceabdf8d3fc0834d5c098bae04b3bc6856ea2a5574b97d581e0e54793a","unchanged":true}
+## nine play Node tests (--expose-gc)
+test-play-anim.mjs EXIT=0 :: test-play-anim PASS 115/115
+test-play-controller.mjs EXIT=0 :: test-play-controller PASS 76/76
+test-play-frame.mjs EXIT=0 :: [test-play-frame] PASS 26/26
+test-play-lod.mjs EXIT=0 :: [test-play-lod] PASS 32/32
+test-play-perf.mjs EXIT=0 :: test-play-perf PASS 19/19 (heap Δ -16864 B, trend -1178 B/1k frames, 666 publishes / 69.4 s, max 10/s)
+test-play-rig.mjs EXIT=0 :: test-play-rig PASS 97/97
+test-play-shell.mjs EXIT=0 :: test-play-shell PASS 101/101
+test-play-spawn.mjs EXIT=0 :: [test-play-spawn] PASS 74/74
+test-play-world.mjs EXIT=0 :: [test-play-world] PASS 27/27
+## typecheck
+TSC_EXIT=0
+## build (earlier this session)
+1
+BUILD_EXIT=0 (observed)
+## e2e/play.spec.ts (earlier this session, PLAYSPEC_EXIT=0)
+[S1] CLICK_TO_PLAY 1621 ms after the shell mounted
+[S1] canvas colours=3415 lit=49.58%
+[S2] HUD speed before W 0, max while W held 2.6 m/s
+  2 passed (18.1s)
+## pre-S2 play trace (git stash run)
+play fields=0 8c39022f6dc3e8be0775238df5524ba8464525d27723aed5aaaf4b9a09774ae6 (walk-offs 1, jumps 519, landings 451)

@@ -27,9 +27,12 @@ await build({
 const M = await import(pathToFileURL(out).href)
 
 // Pinned from the unedited core (9c4ee90). sha256 over every tick's state.
+// WHY (T3 S2, ADR-028 amendment): `play` re-pinned because MOON_PARAMS gained the
+// Moon profile (new terrain under the same KCC); the KCC code is unchanged and the
+// harness pin (TEST_PLANET) did not move. Pre-S2 play pin: 8c39022f6dc3e8be…74ae6.
 const PIN = {
   harness: 'caebaab87639085742f543e46e8274f03323e44cb402cbe451e4415a1450b64a',
-  play: '8c39022f6dc3e8be0775238df5524ba8464525d27723aed5aaaf4b9a09774ae6',
+  play: 'db41fe5aabd7e21e7d4c42f2dac57c7b53a998a6dd7eb4de042caef9f40ead1f',
 }
 
 function lcg(seed) { let s = seed >>> 0; return () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296) }

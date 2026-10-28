@@ -7,11 +7,33 @@ import type { TerrainParams } from '../../core/terrain/terrainField';
 import type { AstronautConfig } from '../../core/physics/astronautKCC';
 import type { TerrainMeshPoolOptions } from '../../render/TerrainMeshPool';
 
-// WHY: harness MOON (~100) verbatim except the name (plan §6.2 port map).
+// WHY: harness MOON (~100) values except the name (plan §6.2 port map) and, since
+// T3 S2 (ADR-028 amendment), the opt-in `moon` profile: mare basins, two crater
+// layers and the ridged term softened (mountainAmp 230×0.12, detailAmp 16×0.35),
+// the S1 gate candidate "G-prune". The harness keeps its own MOON literal.
 export const MOON_PARAMS: TerrainParams = {
   name: 'Play Moon', radius: 1364.5, seed: 20240119,
   continentFreq: 2.3, continentAmp: 95, maskFreq: 3.7,
-  mountainFreq: 6.5, mountainAmp: 230, detailFreq: 22, detailAmp: 16,
+  mountainFreq: 6.5, mountainAmp: 27.6, detailFreq: 22, detailAmp: 5.6,
+  moon: {
+    // WHY: the S1 makeBasins set (mulberry32(0x7a3e), radii ×1.15) rigidly rotated so
+    // basin 0 is centred on the spawn base direction (Earth rotated 75° about E×S,
+    // spawn.ts), giving a mare-floor spawn; pairwise basin angles are unchanged.
+    // Generator: docs/audit/evidence/T3/S2/basins-gen.mjs. [dx, dy, dz, radius rad]
+    basins: [
+      0.84068, -0.077412, 0.535971, 0.713,
+      -0.311829, -0.42262, -0.850973, 0.598,
+      0.033073, -0.99859, -0.041535, 0.5175,
+      -0.98542, 0.104232, 0.134471, 0.46,
+      0.603086, 0.34976, -0.716907, 0.414,
+      -0.148562, -0.655397, 0.74053, 0.368,
+      -0.395219, 0.879273, 0.26586, 0.322,
+    ],
+    shoreWidth: 0.08, rimSigma: 0.05, rimOffset: 0.024,
+    rimAmp0: 25, rimAmpPerRad: 45 / 0.62, floorHeight: -25, floorFreq: 8, floorAmp: 1.2,
+    mareCraterDamp: 0.9,
+    craters: [9, 0.55, 18, 60, 0.18, 0.05, 0x51a7, 32, 0.45, 8, 16, 0.18, 0.05, 0x3c91],
+  },
 };
 export const MOON_R = MOON_PARAMS.radius;
 // WHY: harness MOON_MU (~106) — surface g = 1.62 m/s² (Spec 02.3), 3,016,214.
