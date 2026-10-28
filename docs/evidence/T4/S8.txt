@@ -1,0 +1,44 @@
+T4 S8 close-out evidence (session 156b, bot 76a23ebc, VM v2)
+Tree: 80b2161 (t4-repo-cleanup; S8 adds only docs). From game/, exit codes unpiped.
+Fresh VM setup: npm ci exit 0; npx playwright install chromium exit 0.
+
+MATRIX (AGENT_BRIEF §13; command -> exit | result)
+npx tsc --noEmit                                   0 | clean
+npm run build                                      0 | built
+node --expose-gc tools/test-play-anim.mjs          0 | PASS 115/115
+node --expose-gc tools/test-play-controller.mjs    0 | PASS 76/76
+node --expose-gc tools/test-play-frame.mjs         0 | PASS 26/26
+node --expose-gc tools/test-play-lod.mjs           0 | PASS 32/32
+node --expose-gc tools/test-play-perf.mjs          0 | PASS 19/19 (heap delta -16784 B)
+node --expose-gc tools/test-play-rig.mjs           0 | PASS 97/97
+node --expose-gc tools/test-play-shell.mjs         0 | PASS 101/101
+node --expose-gc tools/test-play-spawn.mjs         0 | PASS 74/74
+node --expose-gc tools/test-play-world.mjs         0 | PASS 27/27
+tools/test-moon-profile.mjs [--self-test]          0 | PASS 16/16, self-test 4/4
+tools/test-moon-material.mjs [--self-test]         0 | PASS 16/16, self-test 4/4
+tools/test-kcc-default-trace.mjs                   0 | PASS
+tools/test-kcc-gate.mjs                            0 | 13/13
+F-gates: orbit 9/9, precision 7/7, seam 14/14, flight 12/12, scale-law 11/11,
+  rail-validation 35/35, real-body-data 63/63, spin-law PASS     all 0
+tools/test-alloc-gate.mjs --self-test              0 | self_test 8/8
+tools/test-alloc-loops.mjs --self-test             0 | self_test 6/6
+  (plain test-alloc-gate.mjs exits 1, play.idle 9921.8 B/frame: known red until
+   F5a per ADR-002; the regression for other tasks is --self-test exit 0)
+npx playwright test e2e/play.spec.ts               0 | 2 passed
+npx playwright test e2e/m1e.spec.ts                0 | 1 passed
+npx playwright test e2e/m1f-r                      0 | 5 passed; R1/R2 PASS, R3 at its
+  pinned known-red vector (as T1 B13 / T3 S4); R5 waived (§8)
+node tools/check-repo-refs.mjs --self-test         0 | 15/15
+node tools/check-repo-refs.mjs --max 100000        0 | dangling 0 after S8 (before: 3,
+  all S8 forward refs in docs/T4-plan.md)
+
+SIZE TABLE (tracked bytes / files; pre-t4 = 83681d3 -> after T4)
+game/src        803971 / 63    ->  803968 / 63   (comment path edits only)
+game/tools     1084608 / 134   ->  495085 / 58
+game/e2e         18014 / 12    ->   18014 / 12
+docs           7917520 / 1287  ->  318073 / 42 (+ this file)
+notes           777682 / 15    ->   61433 / 4
+AGENT_BRIEF.md   20502         ->   12138
+TOTAL         11466676 / 1533  -> 1781952 / 188 at 80b2161 (<= 3 MB: yes)
+Process files: STATE.md 256239 -> 3747; task.md 52590 -> 11953; CHANGES.md 122473 -> 6594.
+History: every removed path stays reachable via `git show pre-t4:<path>` (tag on origin).

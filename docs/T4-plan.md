@@ -1,8 +1,8 @@
 # T4 — REPO CLEANUP (AI-ORIENTED COMPACTION) — PLAN
 
 - Task: T4 · Branch: `t4-repo-cleanup` (cut from `main` @ 7018e56, session 150d)
-- Stage: BUILDING (Lead's execute order 2026-10-28, session 151; build 8/9)
-- Last updated: 2026-10-28 (session 156)
+- Stage: DONE 2026-10-28 (session 156b; build 9/9; fast-forwarded into `main`)
+- Last updated: 2026-10-28 (session 156b)
 - Resume at the FIRST UNCHECKED BOX (planning item or build step).
 - Source: Lead directive 2026-10-28 (`notes/LEDGER.md` APPROVAL LEDGER, session 150d) + ruling (a) (session 150e). Readers are AI sessions only; optimise for fast AI reading, not human readability.
 
@@ -61,14 +61,14 @@ Each step is one session (§12); split `<id>a`/`<id>b` if it will not fit. Every
 - [x] **S5 STATE.md.** DONE session 154: `notes/STATE.md` 264906 B → under 10 KB; APPROVAL LEDGER → `notes/LEDGER.md` verbatim (98 rows, row diff empty); history → `docs/history/SESSIONS.md`; 1D FPS → task.md BACKLOG row. Original step text: Keep: the current NEXT ACTION paragraph, one working VM git recipe, the last 3 SESSION LOG rows. Move the APPROVAL LEDGER verbatim (no rewording) to `notes/LEDGER.md`. Move 1D FPS BACKLOG to a task.md backlog row. MILESTONE LEDGER, IN-FLIGHT, ANCHOR, superseded/DONE paragraphs and older SESSION LOG rows → `docs/history/SESSIONS.md` (one line per task: sessions, outcome, ADRs) + `pre-t4:notes/STATE.md`. VERIFIED: ledger row diff pre vs post empty (96 rows + any added since); STATE.md ≤ 10 KB; checker 0.
 - [x] **S6 task.md + CHANGES.md.** DONE session 155: `notes/task.md` 53825 B → 11747 B (12 DONE rows ≤ 200 chars; DONE definitions A1/T1/T3 out; open rows, T2 definition, PARKED, BACKLOG, PLAN FILE SCHEMA and resume procedure byte-identical; tracker ids identical); `notes/CHANGES.md` 125513 B → 5854 B (21 digest lines + T4 entries); checker: touched files 0, tree 3 (S8 forward refs only); tsc + build exit 0. Plan text: Tracker: one ≤ 200-char row per DONE task (status · merge · ADRs · gate), open rows (F3a-follow-ups, T2, T4, T5, T6) unchanged; DONE task definitions → `pre-t4`; PLAN FILE SCHEMA and resume procedure kept. CHANGES.md: pre-T4 entries → one digest line per task/milestone + `pre-t4:notes/CHANGES.md`; §2 format continues. VERIFIED: every task id of the old tracker present; open rows byte-identical except progress columns; checker 0.
 - [x] **S7 brief.** DONE session 156: `AGENT_BRIEF.md` 21035 B → 12138 B (11.9 KB); rule map in the S7 commit message; §11 and the A1-only clauses (§9 A1 edit fence, §12 "audit unit", §13 "During A1", §1 step 6) retired; §6 gained REF CHECK + EVIDENCE (ADR-030); checker: touched files 0, tree 3 (S8 forward refs only). Plan text: Update §1 reading order/LEAN READ and §2 file map to the new layout; retire §11 AUDIT MODE and A1-only clauses in §9/§13 (history in `docs/history/A1.md`); §10 → one line per amendment; add the ADR-030 evidence policy and "run `check-repo-refs` before every commit". No other rule change. VERIFIED: rule map in the commit message (every old §/bullet → new place, or "A1-only, retired"); brief ≤ 12 KB; checker 0.
-- [ ] **S8 close-out.** Checker 0 over the whole tree; full §13 matrix green (tsc, build, play Node tests with `--expose-gc`, kcc-default-trace, kcc-gate, the F-gates, `e2e/play.spec.ts`, m1e, m1f-r with R5 waived); before/after size table; fast-forward `t4-repo-cleanup` into `main` and push (§6 push authority); NEXT ACTION → T5 plan. VERIFIED: `docs/evidence/T4/S8.txt` (≤ 5 KB) with exit codes; total tracked bytes ≤ 3 MB.
+- [x] **S8 close-out.** DONE session 156b: full §13 matrix green on 80b2161 (alloc-gate by `--self-test` per ADR-002; m1f-r 5 passed, R5 waived); checker 0 over the whole tree; tracked 11,466,676 B / 1,533 files → 1,781,952 B / 188; fast-forwarded into `main`. Evidence `docs/evidence/T4/S8.txt`. Plan text: Checker 0 over the whole tree; full §13 matrix green (tsc, build, play Node tests with `--expose-gc`, kcc-default-trace, kcc-gate, the F-gates, `e2e/play.spec.ts`, m1e, m1f-r with R5 waived); before/after size table; fast-forward `t4-repo-cleanup` into `main` and push (§6 push authority); NEXT ACTION → T5 plan. VERIFIED: `docs/evidence/T4/S8.txt` (≤ 5 KB) with exit codes; total tracked bytes ≤ 3 MB.
 
 ## Risks & open decisions
 - R1 a binding ruling lost → ledger moved verbatim; row diff must be empty (S5).
 - R2 dangling references → the checker lands first (S0, §13 safeguard 3) and gates every step.
 - R3 a tool or page reads a deleted file → grep + run kept tools (S3); tsc/build every step.
 - R4 a later task needs raw evidence or a probe → `pre-t4` tag + EVIDENCE-INDEX; probes cited by open rows are kept.
-- R5 tag push fails through the proxy → record the S0 commit hash in `docs/history/README` in S1 and use `<hash>:` pointers; the checker accepts both.
+- R5 tag push fails through the proxy → use `<hash>:` pointers (the checker accepts both). Did not happen: `pre-t4` is on origin.
 - R6 the brief rewrite drifts a rule → S7 rule map; only A1-only clauses retire.
 - R7 budget → S2 and S5 are the largest; split per §12.
 - Lead's own work: `pre-t4:Milestone/` + `pre-t4:Design_specs/` deletion is ruling (a); `AGENT_BRIEF.md` is trimmed with every rule kept.

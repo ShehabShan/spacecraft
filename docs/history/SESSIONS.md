@@ -27,5 +27,5 @@ One line per task: sessions · outcome · ADRs. Verbatim session rows, supersede
 - F3a-follow-ups · (2) spawn view frames the Earth, session 126 (Lead ruling 126b) · row stays OPEN in the tracker · ADR-017.
 - F2f m1f gates R1–R5 rebuilt + R2 bisect · 127–142 · DONE 2026-10-28, ff-merged; shipped m1f rows retired · ADR-018…ADR-026.
 - T3 better Moon · 146c–150c · DONE, Lead-accepted 2026-10-28, merged · ADR-028, ADR-029.
-- T4 repo cleanup · 150d–156+ (plan 151; S0–S1 151b–151c; S2–S3 152–152c; S4 153–153b; S5 154; S6 155; S7 156) · BUILDING · ADR-030 · plan `docs/T4-plan.md`.
+- T4 repo cleanup · 150d–156b (plan 151; S0–S1 151b–151c; S2–S3 152–152c; S4 153–153b; S5 154; S6 155; S7 156; S8 156b) · DONE 2026-10-28, ff-merged into `main` · ADR-030 · plan `docs/T4-plan.md`.
 - No-unit rows (Lead rulings, process fixes, reviews): 6, 26, 54, 64b, 65b, 74, 76, 102b, 110, 115b, 121b, 126b, 146b, 150d–150g, 153c (Moon review → `docs/T5-T6-ideas.md`). Their rulings are rows in `notes/LEDGER.md`.
