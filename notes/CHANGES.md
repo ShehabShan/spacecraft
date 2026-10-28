@@ -10,6 +10,9 @@ applicable, code fixes proven by failing acceptance output.
 
 ---
 
+## 2026-10-28 — §6 END REPORT (Lead ruling, docs only)
+- `AGENT_BRIEF.md` §6 (+1 bullet), `notes/STATE.md` APPROVAL LEDGER (+1 row) · why: end-of-session reports ran long because only the start report was capped (§5 step 3, ≤5 sentences) · source: Lead, 2026-10-28.
+
 ## 2026-10-28 — §12 OLU use (Lead ruling, docs only)
 - `AGENT_BRIEF.md` §12 (+4 bullets), `notes/STATE.md` APPROVAL LEDGER (+1 row) · why: sessions ended at ~25–35 of 50 OLU because units were cut small and the ~40 wrap-up was read as a stop line; the Lead ruled the ~40 mark only reserves ~10 OLU for commit + push · evidence: SESSION LOG stop figures (rows 34–46, 117–136), bot 37d496cf olu_usage ledger (session 138 ≈28 OLU) · source: Lead, 2026-10-28.
 

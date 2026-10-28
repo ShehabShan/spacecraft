@@ -154,6 +154,13 @@ The engine is unusual BY DESIGN. When code looks odd, assume there is a reason
   `__github` integration proxy (STATE.md SESSION LOG row 129 has the command).
 - Never amend pushed commits; never force-push; never stage `Design_specs/` or
   `Milestone/`.
+- END REPORT (Lead, 2026-10-28; APPROVAL LEDGER): the session's final message to
+  the Lead is at most 4 short lines, no tables:
+  1. Unit and result (one key number).
+  2. Commit hash, and whether it is merged.
+  3. Anything the Lead must decide, or "nothing".
+  4. Next unit.
+  Details go only in the commit message and the SESSION LOG.
 
 ## 7. CODE COMMENTS — write WHY, not what
 Important code and non-obvious functions get a SHORT (1–4 line) `// WHY:` comment
