@@ -11,7 +11,7 @@ alone.
 
 **ACTIVE WORK (2026-10-26): FIX TASKS F1a… in `docs/audit/U27c-fix-tasks.md` §2 order.**
 A1 (the read-only audit) is DONE — accepted by the Lead 2026-10-26 and merged into
-`main` (STATE.md APPROVAL LEDGER). §11 AUDIT MODE no longer binds; it is kept as
+`main` (`notes/LEDGER.md` APPROVAL LEDGER). §11 AUDIT MODE no longer binds; it is kept as
 history. Fix tasks are one-session rows with no plan file: the U27c §2 row is the
 definition, the tracker row is the checkbox. T1 is PAUSED at B11 until after F2f.
 Every session obeys §12 SESSION BUDGET and §13 GOAL & DECISION AUTHORITY.
@@ -123,7 +123,7 @@ The engine is unusual BY DESIGN. When code looks odd, assume there is a reason
    progress lives only on its branch until the task is merged).
 3. Report ≤5 sentences: current state, exact next step, discrepancies.
 4. Continue at NEXT ACTION (the first unchecked plan step). Never redo completed
-   steps; never re-ask decisions recorded in STATE.md's APPROVAL LEDGER.
+   steps; never re-ask decisions recorded in the APPROVAL LEDGER (`notes/LEDGER.md`).
 5. Before ending a session: the per-commit checkpoints (§6) have already left
    the repo fully resumable; session end only ADDS the SESSION LOG handoff row
    (what was accomplished, what is next, anything the successor must know) and
@@ -152,7 +152,7 @@ The engine is unusual BY DESIGN. When code looks odd, assume there is a reason
 - PUSH AUTHORITY (Lead, 2026-10-27; APPROVAL LEDGER): push verified commits
   without asking, every time. The same holds for the §4 fast-forward into `main`
   unless NEXT ACTION or the task row says to wait for the Lead. Push through the
-  `__github` integration proxy (STATE.md SESSION LOG row 129 has the command).
+  `__github` integration proxy (`notes/STATE.md` GIT RECIPE has the command).
 - Never amend pushed commits; never force-push; never re-add the phase-1 canon removed in T4 S1.
 - END REPORT (Lead, 2026-10-28; APPROVAL LEDGER): the session's final message to
   the Lead is at most 4 short lines, no tables:

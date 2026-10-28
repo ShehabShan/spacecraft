@@ -10,6 +10,9 @@ applicable, code fixes proven by failing acceptance output.
 
 ---
 
+## 2026-10-28 — T4 S5: STATE.md compaction (ADR-030)
+- `notes/STATE.md` (264906 B → current NEXT ACTION, SESSION SETUP with OLU METER / COMMIT AUTHOR / one GIT RECIPE, last 3 SESSION LOG rows) · `notes/LEDGER.md` (new; APPROVAL LEDGER verbatim, 98 rows) · `docs/history/SESSIONS.md` (new; one line per task) · `notes/task.md` (BACKLOG row for the 1D FPS note; T4 row 6/9) · ledger pointers in `AGENT_BRIEF.md` §0/§5/§6, `docs/history/A1.md`, `docs/T4-plan.md` · why: T4 S5, AI sessions read STATE.md every bootstrap · evidence: ledger row diff empty, checker no new dangling · source: `docs/T4-plan.md` S5.
+
 ## 2026-10-28 — T3 S1: opt-in Moon terrain profile (ADR-028)
 - `game/src/core/terrain/terrainField.ts`: optional `TerrainParams.moon` / `MoonProfile`; `terrainHeight` dispatches to `moonHeight` (basins, craters, softened highlands) only when it is set, and the pre-T3 field is unchanged as `fieldHeight`; new export `moonMareMask` · `game/tools/test-moon-profile.mjs` (new gate, `--self-test`) · `docs/decisions/ADR-028-moon-terrain-profile.md` · why: the play Moon was 40.9% unwalkable (≥50°) and had no flat ground · evidence: gate PASS 13/13 (<5° 32.6%, ≥50° 3.9%, mare 33.0%, 1.88×), self-test 4/4, default-path pins match; tsc, kcc-default-trace, kcc-gate and play Node tests exit 0 · source: Lead T3 order, 2026-10-28.
 
