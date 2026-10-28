@@ -1,0 +1,5 @@
+[test-moon-profile] mutant off: exit 1 caught [test-moon-profile] FAIL slope <5° 3.1% < 30%
+[test-moon-profile] mutant r0: exit 1 caught [test-moon-profile] FAIL slope <5° 2.9% < 30%
+[test-moon-profile] mutant deep: exit 1 caught [test-moon-profile] FAIL slope <5° 26.8% < 30%
+[test-moon-profile] mutant default: exit 1 caught [test-moon-profile] FAIL TEST_PLANET hash c18f1181884b… != pin 412ed993c2fe…
+[test-moon-profile] SELF-TEST PASS 4/4

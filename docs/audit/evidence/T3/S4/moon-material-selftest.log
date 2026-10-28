@@ -1,0 +1,8 @@
+  mare (mask>0.5) 36.0% of 20,000 dirs; shore 2476; max |Δ| 2.02e-14
+  mare (mask>0.5) 36.0% of 20,000 dirs; shore 2476; max |Δ| 2.02e-14
+mutant noconj: caught (1 fails)
+  mare (mask>0.5) 36.0% of 20,000 dirs; shore 2476; max |Δ| 3.46e-1
+mutant shore: caught (2 fails)
+  mare (mask>0.5) 36.0% of 20,000 dirs; shore 2476; max |Δ| 1.00e+0
+mutant min: caught (3 fails)
+test-moon-material self-test PASS 4/4

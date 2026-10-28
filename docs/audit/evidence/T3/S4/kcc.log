@@ -1,0 +1,4 @@
+[kcc-default-trace] harness caebaab87639085742f543e46e8274f03323e44cb402cbe451e4415a1450b64a (walk-offs 4, jumps 991, landings 968)
+[kcc-default-trace] harness fields=0 caebaab87639085742f543e46e8274f03323e44cb402cbe451e4415a1450b64a
+[kcc-default-trace] play fields=0 db41fe5aabd7e21e7d4c42f2dac57c7b53a998a6dd7eb4de042caef9f40ead1f (walk-offs 0, jumps 443, landings 369)
+kcc-default-trace PASS
