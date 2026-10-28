@@ -13,7 +13,7 @@
 - Probe: `game/tools/audit/u22-play-world.mjs`. It imports the real modules: MoonLod over a fake instant-answer pool (the `test-play-lod` shape), the real spawn search, the real SimulationCore and the real terrain field.
 - Run from `game/`: `node --expose-gc tools/audit/u22-play-world.mjs`.
   - Result: PROBE_EXIT=0, controls 4/4.
-  - Output: `docs/audit/U22-probe-output.txt`.
+  - Output: `pre-t4:docs/audit/U22-probe-output.txt`.
 
 ## Claims written before probing (geometry / physics)
 - **C1.** The surface the player stands on (the analytic `terrainHeight` in the KCC) should match the surface that is drawn (the finest LOD mesh, linear between vertices). The error should be within a few cm, the scale of `groundClearance` 0.02 m.

@@ -10,7 +10,7 @@
   `ProceduralAnimator`, `AnimStateMachine` and `AstronautRig` through an esbuild
   bundle, the same pattern as `test-play-anim`. Forward kinematics is the probe's
   own f64 code, built from the §7.2 joint offsets (hip ±0.11/−0.06, legs 0.40 + 0.40,
-  sole −0.06, toe −0.19, heel +0.09). Output: `docs/audit/U24-probe-output.txt`.
+  sole −0.06, toe −0.19, heel +0.09). Output: `pre-t4:docs/audit/U24-probe-output.txt`.
   `node tools/audit/u24-character.mjs` → **EXIT=0, controls 5/5** (idle sole on
   y = 0; the horizontal foot-slide result of test 15 reproduced at v = 1; slope pitch
   matches the ground; a landing after the launch window is seen; the rig root faces +X).

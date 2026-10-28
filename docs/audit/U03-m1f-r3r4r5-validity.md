@@ -2,8 +2,8 @@
 
 - Unit: A1-U03 (`docs/A1-plan.md` §5) · Commit audited: `5bdac3a` (game/src identical to 256d77d) · Session: 52 (2026-10-22)
 - Question: can R3 (handoff), R4 (zero-gc) and R5 (m1a-integration) **fail** when the property each one claims is broken?
-- Files read: `game/src/test/Milestone1F_TestHarness.tsx` lines 1–60, 167–270, 516–660, 810–935, 963–1012, 1163–1367, 1394–1520; `game/src/test/m1fStraddle.ts` (all); `game/src/render/MultiCameraRig.tsx` `layerMaskFor` (:117–122); `game/src/core/simulation/SimulationCore.ts` rebase step (:430–440); `game/playwright.config.ts`; `game/e2e/m1f.spec.ts`; `pre-t4:notes/reports/M1F.md` §14 (:1215–1260) and §15.3–15.4 (:1443–1470) as claims.
-- Evidence reused: `docs/audit/U01-evidence/gate-run1.log` (unedited tree, badges `[P,F,P,P,F]`).
+- Files read: `game/src/test/Milestone1F_TestHarness.tsx` lines 1–60, 167–270, 516–660, 810–935, 963–1012, 1163–1367, 1394–1520; `game/src/test/m1fStraddle.ts` (all); `game/src/render/MultiCameraRig.tsx` `layerMaskFor` (:117–122); `game/src/core/simulation/SimulationCore.ts` rebase step (:430–440); `game/playwright.config.ts`; `102a5b8:game/e2e/m1f.spec.ts`; `pre-t4:notes/reports/M1F.md` §14 (:1215–1260) and §15.3–15.4 (:1443–1470) as claims.
+- Evidence reused: `pre-t4:docs/audit/U01-evidence/gate-run1.log` (unedited tree, badges `[P,F,P,P,F]`).
 - Probe: `game/tools/audit/u03-r3r4r5-validity.mjs`. It extracts `handoffFade`/`handoffNextState` **verbatim from the harness source text**, replicates the gate loops, adds an independent "what is actually drawn" sweep built from the harness's own visibility rules (:846, :875), runs two mutations, scans the R4/R5 blocks, and runs an ideal-walker Monte Carlo for R5.
   - Command: `cd game && node tools/audit/u03-r3r4r5-validity.mjs` → `[u03] CONFIRMED 22/22`, `PROBE_EXIT=0` (unpiped).
 - Method note: expected behaviour was written down before reading each block (a handoff must never draw nothing; a zero-GC row must fail on allocation; a rebase row must be reachable by the fixture).

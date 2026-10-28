@@ -1,8 +1,0 @@
-m1a baseline exit=0 wall=11s
-m1a badgefail exit=1 wall=11s
-m1a badgeerr exit=0 wall=10s
-m1a pageerror exit=0 wall=11s
-m1a nolog exit=1 wall=36s
-m1d baseline exit=1 wall=49s
-m1d badgeerr exit=0 wall=50s
-DONE

@@ -170,7 +170,7 @@ replacement of existing gates is enacted during A1.
 
 Run from repo root except where `cd game` is specified. Commands were run
 **un-piped**, stdout/stderr redirected to the named logs; `$?` captured immediately
-in matching `.exit` files under `docs/audit/U27b3b2b2b2a-evidence/`.
+in matching `.exit` files under `pre-t4:docs/audit/U27b3b2b2b2a-evidence/`.
 
 | Command | Log prefix | Observed exit / result |
 |---|---|---|

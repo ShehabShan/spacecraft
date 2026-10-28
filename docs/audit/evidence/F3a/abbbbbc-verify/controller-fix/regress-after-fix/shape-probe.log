@@ -1,3 +1,0 @@
-fresh: cal.obj3=48.3 B/iter ok=true
-pollute-int: cal.obj3=48.4 B/iter ok=true
-pollute-double: cal.obj3=48.3 B/iter ok=true

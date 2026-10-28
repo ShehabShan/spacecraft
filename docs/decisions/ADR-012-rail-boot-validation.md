@@ -41,4 +41,4 @@ The rail is the single place every orbit config passes through. Failing loudly a
 ## Consequences
 - Any config with an invalid orbit now throws at `new KeplerRail(...)` and does not run with NaN. No production body was affected: all gates are unchanged and green.
 - F3abb (scale laws, new spin/pole/elements fields, orbit-gate pin update) takes **ADR-013**. The F3ab NEXT ACTION previously reserved ADR-012 for the orbit-gate pins.
-- Evidence: `docs/audit/evidence/F3a/aba/` (`exits.txt`).
+- Evidence: `pre-t4:docs/audit/evidence/F3a/aba/` (`exits.txt`).

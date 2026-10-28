@@ -1,2 +1,0 @@
-independent-1=1
-independent-2=0

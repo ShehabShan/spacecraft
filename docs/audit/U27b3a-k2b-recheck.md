@@ -171,8 +171,8 @@ LAB=<fresh-lab-a> OUT=<fresh-out-a> \
 PLAN="m1a:baseline,badgefail,badgeerr,pageerror,nolog m1d:baseline,badgeerr" \
 sh tools/audit/u08b-spec-sensitivity.sh
 
-node tools/audit/u27b3a-k2b-recheck.mjs ../docs/audit/U27b3a-evidence/independent
-node tools/audit/u27b3a-k2b-recheck.mjs ../docs/audit/U27b3a-evidence/independent-repeat
+node tools/audit/u27b3a-k2b-recheck.mjs pre-t4:docs/audit/U27b3a-evidence/independent
+node tools/audit/u27b3a-k2b-recheck.mjs pre-t4:docs/audit/U27b3a-evidence/independent-repeat
 npm run typecheck
 npm run build
 ```
@@ -190,7 +190,7 @@ The old scripts delete LAB/OUT, so always provide fresh scratch directories.
 | `npm run build` | 0; existing >500 kB chunk warning |
 | `git diff --exit-code 256d77d -- game/src game/e2e game/playwright.config.ts Milestone Design_specs` (repo root) | 0, empty |
 
-Evidence directory: `docs/audit/U27b3a-evidence/`.
+Evidence directory: `pre-t4:docs/audit/U27b3a-evidence/`.
 Original per-case logs and exits are in `original-b/` and `original-a/`.
 Independent directories hold observations, actual Playwright JSON reports,
 child process exits, source hashes, configuration and validated summaries.

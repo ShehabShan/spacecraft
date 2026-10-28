@@ -1,3 +1,0 @@
-test-play-controller run1 EXIT=0
-test-play-controller run2 EXIT=1
-test-play-controller run3 EXIT=0

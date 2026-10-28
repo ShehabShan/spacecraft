@@ -129,7 +129,7 @@ r=classify(image(90,0,1,false),withDarkHole);
 check('large background also dilutes nonzero target-sized difference below 3%',r.pass&&r.sym>0&&!sane(r),r);
 r=classify(disk,disk);
 check('full extracted conjunction responds to bad silhouette scalar',unit(base.trace,r.symPct).pass&&!unit(base.trace,100).pass);
-const historical=readFileSync(new URL('../../../docs/audit/U01-evidence/gate-run1.log',import.meta.url),'utf8');
+const historical=readFileSync(new URL('./u01-gate-run1.log',import.meta.url),'utf8');
 const hdr=historical.match(/R3DUMP hdr centre=\(([\d.]+),([\d.]+)\) meshR=([\d.]+) impR=([\d.]+) meshRmax=([\d.]+) impRmax=([\d.]+) totA=(\d+) sym=(\d+)/);
 check('historical U01 dump records all 25600 mask pixels, zero difference',!!hdr&&+hdr[7]===25600&&+hdr[8]===0,{header:hdr?.[0],freshGPU:false});
 console.log(`PASS ${count}/${count}; source-extracted predicates, synthetic byte inputs, historical pixel evidence only`);

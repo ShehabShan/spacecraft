@@ -1,5 +1,0 @@
-cal.noop_B_per_iter=0.00
-cal.obj3_B_per_iter=96.1
-cal.f64x16_B_per_iter=200.1
-cal.ok=false
-instrument calibration failed

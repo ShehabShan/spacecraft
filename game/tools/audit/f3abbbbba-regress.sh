@@ -1,8 +1,8 @@
 #!/bin/sh
-# F3abbbbba regression runner: writes logs + exits.txt into docs/audit/evidence/F3a/abbbbba/ (run from game/).
+# F3abbbbba regression runner: writes logs + exits.txt into ${EVID:-/tmp/evidence/F3a/abbbbba} (history: pre-t4:docs/audit/evidence/F3a/abbbbba) (run from game/).
 # Scope: scaleLaw.ts is a new module imported by nothing yet, so only typecheck/build and the
 # orbit-data gates that share its inputs are re-run; the full runner (f3abbba-regress.sh) is for the wiring step.
-E=../docs/audit/evidence/F3a/abbbbba
+E=${EVID:-/tmp/evidence/F3a/abbbbba}; mkdir -p "$E"
 mkdir -p $E
 : > $E/exits.txt
 run() { name="$1"; log="$2"; shift 2; "$@" > "$E/$log" 2>&1; echo "$name EXIT=$?" >> $E/exits.txt; }

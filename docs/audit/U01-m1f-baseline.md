@@ -6,7 +6,7 @@
   - **Run 1** was the gate itself: `npx playwright test e2e/m1f.spec.ts --reporter=line` (preview build, HUD 6 FPS).
   - **Runs 2 and 3** were the read-only probe `node tools/audit/u01-m1f-probe.mjs` (Vite dev build, HUD ≈ 11 FPS).
 - Probe method: it attaches a CDP *logpoint* to the unedited harness. A logpoint is a breakpoint condition that logs and returns `false`, so it never pauses and changes no state. The logpoint reads the R2 Sun pose and the Sun readback buffer in place. No harness edit was made.
-- Evidence logs: `docs/audit/U01-evidence/`.
+- Evidence logs: `pre-t4:docs/audit/U01-evidence/`.
 
 ## Verdict (the plan's question)
 

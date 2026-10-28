@@ -1,6 +1,6 @@
 #!/bin/sh
-# F3abba regression runner: writes logs + exits.txt into docs/audit/evidence/F3a/abba/ (run from game/).
-E=../docs/audit/evidence/F3a/abba
+# F3abba regression runner: writes logs + exits.txt into ${EVID:-/tmp/evidence/F3a/abba} (history: pre-t4:docs/audit/evidence/F3a/abba) (run from game/).
+E=${EVID:-/tmp/evidence/F3a/abba}; mkdir -p "$E"
 mkdir -p $E
 : > $E/exits.txt
 run() { name="$1"; log="$2"; shift 2; "$@" > "$E/$log" 2>&1; echo "$name EXIT=$?" >> $E/exits.txt; }

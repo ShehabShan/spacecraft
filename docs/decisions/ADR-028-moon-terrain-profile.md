@@ -66,7 +66,7 @@ The default-path SHA-256 pins match those taken on the unedited tree:
 is rigidly rotated so basin 0 is centred on the spawn search base (Earth direction rotated 75° about E×S,
 `spawn.ts`). A rotation keeps every pairwise basin angle and radius, so the non-overlap and coverage of S1
 are unchanged. The spawn search is unchanged, and it now lands on mare floor. The harness MOON and
-TEST_PLANET are untouched. Generator: `docs/audit/evidence/T3/S2/basins-gen.mjs`.
+TEST_PLANET are untouched. Generator: `game/tools/gen-moon-basins.mjs` (moved in T4 S2 from `pre-t4:docs/audit/evidence/T3/S2/basins-gen.mjs`).
 
 **Why.** Playability first: the player starts on flat mare ground, with basin-rim mountains in view.
 Rotating the set instead of re-searching for basin placements keeps S1's measured coverage valid.

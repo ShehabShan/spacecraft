@@ -15,7 +15,7 @@ The m1b T4, m1d T4 and m1e zero-gc rows prove "zero allocation" with an identity
 
 Self-test (`--self-test`; `--deliberate` adds one wrong expectation): for every loop a leak mutant (~40–50 B/tick retained) must turn the retained clause red; on a clean baseline the churn mutant (4 plain 3-field objects, ≈383 B/tick) must turn the allocation clause red. m1d and m1e are already over budget, and their run-to-run wobble (±150–1,200 B/tick) swamps a 400 B delta, so for them the churn clause is recorded, not asserted; churn sensitivity is shown on the clean m1b loop.
 
-## Measured (current tree, `docs/audit/evidence/F1b/loops/`)
+## Measured (current tree, `pre-t4:docs/audit/evidence/F1b/loops/`)
 | Loop | sampled B/tick | retained B/tick | verdict |
 |---|---|---|---|
 | m1b `SimulationCore.tick` | 9.5 (tick 8.2) | 0.11 | PASS |

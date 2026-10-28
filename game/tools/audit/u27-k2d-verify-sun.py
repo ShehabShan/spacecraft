@@ -2,9 +2,10 @@
 Run from repo root: python3 game/tools/audit/u27-k2d-verify-sun.py
 """
 import json
+import sys
 from pathlib import Path
 
-path = Path("docs/audit/U27-k2d-evidence/sun-controls.log")
+path = Path(sys.argv[1] if len(sys.argv) > 1 else "/tmp/sun-controls.log")  # T4 S2: extract with git show pre-t4:docs/audit/U27-k2d-evidence/sun-controls.log
 text = path.read_text()
 rows = {r["name"]: r for r in (
     json.loads(line.removeprefix("U27CONTROL "))

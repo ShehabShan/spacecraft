@@ -2489,7 +2489,7 @@ or reordered. A step that fails its checks is not committed as done.
     (`tools/test-kcc-default-trace.mjs`); test-play-controller 76/76; regression
     `e2e/m1e.spec.ts e2e/m1f-r` (m1f-r replaces the retired m1f.spec.ts, ADR-026),
     test-kcc-gate exit 0, alloc gate unchanged (known red, ADR-005). Evidence
-    `docs/audit/evidence/T1/B11/`.
+    `pre-t4:docs/audit/evidence/T1/B11/`.
   - **PAUSED 2026-10-21 for A1** — resume only after A1 U01's m1f baseline
     verdict and a Lead order.
   - **Ruled IN (2026-10-20): Q2 = (a) and Q3 = yes.** B11 is applied, not
@@ -2534,7 +2534,7 @@ or reordered. A step that fails its checks is not committed as done.
     (CLICK_TO_PLAY ≤ 20 s, no console errors, non-blank canvas, HUD speed > 0
     after W). Checked as SKIPPED if the Lead declines Q6.
 
-- [x] **B13 — Close-out.** DONE (session 146): full §13 automated matrix green on the final tree (evidence `docs/audit/evidence/T1/B13/`); one stale test literal fixed (test-play-spawn 69/70 → 72/72). Manual MT1–MT16 (hardware WebGL, human) NOT RUN in the VM — owed by the Lead in the acceptance play-test; headless stand-ins check-play-b4/b5/b6/b7/b9 exit 0.
+- [x] **B13 — Close-out.** DONE (session 146): full §13 automated matrix green on the final tree (evidence `pre-t4:docs/audit/evidence/T1/B13/`); one stale test literal fixed (test-play-spawn 69/70 → 72/72). Manual MT1–MT16 (hardware WebGL, human) NOT RUN in the VM — owed by the Lead in the acceptance play-test; headless stand-ins check-play-b4/b5/b6/b7/b9 exit 0.
   - Run the full §13 verification matrix once on the final tree; record
     every result in the commit.
   - Tracker: build status DONE (pending Lead acceptance); STATE.md NEXT

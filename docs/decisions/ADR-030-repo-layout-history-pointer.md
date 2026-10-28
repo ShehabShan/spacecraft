@@ -3,7 +3,7 @@
 Status: accepted (session 151) · Task: T4 S0 · Authority: §13 (technical decision); Lead directive 2026-10-28 (session 150d) and ruling (a) (session 150e)
 
 ## Context
-At bb73503 the tracked tree is 11.44 MB / 1,531 files. About 8 MB is finished-task history: raw evidence (`docs/audit/evidence/`, 5.93 MB, 713 logs and 73 `playwright.json` dumps of up to 410 KB), A1 unit reports, DONE plans, phase-1 canon (`pre-t4:Milestone/`, `pre-t4:Design_specs/`) and phase-1 reports. Only AI sessions read the repo, and bootstrap reading costs OLU (§1 LEAN READ). T4 removes this history from the tree without rewriting git history. Live files then must not point at paths that no longer exist.
+At bb73503 the tracked tree is 11.44 MB / 1,531 files. About 8 MB is finished-task history: raw evidence (`pre-t4:docs/audit/evidence/`, 5.93 MB, 713 logs and 73 `playwright.json` dumps of up to 410 KB), A1 unit reports, DONE plans, phase-1 canon (`pre-t4:Milestone/`, `pre-t4:Design_specs/`) and phase-1 reports. Only AI sessions read the repo, and bootstrap reading costs OLU (§1 LEAN READ). T4 removes this history from the tree without rewriting git history. Live files then must not point at paths that no longer exist.
 
 ## Options
 1. Delete and rely on commit hashes in prose. Pointers are hard to find and easy to get wrong.

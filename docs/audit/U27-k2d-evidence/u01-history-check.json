@@ -1,7 +1,0 @@
-{
-  "historical captured active Sun": true,
-  "historical nonblank scene": true,
-  "historical missing Sun pixels": true,
-  "suspect commit records typecheck/build only, not acceptance": true,
-  "multiple render changes prevent F12-only inference": true
-}

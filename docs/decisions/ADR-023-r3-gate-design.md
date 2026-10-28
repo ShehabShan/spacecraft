@@ -13,7 +13,7 @@ The shipped R3 row (`Milestone1F_TestHarness.tsx` `runSuite`, "R3: handoff hyste
   behind the "0-px silhouette flake" (R3 failed 3/6 runs in F2fa/F2fba): there the disk was lost
   against the scene, and the row compared two empty masks.
 - The controller really has a hole. Measured with the rendered rules on the verbatim controller
-  (`docs/audit/evidence/F2f/cca/handoff-analytic.out.txt`): descending, nothing is drawn for
+  (`pre-t4:docs/audit/evidence/F2f/cca/handoff-analytic.out.txt`): descending, nothing is drawn for
   d ∈ [220,000, 225,647] m (5,647 m, at 1 m steps), and the drawn coverage falls to 0. Ascending has
   0 holes and a maximum dimming of 0.010. A1-U03-1 assigns the fix to F8a (U27c row: "inbound probe
   hole (5,648 m) red before, 0 after").
@@ -32,7 +32,7 @@ The shipped R3 row (`Milestone1F_TestHarness.tsx` `runSuite`, "R3: handoff hyste
 ## Decision
 Option 3. The gate is a new page `?page=m1fR3` (`game/src/test/M1fR3Gate.tsx`, one `main.tsx`
 static-map entry), with spec `game/e2e/m1f-r3.spec.ts`, self-test `game/tools/test-m1f-r3-gate.mjs`,
-and evidence in `docs/audit/evidence/F2f/ccb/`.
+and evidence in `pre-t4:docs/audit/evidence/F2f/ccb/`.
 
 **Controller under test.** `HANDOFF_*`, `handoffFade` and `handoffNextState` move verbatim into a
 pure module, `game/src/test/m1fHandoff.ts`. The shipped harness imports and re-exports them, so its
@@ -109,12 +109,12 @@ hiding the S0 defect behind a PASS badge.
 ## Amendment (F2fccbba, session 136)
 - F2fccbb was split per §12. F2fccbba covers R3b, the mutants meshhide and noimp, and the `?ctl=ref` control. F2fccbbb covers R3c and the mutants shift, scale and bright. Until F2fccbbb, the spec pins `['FAIL','FAIL']`.
 - R3b is built on the shipped `SkyImpostorPool` and `MultiCameraRig.executePasses`. The probe is a pinned copy of the harness material on an isolated black target with a ±24 px window.
-- R3b coverage is **drawn area ÷ the full-opacity mesh reference area**. It is not luminance, because luminance mixed a shading mismatch into coverage (finding F2fccbb-1, evidence `docs/audit/evidence/F2f/ccbb/`).
+- R3b coverage is **drawn area ÷ the full-opacity mesh reference area**. It is not luminance, because luminance mixed a shading mismatch into coverage (finding F2fccbb-1, evidence `pre-t4:docs/audit/evidence/F2f/ccbb/`).
 - Measured fail set: down [290, 245, 238, 228, 224, 222] km; up [238, 245, 290] km. This differs from the prediction because the impostor draws about 1.35× the mesh area. 232 km descending measures 0.765, which is inside tolerance. The spec pins the measured set.
 - `?ctl=ref` is an opaque swap: the mesh stays at full opacity while alphaImp < 0.99, and the impostor is suppressed while the mesh is drawn. With it, R3a passes, and R3b passes every sample where the mesh is drawn; only the impostor-only samples fail (F2fccbb-1). A cross-fade cannot reach full area, because the shipped impostor fades by shrinking its disk radius.
 - `?mut=meshhide` hides the mesh at every distance, not only below 200 km. It is simpler and still adds ascending holes, including at 205 km.
 ## Amendment (F2fccbbb, session 137)
 - R3c is built on the R3b fixture, which is now shared as `makeFixture` (one scene, target and probe; R3b's measurements are unchanged). The masks are R > 8 in the 48² window on the cleared rig background. Repeat determinism compares an FNV-1a hash of the whole target.
-- R3c is **measured FAIL**, not the predicted PASS. At 228/232/236 km the impostor-only mask is 88 px at every distance, against mesh 71/68/68 px and ideal 70.3/67.9/65.6 px. imp-area and sym fail, while centroid (≤ 0.11 px) and repeat (identical) hold. This is finding F2fccbb-1 seen as a silhouette mismatch. The spec pins `['FAIL','FAIL','FAIL']` with the R3c fail reasons (evidence `docs/audit/evidence/F2f/ccbbb/`).
+- R3c is **measured FAIL**, not the predicted PASS. At 228/232/236 km the impostor-only mask is 88 px at every distance, against mesh 71/68/68 px and ideal 70.3/67.9/65.6 px. imp-area and sym fail, while centroid (≤ 0.11 px) and repeat (identical) hold. This is finding F2fccbb-1 seen as a silhouette mismatch. The spec pins `['FAIL','FAIL','FAIL']` with the R3c fail reasons (evidence `pre-t4:docs/audit/evidence/F2f/ccbbb/`).
 - Because R3c is already red, the mutants are told apart by their fail reasons and measured values rather than by badge. shift adds the centroid failure (Δc ≈ 3 px), scale inflates the impostor to 172–191 px, and bright makes both masks fill the window with sym 0, which the area bounds reject (A1-U03-3 is caught).
 - F8a's done-condition must flip R3a and R3b, and the F2fccbb-1 fix must flip R3c. They are separate defects. The R3 rebuild is complete.

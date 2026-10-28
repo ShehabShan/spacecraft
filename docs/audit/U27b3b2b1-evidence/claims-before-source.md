@@ -1,5 +1,0 @@
-# Independent expectations — before reading implementation this session
-- U04-1: a rotating-sphere jump must be compared to independently integrated inertial motion using the actual launch direction and matching landing surface/time. A spin-zero control separates launch tilt from rotation; a radial analytic sphere is a distinct fixture from uneven terrain. A change to the theoretical prediction must affect a claim of agreement with theory.
-- U04-3: penetration-free requires finite per-tick geometric clearance, including grounded movement; a deliberately below-surface position must fail. An Infinity sentinel is absence of observation, not evidence of clearance.
-- U04-4: no unintended yaw snap requires separating commanded steering and surface-frame transport from residual heading jumps. A closed-loop holonomy assertion requires a closed trajectory and endpoint-frame comparison; an open route cannot establish it.
-- Retain findings only to the scope proved; re-check any original probe that treats aggregate row failure as success of a particular clause. No browser or GPU claim from Node.

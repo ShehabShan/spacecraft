@@ -148,7 +148,7 @@ regime one more. Catalog/cap changes need ADRs.
 
 ## Verification
 From `game/`, unpiped commands with exits captured immediately; evidence files
-are in `docs/audit/evidence/U27-k5/` (shared directory for this one K5/K6 batch):
+are in `pre-t4:docs/audit/evidence/U27-k5/` (shared directory for this one K5/K6 batch):
 
 | Command | Exit / observed result | Log |
 |---|---|---|

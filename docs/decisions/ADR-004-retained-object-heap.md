@@ -4,7 +4,7 @@
 - Amends ADR-002 and ADR-003 (same budgets: sampled ≤ 64 B/frame, retained ≤ 8 B/frame). Settles the ADR-002 "open item": play idle retained growth 4.9–9.3 B/frame.
 
 ## Context
-The play gate's idle run read retained growth just over the 8 B/frame budget (this session before the change: 8.59 B/frame, `docs/audit/evidence/F1b/idle-retained/gate-before.log`), while walk read ≈0. ADR-002 left open whether this was real growth or noise, and said the budget is not raised to hide it.
+The play gate's idle run read retained growth just over the 8 B/frame budget (this session before the change: 8.59 B/frame, `pre-t4:docs/audit/evidence/F1b/idle-retained/gate-before.log`), while walk read ≈0. ADR-002 left open whether this was real growth or noise, and said the budget is not raised to hide it.
 
 ## Investigation
 Probe `game/tools/alloc-idle-probe.mjs` (same world and drive as the gate) runs 10 consecutive gc-bracketed rounds of 2,880 frames and splits the retained delta by V8 heap space (`v8.getHeapSpaceStatistics`):
@@ -24,7 +24,7 @@ So the idle "retained growth" is V8 tiering re-optimising after the walk→idle 
 ## Why
 Per-frame object leaks (the defect the clause exists for) are allocated in new space and promoted to old space, so they are still counted; JIT code is not game state and is freed by V8 on its own schedule.
 
-## Evidence (`docs/audit/evidence/F1b/idle-retained/`)
+## Evidence (`pre-t4:docs/audit/evidence/F1b/idle-retained/`)
 - Gate on the current tree, two runs: walk alloc 10538.9/10538.4 B/frame, retained 0.00/0.15; idle alloc 10736.1/10734.5 B/frame, retained 0.08/0.03. Retained clause now PASS on both; GATE still FAIL exit 1 on the allocation clause (expected until F5a/F7a).
 - Gate `--self-test` 8/8 exit 0: real-frame leak mutant still +39.99 B/frame retained → FAIL; churn +1424 B/frame → FAIL; synthetic leak 49.35 → FAIL.
 - Loops `--self-test` exit 0: leak mutants +39.98/+40.00 B/tick on integrateFlight/integrateTick still FAIL on retained.

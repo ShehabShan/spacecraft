@@ -1,3 +1,0 @@
-F12diag run1 observer EXIT=0 (verdict FAILED, badges P F P P F)
-F12diag run2 observer EXIT=0 (verdict FAILED, badges P F P P F)
-variant tool EXIT=0 both builds; tsc --noEmit EXIT=0 both

@@ -64,7 +64,7 @@ can see (U27b2 remedy 2). R4b needs CDP, so the spec/self-test, not the page, mu
 - R4a does not certify zero allocation. The shipped R4 stays as a known-blind row until R4b lands,
   and only then can it be retired (ADR-005, safeguard 3).
 - R5 stays waived.
-- Evidence: `docs/audit/evidence/F2f/cda/`.
+- Evidence: `pre-t4:docs/audit/evidence/F2f/cda/`.
 
 ## Amendment (F2fcdb, session 139, 2026-10-28): R4b and R4c implemented
 - **Driver.** The page exposes `window.__r4` with these members:
@@ -79,4 +79,4 @@ can see (U27b2 remedy 2). R4b needs CDP, so the spec/self-test, not the page, mu
 - **Finding F2fcdb-1.** The shipped `executePasses` render path allocates ~1.6 KB/frame: three.js `setFromProjectionMatrix` ~730 B, render internals ~230 B and MultiCameraRig ~187 B are the top sampled sites. The cause is not isolated. The pure frame path is ~54 B/frame. The spec pins ['PASS','FAIL','PASS'] with `fails: [render]`; fixing F2fcdb-1 flips it to all-PASS.
 - **Mutants.** `churn` (4 escaping objects/frame) turns R4b red on pure as well, while R4c stays green. `leak` (one retained object/frame) turns R4c red at ~24 B/frame.
 - **Retiring the shipped R4.** It may now be retired (safeguard 3 is met), but that is left to the F2f close-out.
-- **Evidence.** `docs/audit/evidence/F2f/cdb/`.
+- **Evidence.** `pre-t4:docs/audit/evidence/F2f/cdb/`.

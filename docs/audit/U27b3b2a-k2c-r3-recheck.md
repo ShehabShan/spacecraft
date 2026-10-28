@@ -78,7 +78,7 @@ on those findings.
 - **Severity / confidence / category:** S1 / confirmed / test.
 - **Location @ base:** same harness `:1189–1220` (A/B setup),
   `:1221–1252` (red>8 masks and symmetric difference), `:1255–1256` (verdict).
-  Historical record: `docs/audit/U01-evidence/gate-run1.log:23`.
+  Historical record: `pre-t4:docs/audit/U01-evidence/gate-run1.log:23`.
 - **Claim:** mesh-only and impostor-only silhouettes match to sub-pixel precision.
 - **Independent expectation:** establish target-specific, plausible coverage before
   comparing it. For an on-axis radius 1,800 m at eye distance 232,000 m, 62° vertical

@@ -1,7 +1,0 @@
-mode=idle jitless=true N=2880 warm=4000
-round[0]=-0.72 B/frame | new_space:0.02 old_space:1.01 trusted_space:0.03
-round[1]=0.12 B/frame | old_space:0.12
-round[2]=0.12 B/frame | old_space:0.12
-round[3]=0.12 B/frame | old_space:0.12
-mean_B_per_frame=-0.09
-EXIT=0

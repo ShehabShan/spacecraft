@@ -106,7 +106,7 @@ const f = (H / 2) / Math.tan(FOV / 2)
 const rpx = f * Math.tan(Math.asin(PROBE_R / D))
 const area = Math.PI * rpx * rpx
 console.log(`[u03] R3(c) expected probe disk at 232 km: r ${rpx.toFixed(2)} px, area ${area.toFixed(1)} px; window ${(2 * win) ** 2} px`)
-const log = readFileSync(join(here, '../../../docs/audit/U01-evidence/gate-run1.log'), 'utf8')
+const log = readFileSync(join(here, 'u01-gate-run1.log'), 'utf8')
 const m = log.match(/R3DUMP hdr centre=\(([\d.]+),([\d.]+)\) meshR=([\d.]+) impR=([\d.]+) meshRmax=([\d.]+) impRmax=([\d.]+) totA=(\d+) sym=(\d+)/)
 check('R3c-log', !!m, 'U01 gate-run1 R3DUMP hdr found')
 if (m) {

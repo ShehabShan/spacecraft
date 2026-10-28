@@ -19,7 +19,7 @@ export const MOON_PARAMS: TerrainParams = {
     // WHY: the S1 makeBasins set (mulberry32(0x7a3e), radii ×1.15) rigidly rotated so
     // basin 0 is centred on the spawn base direction (Earth rotated 75° about E×S,
     // spawn.ts), giving a mare-floor spawn; pairwise basin angles are unchanged.
-    // Generator: docs/audit/evidence/T3/S2/basins-gen.mjs. [dx, dy, dz, radius rad]
+    // Generator: game/tools/gen-moon-basins.mjs. [dx, dy, dz, radius rad]
     basins: [
       0.84068, -0.077412, 0.535971, 0.713,
       -0.311829, -0.42262, -0.850973, 0.598,

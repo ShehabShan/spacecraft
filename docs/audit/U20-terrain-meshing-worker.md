@@ -3,7 +3,7 @@
 - Session 77, 2026-10-25, @ d91378f. READ-ONLY (AGENT_BRIEF §11).
 - Read in full: `game/src/render/TerrainMeshPool.ts` (447) and `game/src/workers/terrainWorker.ts` (256). Also read: `play/world/MoonLod.ts` 15–230, the pool configs of every caller, and the pending/active bookkeeping in the m1c/m1e harnesses.
 - Spec: Milestone 1C, grep only (seeds came from U06 / U14).
-- Probe: `game/tools/audit/u20-mesh-pool-worker.mjs`, run with `node tools/audit/u20-mesh-pool-worker.mjs` → **PROBE_EXIT=0, controls 4/4**. The full output is in `docs/audit/U20-probe-output.txt`.
+- Probe: `game/tools/audit/u20-mesh-pool-worker.mjs`, run with `node tools/audit/u20-mesh-pool-worker.mjs` → **PROBE_EXIT=0, controls 4/4**. The full output is in `pre-t4:docs/audit/U20-probe-output.txt`.
   - The probe imports the REAL pool and the REAL worker module, one module instance per fake `Worker`, plus the REAL `MoonLod`.
   - Every message crosses `structuredClone(m, {transfer})`, so buffers really detach.
   - Workers are FIFO with a configurable reply latency of 0, 2 or 3 frames.

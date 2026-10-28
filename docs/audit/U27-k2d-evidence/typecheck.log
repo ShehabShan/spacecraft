@@ -1,5 +1,0 @@
-
-> game@0.0.0 typecheck
-> tsc --noEmit
-
-TYPECHECK_EXIT=0

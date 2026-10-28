@@ -27,4 +27,4 @@ position, normal and unused grid `uv`; the core and the worker must not change f
 - Frame time is measured by `game/tools/check-play-frametime.mjs`, an interleaved A/B against the pre-S3 tree, because
   T1 B13 recorded no frame-time number. In headless SwiftShader the spawn view is equal (ratio 1.000). The rim view is one
   rAF quantum slower (316.7 → 333.3 ms medians, ratio 1.052 against a 1.05 bound), with and without the cosine culls.
-  See `docs/audit/evidence/T3/S3/`.
+  See `pre-t4:docs/audit/evidence/T3/S3/`.

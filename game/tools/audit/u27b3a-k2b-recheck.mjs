@@ -49,7 +49,7 @@ if (process.argv[2] === '--serve') {
   });
   server.listen(0,'127.0.0.1',() => console.log(server.address().port));
 } else {
-  const out = resolve(process.argv[2] || '../docs/audit/U27b3a-evidence/independent');
+  const out = resolve(process.argv[2] || join(mkdtempSync(join(tmpdir(),'u27b3a-evidence-')),'independent'));
   mkdirSync(out); // Refuse to overwrite earlier evidence.
   const lab = mkdtempSync(join(tmpdir(),'u27b3a-fixture-'));
   mkdirSync(join(lab,'e2e'));

@@ -1,3 +1,0 @@
-laws run1 EXIT=0
-laws run2 EXIT=0
-control EXIT=1

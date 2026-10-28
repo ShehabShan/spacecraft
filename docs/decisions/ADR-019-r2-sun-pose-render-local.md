@@ -1,6 +1,6 @@
 # ADR-019: R2 Sun readback pose is render-local; impostor scale is read from the far pass
 
-Status: accepted (session 129, F2fbba, 2026-10-27). Evidence: `docs/audit/evidence/F2f/bb/REPORT.md`.
+Status: accepted (session 129, F2fbba, 2026-10-27). Evidence: `pre-t4:docs/audit/evidence/F2f/bb/REPORT.md`.
 
 ## Context
 m1f R2(b) checks the Sun impostor's pixel footprint against the f64 truth. At `c0ae8bf` it posed the A/B camera at absolute `drv` and passed. F-12 (`3057899`) changed the pose to render-local `drv − O`, and R2 began reading 0 px (F2fa, F2fba). F2fbba measured the far pass alone at the local pose: 1,371 px, which is correct. The near pass overdraws that disk with terrain, and hiding terrain restores it. The absolute pose avoids the overdraw only because it puts the camera ~1.38 km away from the render-local scene.

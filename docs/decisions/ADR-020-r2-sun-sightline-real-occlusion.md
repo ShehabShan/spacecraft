@@ -3,7 +3,7 @@
 Date: 2026-10-27 · Task: F2f (unit F2fbbb, session 130) · Status: accepted
 
 ## Context
-F2fbba (ADR-019) showed that at the correct render-local R2(b) pose the near-pass terrain covers a correctly drawn Sun. F2fbbb (`docs/audit/evidence/F2f/bbb/REPORT.md`) measured why, twice: the rendered terrain group matches the spin law and −O exactly; the camera is 0.6 m above the ground on a 2.51 m clamped boom; and in the Sun's azimuth the terrain horizon rises to 61° at 41 m, above the Sun's 33°. A hill hides the Sun.
+F2fbba (ADR-019) showed that at the correct render-local R2(b) pose the near-pass terrain covers a correctly drawn Sun. F2fbbb (`pre-t4:docs/audit/evidence/F2f/bbb/REPORT.md`) measured why, twice: the rendered terrain group matches the spin law and −O exactly; the camera is 0.6 m above the ground on a 2.51 m clamped boom; and in the Sun's azimuth the terrain horizon rises to 61° at 41 m, above the Sun's 33°. A hill hides the Sun.
 
 ## Options
 1. Change the render (frames, layer assignment) so the Sun shows. Wrong: the render is correct.

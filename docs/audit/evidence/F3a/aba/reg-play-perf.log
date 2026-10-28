@@ -1,3 +1,0 @@
-  stub pool freeCount 2 (informational)
-  heap samples (KB): 15937 15929 15923 15923 15923 15920 15926 15930 15930 15930 15930
-test-play-perf PASS 19/19 (heap Δ -7368 B, trend 62 B/1k frames, 666 publishes / 69.4 s, max 10/s)

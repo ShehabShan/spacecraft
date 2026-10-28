@@ -1,6 +1,0 @@
-{"command": ["git", "diff", "--exit-code", "256d77d", "--", "game/src", "game/e2e", "game/playwright.config.ts", "Milestone", "Design_specs"], "exit": 0}
-{"command": ["git", "diff", "--exit-code", "HEAD", "--", "game/tools/audit"], "exit": 0}
-{"command": ["git", "diff", "--check"], "exit": 0}
-Process pointers, 14/55 review count, source/probe immutability, allowed-path checks PASS.
-Initial staged whitespace check exit 2: typecheck.log extra blank line at EOF; removed trailing blank line only, diagnostic content preserved. Commit/push not attempted by that command.
-Final staged whitespace check exit 0 after log-EOF normalization.

@@ -144,7 +144,7 @@ is claimed.
 
 ## Audit-method ADR draft — explicit topology and responsive controls
 
-**Context:** U27 requires independent re-review, while A1 permits no game/gate
+**Context:** U27 requires independent re-review, while A1 permits no game or gate
 changes. The old repro used production face tables and a shortened predicate.
 
 **Options:** repeat only the old probe; run only rendered screenshots; or pair

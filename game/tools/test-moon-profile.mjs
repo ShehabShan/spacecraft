@@ -39,7 +39,7 @@ const ok = (cond, msg) => { n++; if (!cond) fails.push(msg) }
 const HARNESS_MOON = { name: 'M1F Moon (catalog)', radius: 1364.5, seed: 20240119, continentFreq: 2.3,
   continentAmp: 95, maskFreq: 3.7, mountainFreq: 6.5, mountainAmp: 230, detailFreq: 22, detailAmp: 16 }
 // WHY: SHA-256 of terrainHeight Float64 bytes on 4,096 Fibonacci dirs, taken on the
-// UNEDITED tree (docs/audit/evidence/T3/P0/feasibility-probe.log, plan §3.1).
+// UNEDITED tree (pre-t4:docs/audit/evidence/T3/P0/feasibility-probe.log, plan §3.1).
 const PIN_TEST_PLANET = '412ed993c2fe088cc1f2f65116c9330ec4ddbe49a477f7a4e2d49b676a755e02'
 const PIN_HARNESS_MOON = 'b7403bae174f81c8a8be7ddd587ab16445cfc33cfc06815f76d293a794a170b6'
 

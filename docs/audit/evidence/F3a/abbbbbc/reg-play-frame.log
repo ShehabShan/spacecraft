@@ -1,5 +1,0 @@
-[test-play-frame] info (B7c): shell-path heap delta -2056 B
-[test-play-frame] info (B7c): W 2 s → 6.343 m; |abs| 1348.6
-[test-play-frame] info: boom 7.000 m, cam–char 7.595 m, fwd·earth 0.8270, Earth 31.93° off-axis, heap delta 41296 B
-[test-play-frame] FAIL 22/23
-  - Earth 31.9° off the view axis (FOV half-height 31°)

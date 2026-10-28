@@ -1,5 +1,0 @@
-  foot slide (cm) v=1 0.0000
-  walk/run: max joint step 1.39° per 1/600 s, phase err 9.9e-17
-  interrupt: Walk→Run 0.035°, Idle→Walk 0.038° (no-snap 17.9°); blend-in max 31.7°/frame
-  animator heap delta -6432 B / 10k updates
-test-play-anim PASS 115/115

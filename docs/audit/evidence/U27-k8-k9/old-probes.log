@@ -1,3 +1,0 @@
-$ git diff --exit-code HEAD -- game/tools/audit
-
-EXIT=0

@@ -102,7 +102,7 @@ fix with relevant terrain/KCC regressions. No ratified constant changed here.
 - K2a's previously reviewed findings are not counted again.
 
 ## Commands and observed exits
-All commands below run from `game/`; logs are in `docs/audit/evidence/U27-k5/`.
+All commands below run from `game/`; logs are in `pre-t4:docs/audit/evidence/U27-k5/`.
 Every exit was captured directly after the command, without a pipeline.
 
 | Command | Exit / observed result | Log |

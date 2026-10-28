@@ -1,8 +1,0 @@
-  PASS trigger-ticks — engine ticks [31,62,93,123,154,185,216,246,277] vs spec [31,62,93,123,154,185,216,246,277]; Δ all (1024,0,0): true; origin mismatches 0
-  PASS offaxis-origins — 21 engine vs 21 oracle shifts, same ticks/Δ: true; origin exact; local ≤128 post-shift, ≤1024 else
-  PASS boundary — 1024/−1024/1023.5 hold; 1024.0001/−1024.0001/1024.5 shift
-  PASS extract-exact — 1,200 ticks × (5–6 entities + 17 celestials) = fround(f64(abs − O))
-  PASS far-origin — 13 shifts at 1.496e11 m; ship local error max 0.0305 mm (limit 1 mm); extract exact
-  PASS stall-ceiling — worst advance() 0.024 ms (limit 16); calls ≥ 250 ms counted, not dropped: 0,0,0; 300 ticks/9 rebases per run: true
-  PASS rebase-cost — worst rebase window (rebasing call + next) 0.003 ms (limit 4); min over 3 runs
-PRECISION GATE PASS 7/7

@@ -1,3 +1,0 @@
-walk.before r=1355.066 moonGround=1355.046 off_m=0.020 mode=SURFACE
-walk.after r=1354.786 moonGround=1355.497 offMoonGround_m=-0.711 mode=SURFACE agl=-0.280 nan=0
-MOON_R=1364.5 TEST_PLANET.radius=5000

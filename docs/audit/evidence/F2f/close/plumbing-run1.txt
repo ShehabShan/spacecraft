@@ -1,3 +1,0 @@
-80/80 expected dispositions (8 clean PASS, 72 defects rejected at the intended assertion); mismatches=0; raw playwright exit=1
-Evidence: /workspace/spacecraft/docs/audit/evidence/F2f/close/plumbing-run1
-PLUMB_EXIT=0

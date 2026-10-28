@@ -1,4 +1,0 @@
-[MT2] canvas after 333 ms; canvas 1280x720
-[MT2] errors (favicon excluded): 0
-[MT16] m1f canvas present; errors (favicon excluded): 0
-[MT16] hud: 3-CAMERA RIG 3 FPS PASSES (FAR/MID/NEAR) 3 / 2 / 46 draw calls DEPTH-CLEAR TRIGGERS 120 (2/frame + A/B) OBJECTS N/M/DUAL 96 / 3 / 0 straddling PLANES FG [0.1, 3k] · MID [2k, 300k] · BG [0.5k, 10k] scaled IMPOSTORS 11 instances @ D ≤ 9,600 m SKY — EARTHRISE EARTH (3D MESH, MID) θ 8.62° · 180 px EARTH

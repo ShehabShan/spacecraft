@@ -71,7 +71,7 @@ This **localizes the suppression to content under spinGroup in this run**, not t
 - Not checked: every real R5 terrain/KCC walk, arbitrary FPS/jitter, historical first bad render commit, GPU portability, unrelated original-probe findings.
 
 ## Reproduction / commands
-From `game/`, unless specified. Full stdout/stderr under `docs/audit/U27-k2d-evidence/`.
+From `game/`, unless specified. Full stdout/stderr under `pre-t4:docs/audit/U27-k2d-evidence/`.
 | Command | Observed exit / result |
 |---|---|
 | `npm ci` | 0 |

@@ -7,7 +7,7 @@
   (handoff state machine + probe fade), Milestone 1F grep (lines 4, 26, 42, 45, 55, 73).
 - Probe: `game/tools/audit/u21-camera-sky.mjs`, plus `game/tools/audit/u21-tsx-loader.mjs` (a Node loader that
   transpiles the real `.tsx` with the repo's esbuild and stubs react / R3F, because the probe calls only the pure
-  exports). Output: `docs/audit/U21-probe-output.txt`.
+  exports). Output: `pre-t4:docs/audit/U21-probe-output.txt`.
   - Command: `cd game && node --expose-gc tools/audit/u21-camera-sky.mjs` → **PROBE_EXIT=0**, controls 4/4.
 - Read-only check: `git diff 256d77d -- game/src game/e2e game/playwright.config.ts Milestone Design_specs` is empty (see commit VERIFIED).
 

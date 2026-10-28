@@ -68,7 +68,7 @@ New probe: `game/tools/audit/u27b3b2b2b2b1-m1a-recheck.mjs`.
 - No renderer pixels, real wall-clock stutter, heap/zero-GC, arbitrary magnitudes/non-finite inputs or celestial-local coverage claimed.
 
 ## Verification and raw evidence
-Logs are whitespace-normalized only (trailing spaces/blank EOF removed after the first staged whitespace check returned exit 2); result text and numbers are unchanged. All logs are under `docs/audit/U27b3b2b2b2b1-evidence/`. Commands run from `game/` unless noted. Commands are redirected to logs, **not piped**; `$?` captured immediately.
+Logs are whitespace-normalized only (trailing spaces/blank EOF removed after the first staged whitespace check returned exit 2); result text and numbers are unchanged. All logs are under `pre-t4:docs/audit/U27b3b2b2b2b1-evidence/`. Commands run from `game/` unless noted. Commands are redirected to logs, **not piped**; `$?` captured immediately.
 | Command | Observed result / exit |
 |---|---|
 | `npm ci` | exit 0; `npm-ci.log` |

@@ -165,7 +165,7 @@ schedule gate, then one implementation/regression unit.
 - K8/K9, slope-feel decisions, and historical model-majority provenance remain open.
 
 ## Commands and observed unpiped exit codes
-Logs under `docs/audit/evidence/U27-k7/`; `exits.txt` records exits.
+Logs under `pre-t4:docs/audit/evidence/U27-k7/`; `exits.txt` records exits.
 
 | Command / run (from game unless stated) | Exit / result |
 |---|---|

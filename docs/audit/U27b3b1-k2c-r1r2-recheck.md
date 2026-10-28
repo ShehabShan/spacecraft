@@ -92,7 +92,7 @@ Checks:
 
 ## 4. Verification and raw evidence
 
-All commands were run without a shell pipeline. Logs: `docs/audit/U27b3b1-evidence/`.
+All commands were run without a shell pipeline. Logs: `pre-t4:docs/audit/U27b3b1-evidence/`.
 
 | Command (from `game/`, except git) | Observed exit / result |
 |---|---|

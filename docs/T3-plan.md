@@ -68,7 +68,7 @@ stay exactly as it is.
   (pure core, zero-GC, no new library).
 
 ### 3.1 Feasibility (P0 quality, session 147)
-Probe: `docs/audit/evidence/T3/P0/feasibility-probe.mjs`. It is a standalone prototype
+Probe: `pre-t4:docs/audit/evidence/T3/P0/feasibility-probe.mjs`. It is a standalone prototype
 with no game code edited; logs are `feasibility-probe.log` and `feasibility-probe.run2.log`.
 - **Default-path pins** (taken on the unedited tree; SHA-256 of `terrainHeight` Float64
   bytes on 4,096 Fibonacci directions). S1's gate must reproduce both exactly:
@@ -134,7 +134,7 @@ with no game code edited; logs are `feasibility-probe.log` and `feasibility-prob
   evidence. Run all nine play Node tests, `e2e/play.spec.ts` and the build.
 - [x] **S3** (sessions 149–150: mare albedo 0.6 by shader injection, ADR-029 accepted; gate 16/16, self-test 4/4; check-play-b4/b5/b6/b7/b9 and test-play-perf exit 0; frame time spawn 1.000, rim 1.052 accepted by the Lead 2026-10-28) Look: darker mare albedo from the basin mask (shader or vertex attribute),
   plus a crater-rim readability check. Screenshots via check-play-b4…b9, and test-play-perf.
-- [x] **S4** (session 150: §13 matrix green on 9c129c0, evidence `docs/audit/evidence/T3/S4/`; the Lead accepted T3 on 2026-10-28; fast-forwarded into `main`) Close-out: the full §13 matrix (tsc, build, play Node tests,
+- [x] **S4** (session 150: §13 matrix green on 9c129c0, evidence `pre-t4:docs/audit/evidence/T3/S4/`; the Lead accepted T3 on 2026-10-28; fast-forwarded into `main`) Close-out: the full §13 matrix (tsc, build, play Node tests,
   kcc-default-trace, kcc-gate, play.spec, m1e, m1f-r with R5 waived). Then the Lead's
   play acceptance and a fast-forward into `main`.
 
@@ -160,7 +160,7 @@ with no game code edited; logs are `feasibility-probe.log` and `feasibility-prob
   (re-pinned) and kcc-gate exit 0; `npx playwright test e2e/play.spec.ts` exit 0;
   `npm run build` exit 0.
 - **S3** check-play-b4/b5/b6/b7/b9 exit 0 and screenshots stored under
-  `docs/audit/evidence/T3/`; test-play-perf exit 0, with frame time not worse than the
+  `pre-t4:docs/audit/evidence/T3/`; test-play-perf exit 0, with frame time not worse than the
   T1 baseline.
 - **S4** Every command above exit 0, plus m1e 6×PASS and the m1f-r pins (R3 and R4
   pinned, R5 waived), and the Lead's play-test.

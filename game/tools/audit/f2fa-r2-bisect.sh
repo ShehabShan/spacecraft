@@ -4,11 +4,11 @@
 # drift hits both sides alike. Each commit runs in its own git worktree with that
 # commit's own spec, playwright config and harness; node_modules is shared via a
 # symlink (package-lock.json is byte-identical at both commits and on main).
-# Writes logs + exits.txt to docs/audit/evidence/F2f/a/. Run from game/.
+# Writes logs + exits.txt to pre-t4:docs/audit/evidence/F2f/a/. Run from game/.
 # Usage: sh tools/audit/f2fa-r2-bisect.sh [N=2]
 N=${1:-2}
 ROOT=$(cd .. && pwd)
-E=$ROOT/docs/audit/evidence/F2f/a
+E=${EVID:-/tmp/evidence/F2f/a}; mkdir -p "$E"
 NM=$(pwd)/node_modules
 mkdir -p "$E"; : > "$E/exits.txt"
 for c in c0ae8bf 3057899; do
