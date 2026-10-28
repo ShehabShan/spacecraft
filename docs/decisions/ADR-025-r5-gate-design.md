@@ -61,7 +61,14 @@ R5a (`game/src/test/M1fR5Gate.tsx`):
 
 ## Consequences
 - R5a PASS at all three heights: 2 / 2 / 3 shifts over 4,000 m, each equal to the oracle. The nadir mutant gives 0 shifts at every height.
-- The spec `game/e2e/m1f-r5.spec.ts` has `expectedRows` 1, which F2fceb bumps to 2.
+- The spec `game/e2e/m1f-r5.spec.ts` has `expectedRows` 2 (R5a + R5b, F2fceb).
 - The self-test is `game/tools/test-m1f-r5-gate.mjs` on port 4185.
 - R5a does not check the rendered sky. That check (Sun continuity on every frame) is part of R5b.
 - The shipped R5 stays waived and unedited. Retiring it is for the F2f close-out.
+
+## Amendment (F2fceb, session 141): row R5b
+- **Straddler A/B.** Sat B (r 60 m) sits on the view axis at 2,400 m, so d_n 2,340 / d_f 2,460. A Near-only occluder is in front of it and a Mid-only backdrop behind it, so a wrong pass order or a missing depth clear changes pixels. Masks come from the production `layerMaskFor`, which must return NEAR|MID for Sat B. The auto render must equal forced-Near and forced-Mid byte-exact. It counts only if Sat B covers > 200 px (auto vs Sat-B-hidden) and a 1 m shift changes pixels. Measured: 655 px (ideal 705), shift 17 px, 0/0 B, repeat 0 B.
+- **Sun on every frame.** A real SimulationCore camera flies the R5a h 0 route (4,000 m at 50 m/s). Every tick the far pass is rendered with the Sun impostor staged from the f32 locals and compared with an origin-free f64 oracle (direction ≤ 1e-5 rad, Sun px > 0, centroid ≤ 1 px). Samples must equal frames > 0, with ≥ 1 rebase frame. The Sun is the frame origin, ~1.36 km away, so a missed rebase (≥ 256 m) moves it by ≥ 0.18 rad. Measured: 4,800 samples, 2 rebase frames, max error 3.44e-8 rad, min 87 px, centroid 0.06 px.
+- **Mutants** `offframe`, `single`, `sunstale` each turn only R5b red for their named reason. The self-test checks both rows in every case (7 cases).
+- **Why not the shipped fixture:** the shipped SAT_B and walk are the A1-U03-5/-6 cases (vacuous A/B, zero-sample Sun term). A pinned isolated scene makes the claim depend on the rig only.
+- The R5 rebuild is complete. Retiring the shipped R1–R5 rows (ADR-005, safeguard 3) is the F2f close-out.

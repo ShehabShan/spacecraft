@@ -1,0 +1,19 @@
+[WebServer] 
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+
+Running 1 test using 1 worker
+
+[m1fR5 gate] acceptance line: [M1fR5Gate] acceptance PASSED
+[m1fR5 gate] badges: ["PASS","PASS"]
+[m1fR5 gate] runtime errors: []
+[m1fR5 gate] page console transcript (tail):
+  warning: [.WebGL-0x27c40017be00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+  warning: [.WebGL-0x27c40017be00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+  warning: [.WebGL-0x27c40017be00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+  warning: [.WebGL-0x27c40017be00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
+  ✓  1 e2e/m1f-r5.spec.ts:11:1 › M1F R5 rebuilt gate (R5a + R5b) (2.1s)
+
+  1 passed (6.6s)
