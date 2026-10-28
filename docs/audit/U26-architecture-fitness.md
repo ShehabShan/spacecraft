@@ -10,8 +10,8 @@ entities, vehicles, new bodies) without a rewrite?
 layer, per-body frames, one clock, a shared terrain service, extensible frame
 stages). I read the code that carries each claim and measured the structural
 limits with two probes on the real core code:
-- `game/tools/audit/u26-architecture-fitness.mjs` (output in `U26-probe-output.txt`; PROBE_EXIT=0, controls 2/2);
-- `game/tools/audit/u26b-terrain-singleton-walk.mjs` (output in `U26b-probe-output.txt`; PROBE_EXIT=0).
+- `pre-t4:game/tools/audit/u26-architecture-fitness.mjs` (output in `U26-probe-output.txt`; PROBE_EXIT=0, controls 2/2);
+- `pre-t4:game/tools/audit/u26b-terrain-singleton-walk.mjs` (output in `U26b-probe-output.txt`; PROBE_EXIT=0).
 
 Both are run from `game/` with `node --expose-gc tools/audit/<file>.mjs`.
 

@@ -4,7 +4,7 @@
 - Base: `3081cd6`; protected source unchanged from `256d77d`.
 - Scope: **A1-U02-1, A1-U02-2, A1-U02-3 only**. All three remain **S1, confirmed**, with the qualifications below. Total reviewed becomes **14/55; 41 pending**.
 - Reviewer: platform usage reports **GPT-6 Astra (`gpt-6-astra`)**; raw record in `U27b3b1-evidence/platform-meter-model.json`. This verifies this reviewer, **not** the models of most historical audit units. The historical-majority cross-model condition remains unresolved.
-- Deliverables: this report, new `game/tools/audit/u27b3b1-r1r2-recheck.mjs`, raw evidence, findings review and process checkpoint. No game, harness, test or ratified constant edits.
+- Deliverables: this report, new `pre-t4:game/tools/audit/u27b3b1-r1r2-recheck.mjs`, raw evidence, findings review and process checkpoint. No game, harness, test or ratified constant edits.
 
 ## 1. Method and scope
 

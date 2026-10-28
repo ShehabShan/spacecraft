@@ -2,7 +2,7 @@
 
 - Unit: A1-U07 (`docs/A1-plan.md` §5 Phase A) · audited at `5a11dc6` · session 59 (2026-10-22)
 - Files read in full: `game/src/test/Milestone1B_TestHarness.tsx` suite region (:1–110 header + singletons, :300–662 reference + `runSuite`), `game/src/core/orbit/KeplerRail.ts` (254), `game/src/core/orbit/celestialData.ts` (:1–62 banner, :190–261 derivation), `SimulationCore.ts` (:160–200 time API, :396–476 tick), `e2e/m1b.spec.ts`. `pre-t4:Milestone/Milestone 1B.txt`: targeted grep only (period, vis-viva, Kepler-3, retrograde, reversibility).
-- Probe: `game/tools/audit/u07-m1b-validity.mjs`. It runs the REAL `SimulationCore` + `KeplerRail` in Node and the harness's `referencePosition … runSuite` sliced VERBATIM (harness lines 316–661, esbuild type-strip; only `publishSuite`/`suiteState` stubbed). It then runs 3 controls that must fail, 7 mutations, and independent physics truth.
+- Probe: `pre-t4:game/tools/audit/u07-m1b-validity.mjs`. It runs the REAL `SimulationCore` + `KeplerRail` in Node and the harness's `referencePosition … runSuite` sliced VERBATIM (harness lines 316–661, esbuild type-strip; only `publishSuite`/`suiteState` stubbed). It then runs 3 controls that must fail, 7 mutations, and independent physics truth.
 - Command: `cd game && node tools/audit/u07-m1b-validity.mjs` → **PROBE_EXIT=0** (run 1: 22/23 confirmed; run 2: 23/23 confirmed; controls OK in both). The one line that differs between runs is the GC-dependent heap verdict, which is itself finding A1-U07-3.
 
 ## Expected behaviour, derived before reading the code

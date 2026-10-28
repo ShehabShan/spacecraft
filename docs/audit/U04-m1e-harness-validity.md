@@ -8,7 +8,7 @@
   - `game/src/core/physics/astronautKCC.ts`: config :115–140, teleport :325–360, jump :585–610, airborne sweep :930–950.
   - `game/src/core/physics/sphericalFrame.ts`: :205–240.
   - `pre-t4:Milestone/` 1E grep: the Coriolis derivation (":54") and the row table (":2990").
-- Probe: `game/tools/audit/u04-m1e-validity.mjs`.
+- Probe: `pre-t4:game/tools/audit/u04-m1e-validity.mjs`.
   - It slices the harness setup (:112–227) and the row block (:576–1092) **verbatim from the source text**, strips the types with esbuild, and runs them on the real core under Node.
   - Around that it adds mutations, an independent RK4 inertial integration, a spin-off control, a per-tick clearance probe, and a `process.memoryUsage` heap shim.
   - Command: `cd game && node tools/audit/u04-m1e-validity.mjs` → `[u04] CONFIRMED 21/21`, `PROBE_EXIT=0` (unpiped).

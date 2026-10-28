@@ -30,7 +30,7 @@ the suspect design, not a reason to accept correlated errors.
 
 ## 2. Method and evidence boundaries
 
-New probe: `game/tools/audit/u27b3b2b2b2a-m1b-recheck.mjs`.
+New probe: `pre-t4:game/tools/audit/u27b3b2b2b2a-m1b-recheck.mjs`.
 
 - Executes the **unchanged** harness `referencePosition` through `runSuite`
   (:316–661) after esbuild type stripping. Supplies only dependencies,

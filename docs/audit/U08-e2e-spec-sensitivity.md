@@ -6,7 +6,7 @@ Plan question (`docs/A1-plan.md` U08): do the specs fail on a wrong badge, a mis
 
 ## Method
 
-Probe: `game/tools/audit/u08-spec-sensitivity.sh` and `game/tools/audit/u08-spec-mutate.mjs`.
+Probe: `pre-t4:game/tools/audit/u08-spec-sensitivity.sh` and `pre-t4:game/tools/audit/u08-spec-mutate.mjs`.
 
 - The script copies `game/` (without node_modules, dist and test-results) to a scratch directory, `/tmp/u08lab`, and symlinks node_modules. The repo tree is never edited.
 - For each mutation it restores the original `src/test/Milestone1B_TestHarness.tsx` and applies ONE mutation with `u08-spec-mutate.mjs`.
@@ -67,7 +67,7 @@ Probe: `game/tools/audit/u08-spec-sensitivity.sh` and `game/tools/audit/u08-spec
 
 ## m1a harness row validity (session 61)
 
-Probe: `game/tools/audit/u08-m1a-validity.mjs`. Command: `cd game && node tools/audit/u08-m1a-validity.mjs`, **PROBE_EXIT=0**, 16/18 checks confirmed, 5/5 controls OK.
+Probe: `pre-t4:game/tools/audit/u08-m1a-validity.mjs`. Command: `cd game && node tools/audit/u08-m1a-validity.mjs`, **PROBE_EXIT=0**, 16/18 checks confirmed, 5/5 controls OK.
 
 - It runs the REAL `SimulationCore` in Node. Mutants are generated copies of `SimulationCore.ts` and `precisionMath.ts` written to `/tmp/u08m/<name>/`; the repo tree is not edited.
 - The acceptance code is sliced VERBATIM from `Milestone1A_TestHarness.tsx` @ fb541e0. Slice A is lines 106–281 (`TEST`, `test`, the `onRebase` listener and `finalizeTest`). Slice B is lines 462–485 (the per-frame capture block of `useFrame`).
@@ -166,7 +166,7 @@ Controls (each must behave as shown):
 
 ## U08b — mutation runs for m1a, m1c–m1f and plumbing (session 62)
 
-Probe: `game/tools/audit/u08b-spec-sensitivity.sh` (parameterised runner, `PLAN="m1a:baseline,badgefail …"`) and `game/tools/audit/u08b-spec-mutate.mjs` (generic regex anchors shared by every harness: the verdict ternary `${X ? 'PASSED' : 'FAILED'}`, the badge text `r.pass ? 'PASS' : 'FAIL'`, and the `[Milestone1X] acceptance` console.log). Same scratch-copy method as U08a (`/tmp/u08blab`; repo tree untouched); REAL specs under the REAL `playwright.config.ts`. A dry run applied all five mutations to all five harnesses. Environment: VM v2, 2 vCPU / 4 GB.
+Probe: `pre-t4:game/tools/audit/u08b-spec-sensitivity.sh` (parameterised runner, `PLAN="m1a:baseline,badgefail …"`) and `pre-t4:game/tools/audit/u08b-spec-mutate.mjs` (generic regex anchors shared by every harness: the verdict ternary `${X ? 'PASSED' : 'FAILED'}`, the badge text `r.pass ? 'PASS' : 'FAIL'`, and the `[Milestone1X] acceptance` console.log). Same scratch-copy method as U08a (`/tmp/u08blab`; repo tree untouched); REAL specs under the REAL `playwright.config.ts`. A dry run applied all five mutations to all five harnesses. Environment: VM v2, 2 vCPU / 4 GB.
 
 Mutations: `badgefail` = verdict forced PASSED + every badge `FAIL` (control); `badgeerr` = verdict forced PASSED + every badge `ERR`; `pageerror` = uncaught throw scheduled before the verdict line; `nolog` = verdict tag renamed, so no recognisable line.
 

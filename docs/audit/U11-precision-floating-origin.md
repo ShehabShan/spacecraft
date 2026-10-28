@@ -6,7 +6,7 @@
   `SimulationCore.ts`: register/unregister 231–297, getOrigin/getLocalPositionF32 318–343,
   onRebase/_emitRebase 350–369, advance 372–390 and tick 404–480.
 - Spec passages: `pre-t4:Milestone/Milestone 1A.txt` §1.1, a grep for rebase / lattice / fround / Float32 (lines 13–36, 87–101).
-- Probe: `game/tools/audit/u11-precision-origin.mjs`. It imports the REAL core and adapter modules and the real `three`, and mutates nothing under `src/`.
+- Probe: `pre-t4:game/tools/audit/u11-precision-origin.mjs`. It imports the REAL core and adapter modules and the real `three`, and mutates nothing under `src/`.
   - Run: `cd game && node tools/audit/u11-precision-origin.mjs; echo PROBE_EXIT=$?` → **PROBE_EXIT=0**.
   - Controls: 3/3 OK.
   - Result: 4 FINDING lines (P3, P4d, P5, P6), all analysed below.

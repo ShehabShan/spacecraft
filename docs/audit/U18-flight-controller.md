@@ -3,7 +3,7 @@
 - Unit: U18 · Session 73 · 2026-10-23 · audited at `21e63b1` (branch `a1-engine-audit`)
 - File: `game/src/core/physics/flightController.ts` (750 lines, read in full), plus the calls it makes into
   `aerodynamics.ts` / `atmosphere.ts`. U19 owns aerodynamics and the atmosphere model.
-- Probe: `game/tools/audit/u18-flight-controller.mjs`. It imports the REAL `FlightController` and the terrain field.
+- Probe: `pre-t4:game/tools/audit/u18-flight-controller.mjs`. It imports the REAL `FlightController` and the terrain field.
   Body axes, "right" (= fwd × up), the expected thrust and the vacuum bounds are computed in the probe itself.
 - Command (from `game/`): `node tools/audit/u18-flight-controller.mjs` → **PROBE_EXIT=0**, controls 5/5.
   Catalog escape speeds come from a one-off read of `CELESTIAL_CONFIGS` (`vesc = √(2·g·R²/R)`); that check is arithmetic only.

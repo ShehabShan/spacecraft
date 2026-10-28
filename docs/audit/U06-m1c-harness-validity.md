@@ -4,7 +4,7 @@ Unit U06 of `docs/A1-plan.md` covers the gate health of the Milestone 1C page: w
 
 - Files read: `game/src/test/Milestone1C_TestHarness.tsx` (1,006 lines, all of it), `game/e2e/m1c.spec.ts`, `game/src/workers/terrainWorker.ts`, `game/src/render/TerrainMeshPool.ts` (lines 1–372), `game/src/core/terrain/terrainField.ts` (lines 1–232), `game/src/core/terrain/spherify.ts` (lines 55–84) and `game/playwright.config.ts`.
 - Spec: `pre-t4:Milestone/Milestone 1C.txt`, read by grep only (seam, skirt, T-junction, heap passages).
-- Probe: `game/tools/audit/u06-m1c-validity.mjs`, run from `game/` as `node tools/audit/u06-m1c-validity.mjs`. Observed **PROBE_EXIT=0, SUMMARY 14/14 confirmed**.
+- Probe: `pre-t4:game/tools/audit/u06-m1c-validity.mjs`, run from `game/` as `node tools/audit/u06-m1c-validity.mjs`. Observed **PROBE_EXIT=0, SUMMARY 14/14 confirmed**.
   - The probe runs the **real** `terrainWorker.ts` in Node: esbuild strips the types, `self` is stubbed, and real `init` + `req` messages are sent. It produces 215 real chunks.
   - The harness seam audit (`posArr`…`auditSeams`, :419–503) and the LOD traversal (constants, `buildNodes`, `childOf`, `nodeHasData`, `updateFlight`, `clearSubtree`, `visitNode`) are **sliced verbatim** from the harness source.
   - An independent truth check keys every chunk vertex by its exact dyadic cube point and compares **every** pair of chunks that share that point. The comparison is bitwise on normals and within 5e-3 m on position, for same-face and cross-face pairs alike.

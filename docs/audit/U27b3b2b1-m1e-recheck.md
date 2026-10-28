@@ -18,7 +18,7 @@ Expectations were written before reading implementation this session in
 U04 probe; inspect KCC teleport/reset, tick, jump, sweep and landing paths.
 Milestone text was searched selectively, not read wholesale.
 
-New probe: `game/tools/audit/u27b3b2b1-m1e-recheck.mjs`.
+New probe: `pre-t4:game/tools/audit/u27b3b2b1-m1e-recheck.mjs`.
 It extracts actual harness setup and row functions with unique-anchor assertions,
 strips TypeScript via esbuild, and runs the real KCC without a renderer.
 Geometric clearance, injected yaw angle and endpoint separation are observed
@@ -37,7 +37,7 @@ Raw logs, exit files, source SHA-256 manifest and verification results:
 | `npm run typecheck` (`game/`) | 0 |
 | `npm run build` (`game/`) | 0; existing >500 kB chunk warning |
 | `git diff --exit-code 256d77d -- game/src game/e2e game/playwright.config.ts Milestone Design_specs` (root) | 0, empty |
-| `git diff --exit-code 6823d42 -- game/tools/audit/u04-m1e-validity.mjs` (root) | 0, original probe unchanged |
+| `git diff --exit-code 6823d42 -- pre-t4:game/tools/audit/u04-m1e-validity.mjs` (root) | 0, original probe unchanged |
 | `git diff --check` (root) | 0 |
 
 The failed first independent attempt remains recorded: R2 has 600 ticks, not

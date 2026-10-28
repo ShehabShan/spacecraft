@@ -268,7 +268,7 @@ Observations (NO change made — recorded for the Lead):
    (brief §4), ruling step 3c ordering.
 
 24. 2026-10-15 · 1C/step3 · game/e2e/m1c.spec.ts (created earlier),
-   game/tools/diag-spherify.mjs + game/tools/diag-m1c.mjs (created) · 1C
+   pre-t4:game/tools/diag-spherify.mjs + pre-t4:game/tools/diag-m1c.mjs (created) · 1C
    gate FAILED on `seamless` (parentVerts=0, roundtripErr 4.2e-1); full
    diagnosis to root cause with protocol-level proof; BOTH defects routed
    to the Lead (F10a/F10b) — no unauthorized fixes. 1A/1B regression GREEN. ·
@@ -364,7 +364,7 @@ Observations (NO change made — recorded for the Lead):
    TSC_EXIT=0 BUILD_EXIT=0, observed unpiped per the new standing rule. ·
    Source: Lead ruling 2026-10-15 (F11/F12).
 
-32. 2026-10-15 · protocol · game/tools/diag-spherify.mjs, diag-m1c.mjs,
+32. 2026-10-15 · protocol · pre-t4:game/tools/diag-spherify.mjs, diag-m1c.mjs,
    diag-m1d.mjs · Committed and pushed the three forensic-diagnostic probes
    (previously untracked scaffolding; diag-m1b.mjs already tracked since
    aca7047). The user EXPLICITLY GAVE PERMISSION for these files to be
@@ -469,8 +469,8 @@ Observations (NO change made — recorded for the Lead):
 
 39. 2026-10-16 · 1E/fixes · game/src/core/physics/astronautKCC.ts (F14),
    game/src/test/Milestone1E_TestHarness.tsx (F15/F16/F17/$-strip),
-   game/tools/diag-m1e-field.mjs + ts-resolve-loader.mjs (F17b probe),
-   game/tools/diag-m1e-core.mjs (attribution) · ALL SIX RULINGS APPLIED
+   pre-t4:game/tools/diag-m1e-field.mjs + ts-resolve-loader.mjs (F17b probe),
+   pre-t4:game/tools/diag-m1e-core.mjs (attribution) · ALL SIX RULINGS APPLIED
    EXACTLY AS SPECIFIED (Lead ruling 2026-10-16, all confirmed authorial):
    **F14 — THE FIRST CORE-BEHAVIOR EDIT** (7947369): the jump-consumption
    line moved from BEFORE the mode dispatch (canon 812 / extracted 467) to
@@ -529,12 +529,12 @@ Observations (NO change made — recorded for the Lead):
    verbatim (a)/(b)/(c) replication; firstAirborneTick=null) — value
    outside the pre-authorized [−0.15,−0.05) window → routed per ruling.
    · §6 + the ruling's stop-and-route terms. · Evidence:
-   pre-t4:notes/reports/M1E.md §4–5; game/tools/diag-m1e-core.mjs (2d7bf7f). ·
+   pre-t4:notes/reports/M1E.md §4–5; pre-t4:game/tools/diag-m1e-core.mjs (2d7bf7f). ·
    Source: Lead ruling 2026-10-16 (items 7c, 8).
 
 41. 2026-10-16 · 1E/fixes-2 · game/src/core/physics/astronautKCC.ts (F18),
    game/src/test/Milestone1E_TestHarness.tsx (F19/F20),
-   game/tools/diag-m1e-core.mjs (rewritten as the post-fix verifier) ·
+   pre-t4:game/tools/diag-m1e-core.mjs (rewritten as the post-fix verifier) ·
    RULINGS R1/R2/R3 APPLIED EXACTLY AS SPECIFIED. **F18 — CORE EDIT #2**
    (37a4c9e; flagged alongside F14 for the 1G §3.5 re-grep): (a)
    _composeGrounded gains an optional spin phase
@@ -688,7 +688,7 @@ Observations (NO change made — recorded for the Lead):
     Evidence: pre-t4:notes/reports/M1F.md §4–6 (verbatim gate output + both probe
     transcripts). · Source: brief §6; directive items 4–5.
 
-47. 2026-10-16 · 1F/tools · game/tools/diag-m1f-core.mjs, game/tools/
+47. 2026-10-16 · 1F/tools · pre-t4:game/tools/diag-m1f-core.mjs, game/tools/
     diag-m1f-browser.mjs (created) · Read-only forensic probes cited as
     evidence in M1F.md §6: Node replication of the verbatim 1F boot/spawn/
     walk/cull arithmetic (WALL_SECONDS env to extend the walk), and a
@@ -749,7 +749,7 @@ Observations (NO change made — recorded for the Lead):
     pre-t4:notes/reports/M1F.md §9 (verbatim output + probe transcripts). ·
     Source: Lead ruling 2026-10-16 items 4c, 9.
 
-50. 2026-10-16 · 1F/tools · game/tools/diag-m1f-r2.mjs (created) ·
+50. 2026-10-16 · 1F/tools · pre-t4:game/tools/diag-m1f-r2.mjs (created) ·
     Read-only convention probe against the REAL sphericalFrame +
     impostorMath modules: replicates lookAtQuatInto verbatim, projects the
     look-target through projectDirectionInto (behind=true, px=py=0 — the
@@ -809,8 +809,8 @@ Observations (NO change made — recorded for the Lead):
     at ~863 m) → branch (iii): edit kept, gate run anyway, routed as
     F25e. · Source: Lead ruling 2026-10-17 item 3 F25d.
 
-54. 2026-10-17 · 1F/tools · game/tools/diag-m1f-core.mjs, game/tools/
-    diag-m1f-r2.mjs, game/tools/diag-m1f-details.mjs (created) ·
+54. 2026-10-17 · 1F/tools · pre-t4:game/tools/diag-m1f-core.mjs, game/tools/
+    diag-m1f-r2.mjs, pre-t4:game/tools/diag-m1f-details.mjs (created) ·
     diag-m1f-core.mjs: ARCS mirrored to the F25d 16-arc list verbatim +
     round-3 instrumentation (crossing timestamps in wall/sim clocks,
     SAT_B distance/bearing from spawn, max slope along the spawn→SAT_B
@@ -837,7 +837,7 @@ Observations (NO change made — recorded for the Lead):
     STATE.md approval ledger. · Source: Lead ruling 2026-10-17 item 3 B-1.
 
 56. 2026-10-17 · 1D/tools (NO harness change) · game/tools/
-    diag-m1d-details.mjs, game/tools/diag-m1d-dive.mjs (created) ·
+    diag-m1d-details.mjs, pre-t4:game/tools/diag-m1d-dive.mjs (created) ·
     Read-only evidence probes for the round-3 regression's m1d row-2
     failure (diveGrounded false): details probe scrapes the five 1D
     .test-row strings verbatim; dive probe polls the FLIGHT panel
@@ -853,7 +853,7 @@ Observations (NO change made — recorded for the Lead):
     M1F.md §10.5. · Source: brief §7 regression rule + M1A row-5
     environment-soft precedent.
 
-57. 2026-10-17 · 1F/F30-gate · game/tools/diag-m1f-core.mjs (rewritten) ·
+57. 2026-10-17 · 1F/F30-gate · pre-t4:game/tools/diag-m1f-core.mjs (rewritten) ·
     F30 Node-first gate BEFORE any harness edit: corridorFor/spawnEligible/
     findSpawn mirrored verbatim (as they would land in the harness) + old-
     acceptance pass for comparison + split counters + timed clean pass +
@@ -888,7 +888,7 @@ Observations (NO change made — recorded for the Lead):
     F32, do-not-patch honored). · Source: Lead ruling round 4 item 3 F31.
 
 59. 2026-10-17 · 1D/tools (E-1; NO 1D harness/spec/config change) ·
-    game/tools/diag-m1d-dive.mjs (extended), game/tools/diag-m1f-details
+    pre-t4:game/tools/diag-m1d-dive.mjs (extended), pre-t4:game/tools/diag-m1f-details
     .mjs (DIAG_PAGE parameter) · E-1 evidence probes: the dive probe now
     reports the WebGL UNMASKED_RENDERER string and mean FPS (rAF counter)
     and accepts DIAG_CHROME_ARGS for a hardware-accelerated session
@@ -914,7 +914,7 @@ Observations (NO change made — recorded for the Lead):
     ruling on F30x/F32/E-1; session row 9. · Lead instruction item 3 B-2.
     · Evidence: STATE.md. · Source: Lead ruling round 4 item 3 B-2.
 
-61. 2026-10-18 · 1F/F30x-gate · game/tools/diag-m1f-core.mjs (extended) ·
+61. 2026-10-18 · 1F/F30x-gate · pre-t4:game/tools/diag-m1f-core.mjs (extended) ·
     F30x Node-first gate BEFORE any harness edit, per the round-5 ruling:
     jitter span parameterized (ladder 0.28 → 0.45 → 0.58 = the 0.60 rad
     hard ceiling), Earthrise guard inside spawnEligible
@@ -973,7 +973,7 @@ Observations (NO change made — recorded for the Lead):
     round 5 §4.6 + §10.2 protocol.
 
 65. 2026-10-18 · 1F/round-6-TrackB · game/src/test/Milestone1F_TestHarness.tsx,
-    game/tools/diag-m1f-r3dump.mjs (created) · R3DUMP emitted from WITHIN
+    pre-t4:game/tools/diag-m1f-r3dump.mjs (created) · R3DUMP emitted from WITHIN
     the R3 classification loop exactly as the addendum prescribed
     (per-differing-pixel dx/dy from the projected centre + side M/I;
     radii header meshR/impR area-derived + max-lit; between the last
@@ -1030,7 +1030,7 @@ Observations (NO change made — recorded for the Lead):
     regression in M1F.md §14. · Lead round-6b directive §2. · Evidence:
     M1F.md §14.1–14.7. · Source: Lead round-6b directive item 2 (F1).
 
-69. 2026-10-19 · 1F/tools · game/tools/diag-m1f-r3val.mjs (created) ·
+69. 2026-10-19 · 1F/tools · pre-t4:game/tools/diag-m1f-r3val.mjs (created) ·
     Validation tooling for the directive's extensive-testing mandate:
     captures a full m1f suite run's R3RAW (per-window byte dump for V1/
     V2/V6) + R3SWEEP (V3 fade-band sweep) + R3BIAS (V4 negative control)
@@ -1060,7 +1060,7 @@ Observations (NO change made — recorded for the Lead):
     · Lead round-6b directive §6. · Evidence: STATE.md. · Source: Lead
     round-6b directive item 6 + §10.2.
 
-71. 2026-10-19 · 1F/tools · game/tools/diag-m1f-r7.mjs (created),
+71. 2026-10-19 · 1F/tools · pre-t4:game/tools/diag-m1f-r7.mjs (created),
     pre-t4:notes/reports/evidence/M1F-r7-walks.json (created) · Round-7 Track A
     Node instrument per the Lead directive: staged walk-outcome site
     search (A screen 2,425 sites over the 0.62 rad cap + old-stream
@@ -1130,7 +1130,7 @@ Observations (NO change made — recorded for the Lead):
     · F-01/F-02 no-op at O=0, so pre-rebase rows unchanged. · Evidence:
     TSC_EXIT=0; diag r7 stages A (2393-site lattice) + GATE smoke. · Source:
     Lead issue batch F-01..F-12 (m1-assembly c0ae8bf review).
-75. 2026-10-19 · 1F/F-04..F-08/F-05 diag · game/tools/diag-m1f-r7.mjs ·
+75. 2026-10-19 · 1F/F-04..F-08/F-05 diag · pre-t4:game/tools/diag-m1f-r7.mjs ·
     F-04 (P1 tools/diag LOS): losClear now builds the rendered straddle pose
     via the shared m1fStraddle helper and un-rotates samples by R⁻¹ before
     terrainHeight (was unrotated moon-fixed ray; now matches harness F-03).
@@ -1410,19 +1410,19 @@ Observations (NO change made — recorded for the Lead):
 
 - 2026-10-26 · F2d · `game/tools/test-flight-gate.mjs` (new), `docs/decisions/ADR-009-independent-flight-gate.md` (new), `game/src/test/Milestone1D_TestHarness.tsx` (DIVE deadline + countdown) · independent m1d gate: pinned density/Mach/wind law, constructed-ridge and 4,096 seeded real-terrain grazing ticks scored by an interior-clearance oracle, governor dive on a physics-time deadline at 60/30/15/10 fps with an identical trace; harness DIVE ends at `diveTicks/60 > 45` instead of requested time · why: T1 passed density-step/sea-level-Mach/reversed-wind faults, T2 passed an endpoint-only sweep, and the requested-time deadline failed T2 below ~20 fps (A1-U05-1/-7/-2) · evidence: `pre-t4:docs/audit/evidence/F2d/` (gate 12/12 ×2, self-test 8/8 ×2, deliberate exit 1, playwright m1d 1 → 0, all regressions exit 0) · source: U27c §2 F2d, rechecks U27b3b2b2a + U27-k2d
 
-- 2026-10-26 · F2e · `game/tools/test-kcc-gate.mjs` (new), `docs/decisions/ADR-010-independent-kcc-gate.md` (new), `game/tools/audit/f2e-regress.sh` (new, regression runner) · independent m1e KCC gate: vertical-jump Coriolis on a smooth sphere and on a real sloped site against its own inertial RK4 (launch along the real normal, contact on the rotating terrain), zero/reversed-spin controls, dt convergence; finite clearance, abs/local frame and yaw residual (minimal-rotation transport + commanded yaw, ≤ 0.5·δ²) on every tick of two real-terrain walks; `--self-test` with 8 source-rewrite mutants · why: R5 subtracted the blended-up tilt and ignored its prediction (A1-U04-1), R1/R2 never observed grounded clearance (A1-U04-3), R1 passed 4° yaw snaps (A1-U04-4) · evidence: `pre-t4:docs/audit/evidence/F2e/` (exits.txt) · source: U27c §2 row F2e, recheck U27b3b2b1. No game source changed.
+- 2026-10-26 · F2e · `game/tools/test-kcc-gate.mjs` (new), `docs/decisions/ADR-010-independent-kcc-gate.md` (new), `pre-t4:game/tools/audit/f2e-regress.sh` (new, regression runner) · independent m1e KCC gate: vertical-jump Coriolis on a smooth sphere and on a real sloped site against its own inertial RK4 (launch along the real normal, contact on the rotating terrain), zero/reversed-spin controls, dt convergence; finite clearance, abs/local frame and yaw residual (minimal-rotation transport + commanded yaw, ≤ 0.5·δ²) on every tick of two real-terrain walks; `--self-test` with 8 source-rewrite mutants · why: R5 subtracted the blended-up tilt and ignored its prediction (A1-U04-1), R1/R2 never observed grounded clearance (A1-U04-3), R1 passed 4° yaw snaps (A1-U04-4) · evidence: `pre-t4:docs/audit/evidence/F2e/` (exits.txt) · source: U27c §2 row F2e, recheck U27b3b2b1. No game source changed.
 - 2026-10-26 · F3aa · `game/src/core/orbit/realBodyData.ts` (new), `game/tools/test-real-body-data.mjs` (new), `docs/decisions/ADR-011-real-body-reference-data.md` (new) · sourced real table (IAU PCK pole/prime meridian/spin rate, JPL planet + satellite mean elements, NSSDC Pluto elements, PCK mean radii) for all 17 bodies; independent gate 63 checks + 10 mutants · why: A1-U12-1 / D-ADR-2 need a real input for the scale laws and the frame tree; data only, nothing in the tick reads it · evidence: `pre-t4:docs/audit/evidence/F3a/` (gate 63/63 exit 0 twice, self-test 10/10 exit 0, orbit gate 9/9, tsc/build exit 0) · source: session 115
-- 2026-10-26 · F3aba · `game/src/core/orbit/KeplerRail.ts` (`validateOrbit`, called in `_addBody`), `game/tools/test-rail-validation.mjs` (new), `game/tools/audit/f3aba-regress.sh` (new), `docs/decisions/ADR-012-rail-boot-validation.md` (new) · boot validation of orbit elements: finite a/e/i/Ω/ω/M0/T/n/μ, a > 0, 0 ≤ e < 1, μ > 0, T > 0; throws naming the body; boot path only, tick unchanged · why: e ≥ 1 / a ≤ 0 / NaN gave a silent NaN state every tick (A1-U12-2); F3abb's derived catalog needs a loud failure · evidence: `pre-t4:docs/audit/evidence/F3a/aba/` (gate 35/35 exit 0 twice, self-test 6/6 exit 0 twice, deliberate exit 1, all regressions exit 0 except test-play-controller 56/57, which is pre-existing — same failure on the unedited tree twice) · source: U27c §2 F3a, ADR-012
-- 2026-10-26 · F3abba · `game/src/core/orbit/spinLaw.ts` (new), `game/src/core/orbit/types.ts` (`SpinParams`, `CelestialConfig.spin`), `game/src/core/orbit/celestialData.ts` (second pass `deriveSpins`), `game/tools/test-spin-law.mjs` (new), `game/tools/audit/f3abba-regress.sh` (new), `docs/decisions/ADR-013-spin-time-law.md` (new) · spin period, right-hand spin axis, prime meridian W0, retrograde flag and lock target for all 17 bodies; time law keeps each body's real spin/orbit ratio, tidal locks exact, Sun on Earth's ratio; data only, nothing in the tick reads it · why: no body rotates (A1-U12-1); F3b's frame tree needs spin data; ledger 2026-10-22 asks for a day much shorter than a year · evidence: `pre-t4:docs/audit/evidence/F3a/abba/` (exits.txt: spin-law PASS ×2, self-test 7/7, deliberate exit 1; all regressions exit 0 except test-play-controller 56/57, pre-existing, and alloc-loops `--self-test` EXIT=2 — NEW, open blocker: calibration `cal.obj3` 96.1 B vs 48.3 on the unedited tree) · source: U27c §2 F3a, ADR-013
-- 2026-10-27 · F3abbba · `game/tools/alloc-lib.mjs` (`calibrate` ctlObj), `game/tools/test-alloc-gate.mjs` (ctlObj), `game/tools/audit/f3abbba-shape-probe.mjs` (new), `game/tools/audit/f3abbba-regress.sh` (new), `docs/decisions/ADR-014-alloc-calibration-private-shape.md` (new) · the allocation-gate calibration control writes `{calX, calY, calZ}` instead of `{x, y, z}`; window, budgets, mutants unchanged · why: once any double `{x,y,z}` exists in the isolate (F3abba `spin.axis`) V8's shared map turns its fields to boxed doubles and the integer control read 96.1 B/iter (allowed 16–64) → false exit 2 · evidence: probe old control 48.4/48.3/96.1 (fresh/int/double), fixed 48.3–48.4 all modes; alloc-loops `--self-test` EXIT=0 ×3, alloc-gate `--self-test` EXIT=0, unfixed alloc-gate `--self-test` EXIT=2; runner exits `pre-t4:docs/audit/evidence/F3a/abbba/exits.txt` · source: V8 field-representation tracking (session 118 probe)
+- 2026-10-26 · F3aba · `game/src/core/orbit/KeplerRail.ts` (`validateOrbit`, called in `_addBody`), `game/tools/test-rail-validation.mjs` (new), `pre-t4:game/tools/audit/f3aba-regress.sh` (new), `docs/decisions/ADR-012-rail-boot-validation.md` (new) · boot validation of orbit elements: finite a/e/i/Ω/ω/M0/T/n/μ, a > 0, 0 ≤ e < 1, μ > 0, T > 0; throws naming the body; boot path only, tick unchanged · why: e ≥ 1 / a ≤ 0 / NaN gave a silent NaN state every tick (A1-U12-2); F3abb's derived catalog needs a loud failure · evidence: `pre-t4:docs/audit/evidence/F3a/aba/` (gate 35/35 exit 0 twice, self-test 6/6 exit 0 twice, deliberate exit 1, all regressions exit 0 except test-play-controller 56/57, which is pre-existing — same failure on the unedited tree twice) · source: U27c §2 F3a, ADR-012
+- 2026-10-26 · F3abba · `game/src/core/orbit/spinLaw.ts` (new), `game/src/core/orbit/types.ts` (`SpinParams`, `CelestialConfig.spin`), `game/src/core/orbit/celestialData.ts` (second pass `deriveSpins`), `game/tools/test-spin-law.mjs` (new), `pre-t4:game/tools/audit/f3abba-regress.sh` (new), `docs/decisions/ADR-013-spin-time-law.md` (new) · spin period, right-hand spin axis, prime meridian W0, retrograde flag and lock target for all 17 bodies; time law keeps each body's real spin/orbit ratio, tidal locks exact, Sun on Earth's ratio; data only, nothing in the tick reads it · why: no body rotates (A1-U12-1); F3b's frame tree needs spin data; ledger 2026-10-22 asks for a day much shorter than a year · evidence: `pre-t4:docs/audit/evidence/F3a/abba/` (exits.txt: spin-law PASS ×2, self-test 7/7, deliberate exit 1; all regressions exit 0 except test-play-controller 56/57, pre-existing, and alloc-loops `--self-test` EXIT=2 — NEW, open blocker: calibration `cal.obj3` 96.1 B vs 48.3 on the unedited tree) · source: U27c §2 F3a, ADR-013
+- 2026-10-27 · F3abbba · `game/tools/alloc-lib.mjs` (`calibrate` ctlObj), `game/tools/test-alloc-gate.mjs` (ctlObj), `game/tools/audit/f3abbba-shape-probe.mjs` (new), `pre-t4:game/tools/audit/f3abbba-regress.sh` (new), `docs/decisions/ADR-014-alloc-calibration-private-shape.md` (new) · the allocation-gate calibration control writes `{calX, calY, calZ}` instead of `{x, y, z}`; window, budgets, mutants unchanged · why: once any double `{x,y,z}` exists in the isolate (F3abba `spin.axis`) V8's shared map turns its fields to boxed doubles and the integer control read 96.1 B/iter (allowed 16–64) → false exit 2 · evidence: probe old control 48.4/48.3/96.1 (fresh/int/double), fixed 48.3–48.4 all modes; alloc-loops `--self-test` EXIT=0 ×3, alloc-gate `--self-test` EXIT=0, unfixed alloc-gate `--self-test` EXIT=2; runner exits `pre-t4:docs/audit/evidence/F3a/abbba/exits.txt` · source: V8 field-representation tracking (session 118 probe)
 
 - 2026-10-27 · F3abbbba · `game/tools/audit/f3abbbba-scale-laws.mjs` (new), `docs/decisions/ADR-015-catalog-scale-laws.md` (new) · chose one radius law, one distance law and one time scale for the catalog · A1-U10-2/-6, U12-1, D-ADR-2, ledger 2026-10-22 rulings · probe 8/8 exit 0 twice, `--control` exit 1 (`pre-t4:docs/audit/evidence/F3a/abbbba/`) · REAL_BODY_DATA (ADR-011). No game code changed.
-- 2026-10-27 · F3abbbbba · `game/src/core/orbit/scaleLaw.ts` (new), `game/tools/test-scale-law.mjs` (new), `game/tools/audit/f3abbbbba-regress.sh` (new) · the ADR-015 radius/distance/time laws and the derived host μ (4π²a³/T²), gravityRange and portalDist as a boot-only pure-core module; not imported by the catalog yet · why: F3a / A1-U10-2/-6, U12-1, D-ADR-2; the wiring is F3abbbbbb · gate 11/11 exit 0 twice, `--self-test` 12/12 exit 0 twice, `--deliberate` exit 1; typecheck/build exit 0 (`pre-t4:docs/audit/evidence/F3a/abbbbba/`) · ADR-015, REAL_BODY_DATA (ADR-011)
-- 2026-10-27 · F3abbbbbb · `game/src/core/orbit/celestialData.ts`, `game/src/core/simulation/SimulationCore.ts` (`_macroTimeScale` 30→1), `game/tools/test-orbit-gate.mjs`, `game/src/test/Milestone1B_TestHarness.tsx`, `game/tools/test-play-spawn.mjs` (Sun elevation pin), `game/tools/audit/f3abbbbbb-regress.sh` (new), `docs/decisions/ADR-015` (addendum) · wired the ADR-015 scale laws into the catalog at 1× · A1-U10-2/-6, U12-1, D-ADR-2 · orbit gate 9/9 + self-test 12/12, scale-law 11/11, spin/rail/real-body/kcc/flight/seam/precision gates, play suites, typecheck, build, e2e-plumbing, playwright m1b all exit 0 (`pre-t4:docs/audit/evidence/F3a/abbbbbb/`) · ADR-015 addendum
+- 2026-10-27 · F3abbbbba · `game/src/core/orbit/scaleLaw.ts` (new), `game/tools/test-scale-law.mjs` (new), `pre-t4:game/tools/audit/f3abbbbba-regress.sh` (new) · the ADR-015 radius/distance/time laws and the derived host μ (4π²a³/T²), gravityRange and portalDist as a boot-only pure-core module; not imported by the catalog yet · why: F3a / A1-U10-2/-6, U12-1, D-ADR-2; the wiring is F3abbbbbb · gate 11/11 exit 0 twice, `--self-test` 12/12 exit 0 twice, `--deliberate` exit 1; typecheck/build exit 0 (`pre-t4:docs/audit/evidence/F3a/abbbbba/`) · ADR-015, REAL_BODY_DATA (ADR-011)
+- 2026-10-27 · F3abbbbbb · `game/src/core/orbit/celestialData.ts`, `game/src/core/simulation/SimulationCore.ts` (`_macroTimeScale` 30→1), `game/tools/test-orbit-gate.mjs`, `game/src/test/Milestone1B_TestHarness.tsx`, `game/tools/test-play-spawn.mjs` (Sun elevation pin), `pre-t4:game/tools/audit/f3abbbbbb-regress.sh` (new), `docs/decisions/ADR-015` (addendum) · wired the ADR-015 scale laws into the catalog at 1× · A1-U10-2/-6, U12-1, D-ADR-2 · orbit gate 9/9 + self-test 12/12, scale-law 11/11, spin/rail/real-body/kcc/flight/seam/precision gates, play suites, typecheck, build, e2e-plumbing, playwright m1b all exit 0 (`pre-t4:docs/audit/evidence/F3a/abbbbbb/`) · ADR-015 addendum
 
 2026-10-27 · F3abbbbbc · game/src/core/orbit/{orbitElements,celestialData,types}.ts, game/tools/test-orbit-gate.mjs, test-alloc-gate.mjs, test-play-*.mjs, Milestone1B_TestHarness.tsx, docs/decisions/ADR-016 · real orbit elements wired in; oracle extended; spawn pins re-pinned · bodies were circular and flat with M0 = index x golden angle · pre-t4:docs/audit/evidence/F3a/abbbbbc/ · session 124
 
-- 2026-10-27 · F3a-follow-up (2) · `game/src/play/camera/ThirdPersonCamera.ts` (new `frameToward`), `game/src/play/world/moonConfig.ts` (`PLAY_TUNING.camSpawnAimAbove` 13°), `game/src/play/PlayPage.tsx`, `game/src/play/frame/playFrame.ts` (respawn), `game/tools/test-play-frame.mjs`, `game/tools/audit/f3afu2-regress.sh` (new), `docs/decisions/ADR-017` · spawn/respawn camera pitched so the Earth sits 13° above the view axis (topocentric aim); old `< 31°` row restored + 13° ± 1.5° / above-axis / respawn-pitch rows · Lead ruling 2026-10-27: Earth was 31.93° off axis at spawn · test-play-frame 26/26 exit 0 (Earth 12.99°), full regress `pre-t4:docs/audit/evidence/F3a/fu2/` · ADR-017, session 126
+- 2026-10-27 · F3a-follow-up (2) · `game/src/play/camera/ThirdPersonCamera.ts` (new `frameToward`), `game/src/play/world/moonConfig.ts` (`PLAY_TUNING.camSpawnAimAbove` 13°), `game/src/play/PlayPage.tsx`, `game/src/play/frame/playFrame.ts` (respawn), `game/tools/test-play-frame.mjs`, `pre-t4:game/tools/audit/f3afu2-regress.sh` (new), `docs/decisions/ADR-017` · spawn/respawn camera pitched so the Earth sits 13° above the view axis (topocentric aim); old `< 31°` row restored + 13° ± 1.5° / above-axis / respawn-pitch rows · Lead ruling 2026-10-27: Earth was 31.93° off axis at spawn · test-play-frame 26/26 exit 0 (Earth 12.99°), full regress `pre-t4:docs/audit/evidence/F3a/fu2/` · ADR-017, session 126
 
 - 2026-10-27 · F2fba · `game/tools/audit/f2fb-make-variant.py` (new, audit tool only; no game code changed) · builds a 3057899 worktree with one batch hunk reverted to its c0ae8bf text · attribute the m1f R2 regression (A1-U01-1) · R2 cause = F-12 Sun-pose position `drv − O`; up vector innocent; 6 observer runs `pre-t4:docs/audit/evidence/F2f/b/` · ADR-018 method, session 128
 - 2026-10-27 · F2fbba · game/tools/audit/f2fb-make-variant.py · new `F12diag` variant: diagnostic-only A/B renders after the m1f R2 verdict (layer masks, group visibility, absolute pose) · find what hides the Sun at the render-local pose · pre-t4:docs/audit/evidence/F2f/bb/ (2 runs, observer exit 0) · ADR-019
@@ -1471,3 +1471,4 @@ Observations (NO change made — recorded for the Lead):
 - 2026-10-28 · T4 (S0, session 151) · `game/tools/check-repo-refs.mjs` (new), `docs/decisions/ADR-030-repo-layout-history-pointer.md` (new) · dangling repo-path gate with `--self-test`; tag `pre-t4` anchors all pre-cleanup history · why: plan S0, the gate lands before any deletion · evidence: S0 commit message · source: ADR-030
 - 2026-10-28 · T4 (S1, session 151) · removed `pre-t4:Milestone/`, `pre-t4:Design_specs/`, `notes/{reports,patches,archive}/`, `.DS_Store`, `pre-t4:game/tools/extract.mjs`, `game/tools/audit/u10{a,b}-*.mjs`, `u12-orbits-catalog.mjs`; comment path in `game/src/test/Milestone1F_TestHarness.tsx` · phase-1 history out of the tree, references rewritten to `pre-t4:<path>` · why: plan S1, Lead ruling (a) · evidence: S1 commit message · source: ADR-030
 - 2026-10-28 · T4 (S2, session 152) · removed `pre-t4:docs/audit/evidence/`, `pre-t4:docs/audit/U*-evidence/`, `pre-t4:docs/audit/U*-probe-output.txt`; moved the T3 S2 basins generator to `game/tools/gen-moon-basins.mjs` (import paths only) and the U01 gate log to `game/tools/audit/u01-gate-run1.log`; comment path in `game/src/play/world/moonConfig.ts`; readers in `u03-r3r4r5-validity.mjs`, `u27b3b2a-r3-recheck.mjs`, `u27b3a-k2b-recheck.mjs` (tmpdir default), `u27-k2d-verify-sun.py` (argv path), runner output dirs → `$EVID` or `/tmp/evidence` · why: plan S2, ADR-030 evidence policy · evidence: `docs/history/EVIDENCE-INDEX.md`, S2 commit message · source: ADR-030
+- 2026-10-28 · T4 (S3a, session 152b) · removed 75 files from `game/tools/audit/` and `game/tools/` (uncited A1 probes, `*-regress.sh` runners, phase-1 `diag-*`, a stray `.pyc`); `.gitignore` += `__pycache__/` · why: plan S3, keep only tools a kept doc or gate names · evidence: `docs/history/EVIDENCE-INDEX.md` §Tools, S3a commit message · source: ADR-030

@@ -15,7 +15,7 @@ Full reads: `core/render/impostorMath.ts`, `render/SkyImpostorPool.ts`,
 Targeted reads: animation gate rows 15/17c, T1 plan §8.3/§8.6/§8.7,
 Milestone 1F §1.2 and matching projection/depth passages (not the entire milestone).
 
-New probe: `game/tools/audit/u27-k8-k9-recheck.mjs`.
+New probe: `pre-t4:game/tools/audit/u27-k8-k9-recheck.mjs`.
 It imports unchanged modules through esbuild, using an ignored cache bundle.
 It does **not** reuse the old probes' forward kinematics or placement formulas
 as its measurement path:

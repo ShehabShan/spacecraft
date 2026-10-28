@@ -8,8 +8,8 @@
   and `_landAt` 970–1026. Config consumer: `game/src/play/world/moonConfig.ts` (`MOON_ASTRONAUT`).
 - Spec grep: the Milestone 1E STEP RULE passage (lines 205–229) is the code header verbatim, so there is no
   spec/code conflict. The defects below are in how the code feeds the rule, not in what the rule says.
-- Probes (new, read-only): `game/tools/audit/u16-kcc-step-rule.mjs` (controls 5/5) and
-  `game/tools/audit/u16b-kcc-wrap-nan-blocked.mjs` (controls 2/2). Both import the REAL KCC and terrain. Every
+- Probes (new, read-only): `pre-t4:game/tools/audit/u16-kcc-step-rule.mjs` (controls 5/5) and
+  `pre-t4:game/tools/audit/u16b-kcc-wrap-nan-blocked.mjs` (controls 2/2). Both import the REAL KCC and terrain. Every
   reference is written inside the probe:
   - The true slope is a great-circle central-difference gradient of the height field. U14 found the heights,
     seams and determinism clean.

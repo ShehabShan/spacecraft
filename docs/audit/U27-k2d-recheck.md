@@ -61,7 +61,7 @@ Original `u01-m1f-probe.mjs` was rerun unchanged on the unedited harness: exit 0
 | Sky-only (hide all listed world objects) | 1371 | 99.129% | 1.993 px |
 | Sky-only, impostor mesh hidden too | 153 | 11.063% | 1.928 px |
 
-This **localizes the suppression to content under spinGroup in this run**, not the astronaut. It does not identify which terrain/shell/satellite draw, prove a first bad commit, or vindicate every rendering environment. The remaining glow/background still supplies 153 threshold pixels when impostors are hidden, so the colour mask is not exclusive to the Sun disk. **Hiding the group does not make the full R2 pass:** centroid error remains above 1.5 px. A fix must address/diagnose both coverage and projection, not simply hide geometry or weaken the gate. Independent log validation **6/6, exit0** (`python3 game/tools/audit/u27-k2d-verify-sun.py`, repo root); controlled-browser tool exit0 means captured logpoint.
+This **localizes the suppression to content under spinGroup in this run**, not the astronaut. It does not identify which terrain/shell/satellite draw, prove a first bad commit, or vindicate every rendering environment. The remaining glow/background still supplies 153 threshold pixels when impostors are hidden, so the colour mask is not exclusive to the Sun disk. **Hiding the group does not make the full R2 pass:** centroid error remains above 1.5 px. A fix must address/diagnose both coverage and projection, not simply hide geometry or weaken the gate. Independent log validation **6/6, exit0** (`python3 pre-t4:game/tools/audit/u27-k2d-verify-sun.py`, repo root); controlled-browser tool exit0 means captured logpoint.
 
 ## Checked, no issue / limits
 - Actual core rebase count agrees with the selected independent continuous path; no origin algorithm defect demonstrated by this batch.
@@ -81,7 +81,7 @@ From `game/`, unless specified. Full stdout/stderr under `pre-t4:docs/audit/U27-
 | `node tools/audit/u27-k2d-recheck.mjs --self-test-failure` | 1 deliberately; 14/15 |
 | `node tools/audit/u01-m1f-probe.mjs` | 0; captured failed R2 |
 | `node tools/audit/u27-k2d-sun-controls.mjs` | 0; controlled diagnostic, not gate PASS |
-| root: `python3 game/tools/audit/u27-k2d-verify-sun.py` | 0; 6/6 |
+| root: `python3 pre-t4:game/tools/audit/u27-k2d-verify-sun.py` | 0; 6/6 |
 | `npm run typecheck` | 0 |
 | `npm run build` | 0; existing bundle-size warnings |
 | root: `git diff --exit-code 256d77d -- game/src game/e2e game/playwright.config.ts Milestone Design_specs` | 0, empty |

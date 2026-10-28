@@ -94,3 +94,28 @@ directory had no summary file, and the commit message is then the record.
 | U27b3b2b2b1-evidence | daed833 A1-U27b3b2b2b1: recheck cube-face seam gate with independent topology | — | 10 · 84 KB | `pre-t4:docs/audit/U27b3b2b2b1-evidence/` |
 | U27b3b2b2b2a-evidence | 4d0692b A1-U27b3b2b2b2a: recheck orbital rate and direction gate blind spots | exits: build=0, independent-1=0, independent-2=0, npm-ci=0, original=0, protected-diff=0, self-test=1, typecheck=0 | 17 · 87 KB | `pre-t4:docs/audit/U27b3b2b2b2a-evidence/` |
 | U27b3b2b2b2b1-evidence | 9add690 A1-U27b3b2b2b2b1: recheck precision and rebase gate blind spots | — | 12 · 59 KB | `pre-t4:docs/audit/U27b3b2b2b2b1-evidence/` |
+
+## Tools
+
+T4 S3a kept 18 files of `game/tools/audit/` and the phase-1 `game/tools/diag-*` / `r4-cdp-driver.mjs` set: those named in a kept doc (FINDINGS, U27c-fix-tasks, U26-adr-drafts, an ADR) or a kept gate/tool, plus the files they import or read. The other 75 (every `*-regress.sh` and `f2fa-*.sh` runner, the uncited A1 probes, all `diag-*`) were deleted; read them with `git show pre-t4:game/tools/<path>` (the runners write to `pre-t4:docs/audit/evidence/<step>`, see the table above).
+
+| kept file | reason |
+|---|---|
+| `game/tools/audit/f2fa-m1f-observe.mjs` | named in ADR-018-r2-bisect-method.md |
+| `game/tools/audit/f2fb-make-variant.py` | named in ADR-021-r2-gate-design.md |
+| `game/tools/audit/f3abbba-shape-probe.mjs` | named in ADR-014-alloc-calibration-private-shape.md |
+| `game/tools/audit/f3abbbba-scale-laws.mjs` | named in ADR-015-catalog-scale-laws.md |
+| `game/tools/audit/u01-gate-run1.log` | named in u03-r3r4r5-validity.mjs, u27b3b2a-r3-recheck.mjs |
+| `game/tools/audit/u03-r3r4r5-validity.mjs` | named in ADR-023-r3-gate-design.md |
+| `game/tools/audit/u27-findings-index.py` | named in FINDINGS.md |
+| `game/tools/audit/u27-k2d-recheck.mjs` | named in FINDINGS.md |
+| `game/tools/audit/u27-k4-recheck.mjs` | named in FINDINGS.md |
+| `game/tools/audit/u27b1-k1-recheck.mjs` | named in ADR-023-r3-gate-design.md |
+| `game/tools/audit/u27b1-ts-loader.mjs` | named in u27b1-k1-recheck.mjs |
+| `game/tools/audit/u27b2-k2a-recheck.mjs` | named in FINDINGS.md |
+| `game/tools/audit/u27b3a-k2b-recheck.mjs` | named in test-e2e-plumbing.mjs |
+| `game/tools/audit/u27b3b2a-r3-recheck.mjs` | named in ADR-023-r3-gate-design.md |
+| `game/tools/audit/u27b3b2b2b2b1-m1a-recheck.mjs` | named in FINDINGS.md |
+| `game/tools/audit/u27b3b2b2b2b2a-m1a-timing-recheck.mjs` | named in FINDINGS.md |
+| `game/tools/audit/u27c-coverage-check.py` | named in U27c-fix-tasks.md |
+| `game/tools/r4-cdp-driver.mjs` | named in ADR-024-r4-gate-design.md, m1f-r4.spec.ts, M1fR4Gate.tsx |

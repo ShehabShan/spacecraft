@@ -8,7 +8,7 @@
   - `game/src/play/frame/playFrame.ts` (152)
   - `game/src/play/frame/shellStages.ts` (74)
 - Also read: `moonConfig.ts` PLAY_TUNING, astronautKCC.ts 386–400 / 548–575 / 660–690 (input → vDes, auto-turn, look yaw), terrainWorker.ts 74–84 (index topology), T1-plan coyote / camera / wheel passages (grep).
-- Probe: `game/tools/audit/u23-controller-camera.mjs`. It drives the REAL PlayerController, ThirdPersonCamera, PlayClock and AstronautKCC through the esbuild bundle pattern of `test-play-controller.mjs`.
+- Probe: `pre-t4:game/tools/audit/u23-controller-camera.mjs`. It drives the REAL PlayerController, ThirdPersonCamera, PlayClock and AstronautKCC through the esbuild bundle pattern of `test-play-controller.mjs`.
   - Run from `game/`: `node tools/audit/u23-controller-camera.mjs` → **PROBE_EXIT=0**, controls 3/3.
   - Full output: `pre-t4:docs/audit/U23-probe-output.txt`.
 - Read-only: no file under `game/src`, `game/e2e`, `Milestone`, `Design_specs` changed (§6.4 diff empty, see commit VERIFIED).

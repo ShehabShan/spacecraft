@@ -6,7 +6,7 @@
 - Code: `game/src/core/physics/astronautKCC.ts` @ 810b032, lines 524–1114 (part 1, lines 1–560, is U16),
   plus `play/world/moonConfig.ts` (MOON_ASTRONAUT) and `core/physics/sphericalFrame.ts` (helpers).
 - Spec: Milestone 1E grep ("Coriolis handoff", "Zero-G" passages, lines 51–63). It matches the code header.
-- Probe: `game/tools/audit/u17-kcc-part2.mjs` (imports the REAL KCC and terrain; the truth is computed in the
+- Probe: `pre-t4:game/tools/audit/u17-kcc-part2.mjs` (imports the REAL KCC and terrain; the truth is computed in the
   probe: radials from the KCC's own positions, true AGL from the height field, ballistics from an RK4).
 - Scope note: the plan lists "the C¹ speed cap (RATIFIED)" under U17. **The KCC has no speed cap.** The C¹ cap
   is the 2,000 m/s thrust fade in `flightController.ts:18/445`, so it moves to U18 (A1-U17-9).

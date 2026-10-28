@@ -6,7 +6,7 @@
   162 (716 lines). Read as claims: `tools/test-play-anim.mjs` (rows 15, 17c, setup),
   `docs/T1-plan.md` §5.2 / §8.2 / §8.6, `PlayerController.ts` 125–150,
   `moonWorld.ts` 130–150, `playFrame.ts` 108–117.
-- Probe: `game/tools/audit/u24-character.mjs`. It drives the real
+- Probe: `pre-t4:game/tools/audit/u24-character.mjs`. It drives the real
   `ProceduralAnimator`, `AnimStateMachine` and `AstronautRig` through an esbuild
   bundle, the same pattern as `test-play-anim`. Forward kinematics is the probe's
   own f64 code, built from the §7.2 joint offsets (hip ±0.11/−0.06, legs 0.40 + 0.40,

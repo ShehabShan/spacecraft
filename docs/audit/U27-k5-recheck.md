@@ -29,7 +29,7 @@ The older report's `useGameStore` comment is not evidence about shipped play:
 that store is used by the M1A harness. The playFrame header is the relevant claim.
 
 ### Reproduction and controls
-New probe: `game/tools/audit/u27-k5-recheck.mjs`. It reuses the unchanged
+New probe: `pre-t4:game/tools/audit/u27-k5-recheck.mjs`. It reuses the unchanged
 `test-play-perf.mjs` boot/drive prefix (real world/KCC/controller/camera/animator,
 fake worker pool/document/store) but builds an independent measuring instrument.
 Generated fixture/bundle files stay in ignored `node_modules/.cache`.

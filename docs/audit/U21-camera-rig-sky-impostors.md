@@ -5,7 +5,7 @@
   `game/src/play/world/skyState.ts` (127, the play port of the harness sky state).
   Also read: `game/src/core/render/impostorMath.ts` exports, `Milestone1F_TestHarness.tsx` 604–645 and 836–880
   (handoff state machine + probe fade), Milestone 1F grep (lines 4, 26, 42, 45, 55, 73).
-- Probe: `game/tools/audit/u21-camera-sky.mjs`, plus `game/tools/audit/u21-tsx-loader.mjs` (a Node loader that
+- Probe: `pre-t4:game/tools/audit/u21-camera-sky.mjs`, plus `pre-t4:game/tools/audit/u21-tsx-loader.mjs` (a Node loader that
   transpiles the real `.tsx` with the repo's esbuild and stubs react / R3F, because the probe calls only the pure
   exports). Output: `pre-t4:docs/audit/U21-probe-output.txt`.
   - Command: `cd game && node --expose-gc tools/audit/u21-camera-sky.mjs` → **PROBE_EXIT=0**, controls 4/4.

@@ -25,7 +25,7 @@ Session 99 · 2026-10-26 · base `029488c` · A1 read-only.
 ## Dispositions (five S1 findings retained with qualifications)
 
 All locations refer to `game/src/` at `029488c`. New probe:
-`game/tools/audit/u27-k6-recheck.mjs`; original U18/U19 probes also rerun unchanged.
+`pre-t4:game/tools/audit/u27-k6-recheck.mjs`; original U18/U19 probes also rerun unchanged.
 Full controller, atmosphere and aerodynamics files were read; targeted Milestone
 1D passages 35, 69, 75 and control-sign passages checked, not the whole milestone.
 

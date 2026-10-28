@@ -1,7 +1,7 @@
 # A1-U05 — m1d harness validity (U05b: probes + findings)
 
 - Unit: U05b (the first part of U05 was the reading pass, U05a: `docs/audit/U05a-m1d-harness-reading.md`). Commit base: 6f1d740.
-- Probe: `game/tools/audit/u05-m1d-validity.mjs`. Run from `game/` with `node --expose-gc tools/audit/u05-m1d-validity.mjs`. Result: PROBE_EXIT=0, 9/11 checks confirmed; the 2 that were not confirmed are reported honestly below.
+- Probe: `pre-t4:game/tools/audit/u05-m1d-validity.mjs`. Run from `game/` with `node --expose-gc tools/audit/u05-m1d-validity.mjs`. Result: PROBE_EXIT=0, 9/11 checks confirmed; the 2 that were not confirmed are reported honestly below.
 - What the probe does:
   - Slices the T1 predicate verbatim (`Milestone1D_TestHarness.tsx` :645–:663), strips its types with esbuild and runs it with injected mutations of the atmosphere functions.
   - Replicates the T4 `heapOk` clause (:734) and the T5 offset clause (:867–871).
@@ -134,7 +134,7 @@
 - An independent analytic drag + gravity integration for v@1000 m.
 - Read `flightController.ts` :60–355 and :580–750 (sweep/contact), `aerodynamics.ts`, `atmosphere.ts` in full, harness :1000–1182 (HUD), and the Milestone 1D grep.
 ## U05c — DDA penetration, analytic dive, remaining reads (2026-10-22)
-Probe: `game/tools/audit/u05c-m1d-dda-dive.mjs` (run from `game/`: `node tools/audit/u05c-m1d-dda-dive.mjs`).
+Probe: `pre-t4:game/tools/audit/u05c-m1d-dda-dive.mjs` (run from `game/`: `node tools/audit/u05c-m1d-dda-dive.mjs`).
 It builds mutant copies of the real `flightController.ts` by text substitution, strips types with esbuild, and re-points their imports at the real atmosphere, aerodynamics and terrain modules.
 Result: PROBE_EXIT=0, 9/10 checks confirmed. TERR-2 was not confirmed, and that miss is itself finding A1-U05-8.
 Reads done: `flightController.ts` :1–160, :376–560 and :596–750; `aerodynamics.ts` header + `SHIP_AERO`; `atmosphere.ts` density law; harness :488–530 and :680–705; the harness verdict (:1000–1182 is HUD + ALL-PASS chip only); Milestone 1D grep (:19, :72 DDA proof, :2325).

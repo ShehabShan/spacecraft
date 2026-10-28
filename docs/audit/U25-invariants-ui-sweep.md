@@ -2,7 +2,7 @@
 
 Unit: `docs/A1-plan.md` Phase F, U25 · Session 82 · 2026-10-25 · audited @ `82c5906` (branch `a1-engine-audit`)
 Scope: `src/core` import purity, per-frame allocation in tick paths, Euler accumulators, the page rule, and a skim of `play/ui/*`, `play/input/*`, `store/*`, `main.tsx`, `App.tsx` and `play/frame/playFrame.ts`.
-Probe: `game/tools/audit/u25-alloc-sampler.mjs`, run from `game/` as `node --expose-gc --max-semi-space-size=64 tools/audit/u25-alloc-sampler.mjs`, **PROBE_EXIT=0**. Output: `pre-t4:docs/audit/U25-probe-output.txt`.
+Probe: `pre-t4:game/tools/audit/u25-alloc-sampler.mjs`, run from `game/` as `node --expose-gc --max-semi-space-size=64 tools/audit/u25-alloc-sampler.mjs`, **PROBE_EXIT=0**. Output: `pre-t4:docs/audit/U25-probe-output.txt`.
 
 ## Claims (written before probing)
 1. `src/core/**` imports nothing from three, react, @react-three/fiber, physics libraries or DOM globals (AGENT_BRIEF §3).

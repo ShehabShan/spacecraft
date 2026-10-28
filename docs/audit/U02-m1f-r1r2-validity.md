@@ -4,7 +4,7 @@
 - Question: can R1 (depth-compositing) and R2 (impostor-angular) **fail** when the property each one claims is broken?
 - Files read in full: `game/src/test/Milestone1F_TestHarness.tsx` lines 20–34, 794–930 and 981–1160; `game/src/render/SkyImpostorPool.ts` (update/setBody, shaders); `game/src/core/render/impostorMath.ts` (thetaEdge, quadHalfSize, depthResolution, projectDirectionInto); `game/src/render/MultiCameraRig.tsx` (planes, renderAB); `game/src/render/TerrainMeshPool.ts` 330–380.
 - Milestone 1F grep: lines 882–887 (row claims), 1813–1931 (the same suite code, spec-authored), and the table at 2555–2563.
-- Probe: `game/tools/audit/u02-r1r2-validity.mjs`, run under Node with no harness edit. It copies the R1(b) and R2(a) loops verbatim, runs them against the real `SkyImpostorPool`, `impostorMath`, `terrainField` and rails, and adds an independent check that reads the written GPU data. Result: `[u02] CONFIRMED 9/9`, `PROBE_EXIT=0`.
+- Probe: `pre-t4:game/tools/audit/u02-r1r2-validity.mjs`, run under Node with no harness edit. It copies the R1(b) and R2(a) loops verbatim, runs them against the real `SkyImpostorPool`, `impostorMath`, `terrainField` and rails, and adds an independent check that reads the written GPU data. Result: `[u02] CONFIRMED 9/9`, `PROBE_EXIT=0`.
 
 ## Verdict
 | Row part | Can it fail on its claim? | Evidence |

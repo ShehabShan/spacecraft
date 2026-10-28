@@ -6,7 +6,7 @@
   Specs: `pre-t4:Milestone/Milestone 1D.txt` lines 16–42, 43, 75 (grep); `pre-t4:Design_specs/00` line 22, `02` §4, `03` atmosphereHeight (grep).
 - Lead extension (2026-10-23): also check the T2 requirement in `notes/task.md`
   (per-body real atmospheres, a manual landing that the atmosphere affects, 2,000 m/s for deep space only).
-- Probe: `game/tools/audit/u19-aero-atmosphere.mjs`. It imports the real atmosphere, aerodynamics,
+- Probe: `pre-t4:game/tools/audit/u19-aero-atmosphere.mjs`. It imports the real atmosphere, aerodynamics,
   flightController and terrain modules. Truth comes from hydrostatics (dP/dh = −ρg, P = ρ·Rs·T) and
   NASA planetary fact-sheet values, rounded.
   - Command (from `game/`): `node --expose-gc tools/audit/u19-aero-atmosphere.mjs > /tmp/u19.log` → **PROBE_EXIT=0**, `controls=11/11`.

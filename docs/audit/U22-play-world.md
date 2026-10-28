@@ -10,7 +10,7 @@
   - `MoonLod.ts` (250)
   - Call sites in `play/frame/playFrame.ts` (stages 6–11) and `PlayPage.tsx`
   - The helpers they lean on: `terrainField.ts` (`gridCoord`, `chunkArcWidth`, `chunkOriginInto`, `skirtDepthFor`) and `KCC.teleportSurface`
-- Probe: `game/tools/audit/u22-play-world.mjs`. It imports the real modules: MoonLod over a fake instant-answer pool (the `test-play-lod` shape), the real spawn search, the real SimulationCore and the real terrain field.
+- Probe: `pre-t4:game/tools/audit/u22-play-world.mjs`. It imports the real modules: MoonLod over a fake instant-answer pool (the `test-play-lod` shape), the real spawn search, the real SimulationCore and the real terrain field.
 - Run from `game/`: `node --expose-gc tools/audit/u22-play-world.mjs`.
   - Result: PROBE_EXIT=0, controls 4/4.
   - Output: `pre-t4:docs/audit/U22-probe-output.txt`.

@@ -8,7 +8,7 @@ Plan question (`docs/A1-plan.md` U09): do the assertions match the §13 claims, 
 
 - Claims written down first from §13.2: every script prints `[test-play-<area>] PASS n/n` and exits non-zero on failure; "Heap ≈ 0" = `heapUsed` delta after a final `gc()` < 64 KiB **and** no monotonic growth across 10 equal chunks; the play layer allocates nothing per frame (AGENT_BRIEF §3 zero-GC, T1-plan §11).
 - Baseline: each script run with `node --expose-gc tools/<f>` from `game/`, exit code recorded unpiped (`> log 2>&1; echo $?`), 4 runs for the controller and 1 + 3 reruns for the others; then once without `--expose-gc`.
-- Probe: `game/tools/audit/u09-play-node-validity.mjs`. It copies `game/src` to `node_modules/.cache/u09/g0` (git-ignored), path-rewrites copies of the real test scripts onto that copy, injects ONE mutation per copy, and re-runs them as child processes (`--expose-gc`, optionally `--trace-gc`). A `PerformanceObserver('gc')` hook counts minor GCs (scavenges). The repo's `src/` and `tools/test-play-*.mjs` are only read. Result: `PROBE_EXIT=0`, `[u09] 11/11 as expected`.
+- Probe: `pre-t4:game/tools/audit/u09-play-node-validity.mjs`. It copies `game/src` to `node_modules/.cache/u09/g0` (git-ignored), path-rewrites copies of the real test scripts onto that copy, injects ONE mutation per copy, and re-runs them as child processes (`--expose-gc`, optionally `--trace-gc`). A `PerformanceObserver('gc')` hook counts minor GCs (scavenges). The repo's `src/` and `tools/test-play-*.mjs` are only read. Result: `PROBE_EXIT=0`, `[u09] 11/11 as expected`.
 - Environment: PromptQL VM v2, 2 vCPU / 4 GB, Node from `game/` `npm ci`.
 
 ## Baseline

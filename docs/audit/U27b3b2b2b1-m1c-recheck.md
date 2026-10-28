@@ -50,7 +50,7 @@ The old report is a claim to retest, not evidence for this session.
 
 ## Method and controls
 
-New runnable repro: `game/tools/audit/u27b3b2b2b1-m1c-recheck.mjs`
+New runnable repro: `pre-t4:game/tools/audit/u27b3b2b2b1-m1c-recheck.mjs`
 (from `game/`: `node tools/audit/u27b3b2b2b1-m1c-recheck.mjs`).
 It exits nonzero if an expected disposition fails.
 
