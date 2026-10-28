@@ -4,7 +4,7 @@
 // WHY: m1e R5 subtracts the blended-up tilt instead of the real launch normal (−0.97 cm artefact at
 // zero spin) and never compares its own prediction (A1-U04-1); R1/R2 keep integrity.minAGL =
 // Infinity while grounded, so a 0.10 m sink passes (A1-U04-3); R1's raw forward-delta bound
-// accepts 4° yaw snaps (A1-U04-4). Recheck: docs/audit/U27b3b2b1-m1e-recheck.md. Truth here comes
+// accepts 4° yaw snaps (A1-U04-4). Recheck: pre-t4:docs/audit/U27b3b2b1-m1e-recheck.md. Truth here comes
 // from PINNED catalog literals, an independent integrator and independent geometry; the only engine
 // data shared is the terrain height field and its normal service (never KCC telemetry/integrity).
 //

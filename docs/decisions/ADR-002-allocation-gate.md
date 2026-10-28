@@ -3,7 +3,7 @@
 - Status: ACCEPTED (session decision under AGENT_BRIEF §13) · Task: F1b (part F1ba) · Date: 2026-10-26
 - Closes in F1ba: A1-U09-1 (play-frame side of cluster K2a) and the measurement half of A1-U25-1. The engine fix for A1-U25-1 is F5a.
 - Left for F1bb: A1-U03-4, A1-U04-5, A1-U05-3, A1-U06-2, A1-U07-3 (the harness loops) and retiring the boot-only counters.
-- Follows: draft D-ADR-1 (gates before engine fixes) and U27b2 (`docs/audit/U27b2-k2a-recheck.md`).
+- Follows: draft D-ADR-1 (gates before engine fixes) and U27b2 (`pre-t4:docs/audit/U27b2-k2a-recheck.md`).
 
 ## Context
 AGENT_BRIEF §3 says the engine does no per-frame allocation. No existing gate can check that claim.

@@ -1,7 +1,7 @@
 # ADR-025 — Rebuilt m1f R5 (M1A integration) gate design
 
 - Status: ACCEPTED (F2fcea, session 140, 2026-10-28). R5a is implemented; R5b is F2fceb.
-- Task: F2f (U27c §2), findings A1-U03-5 (S1, K2d; re-checked in `docs/audit/U27-k2d-recheck.md`) and A1-U03-6 (S2).
+- Task: F2f (U27c §2), findings A1-U03-5 (S1, K2d; re-checked in `pre-t4:docs/audit/U27-k2d-recheck.md`) and A1-U03-6 (S2).
 
 ## Context
 The shipped R5 (`Milestone1F_TestHarness.tsx` `runSuite`, "R5: M1A integration") has two defects:

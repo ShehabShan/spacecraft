@@ -3,7 +3,7 @@
 // within 5 mm — plus same-face and T-junction seams, run in Node on the unchanged worker.
 // WHY: m1c T3 (`auditSeams`) skips every pair of chunks on different faces, so a unilateral
 // fault at any of the 12 edges / 8 corners passes (A1-U06-1, K2c; recheck
-// docs/audit/U27b3b2b2b1-m1c-recheck.md: 64 false accepts). Truth here comes from an explicit
+// pre-t4:docs/audit/U27b3b2b2b1-m1c-recheck.md: 64 false accepts). Truth here comes from an explicit
 // Cartesian chart per face (pinned public face convention, NOT the production FACE_C/U/V or
 // gridCoord), exact dyadic cube-coordinate identity keys, and Float32 bit patterns.
 //

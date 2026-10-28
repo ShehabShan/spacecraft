@@ -1,7 +1,7 @@
 # ADR-001 — Strict e2e acceptance contract for the milestone specs
 
 - Status: ACCEPTED (session decision under AGENT_BRIEF §13) · Task: F1a · Date: 2026-10-26
-- Closes: A1-U08-1, A1-U08-2, A1-U08-9 (cluster K2b, `docs/audit/FINDINGS.md`; recheck `docs/audit/U27b3a-k2b-recheck.md`)
+- Closes: A1-U08-1, A1-U08-2, A1-U08-9 (cluster K2b, `docs/audit/FINDINGS.md`; recheck `pre-t4:docs/audit/U27b3a-k2b-recheck.md`)
 - Follows: draft D-ADR-1 ("independent gates before any engine fix", `docs/audit/U26-adr-drafts.md`)
 
 ## Context

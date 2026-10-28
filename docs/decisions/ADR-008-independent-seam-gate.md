@@ -3,7 +3,7 @@
 **Status:** accepted (session 112, 2026-10-26) · **Task:** F2c · **Finding:** A1-U06-1 (K2c)
 
 ## Context
-m1c T3 (`auditSeams` in `Milestone1C_TestHarness.tsx`) skips every chunk pair on different cube faces. A one-sided normal fault at any of the 12 cube edges or 8 corners passes, and so does a 1 m position fault at any edge. The recheck (`docs/audit/U27b3b2b2b1-m1c-recheck.md`) measured 64 false accepts per run across two fixtures. Same-face and T-junction faults are caught.
+m1c T3 (`auditSeams` in `Milestone1C_TestHarness.tsx`) skips every chunk pair on different cube faces. A one-sided normal fault at any of the 12 cube edges or 8 corners passes, and so does a 1 m position fault at any edge. The recheck (`pre-t4:docs/audit/U27b3b2b2b1-m1c-recheck.md`) measured 64 false accepts per run across two fixtures. Same-face and T-junction faults are caught.
 
 ## Options
 1. Patch T3 in the browser harness to compare cross-face pairs. Its identity would still come from the production face tables, so a face-table fault could validate itself. Changing the row also touches the strict ADR-001 contract (C4).

@@ -3,7 +3,7 @@
 **Status:** accepted (session 114, 2026-10-26) · **Task:** F2e · **Findings:** A1-U04-1, A1-U04-3, A1-U04-4 (K2c)
 
 ## Context
-m1e R5 subtracts the character's blended-up tilt from the jump drift, but the KCC launches along the terrain normal. At zero spin this reports −0.97 cm of "drift" with no rotation at all. R5 also never compares its own prediction: −1 m, 100 m and NaN all pass (A1-U04-1). R1 and R2 keep `integrity.minAGL = Infinity` while grounded, so a 0.10 m sink after a tick passes both rows (A1-U04-3). R1's raw per-tick forward-change bound (0.09 rad) mixes steering, frame transport and error, so 87 injected 4° yaw snaps pass (A1-U04-4). The recheck is `docs/audit/U27b3b2b1-m1e-recheck.md`.
+m1e R5 subtracts the character's blended-up tilt from the jump drift, but the KCC launches along the terrain normal. At zero spin this reports −0.97 cm of "drift" with no rotation at all. R5 also never compares its own prediction: −1 m, 100 m and NaN all pass (A1-U04-1). R1 and R2 keep `integrity.minAGL = Infinity` while grounded, so a 0.10 m sink after a tick passes both rows (A1-U04-3). R1's raw per-tick forward-change bound (0.09 rad) mixes steering, frame transport and error, so 87 injected 4° yaw snaps pass (A1-U04-4). The recheck is `pre-t4:docs/audit/U27b3b2b1-m1e-recheck.md`.
 
 ## Options
 1. Rewrite R1/R2/R5 inside the browser harness. Truth would still come from KCC telemetry, and the ADR-001 row contract (E6) would be touched.

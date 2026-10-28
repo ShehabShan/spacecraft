@@ -3,8 +3,8 @@
 // extract, and the wall-clock cost of a rebase — run against the real SimulationCore.
 // WHY: m1a T2/T4 read the engine's own REBASE_THRESHOLD / ORIGIN_LATTICE, T3 counts but never
 // times rebases, no row reads any localPosF32, and T5 drops every frame ≥ 250 ms and tags the
-// wrong frame as the rebase frame (A1-U08-5/-6/-7; rechecks docs/audit/U27b3b2b2b2b1-m1a-recheck.md
-// and U27b3b2b2b2b2a-m1a-timing-recheck.md). Truth here comes from PINNED SPEC LITERALS and the
+// wrong frame as the rebase frame (A1-U08-5/-6/-7; rechecks pre-t4:docs/audit/U27b3b2b2b2b1-m1a-recheck.md
+// and pre-t4:docs/audit/U27b3b2b2b2b2a-m1a-timing-recheck.md). Truth here comes from PINNED SPEC LITERALS and the
 // raw f64 inputs only; the gate never imports a constant from the engine.
 //
 // Run from game/:

@@ -1,7 +1,7 @@
 # A1-U27c — Fix tasks in dependency order (proposal for the Lead gate)
 
 - Task: A1 (read-only) · Branch: `a1-engine-audit` · Base `31f4ebe` · 2026-10-26
-- Inputs: `FINDINGS.md` §3 (55 S0/S1 in K1–K9, each with U27b recheck evidence), `U26-architecture-fitness.md`, draft ADRs `U26-adr-drafts.md` (D-ADR-1..8) and the U27 recheck ADR drafts (`U27-k4-adr-draft.md`, `U27-k5-k6-adr-draft.md`, `U27-k7-adr-draft.md`, `U27-k8-k9-adr-draft.md`).
+- Inputs: `FINDINGS.md` §3 (55 S0/S1 in K1–K9, each with U27b recheck evidence), `pre-t4:docs/audit/U26-architecture-fitness.md`, draft ADRs `U26-adr-drafts.md` (D-ADR-1..8) and the U27 recheck ADR drafts (`pre-t4:docs/audit/U27-k4-adr-draft.md`, `pre-t4:docs/audit/U27-k5-k6-adr-draft.md`, `pre-t4:docs/audit/U27-k7-adr-draft.md`, `pre-t4:docs/audit/U27-k8-k9-adr-draft.md`).
 - Checker: `python3 game/tools/audit/u27c-coverage-check.py` (repo root) — every S0/S1 ID maps to exactly one target, every task is one session, every dependency is listed earlier. `--self-test` drops one ID and must exit 1.
 - Nothing here is built during A1. Fix tasks start only on the Lead's execute order (AGENT_BRIEF §4 LEAD GATE).
 

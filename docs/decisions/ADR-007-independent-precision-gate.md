@@ -9,7 +9,7 @@ The m1a harness rows cannot fail on the floating-origin contract they claim to p
 - No row reads any `localPosF32`, so the f32-before-subtract and stale-static-locals faults pass.
 - T5 drops every frame ≥ 250 ms. It tags the frame *before* the rebase as the rebase frame, and its verdict depends on the display rate.
 
-The rechecks are `docs/audit/U27b3b2b2b2b1-m1a-recheck.md` and `U27b3b2b2b2b2a-m1a-timing-recheck.md`.
+The rechecks are `pre-t4:docs/audit/U27b3b2b2b2b1-m1a-recheck.md` and `pre-t4:docs/audit/U27b3b2b2b2b2a-m1a-timing-recheck.md`.
 
 ## Options
 1. Patch the browser harness rows (spec literals, extra legs, re-timed T5). The verdict would still depend on wall-clock frame rate under SwiftShader, and every row change touches the strict ADR-001 contract (A5).

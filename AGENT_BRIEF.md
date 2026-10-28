@@ -183,7 +183,7 @@ Any impulse to change a ratified constant/formula/threshold · any new library �
 a milestone regression page you cannot fix · suspected lost work · any doubt
 about whether a change is allowed — STOP, write the options, ask the Lead.
 During A1, also: any edit outside `docs/audit/**`, `game/tools/audit/**` and the
-process files (`notes/task.md`, `notes/STATE.md`, `docs/A1-plan.md`).
+process files (`notes/task.md`, `notes/STATE.md`, `pre-t4:docs/A1-plan.md`).
 The Lead is the repo owner.
 Outside A1, a technical choice (including a ratified constant, formula,
 threshold or a new library) is NOT a hard stop: decide it under §13 and record
@@ -263,7 +263,7 @@ the existing code cannot audit it.
   finding, and the auditor judges which side is right on physics and math.
 - RATIFIED items (§3) and parked 1F (§8) MAY be audited and flagged; changing them
   happens in a later fix task under §13 (ADR + evidence).
-- Method, finding template, severity scale and budget rule: `docs/A1-plan.md` §6.
+- Method, finding template, severity scale and budget rule: `pre-t4:docs/A1-plan.md` §6.
 
 ## 12. SESSION BUDGET (binds every task; Lead, 2026-10-21)
 - One session = 50 OLU. Every committable unit (plan item, build step, audit

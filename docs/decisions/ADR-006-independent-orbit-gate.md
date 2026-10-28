@@ -1,7 +1,7 @@
 # ADR-006 — Independent raw-element orbit gate (F2a)
 
 - Status: ACCEPTED (session decision, AGENT_BRIEF §13) · Task: F2a (U27c §2) · Date: 2026-10-26
-- Closes K2c orbital findings A1-U07-1 (rate) and A1-U07-2 (geometry/direction). Promotes the A1 audit-method draft in `docs/audit/U27b3b2b2b2a-m1b-recheck.md` §5 to a regression gate.
+- Closes K2c orbital findings A1-U07-1 (rate) and A1-U07-2 (geometry/direction). Promotes the A1 audit-method draft in `pre-t4:docs/audit/U27b3b2b2b2a-m1b-recheck.md` §5 to a regression gate.
 
 ## Context
 All five m1b rows build their reference from the rail's own derived values (`orbit.n`, `orbit.T`, cached `basisP/basisQ`, `semiMinor`). An error in those values therefore moves the engine and the reference together, and the rows still pass. The A1 recheck showed that the full suite accepts Earth n×1.01, every n×2, a coherent μ×4/n×2/T÷2 change, all `basisQ` negated, and Triton's sign flipped.

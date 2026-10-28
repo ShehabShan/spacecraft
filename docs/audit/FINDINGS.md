@@ -43,7 +43,7 @@
 | A1-U03-1 | **Re-confirmed (S0)**, scope clarified | Source-extracted real update/apply functions + real pool: 57 missing samples at 100 m spacing; cutoff 225,647.934 m, inbound return strictly below 220,000 m. Actual R3(a): zero holes. |
 | A1-U21-3 | **Re-confirmed (S1)** | Real play update: 72/72 alpha values = 1; no Earth/Moon impostor slot. Source caller inventory confines handoff to harness. |
 
-Full method, commands/exits and controls: [U27b1 K1 re-check](U27b1-k1-recheck.md).
+Full method, commands/exits and controls: [U27b1 K1 re-check](pre-t4:docs/audit/U27b1-k1-recheck.md).
 Both old repros rerun (exit 0); independent probe 11/11 (exit 0). **No fresh GPU
 pixels or full browser suite.** “Nothing” is the affected probe's representations,
 not the whole scene or a demonstrated play-page disappearance; distances are
@@ -81,7 +81,7 @@ This is the largest cluster. The 1A–1F approvals rest on these gates, so they 
 | A1-U09-1 | Re-confirmed S1 | ~4 KB/frame transient mutant passes perf 19/19; retained mutant fails. Independent observer sees ~41.6 MB churn hidden by post-GC delta. |
 
 Full method, source citations, commands/unpiped exits, controls, limitations and
-audit-method ADR draft: [U27b2 K2a re-check](U27b2-k2a-recheck.md).
+audit-method ADR draft: [U27b2 K2a re-check](pre-t4:docs/audit/U27b2-k2a-recheck.md).
 Original repros all exit 0, **not** all expectations pass: U05 10/11 (old unrelated
 T3-2 expectation), U09 10/11 (cold-camera failure did not recur).
 New `node --expose-gc tools/audit/u27b2-k2a-recheck.mjs` from `game/`:
@@ -110,7 +110,7 @@ majority provenance remains open. Remaining K2 and K3–K9 are not signed off.
 | A1-U08-9 | Re-confirmed S1 | Real m1a ERR and red m1d with ERR + forced PASSED pass; all six specs accept ERR fixtures. |
 
 Full method, commands/exits, exact citations and audit-method ADR:
-[U27b3a K2b re-check](U27b3a-k2b-recheck.md).
+[U27b3a K2b re-check](pre-t4:docs/audit/U27b3a-k2b-recheck.md).
 Independent probe **54/54 expected dispositions ×2**, wrapper exit 0:
 6 clean accepts, 18 correctly rejected controls, **30 false accepts per run**.
 The raw mixed Playwright suites exit 1 intentionally. These are plumbing tests,
@@ -139,7 +139,7 @@ Typecheck/build/protected diff exit 0. Raw evidence: `U27b3a-evidence/`.
 | A1-U02-3 | Re-confirmed S1 | 8190 actual chunk origins hit the 1e9/30 km sentinel. Conservative noise-derived bound makes raw gap ≤ −1856.18 m without relying on the hand-entered 360 m terrain maximum. Positive out-of-domain control exercises real branch. |
 
 Full method, corrections, source citations, controls and audit-method ADR draft:
-[U27b3b1 R1/R2 re-check](U27b3b1-k2c-r1r2-recheck.md).
+[U27b3b1 R1/R2 re-check](pre-t4:docs/audit/U27b3b1-k2c-r1r2-recheck.md).
 Original repro **9/9**, exit 0; independent extracted predicates **20/20 ×2**,
 exit 0. Typecheck/build/protected diff exit 0. Raw logs: `U27b3b1-evidence/`.
 
@@ -162,7 +162,7 @@ provenance unresolved. Remaining K2 and K3–K9 are not signed off.
 | A1-U03-3 | Re-confirmed S1; qualified | Extracted pixel loop accepts bright-background missing/shifted/enlarged targets; a 69-pixel difference becomes 0.2695% against 25,600 background pixels. Empty masks and isolated bad disks fail. Historical U01 saturation re-read, not a fresh GPU run or proof of every run since 3057899. |
 
 Method, source citations, qualifications and audit-method ADR draft:
-[U27b3b2a R3 re-check](U27b3b2a-k2c-r3-recheck.md).
+[U27b3b2a R3 re-check](pre-t4:docs/audit/U27b3b2a-k2c-r3-recheck.md).
 Original repro **22/22**, independent controls **26/26 ×2**, all exit 0.
 Typecheck/build/protected diff exit 0; evidence in `U27b3b2a-evidence/`.
 These are source-extracted predicate tests with synthetic draw/byte fixtures, not
@@ -183,7 +183,7 @@ provenance still unresolved. Unrelated original-probe R4/R5 output is not sign-o
 | A1-U04-4 | Re-confirmed S1; qualified | 87 measured 4° snaps pass; 8° snaps fail. Baseline ends 123.03° from start: no closed-loop holonomy test. Separate steering/transport and derive tolerances; original 1e−6 rad recommendation is not established for the terrain-blended path. |
 
 Report, controls and audit-method ADR draft:
-[U27b3b2b1 m1e re-check](U27b3b2b1-m1e-recheck.md).
+[U27b3b2b1 m1e re-check](pre-t4:docs/audit/U27b3b2b1-m1e-recheck.md).
 Original repro **20/21, exit 1** (unrelated R4 M-LEAK GC trial); targeted
 checks reproduced. Independent first attempt **27/28, exit 1** caught an
 out-of-window injection; corrected probe **28/28 ×2, exit 0**.
@@ -209,7 +209,7 @@ no untouched findings signed off.
 | A1-U05-7 | Re-confirmed S1; qualified | Actual T2 dive predicate accepts a literal start/end-only sweep and coarse64 sweep, while no sweep and negative telemetry fail. Constructed ridge has +10.022 m endpoints / −10 m midpoint yet endpoint telemetry passes. Real-terrain endpoint mutant: 22/4096 tunnels, selected witness +8.368/+4.247 m endpoints / −15.078 m interior. Unmodified sweep catches both selected witnesses. No new production tunnelling claim. |
 
 Report + audit-method ADR draft:
-[U27b3b2b2a m1d re-check](U27b3b2b2a-m1d-recheck.md).
+[U27b3b2b2a m1d re-check](pre-t4:docs/audit/U27b3b2b2a-m1d-recheck.md).
 Original repros exit 0 but only **10/11** and **9/10** observations confirmed
 (unrelated T3-2 expectation and false terrain slope-bound premise). Independent
 first attempt exit 1 (probe Function-body transpilation); corrected versions
@@ -235,7 +235,7 @@ provenance unresolved. No untouched findings signed off.
 | A1-U06-1 | Re-confirmed S1; qualified | Exact T3 accepts reversed normals at all 12 cube edges/eight corners and 1 m position faults on all 12 edges, in independent sphere + real-worker fixtures (64 false accepts/run). Same-face/T-junction normal/position controls fail. Production baseline 818 cross-face pairs has zero normal-bit mismatches; max position deviation 0.120 mm. |
 
 Report + audit-method ADR draft:
-[U27b3b2b2b1 m1c re-check](U27b3b2b2b1-m1c-recheck.md).
+[U27b3b2b2b1 m1c re-check](pre-t4:docs/audit/U27b3b2b2b1-m1c-recheck.md).
 Original **14/14 exit 0**; new probe **80/80 twice exit 0**.
 Initial **78/79 exit 1** identified synthetic +0/−0 differences; explicit control
 confirms them, only synthetic zeros canonicalized, real worker arrays untouched.
@@ -260,7 +260,7 @@ provenance unresolved. No untouched findings signed off.
 | A1-U07-2 | Re-confirmed S1; qualified | Every basisQ reversed and Triton n sign flipped pass five rows; independent direction checks reject. Radius/flattening controls pass T1 but fail T3. Future direction truth must not use the potentially wrong n sign. |
 
 Report + audit-method ADR draft:
-[U27b3b2b2b2a m1b re-check](U27b3b2b2b2a-m1b-recheck.md).
+[U27b3b2b2b2a m1b re-check](pre-t4:docs/audit/U27b3b2b2b2a-m1b-recheck.md).
 Original **23/23 exit 0**; independent **32/32 twice exit 0**;
 deliberate self-test **32/33 exit 1**. Raw logs/exits:
 `U27b3b2b2b2a-evidence/`. Typecheck/build/protected diff exit 0.
@@ -284,7 +284,7 @@ provenance unresolved. No untouched finding signed off.
 | A1-U08-5 | **Re-confirmed with qualifications; S1 retained.** Wrong thresholds/lattices pass, including ten shifts with L300. Exact trace alone misses thresholds 1023/1025; signed boundary tests catch them. L512 remains divisible by 256 but chooses the wrong off-axis origin. Independent exact-origin oracle rejects all five lattice mutants; count/bound/lattice controls respond. |
 | A1-U08-6 | **Re-confirmed with qualifications; S1 retained.** Early rounding, stale beacons (9216 m error) and zeroed locals pass. T2 does indirectly read focus locals and rejects 2048 m, so “no row reads locals” is too broad. Catalog Earth distance is 600000 m, not 1 AU: 16320 m errors are injected-fault stress witnesses, not production play defects; catalog-scale witness error is ~5 mm. |
 
-Evidence: [m1a re-check report](U27b3b2b2b2b2b1-m1a-recheck.md),
+Evidence: [m1a re-check report](pre-t4:docs/audit/U27b3b2b2b2b1-m1a-recheck.md),
 new probe `game/tools/audit/u27b3b2b2b2b1-m1a-recheck.mjs`, raw logs
 `U27b3b2b2b2b1-evidence/`. Original 16/18 confirmed with controls OK, exit 0
 (two documented non-confirmations); independent final **50/50 twice exit 0**;
@@ -306,7 +306,7 @@ Model `gpt-6-astra` verified by platform; historical-majority condition unresolv
 |---|---|
 | A1-U08-7 | **Re-confirmed with qualifications; S1 retained.** ≥250 ms intervals are discarded, including nine 300 ms following-rebase delays and three 1 s freezes. Rebase diagnostics tag the preceding interval and do not affect the verdict. Collector + finalizer warmup skip 40 callbacks; callback30=200 ms passes, callback41 fails. |
 
-Evidence: [timing re-check report](U27b3b2b2b2b2a-m1a-timing-recheck.md),
+Evidence: [timing re-check report](pre-t4:docs/audit/U27b3b2b2b2b2a-m1a-timing-recheck.md),
 new probe `game/tools/audit/u27b3b2b2b2b2a-m1a-timing-recheck.mjs`,
 raw logs `evidence/U27b3b2b2b2b2a/`. Original16/18 controls OK exit0
 (timing claims confirmed; unrelated non-confirmations preserved);
@@ -334,7 +334,7 @@ Model `gpt-6-astra` verified; historical-majority condition unresolved.
 | A1-U05-2 | **Re-confirmed, S1 retained.** Exact extracted row fails at 15/10 fps before completing the same trajectory. Tick-time deadline controls pass. Original replay had one extra update; corrected 15 fps 16.8 s / 62.607 m AGL. |
 | A1-U01-1 | **Failure re-confirmed; attribution remains likely.** Fresh unchanged browser repro: R2 footprint zero, Sun active +32.9566°, nonblank frame. Follow-up visibility controls localize suppression to spinGroup (not exact draw): hiding it restores99.129% coverage, but centroid1.993px still fails. First bad commit3057899/F-12 remains unbisected. |
 
-Evidence: [K2d batch report](U27-k2d-recheck.md), new
+Evidence: [K2d batch report](pre-t4:docs/audit/U27-k2d-recheck.md), new
 `game/tools/audit/u27-k2d-recheck.mjs`, raw `U27-k2d-evidence/`.
 Original U03 22/22 exit0; U05 10/11 exit0 (unrelated miss retained);
 independent **14/14 twice exit0**, deliberate **14/15 exit1**.
@@ -372,7 +372,7 @@ All seven retain S1; historical member titles above are qualified by this review
 | A1-U26-2 | Synthesis confirmed, not an independent root cause or proof one frame-tree change fixes every consumer. |
 
 Full evidence, source anchors, commands/exits, limitations and audit-method ADR:
-[U27b4a K3 re-check](U27-k3-recheck.md). Seven original scripts exit0, controls
+[U27b4a K3 re-check](pre-t4:docs/audit/U27-k3-recheck.md). Seven original scripts exit0, controls
 inspected; independent **29/29 twice**, exit0, deliberate self-test29/30 exit1.
 Typecheck/build and protected/old-probe diffs exit0. No browser or GPU verdict.
 Raw logs: `U27-k3-evidence/`.
@@ -402,7 +402,7 @@ rulings, rather than asking those visual questions again.
 | U05-8 | Retain S1, confirmed false premise | Geodesic0.5m secant5.953>1.2; original6.412. Baseline0/3000 tunnels remains; production tunnelling not established. |
 | U20-1 | Retain S1, confirmed controlled schedule | 100 serial requests →4drops at peakinflight1; stale pending aliases another owner's active record. Larger per-worker capacity →0drops. Aggregate192sets>144meshes already holds, so total-capacity assertion alone is insufficient. |
 
-[Report](U27-k4-recheck.md), [draft method ADR](U27-k4-adr-draft.md),
+[Report](pre-t4:docs/audit/U27-k4-recheck.md), [draft method ADR](pre-t4:docs/audit/U27-k4-adr-draft.md),
 logs in `U27-k4-evidence/`; new probe `game/tools/audit/u27-k4-recheck.mjs`.
 Originals exit0 (U14/U22/U20 controls4/4; U05c9/10 rejects false bound).
 Independent **19/19 twice exit0**, deliberate19/20 exit1; typecheck/build and
@@ -425,7 +425,7 @@ is measured; allocation-site cause not diagnosed. Original U25 controls2/3
 despite exit0; independent failed floating controls preserved, replaced by
 integer zero controls without relaxed bounds. Final19/19 twice exit0;
 deliberate19/20 exit1.
-[Report](U27-k5-recheck.md), [method ADR draft](U27-k5-k6-adr-draft.md);
+[Report](pre-t4:docs/audit/U27-k5-recheck.md), [method ADR draft](pre-t4:docs/audit/U27-k5-k6-adr-draft.md);
 shared evidence `evidence/U27-k5/`. Allocation and retained growth need separate gates.
 
 ### K6 — Flight model: controls, the speed cap and landing physics — score 15.0 (5× S1)
@@ -448,8 +448,8 @@ shared evidence `evidence/U27-k5/`. Allocation and retained growth need separate
 | U19-4 | Retain S1, integration gap | One built-in profile/no body selection or cruise regime; caller-supplied profiles and vacuum already work. Not automatic Earth atmosphere for every body. |
 
 Original U18/U19 controls5/5 and11/11 exit0; independent23/23 twice exit0,
-deliberate23/24 exit1. [Report](U27-k6-recheck.md),
-[method ADR draft](U27-k5-k6-adr-draft.md); logs `evidence/U27-k5/`.
+deliberate23/24 exit1. [Report](pre-t4:docs/audit/U27-k6-recheck.md),
+[method ADR draft](pre-t4:docs/audit/U27-k5-k6-adr-draft.md); logs `evidence/U27-k5/`.
 K5+K6 complete as one partial batch; **48/55 reviewed; K7–K9 seven remain**.
 Typecheck/build/protected diff exit0; no production changes or browser verdict.
 Historical per-unit model attribution remains unverified.
@@ -471,8 +471,8 @@ Historical per-unit model attribution remains unverified.
 
 Original U16/U17 controls5/5, U13b schedule repro, all exit0.
 Independent17/17 twice exit0, deliberate17/18 exit1; first loader error retained.
-Typecheck/build/protected/old-probe diffs0. [Report](U27-k7-recheck.md),
-[method ADR draft](U27-k7-adr-draft.md), logs `evidence/U27-k7/`.
+Typecheck/build/protected/old-probe diffs0. [Report](pre-t4:docs/audit/U27-k7-recheck.md),
+[method ADR draft](pre-t4:docs/audit/U27-k7-adr-draft.md), logs `evidence/U27-k7/`.
 **51/55 reviewed; K8/K9 four remain.** Historical model-majority provenance open.
 
 ### K8 — Impostor projection off-axis — score 6.0 (2× S1)
@@ -504,7 +504,7 @@ Original three probes exit0 (U15/U24 controls5/5 each); unchanged animation gate
 Independent48/48 twice exit0; deliberate48/49 exit1. Initial46/48 exit1 retained
 and explained (probe's incorrect residual bound, not a game failure).
 Typecheck/build/protected and existing-probe diffs exit0.
-[Report](U27-k8-k9-recheck.md), [method ADR draft](U27-k8-k9-adr-draft.md),
+[Report](pre-t4:docs/audit/U27-k8-k9-recheck.md), [method ADR draft](pre-t4:docs/audit/U27-k8-k9-adr-draft.md),
 evidence `evidence/U27-k8-k9/`. No production edits or GPU verdict.
 **55/55 evidence reviewed.** Current reviewer gpt-6-astra confirmed; original
 U05b independently matched to Opus5.5, but historical majority remains
@@ -520,170 +520,170 @@ unverified. U27c must preserve/resolve that qualification, not silently close it
 
 | ID | Sev | Conf | Category | Title | Report |
 |---|---|---|---|---|---|
-| A1-U01-1 | S1 | likely | test | R2 regressed in commit 3057899 (F-12 suite-pose change), which shipped without a gate run | `U01-m1f-baseline.md` |
-| A1-U01-2 | S2 | confirmed | test | R2 fails silently: the detail string cannot distinguish "occluded" from "culled" or "blank" | `U01-m1f-baseline.md` |
-| A1-U02-1 | S1 | confirmed | test (and spec: the same code is in Milestone 1F ~1900–1931) | R2(a)'s per-instance θ/position audit cannot fail, and it audits only one body | `U02-m1f-r1r2-validity.md` |
-| A1-U02-2 | S1 | confirmed | test (spec: Milestone 1F ~1840–1880, same code) | R1's pair audit runs on constants: `layeredMin > 10 && singleMin < 1` is true by construction | `U02-m1f-r1r2-validity.md` |
-| A1-U02-3 | S1 | confirmed | test (spec: Milestone 1F :1849–1869; the spec table :2562 claims "Earth/horizon ~600,000×") | R1(b) "Earth vs horizon terrain" is structurally dead (frame error); it always prints the 1e9 sentinel | `U02-m1f-r1r2-validity.md` |
-| A1-U02-4 | S2 | likely | test | R1's frozen-frame determinism half cannot detect z-fighting | `U02-m1f-r1r2-validity.md` |
-| A1-U02-5 | S2 | confirmed | doc / spec | R2's tolerances are documented three different ways | `U02-m1f-r1r2-validity.md` |
-| A1-U02-6 | S3 | confirmed | test | `abRender`'s quiesce guard is vacuous, and its fallthrough comment is false | `U02-m1f-r1r2-validity.md` |
-| A1-U03-1 | S0 | confirmed | engine (harness handoff controller) + test | The mesh↔impostor handoff renders NOTHING for 5.6 km on every descent; R3 cannot see it | `U03-m1f-r3r4r5-validity.md` |
-| A1-U03-2 | S1 | confirmed | test (spec: same code in Milestone 1F) | R3(a) and R3(b) hole/double counters are tautologies | `U03-m1f-r3r4r5-validity.md` |
-| A1-U03-3 | S1 | confirmed | test | R3(c) silhouette A/B compares a saturated window, so it passes vacuously | `U03-m1f-r3r4r5-validity.md` |
-| A1-U03-4 | S1 | confirmed | test | R4's identity canary is never checked; heap rows pass on GC or missing data | `U03-m1f-r3r4r5-validity.md` |
-| A1-U03-5 | S1 | confirmed | test (fixture) — answers the plan seed "is the gate wrong, or the terrain, or the KCC?": the gate. | R5 "rebases ≥ 2" is unreachable by the gate's own fixture (SAT_B is overhead; the walk ends at its nadir) | `U03-m1f-r3r4r5-validity.md` |
-| A1-U03-6 | S2 | confirmed | test | R5 straddler A/B never checks that Sat B is visible; Sun continuity is sampled only on rebase frames | `U03-m1f-r3r4r5-validity.md` |
-| A1-U04-1 | S1 | confirmed | test | R5 "spec-canonical" Coriolis row passes on a mis-measured drift (0.75 cm vs ≈1.9 cm true); `predicted` is never compared | `U04-m1e-harness-validity.md` |
-| A1-U04-2 | S3 | confirmed | spec / doc | The spec's (4/3)Ωu³/g² uses g = 9.81 and ignores the rotating frame; the true drift here is 11% larger | `U04-m1e-harness-validity.md` |
-| A1-U04-3 | S1 | confirmed | test (plus KCC integrity semantics) | "Penetration-free" clauses in R1 and R2(c) are vacuous: `integrity.minAGL` is never written while grounded | `U04-m1e-harness-validity.md` |
-| A1-U04-4 | S1 | confirmed | test | R1 "no yaw snaps" bounds admit 4° snaps; the holonomy claim is printed but untested | `U04-m1e-harness-validity.md` |
-| A1-U04-5 | S1 | confirmed | test | R4 zero-gc: identity canary cannot fail; heap guard is optional and GC-timing dependent | `U04-m1e-harness-validity.md` |
-| A1-U04-6 | S2 | confirmed | test | R3 state-machine sub-checks weaker than worded | `U04-m1e-harness-validity.md` |
-| A1-U05-1 | S1 | confirmed | test | T1 cannot fail on its own claims (C∞ law, Mach, rotating atmosphere) | `U05-m1d-harness-validity.md` |
-| A1-U05-2 | S1 | confirmed | test (and play: documents a real slow-motion effect) | T2 (governor dive) verdict depends on machine frame rate | `U05-m1d-harness-validity.md` |
-| A1-U05-3 | S1 | confirmed | test | T4 heap clause passes any negative delta, and its verdict is GC noise | `U05-m1d-harness-validity.md` |
-| A1-U05-4 | S2 | confirmed | test | T4 identity canary is tautological | `U05-m1d-harness-validity.md` |
-| A1-U05-5 | S2 | confirmed | test | T5 offset check cannot fail; the "Δ f32-exact" claim is never checked | `U05-m1d-harness-validity.md` |
-| A1-U05-6 | S3 | confirmed | test | T3 "no hard clamp" only covers clamps inside `integrateFlight` | `U05-m1d-harness-validity.md` |
-| A1-U05-7 | S1 | confirmed | test | T2's no-clip clauses cannot test the DDA; `minPostTickAGL` is blind to tunnelling by construction | `U05-m1d-harness-validity.md` |
-| A1-U05-8 | S1 | confirmed | spec + engine | The DDA no-clip proof rests on a false terrain slope bound (L = 1.2; measured up to 6.4) | `U05-m1d-harness-validity.md` |
-| A1-U05-9 | S2 | confirmed | spec + doc | The "structural limit" a_struct is exceeded 6.9× during the governed dive | `U05-m1d-harness-validity.md` |
-| A1-U05-10 | S2 | confirmed | engine | Telemetry g-load excludes drag (0.000 g shown during a 63 g deceleration) | `U05-m1d-harness-validity.md` |
-| A1-U06-1 | S1 | confirmed | test | T3 never compares the 12 cube-face seams; inverted face-edge normals still PASS | `U06-m1c-harness-validity.md` |
-| A1-U06-2 | S1 | confirmed | test | T2 "zero main-thread buffer allocations" is zero by construction | `U06-m1c-harness-validity.md` |
-| A1-U06-3 | S2 | confirmed | test (harness controller; it is not the play-layer LOD) | The harness LOD merge leaves children `desired`; parent and children chunks can coexist for seconds | `U06-m1c-harness-validity.md` |
-| A1-U06-4 | S2 | confirmed | test / engine (design) | Neighbours two levels apart occur in flight and are never audited (no 2:1 balance) | `U06-m1c-harness-validity.md` |
-| A1-U06-5 | S2 | confirmed | test | T4 heap guard passes on N/A and on any negative delta; memory is bucketed | `U06-m1c-harness-validity.md` |
-| A1-U06-6 | S3 | confirmed | test / doc | heap-flat detail string prints a literal template expression | `U06-m1c-harness-validity.md` |
-| A1-U07-1 | S1 | confirmed | test | No m1b row checks the orbital time scale; Kepler-3 is a tautology | `U07-m1b-harness-validity.md` |
-| A1-U07-2 | S1 | confirmed | test | The "independent" reference re-uses the rail's geometry; orbit direction is never checked | `U07-m1b-harness-validity.md` |
-| A1-U07-3 | S1 | confirmed | test | Zero-GC row: heap clause passes on missing API and on GC; verdict flips between runs | `U07-m1b-harness-validity.md` |
-| A1-U07-4 | S2 | confirmed | test | Vis-viva clause is an identity and skips all moons | `U07-m1b-harness-validity.md` |
-| A1-U07-5 | S2 | confirmed | test | Acceptance console line and T3 detail print literal `{…}` instead of values | `U07-m1b-harness-validity.md` |
-| A1-U07-6 | S2 | confirmed | doc | Documented period table is stale by up to 11 s | `U07-m1b-harness-validity.md` |
-| A1-U07-7 | S3 | confirmed | spec | Earth's Moon sits at 0.71 of Earth's Hill radius | `U07-m1b-harness-validity.md` |
-| A1-U08-1 | S1 | high | gate sensitivity | Page errors and console errors are collected but never asserted | `U08-e2e-spec-sensitivity.md` |
-| A1-U08-2 | S1 | high | gate sensitivity | A missing result passes: placeholder badges and dropped rows are not detected | `U08-e2e-spec-sensitivity.md` |
-| A1-U08-3 | S2 | high | gate design | The gate trusts the harness's own PASSED line, which carries no cross-checkable values | `U08-e2e-spec-sensitivity.md` |
-| A1-U08-4 | S2 | high | build plumbing | The gate build does not type-check, and there is no CI | `U08-e2e-spec-sensitivity.md` |
-| A1-U08-5 | S1 | high | test | m1a rows T2–T4 cannot detect a wrong rebase threshold or a wrong lattice | `U08-e2e-spec-sensitivity.md` |
-| A1-U08-6 | S1 | high | test | m1a never checks the precision invariant or the static beacons it renders as "the signature visual proof" | `U08-e2e-spec-sensitivity.md` |
-| A1-U08-7 | S1 | high | test | m1a T5 cannot see the worst stutters, and its "rebase frame" is the wrong frame | `U08-e2e-spec-sensitivity.md` |
-| A1-U08-8 | S2 | high | test | m1a console verdict line and four of the five row details print literal template text | `U08-e2e-spec-sensitivity.md` |
-| A1-U08-9 | S1 | high | test | The badge check only rejects the literal text "FAIL"; any other failing badge passes | `U08-e2e-spec-sensitivity.md` |
-| A1-U08-10 | S3 | medium | test / env | The m1f gate did not reach a verdict within 240 s on a 2 vCPU / 4 GB VM | `U08-e2e-spec-sensitivity.md` |
-| A1-U09-1 | S1 | high | test | The heap rows cannot detect per-frame allocation, so the zero-GC claim is untested | `U09-play-node-tests.md` |
-| A1-U09-2 | S2 | high | test (bad method) | The controller camera heap row is red because it has no warm-up, not because of a leak | `U09-play-node-tests.md` |
-| A1-U09-3 | S2 | high | spec–test mismatch | Only test-play-perf checks the §13.2 "no monotonic growth" clause; six rows are one-sided | `U09-play-node-tests.md` |
-| A1-U09-4 | S3 | high | test sensitivity | The jump-buffer rows bracket the window at [0.10, 0.20) s, not 0.12 s | `U09-play-node-tests.md` |
-| A1-U09-5 | S3 | high | test | Without `--expose-gc` the controller zero-GC row passes vacuously | `U09-play-node-tests.md` |
-| A1-U09-6 | S3 | high | test / reporting | Output lines do not follow the §13.2 format | `U09-play-node-tests.md` |
-| A1-U10-1 | S2 | confirmed | spec | Spec 02 has lost every formula: 9 empty value/formula slots | `U10-design-specs-scale.md` |
-| A1-U10-2 | S2 | confirmed | spec (data) | Catalog radii follow two different compression laws; Mars is smaller than Mercury, Charon and Titania larger than the Moon | `U10-design-specs-scale.md` |
-| A1-U10-3 | S2 | confirmed | spec (data) / play | Earth fills 14.7° of the play Moon's sky (real 1.9°); moon orbits have no common compression law | `U10-design-specs-scale.md` |
-| A1-U10-4 | S2 | confirmed | spec / play | The play Moon is a 1:1,273 world with real g: horizon 66 m, mountains 26 % of the radius | `U10-design-specs-scale.md` |
-| A1-U10-5 | S1 | confirmed | spec | The speed limits have no reference frame, and every planet and moon outruns them | `U10-design-specs-scale.md` |
-| A1-U10-6 | S2 | confirmed | spec | A day is longer than a year: spin runs on real time, orbits on the 30× clock | `U10-design-specs-scale.md` |
-| A1-U10-7 | S2 | confirmed | spec | Spec 05 1B asks for "exact real-world relative positions"; the catalog cannot produce them, and spec 00 rules them out of scope | `U10-design-specs-scale.md` |
-| A1-U10-8 | S2 | confirmed | spec | `gravityRange` is called a sphere of influence but matches neither Hill nor Laplace SOI; the Sun has no range yet drives every rail | `U10-design-specs-scale.md` |
-| A1-U10-9 | S2 | confirmed | spec | Atmospheres are called "shallow" but most are as tall as the planet | `U10-design-specs-scale.md` |
-| A1-U10-10 | S2 | confirmed | spec / doc | Specs 00/01/05 are built on Rapier; the engine and the brief defer it | `U10-design-specs-scale.md` |
-| A1-U10-11 | S3 | confirmed | spec | Spec 01 says rebase on crossing a 256 m boundary; spec 05 and the code rebase past 1,024 m | `U10-design-specs-scale.md` |
-| A1-U10-12 | S3 | confirmed | spec / engine | Spec 03 gives no moon a portal distance; the code invents 80,000 m | `U10-design-specs-scale.md` |
-| A1-U10-13 | S3 | confirmed | spec | Two different zero-GC bars | `U10-design-specs-scale.md` |
-| A1-U10-14 | S3 | confirmed | spec (look and feel) | The artistic Sun is 3.8° wide from Earth and only 1.2× Jupiter | `U10-design-specs-scale.md` |
-| A1-U11-1 | S2 | confirmed | engine | Adapter never re-shows an entity that is unregistered and registered again | `U11-precision-floating-origin.md` |
-| A1-U11-2 | S2 | confirmed | engine | Unregistering the focus entity silently re-focuses an arbitrary entity, and the origin jumps there | `U11-precision-floating-origin.md` |
-| A1-U11-3 | S3 | confirmed | engine | `getOrigin()` / `getOriginReadonly()` return the live, writable origin; one write breaks the lattice and `RebaseEvent.delta` | `U11-precision-floating-origin.md` |
-| A1-U11-4 | S3 | confirmed | doc | The power-of-two rationale is overstated: render precision does not depend on the lattice, and the Δ bound is conservative | `U11-precision-floating-origin.md` |
-| A1-U12-1 | S1 | confirmed | engine + spec | No body rotates: the engine has no spin rail, no pole, no prime meridian | `U12-orbits-catalog.md` |
-| A1-U12-2 | S2 | confirmed | engine | The rail accepts non-elliptical elements and returns NaN or a degenerate line silently | `U12-orbits-catalog.md` |
-| A1-U12-3 | S2 | confirmed | spec + engine (data) | Every orbit is circular and in one plane, including the systems where that is visibly wrong | `U12-orbits-catalog.md` |
-| A1-U12-4 | S3 | confirmed | engine | Newton exit is never met for e ≥ 0.9999 near M ≈ 0 (accuracy still fine) | `U12-orbits-catalog.md` |
-| A1-U12-5 | S3 | confirmed | doc | `wrapAngle` returns [−π, π), not (−π, π] as documented | `U12-orbits-catalog.md` |
-| A1-U12-6 | S3 | confirmed | spec (data) | Triton's surface gravity disagrees with its own mass fact by 8 % | `U12-orbits-catalog.md` |
-| A1-U13-1 | S1 | confirmed | engine + spec | The tick has no parented-compose step: the player world is detached from the solar system | `U13-simulation-core.md` |
-| A1-U13-2 | S1 | confirmed | play + engine | Controller and core tick schedules disagree at 144 Hz (bounded phase mismatch) | `U13-simulation-core.md` |
-| A1-U13-3 | S2 | confirmed | engine + spec + doc | Below 12 fps the game runs in slow motion; the spec's load shedding does not exist and `shedSeconds` under-counts | `U13-simulation-core.md` |
-| A1-U13-4 | S2 | confirmed | engine | No interpolation factor: 58 % of frames at 144 Hz render with no new tick | `U13-simulation-core.md` |
-| A1-U13-5 | S2 | confirmed | engine | A rebase listener that unsubscribes during the emit makes the next listener miss the event | `U13-simulation-core.md` |
-| A1-U13-6 | S3 | confirmed | play | `moonWorld` ticks the core directly at boot and on every respawn | `U13-simulation-core.md` |
-| A1-U13-7 | S3 | likely | engine + doc | "Allocation per tick: 0" is not exact (≈ 1.6 B/tick, GC count grows with N) | `U13-simulation-core.md` |
-| A1-U14-1 | S1 | confirmed | engine + spec | Fixed ε = 0.002 rad is too coarse for the detail octaves: normals and slopes are wrong by degrees | `U14-terrain-field.md` |
-| A1-U14-2 | S2 | confirmed | engine + spec | The normal depends on a tangent-frame choice that flips on 6 planes: up to 37° jumps | `U14-terrain-field.md` |
-| A1-U14-3 | S1 | confirmed | test + engine | `maxTerrainHeight` / `HEIGHT_SLACK` are hand-typed, and the m1e slope suite breaks its own: STEEP reaches 2,216 m vs 900 m | `U14-terrain-field.md` |
-| A1-U14-4 | S3 | confirmed | doc + engine | Spherify distortion is misstated: linear variation 2×, not √2; `chunkArcWidth` is not conservative | `U14-terrain-field.md` |
-| A1-U14-5 | S2 | likely | engine | `terrainHeight` and `terrainNormalInto` are not allocation-free in V8 | `U14-terrain-field.md` |
-| A1-U14-6 | S3 | confirmed | engine | `chunkKey` collides from level 9; seeds alias; one active field per thread | `U14-terrain-field.md` |
-| A1-U15-1 | S2 | confirmed | engine | "Parallel transport" is Gram-Schmidt projection: not reversible, so up jitter turns into heading drift | `U15-spherical-frame-impostor.md` |
-| A1-U15-2 | S2 | confirmed | engine / play | Below-horizon cull uses a fixed 0.03 rad allowance, smaller than the eye-height dip on the play Moon | `U15-spherical-frame-impostor.md` |
-| A1-U15-3 | S1 | confirmed | engine (render) | Camera-facing impostor quads break the tan law off-axis: big bodies are squashed up to ~31 % | `U15-spherical-frame-impostor.md` |
-| A1-U15-4 | S1 | confirmed | engine (render) | Staged-rank occlusion inverts off-axis: a far body is drawn over a near one | `U15-spherical-frame-impostor.md` |
-| A1-U15-5 | S3 | confirmed | engine | Unclamped tan law and singular inputs | `U15-spherical-frame-impostor.md` |
-| A1-U15-6 | S3 | confirmed | doc | Header numbers and wording are wrong | `U15-spherical-frame-impostor.md` |
-| A1-U16-1 | S1 | confirmed | engine (RATIFIED item: the KCC step/slope rule) | the ratified 50° walk limit is really ≈ 56–59° (ratio measured along the tilted `fwd`) | `U16-astronautkcc-part1.md` |
-| A1-U16-2 | S1 | confirmed | engine | on the spin-phase wrap tick the sweep samples a whole turn — 66 % false landings | `U16-astronautkcc-part1.md` |
-| A1-U16-3 | S2 | confirmed | engine | grounded velocity is the commanded velocity, not the realised motion | `U16-astronautkcc-part1.md` |
-| A1-U16-4 | S2 | confirmed | engine | the NaN guard rolls back the pose but keeps the NaN velocity, so the controller stays dead | `U16-astronautkcc-part1.md` |
-| A1-U16-5 | S2 | confirmed | engine / gameplay | jump launches along the cached terrain normal — up to 4.1 m/s sideways, from a wrong ε-normal | `U16-astronautkcc-part1.md` |
-| A1-U16-6 | S3 | confirmed | engine / doc | the stepHeight clause never binds — the "dual" rule is the ratio rule alone | `U16-astronautkcc-part1.md` |
-| A1-U16-7 | S3 | confirmed | engine (config) | slideAngle 45° < maxWalkSlope 50°: the character climbs while it slides | `U16-astronautkcc-part1.md` |
-| A1-U17-1 | S1 | confirmed | engine | airborne/zero-G "up re-alignment" pulls the planet-frame `up` toward the WORLD radial | `U17-astronautkcc-part2.md` |
-| A1-U17-2 | S2 | confirmed | engine | the vehicle tick writes `up`/`fwd` in the WORLD frame; a parked vehicle drifts by the spin angle | `U17-astronautkcc-part2.md` |
-| A1-U17-3 | S1 | confirmed | engine (visible in play) | uneven-ground landings can snap the character frame by up to 51° in one tick (play Moon, Ω = 0) | `U17-astronautkcc-part2.md` |
-| A1-U17-4 | S2 | confirmed | engine | sliding stops 15–28× harder than kinetic friction allows once the slope reads ≤ 45° | `U17-astronautkcc-part2.md` |
-| A1-U17-5 | S2 | confirmed | engine (telemetry shown on the HUD: `play/ui/Hud.tsx:36`) | airborne `altAGL` is measured against the take-off ground height | `U17-astronautkcc-part2.md` |
-| A1-U17-6 | S2 | confirmed | engine | the landing plant drops strafe and plants a velocity that is not tangent | `U17-astronautkcc-part2.md` |
-| A1-U17-7 | S3 | confirmed | doc / engine | the landing's "kill the normal component" step is dead code; the comment says the opposite of the code | `U17-astronautkcc-part2.md` |
-| A1-U17-8 | S3 | confirmed | engine | `cliff` is computed and never read (`void cliff`) | `U17-astronautkcc-part2.md` |
-| A1-U17-9 | S3 | confirmed | doc | the plan's "C¹ speed cap (RATIFIED)" is not in the KCC | `U17-astronautkcc-part2.md` |
-| A1-U18-1 | S1 | confirmed | engine + spec | yaw and roll are mirrored: D / → steer the ship LEFT | `U18-flight-controller.md` |
-| A1-U18-2 | S1 | confirmed | engine (RATIFIED C¹ speed cap) | the C¹ cap also fades RETRO thrust: near 2,000 m/s the ship cannot brake | `U18-flight-controller.md` |
-| A1-U18-3 | S1 | confirmed | engine | planet spin splits the ship across two frames: a parked ship slides 179 m in 10 s | `U18-flight-controller.md` |
-| A1-U18-4 | S2 | confirmed | engine + doc | one NaN input latches angVel to NaN; the ship freezes forever and the observer sees NaN state | `U18-flight-controller.md` |
-| A1-U18-5 | S2 | likely | engine | the "unreachable" 2,025 m/s rescale is reachable on the giant planets | `U18-flight-controller.md` |
-| A1-U18-6 | S3 | confirmed | engine (instrument only) | telemetry pressure ignores the temperature floor and goes negative | `U18-flight-controller.md` |
-| A1-U19-1 | S2 | confirmed | spec / engine | the atmosphere is not hydrostatic: H = 1,200 m implies g = 68.9 m/s² (7× the planet) | `U19-aero-atmosphere.md` |
-| A1-U19-2 | S1 | confirmed | engine / spec (T2 prerequisite) | the governor's "slow arrival" holds only for Earth's ρ0·H: with real densities, Mars and Pluto hit the ground near 2,000 m/s and Venus never lands | `U19-aero-atmosphere.md` |
-| A1-U19-3 | S1 | confirmed | engine (T2 prerequisite) | any touchdown speed "lands": contacts at 25, 57 and 124 m/s all end LANDED in the contact tick | `U19-aero-atmosphere.md` |
-| A1-U19-4 | S1 | confirmed | engine / spec (T2 gap) | one Earth-scale atmosphere for every body; the catalog's atmosphereHeight is never read; no cruise/boost regime exists | `U19-aero-atmosphere.md` |
-| A1-U19-5 | S2 | confirmed | engine | lift is not governed: 112.5 m/s² at sea-level v_safe, above a_struct = 90 | `U19-aero-atmosphere.md` |
-| A1-U19-6 | S3 | confirmed | engine / doc | lift switches on as a step at \|v_rel\| = 15 m/s (1.06 m/s² at sea level) | `U19-aero-atmosphere.md` |
-| A1-U19-7 | S3 | confirmed | doc | documentation errors: the Milestone 1D v_safe table's 2 km row is wrong; the "< 2 %" lapse claim; v_safe omits βL | `U19-aero-atmosphere.md` |
-| A1-U20-1 | S1 | confirmed | engine | "A free set always exists" is wrong: with 144 meshes on 96 sets the worker drops requests, and the LOD keeps a dead `pendingRec`, so terrain holes persist | `U20-terrain-meshing-worker.md` |
-| A1-U20-2 | S2 | confirmed | engine (performance) | No load balancing: `pump()` always fills worker 0 first, so one worker does almost all the generation | `U20-terrain-meshing-worker.md` |
-| A1-U20-3 | S3 | confirmed | doc | Header and comment drift: the request array rides the LAST response; the allocation budget ignores the receive path; the ring bound is undocumented | `U20-terrain-meshing-worker.md` |
-| A1-U21-1 | S2 | confirmed | engine + spec (Milestone 1F l.45/55) | The Near pass paints over Mid-only objects in the 2,400–3,000 m overlap (painter order inverted) | `U21-camera-rig-sky-impostors.md` |
-| A1-U21-2 | S2 | confirmed | engine | Meshes past 300 km are clipped or not drawn by any pass; no mesh can use the Far band | `U21-camera-rig-sky-impostors.md` |
-| A1-U21-3 | S1 | confirmed | engine + play | The mesh↔impostor handoff and its hysteresis (RATIFIED) exist only in the test harness | `U21-camera-rig-sky-impostors.md` |
-| A1-U21-4 | S2 | confirmed | engine | The impostor "fade" shrinks an opaque disk instead of fading it, so the cross-fade is not silhouette-exact | `U21-camera-rig-sky-impostors.md` |
-| A1-U21-5 | S3 | confirmed | engine | `executePasses()` allocates every frame (header says zero) | `U21-camera-rig-sky-impostors.md` |
-| A1-U21-6 | S3 | confirmed | doc | Draw-order comments are wrong: stars and glow are drawn after the impostors | `U21-camera-rig-sky-impostors.md` |
-| A1-U21-7 | S3 | confirmed | engine | Near-pass depth resolution is coarse at the band end (3.4–5.4 m) | `U21-camera-rig-sky-impostors.md` |
-| A1-U22-1 | S1 | confirmed | play / engine | The drawn terrain is not the terrain the player stands on: metre-scale mismatch at the finest LOD | `U22-play-world.md` |
-| A1-U22-2 | S2 | confirmed | play | The LOD wants more chunks than the 96-mesh pool holds; selected leaves at 1–1.9 km stay unmeshed with no fallback | `U22-play-world.md` |
-| A1-U22-3 | S3 | confirmed | play | `brad` is 1.5–2.2× the real chunk extent: conservative, but every layer mask and horizon test is inflated | `U22-play-world.md` |
-| A1-U22-4 | S3 | confirmed | play | Spawn search: early exit unreachable (always 24,000 iterations), flat sites skipped, roughness probes not tangent | `U22-play-world.md` |
-| A1-U23-1 | S2 | confirmed | play | Below 12 fps the game runs slow: PlayClock 0.1 s clamp + 5-substep cap shed up to 58 % of game time | `U23-controller-camera-input-frame.md` |
-| A1-U23-2 | S2 | confirmed | play | First-person yaw updates at the 60 Hz tick rate, not the frame rate (judder on high-refresh screens) | `U23-controller-camera-input-frame.md` |
-| A1-U23-3 | S2 | likely | play | Camera clearance uses the analytic height, but the drawn terrain sits higher: the camera can be inside the visible ground | `U23-controller-camera-input-frame.md` |
-| A1-U23-4 | S2 | confirmed | play | The 4-point boom cut misses ridges between samples: the character is hidden behind terrain on 0.58 % of poses | `U23-controller-camera-input-frame.md` |
-| A1-U23-5 | S3 | confirmed | play | A heading parallel to up collapses to zero and the player cannot move | `U23-controller-camera-input-frame.md` |
-| A1-U23-6 | S3 | likely | play | Wheel zoom ignores `deltaMode` | `U23-controller-camera-input-frame.md` |
-| A1-U24-1 | S1 | confirmed | play + test | The "planted" stance foot floats up to 14 cm at run/sprint and sinks 1.6 cm at a crawl; no gate checks foot height | `U24-character.md` |
-| A1-U24-2 | S2 | confirmed | play + test | Crouch-walk breaks the no-slide stride: the stance foot slides 5 cm per step | `U24-character.md` |
-| A1-U24-3 | S1 | confirmed | play + test | Slope-foot roll is inverted: on a 10° cross-slope the sole is tilted 19.6° against the terrain | `U24-character.md` |
-| A1-U24-4 | S2 | confirmed | play | A landing within 0.12 s of a launch is lost: JumpLaunch → Walk with no Land, even at 3–4 m/s | `U24-character.md` |
-| A1-U24-5 | S3 | confirmed | play + doc | The GLB seam documents a facing that `characterRoot` does not use; the yaw fix and ground clearance are rig-private | `U24-character.md` |
-| A1-U24-6 | S3 | suspected | play | `jumpedThisFrame` fires on any launch with vertical speed > 0.5 m/s, so the "crest launch → Fall" decision may never be taken | `U24-character.md` |
-| A1-U25-1 | S1 | confirmed | engine / play / test | The play frame allocates ≈10.5 KB per frame (≈1.5 MB/s at 144 Hz); 72–78 % is in the core terrain height path; the zero-GC gate cannot see it | `U25-invariants-ui-sweep.md` |
-| A1-U25-2 | S2 | confirmed | play | Debug HUD latitude/longitude come from the tilted body `up`, not from the position — up to 33–39° (~900 m) off | `U25-invariants-ui-sweep.md` |
-| A1-U25-3 | S3 | confirmed | doc | `HudPublisher` comment "nothing is allocated": the real zustand `setHud` costs ≈297 B per publish | `U25-invariants-ui-sweep.md` |
-| A1-U25-4 | S3 | confirmed | play | The menu (`App.tsx`) lists play and m1a–m1d only; the m1e/m1f regression pages are not linked | `U25-invariants-ui-sweep.md` |
-| A1-U25-5 | S3 | confirmed | play | A terrain worker error never reaches the ERROR phase (documented deferral) | `U25-invariants-ui-sweep.md` |
-| A1-U26-1 | S2 | confirmed | engine | Terrain field is a per-thread singleton: a second body's init silently re-points every live actor | `U26-architecture-fitness.md` |
-| A1-U26-2 | S1 | confirmed | engine | No reference-frame model: bodies have no spin, actors have no parent frame (synthesis of U12-1, U13-1, U17-1/2, U18-3) | `U26-architecture-fitness.md` |
-| A1-U26-3 | S2 | confirmed | engine | Core entity record is position/velocity only; physics lives outside the core and writes through | `U26-architecture-fitness.md` |
-| A1-U26-4 | S2 | confirmed | play | Play frame and rig are single-world, hand-ordered and module-global: no extension seam | `U26-architecture-fitness.md` |
-| A1-U26-5 | S3 | confirmed | engine | CPU is not the binding constraint; allocation and the height-query count are | `U26-architecture-fitness.md` |
+| A1-U01-1 | S1 | likely | test | R2 regressed in commit 3057899 (F-12 suite-pose change), which shipped without a gate run | `pre-t4:docs/audit/U01-m1f-baseline.md` |
+| A1-U01-2 | S2 | confirmed | test | R2 fails silently: the detail string cannot distinguish "occluded" from "culled" or "blank" | `pre-t4:docs/audit/U01-m1f-baseline.md` |
+| A1-U02-1 | S1 | confirmed | test (and spec: the same code is in Milestone 1F ~1900–1931) | R2(a)'s per-instance θ/position audit cannot fail, and it audits only one body | `pre-t4:docs/audit/U02-m1f-r1r2-validity.md` |
+| A1-U02-2 | S1 | confirmed | test (spec: Milestone 1F ~1840–1880, same code) | R1's pair audit runs on constants: `layeredMin > 10 && singleMin < 1` is true by construction | `pre-t4:docs/audit/U02-m1f-r1r2-validity.md` |
+| A1-U02-3 | S1 | confirmed | test (spec: Milestone 1F :1849–1869; the spec table :2562 claims "Earth/horizon ~600,000×") | R1(b) "Earth vs horizon terrain" is structurally dead (frame error); it always prints the 1e9 sentinel | `pre-t4:docs/audit/U02-m1f-r1r2-validity.md` |
+| A1-U02-4 | S2 | likely | test | R1's frozen-frame determinism half cannot detect z-fighting | `pre-t4:docs/audit/U02-m1f-r1r2-validity.md` |
+| A1-U02-5 | S2 | confirmed | doc / spec | R2's tolerances are documented three different ways | `pre-t4:docs/audit/U02-m1f-r1r2-validity.md` |
+| A1-U02-6 | S3 | confirmed | test | `abRender`'s quiesce guard is vacuous, and its fallthrough comment is false | `pre-t4:docs/audit/U02-m1f-r1r2-validity.md` |
+| A1-U03-1 | S0 | confirmed | engine (harness handoff controller) + test | The mesh↔impostor handoff renders NOTHING for 5.6 km on every descent; R3 cannot see it | `pre-t4:docs/audit/U03-m1f-r3r4r5-validity.md` |
+| A1-U03-2 | S1 | confirmed | test (spec: same code in Milestone 1F) | R3(a) and R3(b) hole/double counters are tautologies | `pre-t4:docs/audit/U03-m1f-r3r4r5-validity.md` |
+| A1-U03-3 | S1 | confirmed | test | R3(c) silhouette A/B compares a saturated window, so it passes vacuously | `pre-t4:docs/audit/U03-m1f-r3r4r5-validity.md` |
+| A1-U03-4 | S1 | confirmed | test | R4's identity canary is never checked; heap rows pass on GC or missing data | `pre-t4:docs/audit/U03-m1f-r3r4r5-validity.md` |
+| A1-U03-5 | S1 | confirmed | test (fixture) — answers the plan seed "is the gate wrong, or the terrain, or the KCC?": the gate. | R5 "rebases ≥ 2" is unreachable by the gate's own fixture (SAT_B is overhead; the walk ends at its nadir) | `pre-t4:docs/audit/U03-m1f-r3r4r5-validity.md` |
+| A1-U03-6 | S2 | confirmed | test | R5 straddler A/B never checks that Sat B is visible; Sun continuity is sampled only on rebase frames | `pre-t4:docs/audit/U03-m1f-r3r4r5-validity.md` |
+| A1-U04-1 | S1 | confirmed | test | R5 "spec-canonical" Coriolis row passes on a mis-measured drift (0.75 cm vs ≈1.9 cm true); `predicted` is never compared | `pre-t4:docs/audit/U04-m1e-harness-validity.md` |
+| A1-U04-2 | S3 | confirmed | spec / doc | The spec's (4/3)Ωu³/g² uses g = 9.81 and ignores the rotating frame; the true drift here is 11% larger | `pre-t4:docs/audit/U04-m1e-harness-validity.md` |
+| A1-U04-3 | S1 | confirmed | test (plus KCC integrity semantics) | "Penetration-free" clauses in R1 and R2(c) are vacuous: `integrity.minAGL` is never written while grounded | `pre-t4:docs/audit/U04-m1e-harness-validity.md` |
+| A1-U04-4 | S1 | confirmed | test | R1 "no yaw snaps" bounds admit 4° snaps; the holonomy claim is printed but untested | `pre-t4:docs/audit/U04-m1e-harness-validity.md` |
+| A1-U04-5 | S1 | confirmed | test | R4 zero-gc: identity canary cannot fail; heap guard is optional and GC-timing dependent | `pre-t4:docs/audit/U04-m1e-harness-validity.md` |
+| A1-U04-6 | S2 | confirmed | test | R3 state-machine sub-checks weaker than worded | `pre-t4:docs/audit/U04-m1e-harness-validity.md` |
+| A1-U05-1 | S1 | confirmed | test | T1 cannot fail on its own claims (C∞ law, Mach, rotating atmosphere) | `pre-t4:docs/audit/U05-m1d-harness-validity.md` |
+| A1-U05-2 | S1 | confirmed | test (and play: documents a real slow-motion effect) | T2 (governor dive) verdict depends on machine frame rate | `pre-t4:docs/audit/U05-m1d-harness-validity.md` |
+| A1-U05-3 | S1 | confirmed | test | T4 heap clause passes any negative delta, and its verdict is GC noise | `pre-t4:docs/audit/U05-m1d-harness-validity.md` |
+| A1-U05-4 | S2 | confirmed | test | T4 identity canary is tautological | `pre-t4:docs/audit/U05-m1d-harness-validity.md` |
+| A1-U05-5 | S2 | confirmed | test | T5 offset check cannot fail; the "Δ f32-exact" claim is never checked | `pre-t4:docs/audit/U05-m1d-harness-validity.md` |
+| A1-U05-6 | S3 | confirmed | test | T3 "no hard clamp" only covers clamps inside `integrateFlight` | `pre-t4:docs/audit/U05-m1d-harness-validity.md` |
+| A1-U05-7 | S1 | confirmed | test | T2's no-clip clauses cannot test the DDA; `minPostTickAGL` is blind to tunnelling by construction | `pre-t4:docs/audit/U05-m1d-harness-validity.md` |
+| A1-U05-8 | S1 | confirmed | spec + engine | The DDA no-clip proof rests on a false terrain slope bound (L = 1.2; measured up to 6.4) | `pre-t4:docs/audit/U05-m1d-harness-validity.md` |
+| A1-U05-9 | S2 | confirmed | spec + doc | The "structural limit" a_struct is exceeded 6.9× during the governed dive | `pre-t4:docs/audit/U05-m1d-harness-validity.md` |
+| A1-U05-10 | S2 | confirmed | engine | Telemetry g-load excludes drag (0.000 g shown during a 63 g deceleration) | `pre-t4:docs/audit/U05-m1d-harness-validity.md` |
+| A1-U06-1 | S1 | confirmed | test | T3 never compares the 12 cube-face seams; inverted face-edge normals still PASS | `pre-t4:docs/audit/U06-m1c-harness-validity.md` |
+| A1-U06-2 | S1 | confirmed | test | T2 "zero main-thread buffer allocations" is zero by construction | `pre-t4:docs/audit/U06-m1c-harness-validity.md` |
+| A1-U06-3 | S2 | confirmed | test (harness controller; it is not the play-layer LOD) | The harness LOD merge leaves children `desired`; parent and children chunks can coexist for seconds | `pre-t4:docs/audit/U06-m1c-harness-validity.md` |
+| A1-U06-4 | S2 | confirmed | test / engine (design) | Neighbours two levels apart occur in flight and are never audited (no 2:1 balance) | `pre-t4:docs/audit/U06-m1c-harness-validity.md` |
+| A1-U06-5 | S2 | confirmed | test | T4 heap guard passes on N/A and on any negative delta; memory is bucketed | `pre-t4:docs/audit/U06-m1c-harness-validity.md` |
+| A1-U06-6 | S3 | confirmed | test / doc | heap-flat detail string prints a literal template expression | `pre-t4:docs/audit/U06-m1c-harness-validity.md` |
+| A1-U07-1 | S1 | confirmed | test | No m1b row checks the orbital time scale; Kepler-3 is a tautology | `pre-t4:docs/audit/U07-m1b-harness-validity.md` |
+| A1-U07-2 | S1 | confirmed | test | The "independent" reference re-uses the rail's geometry; orbit direction is never checked | `pre-t4:docs/audit/U07-m1b-harness-validity.md` |
+| A1-U07-3 | S1 | confirmed | test | Zero-GC row: heap clause passes on missing API and on GC; verdict flips between runs | `pre-t4:docs/audit/U07-m1b-harness-validity.md` |
+| A1-U07-4 | S2 | confirmed | test | Vis-viva clause is an identity and skips all moons | `pre-t4:docs/audit/U07-m1b-harness-validity.md` |
+| A1-U07-5 | S2 | confirmed | test | Acceptance console line and T3 detail print literal `{…}` instead of values | `pre-t4:docs/audit/U07-m1b-harness-validity.md` |
+| A1-U07-6 | S2 | confirmed | doc | Documented period table is stale by up to 11 s | `pre-t4:docs/audit/U07-m1b-harness-validity.md` |
+| A1-U07-7 | S3 | confirmed | spec | Earth's Moon sits at 0.71 of Earth's Hill radius | `pre-t4:docs/audit/U07-m1b-harness-validity.md` |
+| A1-U08-1 | S1 | high | gate sensitivity | Page errors and console errors are collected but never asserted | `pre-t4:docs/audit/U08-e2e-spec-sensitivity.md` |
+| A1-U08-2 | S1 | high | gate sensitivity | A missing result passes: placeholder badges and dropped rows are not detected | `pre-t4:docs/audit/U08-e2e-spec-sensitivity.md` |
+| A1-U08-3 | S2 | high | gate design | The gate trusts the harness's own PASSED line, which carries no cross-checkable values | `pre-t4:docs/audit/U08-e2e-spec-sensitivity.md` |
+| A1-U08-4 | S2 | high | build plumbing | The gate build does not type-check, and there is no CI | `pre-t4:docs/audit/U08-e2e-spec-sensitivity.md` |
+| A1-U08-5 | S1 | high | test | m1a rows T2–T4 cannot detect a wrong rebase threshold or a wrong lattice | `pre-t4:docs/audit/U08-e2e-spec-sensitivity.md` |
+| A1-U08-6 | S1 | high | test | m1a never checks the precision invariant or the static beacons it renders as "the signature visual proof" | `pre-t4:docs/audit/U08-e2e-spec-sensitivity.md` |
+| A1-U08-7 | S1 | high | test | m1a T5 cannot see the worst stutters, and its "rebase frame" is the wrong frame | `pre-t4:docs/audit/U08-e2e-spec-sensitivity.md` |
+| A1-U08-8 | S2 | high | test | m1a console verdict line and four of the five row details print literal template text | `pre-t4:docs/audit/U08-e2e-spec-sensitivity.md` |
+| A1-U08-9 | S1 | high | test | The badge check only rejects the literal text "FAIL"; any other failing badge passes | `pre-t4:docs/audit/U08-e2e-spec-sensitivity.md` |
+| A1-U08-10 | S3 | medium | test / env | The m1f gate did not reach a verdict within 240 s on a 2 vCPU / 4 GB VM | `pre-t4:docs/audit/U08-e2e-spec-sensitivity.md` |
+| A1-U09-1 | S1 | high | test | The heap rows cannot detect per-frame allocation, so the zero-GC claim is untested | `pre-t4:docs/audit/U09-play-node-tests.md` |
+| A1-U09-2 | S2 | high | test (bad method) | The controller camera heap row is red because it has no warm-up, not because of a leak | `pre-t4:docs/audit/U09-play-node-tests.md` |
+| A1-U09-3 | S2 | high | spec–test mismatch | Only test-play-perf checks the §13.2 "no monotonic growth" clause; six rows are one-sided | `pre-t4:docs/audit/U09-play-node-tests.md` |
+| A1-U09-4 | S3 | high | test sensitivity | The jump-buffer rows bracket the window at [0.10, 0.20) s, not 0.12 s | `pre-t4:docs/audit/U09-play-node-tests.md` |
+| A1-U09-5 | S3 | high | test | Without `--expose-gc` the controller zero-GC row passes vacuously | `pre-t4:docs/audit/U09-play-node-tests.md` |
+| A1-U09-6 | S3 | high | test / reporting | Output lines do not follow the §13.2 format | `pre-t4:docs/audit/U09-play-node-tests.md` |
+| A1-U10-1 | S2 | confirmed | spec | Spec 02 has lost every formula: 9 empty value/formula slots | `pre-t4:docs/audit/U10-design-specs-scale.md` |
+| A1-U10-2 | S2 | confirmed | spec (data) | Catalog radii follow two different compression laws; Mars is smaller than Mercury, Charon and Titania larger than the Moon | `pre-t4:docs/audit/U10-design-specs-scale.md` |
+| A1-U10-3 | S2 | confirmed | spec (data) / play | Earth fills 14.7° of the play Moon's sky (real 1.9°); moon orbits have no common compression law | `pre-t4:docs/audit/U10-design-specs-scale.md` |
+| A1-U10-4 | S2 | confirmed | spec / play | The play Moon is a 1:1,273 world with real g: horizon 66 m, mountains 26 % of the radius | `pre-t4:docs/audit/U10-design-specs-scale.md` |
+| A1-U10-5 | S1 | confirmed | spec | The speed limits have no reference frame, and every planet and moon outruns them | `pre-t4:docs/audit/U10-design-specs-scale.md` |
+| A1-U10-6 | S2 | confirmed | spec | A day is longer than a year: spin runs on real time, orbits on the 30× clock | `pre-t4:docs/audit/U10-design-specs-scale.md` |
+| A1-U10-7 | S2 | confirmed | spec | Spec 05 1B asks for "exact real-world relative positions"; the catalog cannot produce them, and spec 00 rules them out of scope | `pre-t4:docs/audit/U10-design-specs-scale.md` |
+| A1-U10-8 | S2 | confirmed | spec | `gravityRange` is called a sphere of influence but matches neither Hill nor Laplace SOI; the Sun has no range yet drives every rail | `pre-t4:docs/audit/U10-design-specs-scale.md` |
+| A1-U10-9 | S2 | confirmed | spec | Atmospheres are called "shallow" but most are as tall as the planet | `pre-t4:docs/audit/U10-design-specs-scale.md` |
+| A1-U10-10 | S2 | confirmed | spec / doc | Specs 00/01/05 are built on Rapier; the engine and the brief defer it | `pre-t4:docs/audit/U10-design-specs-scale.md` |
+| A1-U10-11 | S3 | confirmed | spec | Spec 01 says rebase on crossing a 256 m boundary; spec 05 and the code rebase past 1,024 m | `pre-t4:docs/audit/U10-design-specs-scale.md` |
+| A1-U10-12 | S3 | confirmed | spec / engine | Spec 03 gives no moon a portal distance; the code invents 80,000 m | `pre-t4:docs/audit/U10-design-specs-scale.md` |
+| A1-U10-13 | S3 | confirmed | spec | Two different zero-GC bars | `pre-t4:docs/audit/U10-design-specs-scale.md` |
+| A1-U10-14 | S3 | confirmed | spec (look and feel) | The artistic Sun is 3.8° wide from Earth and only 1.2× Jupiter | `pre-t4:docs/audit/U10-design-specs-scale.md` |
+| A1-U11-1 | S2 | confirmed | engine | Adapter never re-shows an entity that is unregistered and registered again | `pre-t4:docs/audit/U11-precision-floating-origin.md` |
+| A1-U11-2 | S2 | confirmed | engine | Unregistering the focus entity silently re-focuses an arbitrary entity, and the origin jumps there | `pre-t4:docs/audit/U11-precision-floating-origin.md` |
+| A1-U11-3 | S3 | confirmed | engine | `getOrigin()` / `getOriginReadonly()` return the live, writable origin; one write breaks the lattice and `RebaseEvent.delta` | `pre-t4:docs/audit/U11-precision-floating-origin.md` |
+| A1-U11-4 | S3 | confirmed | doc | The power-of-two rationale is overstated: render precision does not depend on the lattice, and the Δ bound is conservative | `pre-t4:docs/audit/U11-precision-floating-origin.md` |
+| A1-U12-1 | S1 | confirmed | engine + spec | No body rotates: the engine has no spin rail, no pole, no prime meridian | `pre-t4:docs/audit/U12-orbits-catalog.md` |
+| A1-U12-2 | S2 | confirmed | engine | The rail accepts non-elliptical elements and returns NaN or a degenerate line silently | `pre-t4:docs/audit/U12-orbits-catalog.md` |
+| A1-U12-3 | S2 | confirmed | spec + engine (data) | Every orbit is circular and in one plane, including the systems where that is visibly wrong | `pre-t4:docs/audit/U12-orbits-catalog.md` |
+| A1-U12-4 | S3 | confirmed | engine | Newton exit is never met for e ≥ 0.9999 near M ≈ 0 (accuracy still fine) | `pre-t4:docs/audit/U12-orbits-catalog.md` |
+| A1-U12-5 | S3 | confirmed | doc | `wrapAngle` returns [−π, π), not (−π, π] as documented | `pre-t4:docs/audit/U12-orbits-catalog.md` |
+| A1-U12-6 | S3 | confirmed | spec (data) | Triton's surface gravity disagrees with its own mass fact by 8 % | `pre-t4:docs/audit/U12-orbits-catalog.md` |
+| A1-U13-1 | S1 | confirmed | engine + spec | The tick has no parented-compose step: the player world is detached from the solar system | `pre-t4:docs/audit/U13-simulation-core.md` |
+| A1-U13-2 | S1 | confirmed | play + engine | Controller and core tick schedules disagree at 144 Hz (bounded phase mismatch) | `pre-t4:docs/audit/U13-simulation-core.md` |
+| A1-U13-3 | S2 | confirmed | engine + spec + doc | Below 12 fps the game runs in slow motion; the spec's load shedding does not exist and `shedSeconds` under-counts | `pre-t4:docs/audit/U13-simulation-core.md` |
+| A1-U13-4 | S2 | confirmed | engine | No interpolation factor: 58 % of frames at 144 Hz render with no new tick | `pre-t4:docs/audit/U13-simulation-core.md` |
+| A1-U13-5 | S2 | confirmed | engine | A rebase listener that unsubscribes during the emit makes the next listener miss the event | `pre-t4:docs/audit/U13-simulation-core.md` |
+| A1-U13-6 | S3 | confirmed | play | `moonWorld` ticks the core directly at boot and on every respawn | `pre-t4:docs/audit/U13-simulation-core.md` |
+| A1-U13-7 | S3 | likely | engine + doc | "Allocation per tick: 0" is not exact (≈ 1.6 B/tick, GC count grows with N) | `pre-t4:docs/audit/U13-simulation-core.md` |
+| A1-U14-1 | S1 | confirmed | engine + spec | Fixed ε = 0.002 rad is too coarse for the detail octaves: normals and slopes are wrong by degrees | `pre-t4:docs/audit/U14-terrain-field.md` |
+| A1-U14-2 | S2 | confirmed | engine + spec | The normal depends on a tangent-frame choice that flips on 6 planes: up to 37° jumps | `pre-t4:docs/audit/U14-terrain-field.md` |
+| A1-U14-3 | S1 | confirmed | test + engine | `maxTerrainHeight` / `HEIGHT_SLACK` are hand-typed, and the m1e slope suite breaks its own: STEEP reaches 2,216 m vs 900 m | `pre-t4:docs/audit/U14-terrain-field.md` |
+| A1-U14-4 | S3 | confirmed | doc + engine | Spherify distortion is misstated: linear variation 2×, not √2; `chunkArcWidth` is not conservative | `pre-t4:docs/audit/U14-terrain-field.md` |
+| A1-U14-5 | S2 | likely | engine | `terrainHeight` and `terrainNormalInto` are not allocation-free in V8 | `pre-t4:docs/audit/U14-terrain-field.md` |
+| A1-U14-6 | S3 | confirmed | engine | `chunkKey` collides from level 9; seeds alias; one active field per thread | `pre-t4:docs/audit/U14-terrain-field.md` |
+| A1-U15-1 | S2 | confirmed | engine | "Parallel transport" is Gram-Schmidt projection: not reversible, so up jitter turns into heading drift | `pre-t4:docs/audit/U15-spherical-frame-impostor.md` |
+| A1-U15-2 | S2 | confirmed | engine / play | Below-horizon cull uses a fixed 0.03 rad allowance, smaller than the eye-height dip on the play Moon | `pre-t4:docs/audit/U15-spherical-frame-impostor.md` |
+| A1-U15-3 | S1 | confirmed | engine (render) | Camera-facing impostor quads break the tan law off-axis: big bodies are squashed up to ~31 % | `pre-t4:docs/audit/U15-spherical-frame-impostor.md` |
+| A1-U15-4 | S1 | confirmed | engine (render) | Staged-rank occlusion inverts off-axis: a far body is drawn over a near one | `pre-t4:docs/audit/U15-spherical-frame-impostor.md` |
+| A1-U15-5 | S3 | confirmed | engine | Unclamped tan law and singular inputs | `pre-t4:docs/audit/U15-spherical-frame-impostor.md` |
+| A1-U15-6 | S3 | confirmed | doc | Header numbers and wording are wrong | `pre-t4:docs/audit/U15-spherical-frame-impostor.md` |
+| A1-U16-1 | S1 | confirmed | engine (RATIFIED item: the KCC step/slope rule) | the ratified 50° walk limit is really ≈ 56–59° (ratio measured along the tilted `fwd`) | `pre-t4:docs/audit/U16-astronautkcc-part1.md` |
+| A1-U16-2 | S1 | confirmed | engine | on the spin-phase wrap tick the sweep samples a whole turn — 66 % false landings | `pre-t4:docs/audit/U16-astronautkcc-part1.md` |
+| A1-U16-3 | S2 | confirmed | engine | grounded velocity is the commanded velocity, not the realised motion | `pre-t4:docs/audit/U16-astronautkcc-part1.md` |
+| A1-U16-4 | S2 | confirmed | engine | the NaN guard rolls back the pose but keeps the NaN velocity, so the controller stays dead | `pre-t4:docs/audit/U16-astronautkcc-part1.md` |
+| A1-U16-5 | S2 | confirmed | engine / gameplay | jump launches along the cached terrain normal — up to 4.1 m/s sideways, from a wrong ε-normal | `pre-t4:docs/audit/U16-astronautkcc-part1.md` |
+| A1-U16-6 | S3 | confirmed | engine / doc | the stepHeight clause never binds — the "dual" rule is the ratio rule alone | `pre-t4:docs/audit/U16-astronautkcc-part1.md` |
+| A1-U16-7 | S3 | confirmed | engine (config) | slideAngle 45° < maxWalkSlope 50°: the character climbs while it slides | `pre-t4:docs/audit/U16-astronautkcc-part1.md` |
+| A1-U17-1 | S1 | confirmed | engine | airborne/zero-G "up re-alignment" pulls the planet-frame `up` toward the WORLD radial | `pre-t4:docs/audit/U17-astronautkcc-part2.md` |
+| A1-U17-2 | S2 | confirmed | engine | the vehicle tick writes `up`/`fwd` in the WORLD frame; a parked vehicle drifts by the spin angle | `pre-t4:docs/audit/U17-astronautkcc-part2.md` |
+| A1-U17-3 | S1 | confirmed | engine (visible in play) | uneven-ground landings can snap the character frame by up to 51° in one tick (play Moon, Ω = 0) | `pre-t4:docs/audit/U17-astronautkcc-part2.md` |
+| A1-U17-4 | S2 | confirmed | engine | sliding stops 15–28× harder than kinetic friction allows once the slope reads ≤ 45° | `pre-t4:docs/audit/U17-astronautkcc-part2.md` |
+| A1-U17-5 | S2 | confirmed | engine (telemetry shown on the HUD: `play/ui/Hud.tsx:36`) | airborne `altAGL` is measured against the take-off ground height | `pre-t4:docs/audit/U17-astronautkcc-part2.md` |
+| A1-U17-6 | S2 | confirmed | engine | the landing plant drops strafe and plants a velocity that is not tangent | `pre-t4:docs/audit/U17-astronautkcc-part2.md` |
+| A1-U17-7 | S3 | confirmed | doc / engine | the landing's "kill the normal component" step is dead code; the comment says the opposite of the code | `pre-t4:docs/audit/U17-astronautkcc-part2.md` |
+| A1-U17-8 | S3 | confirmed | engine | `cliff` is computed and never read (`void cliff`) | `pre-t4:docs/audit/U17-astronautkcc-part2.md` |
+| A1-U17-9 | S3 | confirmed | doc | the plan's "C¹ speed cap (RATIFIED)" is not in the KCC | `pre-t4:docs/audit/U17-astronautkcc-part2.md` |
+| A1-U18-1 | S1 | confirmed | engine + spec | yaw and roll are mirrored: D / → steer the ship LEFT | `pre-t4:docs/audit/U18-flight-controller.md` |
+| A1-U18-2 | S1 | confirmed | engine (RATIFIED C¹ speed cap) | the C¹ cap also fades RETRO thrust: near 2,000 m/s the ship cannot brake | `pre-t4:docs/audit/U18-flight-controller.md` |
+| A1-U18-3 | S1 | confirmed | engine | planet spin splits the ship across two frames: a parked ship slides 179 m in 10 s | `pre-t4:docs/audit/U18-flight-controller.md` |
+| A1-U18-4 | S2 | confirmed | engine + doc | one NaN input latches angVel to NaN; the ship freezes forever and the observer sees NaN state | `pre-t4:docs/audit/U18-flight-controller.md` |
+| A1-U18-5 | S2 | likely | engine | the "unreachable" 2,025 m/s rescale is reachable on the giant planets | `pre-t4:docs/audit/U18-flight-controller.md` |
+| A1-U18-6 | S3 | confirmed | engine (instrument only) | telemetry pressure ignores the temperature floor and goes negative | `pre-t4:docs/audit/U18-flight-controller.md` |
+| A1-U19-1 | S2 | confirmed | spec / engine | the atmosphere is not hydrostatic: H = 1,200 m implies g = 68.9 m/s² (7× the planet) | `pre-t4:docs/audit/U19-aero-atmosphere.md` |
+| A1-U19-2 | S1 | confirmed | engine / spec (T2 prerequisite) | the governor's "slow arrival" holds only for Earth's ρ0·H: with real densities, Mars and Pluto hit the ground near 2,000 m/s and Venus never lands | `pre-t4:docs/audit/U19-aero-atmosphere.md` |
+| A1-U19-3 | S1 | confirmed | engine (T2 prerequisite) | any touchdown speed "lands": contacts at 25, 57 and 124 m/s all end LANDED in the contact tick | `pre-t4:docs/audit/U19-aero-atmosphere.md` |
+| A1-U19-4 | S1 | confirmed | engine / spec (T2 gap) | one Earth-scale atmosphere for every body; the catalog's atmosphereHeight is never read; no cruise/boost regime exists | `pre-t4:docs/audit/U19-aero-atmosphere.md` |
+| A1-U19-5 | S2 | confirmed | engine | lift is not governed: 112.5 m/s² at sea-level v_safe, above a_struct = 90 | `pre-t4:docs/audit/U19-aero-atmosphere.md` |
+| A1-U19-6 | S3 | confirmed | engine / doc | lift switches on as a step at \|v_rel\| = 15 m/s (1.06 m/s² at sea level) | `pre-t4:docs/audit/U19-aero-atmosphere.md` |
+| A1-U19-7 | S3 | confirmed | doc | documentation errors: the Milestone 1D v_safe table's 2 km row is wrong; the "< 2 %" lapse claim; v_safe omits βL | `pre-t4:docs/audit/U19-aero-atmosphere.md` |
+| A1-U20-1 | S1 | confirmed | engine | "A free set always exists" is wrong: with 144 meshes on 96 sets the worker drops requests, and the LOD keeps a dead `pendingRec`, so terrain holes persist | `pre-t4:docs/audit/U20-terrain-meshing-worker.md` |
+| A1-U20-2 | S2 | confirmed | engine (performance) | No load balancing: `pump()` always fills worker 0 first, so one worker does almost all the generation | `pre-t4:docs/audit/U20-terrain-meshing-worker.md` |
+| A1-U20-3 | S3 | confirmed | doc | Header and comment drift: the request array rides the LAST response; the allocation budget ignores the receive path; the ring bound is undocumented | `pre-t4:docs/audit/U20-terrain-meshing-worker.md` |
+| A1-U21-1 | S2 | confirmed | engine + spec (Milestone 1F l.45/55) | The Near pass paints over Mid-only objects in the 2,400–3,000 m overlap (painter order inverted) | `pre-t4:docs/audit/U21-camera-rig-sky-impostors.md` |
+| A1-U21-2 | S2 | confirmed | engine | Meshes past 300 km are clipped or not drawn by any pass; no mesh can use the Far band | `pre-t4:docs/audit/U21-camera-rig-sky-impostors.md` |
+| A1-U21-3 | S1 | confirmed | engine + play | The mesh↔impostor handoff and its hysteresis (RATIFIED) exist only in the test harness | `pre-t4:docs/audit/U21-camera-rig-sky-impostors.md` |
+| A1-U21-4 | S2 | confirmed | engine | The impostor "fade" shrinks an opaque disk instead of fading it, so the cross-fade is not silhouette-exact | `pre-t4:docs/audit/U21-camera-rig-sky-impostors.md` |
+| A1-U21-5 | S3 | confirmed | engine | `executePasses()` allocates every frame (header says zero) | `pre-t4:docs/audit/U21-camera-rig-sky-impostors.md` |
+| A1-U21-6 | S3 | confirmed | doc | Draw-order comments are wrong: stars and glow are drawn after the impostors | `pre-t4:docs/audit/U21-camera-rig-sky-impostors.md` |
+| A1-U21-7 | S3 | confirmed | engine | Near-pass depth resolution is coarse at the band end (3.4–5.4 m) | `pre-t4:docs/audit/U21-camera-rig-sky-impostors.md` |
+| A1-U22-1 | S1 | confirmed | play / engine | The drawn terrain is not the terrain the player stands on: metre-scale mismatch at the finest LOD | `pre-t4:docs/audit/U22-play-world.md` |
+| A1-U22-2 | S2 | confirmed | play | The LOD wants more chunks than the 96-mesh pool holds; selected leaves at 1–1.9 km stay unmeshed with no fallback | `pre-t4:docs/audit/U22-play-world.md` |
+| A1-U22-3 | S3 | confirmed | play | `brad` is 1.5–2.2× the real chunk extent: conservative, but every layer mask and horizon test is inflated | `pre-t4:docs/audit/U22-play-world.md` |
+| A1-U22-4 | S3 | confirmed | play | Spawn search: early exit unreachable (always 24,000 iterations), flat sites skipped, roughness probes not tangent | `pre-t4:docs/audit/U22-play-world.md` |
+| A1-U23-1 | S2 | confirmed | play | Below 12 fps the game runs slow: PlayClock 0.1 s clamp + 5-substep cap shed up to 58 % of game time | `pre-t4:docs/audit/U23-controller-camera-input-frame.md` |
+| A1-U23-2 | S2 | confirmed | play | First-person yaw updates at the 60 Hz tick rate, not the frame rate (judder on high-refresh screens) | `pre-t4:docs/audit/U23-controller-camera-input-frame.md` |
+| A1-U23-3 | S2 | likely | play | Camera clearance uses the analytic height, but the drawn terrain sits higher: the camera can be inside the visible ground | `pre-t4:docs/audit/U23-controller-camera-input-frame.md` |
+| A1-U23-4 | S2 | confirmed | play | The 4-point boom cut misses ridges between samples: the character is hidden behind terrain on 0.58 % of poses | `pre-t4:docs/audit/U23-controller-camera-input-frame.md` |
+| A1-U23-5 | S3 | confirmed | play | A heading parallel to up collapses to zero and the player cannot move | `pre-t4:docs/audit/U23-controller-camera-input-frame.md` |
+| A1-U23-6 | S3 | likely | play | Wheel zoom ignores `deltaMode` | `pre-t4:docs/audit/U23-controller-camera-input-frame.md` |
+| A1-U24-1 | S1 | confirmed | play + test | The "planted" stance foot floats up to 14 cm at run/sprint and sinks 1.6 cm at a crawl; no gate checks foot height | `pre-t4:docs/audit/U24-character.md` |
+| A1-U24-2 | S2 | confirmed | play + test | Crouch-walk breaks the no-slide stride: the stance foot slides 5 cm per step | `pre-t4:docs/audit/U24-character.md` |
+| A1-U24-3 | S1 | confirmed | play + test | Slope-foot roll is inverted: on a 10° cross-slope the sole is tilted 19.6° against the terrain | `pre-t4:docs/audit/U24-character.md` |
+| A1-U24-4 | S2 | confirmed | play | A landing within 0.12 s of a launch is lost: JumpLaunch → Walk with no Land, even at 3–4 m/s | `pre-t4:docs/audit/U24-character.md` |
+| A1-U24-5 | S3 | confirmed | play + doc | The GLB seam documents a facing that `characterRoot` does not use; the yaw fix and ground clearance are rig-private | `pre-t4:docs/audit/U24-character.md` |
+| A1-U24-6 | S3 | suspected | play | `jumpedThisFrame` fires on any launch with vertical speed > 0.5 m/s, so the "crest launch → Fall" decision may never be taken | `pre-t4:docs/audit/U24-character.md` |
+| A1-U25-1 | S1 | confirmed | engine / play / test | The play frame allocates ≈10.5 KB per frame (≈1.5 MB/s at 144 Hz); 72–78 % is in the core terrain height path; the zero-GC gate cannot see it | `pre-t4:docs/audit/U25-invariants-ui-sweep.md` |
+| A1-U25-2 | S2 | confirmed | play | Debug HUD latitude/longitude come from the tilted body `up`, not from the position — up to 33–39° (~900 m) off | `pre-t4:docs/audit/U25-invariants-ui-sweep.md` |
+| A1-U25-3 | S3 | confirmed | doc | `HudPublisher` comment "nothing is allocated": the real zustand `setHud` costs ≈297 B per publish | `pre-t4:docs/audit/U25-invariants-ui-sweep.md` |
+| A1-U25-4 | S3 | confirmed | play | The menu (`App.tsx`) lists play and m1a–m1d only; the m1e/m1f regression pages are not linked | `pre-t4:docs/audit/U25-invariants-ui-sweep.md` |
+| A1-U25-5 | S3 | confirmed | play | A terrain worker error never reaches the ERROR phase (documented deferral) | `pre-t4:docs/audit/U25-invariants-ui-sweep.md` |
+| A1-U26-1 | S2 | confirmed | engine | Terrain field is a per-thread singleton: a second body's init silently re-points every live actor | `pre-t4:docs/audit/U26-architecture-fitness.md` |
+| A1-U26-2 | S1 | confirmed | engine | No reference-frame model: bodies have no spin, actors have no parent frame (synthesis of U12-1, U13-1, U17-1/2, U18-3) | `pre-t4:docs/audit/U26-architecture-fitness.md` |
+| A1-U26-3 | S2 | confirmed | engine | Core entity record is position/velocity only; physics lives outside the core and writes through | `pre-t4:docs/audit/U26-architecture-fitness.md` |
+| A1-U26-4 | S2 | confirmed | play | Play frame and rig are single-world, hand-ordered and module-global: no extension seam | `pre-t4:docs/audit/U26-architecture-fitness.md` |
+| A1-U26-5 | S3 | confirmed | engine | CPU is not the binding constraint; allocation and the height-query count are | `pre-t4:docs/audit/U26-architecture-fitness.md` |

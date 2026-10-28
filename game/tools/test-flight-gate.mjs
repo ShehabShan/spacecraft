@@ -4,7 +4,7 @@
 // WHY: m1d T1 passes a 50 % density step, sea-level-only Mach and reversed wind (A1-U05-1); T2
 // passes an endpoint-only sweep because minPostTickAGL reads only tick endpoints (A1-U05-7); and
 // T2's 45 s deadline counts REQUESTED time, so at 15/10 fps the shed ticks leave the ship airborne
-// (A1-U05-2). Rechecks: docs/audit/U27b3b2b2a-m1d-recheck.md, U27-k2d-recheck.md. Truth here comes
+// (A1-U05-2). Rechecks: pre-t4:docs/audit/U27b3b2b2a-m1d-recheck.md, pre-t4:docs/audit/U27-k2d-recheck.md. Truth here comes
 // from PINNED SPEC LITERALS (Milestone 1D) and an independent path oracle; the only engine data
 // the oracle shares is the real terrain height field (never the DDA's samples or telemetry).
 //

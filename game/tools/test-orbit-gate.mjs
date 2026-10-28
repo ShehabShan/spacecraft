@@ -3,7 +3,7 @@
 // ratio, checked against the real KeplerRail/SimulationCore. The oracle solves Kepler's equation by
 // bisection and rotates by true anomaly (Rz(Omega)Rx(i)Rz(omega)); it shares no code with the rail.
 // WHY: every m1b row reads the rail's own derived n/T/basis/semiMinor, so n×1.01, n×2 and
-// reversed orbits pass all five rows (A1-U07-1/-2, recheck docs/audit/U27b3b2b2b2a-m1b-recheck.md).
+// reversed orbits pass all five rows (A1-U07-1/-2, recheck pre-t4:docs/audit/U27b3b2b2b2a-m1b-recheck.md).
 // The oracle reads ONLY raw catalog inputs (a, e, i, Ω, ω, M0, parent g and R) plus three pinned
 // facts below; it never reads orbit.n, orbit.T, orbit.muHost, orbit.retrograde, basisP/Q, semiMinor.
 //

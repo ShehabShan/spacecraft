@@ -1,7 +1,7 @@
 # ADR-024 — Rebuilt m1f R4 (zero-GC) gate design
 
 - Status: ACCEPTED (F2fcda, session 138, 2026-10-28). R4a is implemented; R4b/R4c are F2fcdb.
-- Task: F2f (U27c §2), finding A1-U03-4 (S1, K2a; re-confirmed in `docs/audit/U27b2-k2a-recheck.md`).
+- Task: F2f (U27c §2), finding A1-U03-4 (S1, K2a; re-confirmed in `pre-t4:docs/audit/U27b2-k2a-recheck.md`).
 
 ## Context
 The shipped R4 (`Milestone1F_TestHarness.tsx` `runSuite`, "R4: zero-GC") has three defects:
