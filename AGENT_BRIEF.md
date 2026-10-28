@@ -1,324 +1,190 @@
 # SOLARIS — GAME DEVELOPMENT BRIEF (PHASE 2: TASK-BASED MAIN DEVELOPMENT)
 
-You are a game feature builder on a WebGL2 space-exploration game. The engine was
-assembled and acceptance-verified in a prior phase (milestones 1A–1F; 1G deferred) —
-that work is DONE. You do NOT re-derive it and you do NOT read the assembly-era
-documents: the code in `game/src` is the source of truth. Your job: pick up the
-active task, plan it or resume it midway, build it step by step, verify each step,
-and commit+push after every completed step — so that ANY fresh session (a different
-AI model, no shared memory) can continue exactly where you left off, from the repo
-alone.
+You build features for a WebGL2 space-exploration game. The engine (milestones
+1A–1F; 1G deferred) is DONE and acceptance-verified: do not re-derive it or read
+assembly-era documents; `game/src` is the source of truth. Plan or resume the
+active task, build and verify it step by step, commit+push after every step, so
+ANY fresh session (other model, no memory) continues from the repo alone.
 
-**ACTIVE WORK (2026-10-26): FIX TASKS F1a… in `docs/audit/U27c-fix-tasks.md` §2 order.**
-A1 (the read-only audit) is DONE — accepted by the Lead 2026-10-26 and merged into
-`main` (`notes/LEDGER.md` APPROVAL LEDGER). §11 AUDIT MODE no longer binds; it is kept as
-history. Fix tasks are one-session rows with no plan file: the U27c §2 row is the
-definition, the tracker row is the checkbox. T1 is PAUSED at B11 until after F2f.
-Every session obeys §12 SESSION BUDGET and §13 GOAL & DECISION AUTHORITY.
+**ACTIVE WORK:** `notes/STATE.md` NEXT ACTION + the `notes/task.md` tracker. Order
+after T4 (Lead, `notes/LEDGER.md` 2026-10-28): T5 → T6 → F3b. Every session obeys
+§12 and §13.
 
-## 1. READING ORDER (a fresh session reads exactly this, in order)
-1. This brief (all of it — it is short).
-2. `notes/task.md` — task tracker + task definitions; find the ACTIVE task.
-3. The active task's definition:
-   - a FIX TASK (F1a…, see the banner) has no plan file: its row in
-     `docs/audit/U27c-fix-tasks.md` §2 is the definition and its tracker row in
-     `notes/task.md` is the checkbox;
-   - any other task has a plan `docs/<task>-plan.md` — the FIRST UNCHECKED BOX is
-     your starting point: a planning-checklist item while the plan is being
-     authored, a build step once building has started (no plan file yet = the
-     task is at its PLAN stage, first commit).
-4. `notes/STATE.md` — NEXT ACTION (the binding pointer) and the SESSION LOG tail.
-5. The code you are about to touch, under `game/src`.
-6. If the active task is **A1 (engine audit)**: §11 AUDIT MODE below, which
-   overrides parts of §2, §3 and §8 for that task only.
+## 1. READING ORDER (exactly this, in order)
+1. This brief, all of it.
+2. `notes/task.md`: the TRACKER header and the ACTIVE row
+   (`grep -n '^| <task>' notes/task.md`); skip DONE rows and inactive definitions.
+3. The task definition. FIX TASK (F…): no plan file; read only its
+   `docs/audit/U27c-fix-tasks.md` §2 row (the definition; the tracker row is the
+   checkbox) and, before the first commit, the S2/S3 rows of its cluster in
+   `docs/audit/FINDINGS.md` §4. Other tasks: `docs/<task>-plan.md`, FIRST UNCHECKED
+   BOX (planning item or build step; no plan file = PLAN stage, first commit).
+4. `notes/STATE.md`: bold NEXT ACTION (binding), any RECON paragraph under it, last
+   3 SESSION LOG rows. Nothing below SESSION LOG.
+5. The code you will touch: `grep -rn` the names in the definition, then `sed -n`
+   only those functions. Never read whole large files.
 
-LEAN READ (Lead, 2026-10-27; binds every session). Read only what the steps above
-need. The process files are mostly history, and reading them in full costs ~25 OLU:
-- `notes/task.md`: the TRACKER header plus the ACTIVE task's row
-  (`grep -n '^| <task>' notes/task.md`). Skip DONE rows (the A1 row alone is ~10 KB)
-  and the TASK DEFINITIONS of tasks that are not active.
-- `docs/audit/U27c-fix-tasks.md`: the active task's §2 row only. Before the first
-  commit, also read the S2/S3 rows of its cluster in FINDINGS §4, as §2 requires.
-- `notes/STATE.md`: the bold NEXT ACTION paragraph and any RECON paragraph directly
-  under it, plus the last 3 SESSION LOG rows. Skip the "… DONE (session N …"
-  history paragraphs and every section below SESSION LOG. Check the APPROVAL LEDGER
-  by `grep` only, when a decision may already have been ruled.
-- Never `cat` a whole process file; use `sed -n`/`grep` ranges.
-- Code: find it with `grep -rn` on the names in the active task's definition row,
-  then read only those functions with `sed -n` ranges. Never read whole large
-  files (`game/src` is ~690 KB).
+LEAN READ (Lead, 2026-10-27; binds every session): read only what §1 needs (full
+process files cost ~25 OLU); never `cat` a process file, use `sed -n`/`grep`;
+check `notes/LEDGER.md` by `grep` only, when a decision may be ruled already;
+history (`docs/history/`, `git show pre-t4:<path>`) only when a task needs it.
 
-## 2. FILE MAP — what to read, what never to read
-- `game/` — THE GAME. Source of truth for all behavior, constants, structure.
-- `notes/task.md` + `docs/<Tn>-plan.md` + `notes/STATE.md` — the task system (§4).
-- `notes/CHANGES.md` — change log. APPEND an entry for every code change you make
-  (format: date · task · file · what · why · evidence · source).
-- REMOVED in T4 S1 (Lead ruling (a), 2026-10-28; ADR-030): the phase-1 canon
-  (seven assembly deliverables, original design vision) and the phase-1 reports,
-  addenda and archived brief. Their content is in the code; the CODE wins every
-  conflict. Read one only if a task needs it: `git show pre-t4:<path>`.
-- `game/src/test/Milestone1<X>_TestHarness.tsx` — assembly acceptance pages, still
-  runnable (`?page=m1a` … `?page=m1e`). With the rebuilt 1F gates `?page=m1fR1` …
-  `?page=m1fR5` (`npx playwright test e2e/m1f-r`) they are your REGRESSION suite
-  (§3). The shipped `?page=m1f` rows are retired (ADR-026); the page stays for
-  manual mode and tools.
+## 2. FILE MAP
+- `game/` — THE GAME; the CODE wins every conflict with any document.
+- Task system (§4): `notes/task.md` (tracker, definitions, PLAN FILE SCHEMA),
+  `docs/<Tn>-plan.md`, `notes/STATE.md` (NEXT ACTION, GIT RECIPE, COMMIT AUTHOR,
+  OLU METER, SESSION LOG).
+- `notes/LEDGER.md` — APPROVAL LEDGER: binding Lead rulings; append-only.
+- `notes/CHANGES.md` — APPEND under "## Entries" for every code change: date ·
+  task · file · what · why · evidence · source.
+- `docs/decisions/` ADRs (§13) · `docs/audit/` open A1 outputs (`FINDINGS.md`,
+  `U27c-fix-tasks.md`, `U26-adr-drafts.md`) · `docs/history/` digests of finished
+  work · `docs/evidence/<task>/` new evidence (§6) · `docs/T5-T6-ideas.md` T5/T6
+  planner input.
+- REMOVED in T4 (Lead ruling (a), 2026-10-28; ADR-030): phase-1 canon and design
+  vision, phase-1 reports/patches/archive, raw evidence, A1 unit reports, DONE
+  plans. Their content is in the code; if a task needs one: `git show
+  pre-t4:<path>`. Never re-add them.
+- REGRESSION suite (§3): `?page=m1a` … `?page=m1e`
+  (`game/src/test/Milestone1<X>_TestHarness.tsx`) and the rebuilt 1F gates
+  `?page=m1fR1` … `m1fR5` (`npx playwright test e2e/m1f-r`). Shipped `?page=m1f`
+  rows are retired (ADR-026); the page stays for manual mode and tools.
 
-## 3. ENGINE INVARIANTS — these still bind; protect them
-The engine is unusual BY DESIGN. When code looks odd, assume there is a reason
-(often a `// WHY:` comment or a CHANGES.md entry) — do not "simplify" it.
-- Pure core: `src/core/**` imports NOTHING from three / react / @react-three/fiber
-  / physics libs. Keep it that way.
-- Zero-GC: all buffers and pools are boot-allocated; NO per-frame allocation in
-  tick loops.
+## 3. ENGINE INVARIANTS (protect them)
+The engine is unusual BY DESIGN: odd code usually has a reason (`// WHY:` or a
+CHANGES.md entry) — do not "simplify" it.
+- `src/core/**` imports NOTHING from three / react / @react-three/fiber / physics.
+- Zero-GC: buffers and pools boot-allocated; NO per-frame allocation in tick loops.
 - Floating origin: 256 m lattice (O = 256·round(P/256)); rebase when max|local| >
-  1,024 m; local coordinates are ALWAYS Float64 subtraction then narrowing.
-- The canonical tick order lives in `SimulationCore.tick()` — do not reorder it.
-- Astronaut orientation is a parallel-transport frame — NEVER Euler accumulators.
-- Page rule: exactly one harness/game module per page, switched by full page
-  loads via the `?page=` static map in `main.tsx` (module singletons + Web
-  Workers + THREE prototype patches make multi-module pages corrupt each other).
-  New game pages follow the same static-map pattern.
-- Milestone harness pages are regression: if you touch shared modules (terrain /
-  KCC / core / render), re-run the relevant `?page=m1X` suite(s) and keep them
-  green. Breaking one is a bug you introduced — fix it before reporting.
-- Final decisions live in code: catalog constants in `celestialData.ts` are never
-  re-derived from formulas; the KCC step/slope rule, the C¹ speed cap, the layered
-  camera bands, and the impostor hysteresis are RATIFIED — change none of them (except under §13: ADR + evidence)
-  without a Lead ruling.
-- Rapier (or any physics library) stays deferred: the analytic KCC + sweeps ARE
-  the design. No new libraries without asking the Lead.
+  1,024 m; local coords ALWAYS Float64 subtraction, then narrowing.
+- Canonical tick order lives in `SimulationCore.tick()`; never reorder it.
+- Astronaut orientation is a parallel-transport frame, NEVER Euler accumulators.
+- One harness/game module per page, switched by full page loads via the `?page=`
+  static map in `main.tsx` (module singletons, Workers and THREE prototype patches
+  corrupt multi-module pages); new game pages follow it.
+- Touching shared modules (terrain / KCC / core / render): re-run the relevant
+  `?page=m1X` suites and keep them green; a break you caused is your bug — fix it
+  before reporting.
+- `celestialData.ts` catalog constants are never re-derived from formulas. The KCC
+  step/slope rule, C¹ speed cap, layered camera bands and impostor hysteresis are
+  RATIFIED: change none without a Lead ruling, except under §13 (ADR + evidence).
+- Rapier or any physics library stays deferred: analytic KCC + sweeps ARE the
+  design. No new libraries without asking the Lead.
 
 ## 4. THE TASK SYSTEM
-- Work is organized as TASKS (T1, T2, …) defined in `notes/task.md`. Each task
-  has: one branch, one plan file `docs/<Tn>-plan.md`, and one tracker row.
-- Two stages — BOTH incremental and multi-session:
-  - PLAN: author `docs/<Tn>-plan.md` section by section, per the PLANNING
-    CHECKLIST at the top of the plan file (schema in `notes/task.md`). The file
-    is created on the FIRST planning commit (header + empty checklist), then
-    sections are drafted, checked off, committed, pushed — a few per commit.
-    Plan status lifecycle: NOT STARTED → IN PROGRESS (n/m sections) → READY.
-  - BUILD: execute the plan's steps in order.
-  - LEAD GATE: when the plan checklist completes, set plan status READY, update
-    tracker + STATE.md, and STOP — building starts ONLY on the Lead's execute
-    order ("execute the <Tn> plan"), never automatically.
-- A STEP (build) or CHECKLIST ITEM (plan) is the unit of work AND the unit of
-  commit: small, independently verifiable, checkpointed per §6.
-- Tracker columns (update as you go): task · branch · plan status · build status ·
-  step progress (done/total + next step) · last commit · blockers.
-- Branch/merge: one branch per task (`<tn>-<slug>`, e.g. `t1-playable-moon`) cut
-  from the latest integrated line. When a task is DONE and verified, merge its
-  branch into `main` and push; the NEXT task branches from `main`. (This replaces
-  the phase-1 "never push main" rule: `main` now receives completed-task merges,
-  pushed by the merging session. Never force-push. Never re-add the phase-1 canon removed in T4 S1.)
+- TASKS are defined in `notes/task.md`: one branch, one plan file
+  `docs/<Tn>-plan.md` (fix tasks: §1.3), one tracker row each.
+- PLAN: author the plan section by section per its PLANNING CHECKLIST (schema in
+  `notes/task.md`); the first planning commit creates it (header + empty
+  checklist); draft, check off, commit, push a few sections per commit. Status:
+  NOT STARTED → IN PROGRESS (n/m) → READY. BUILD: run the steps in order.
+- LEAD GATE: at checklist completion set READY, update tracker + STATE.md and STOP.
+  Build only on the Lead's order ("execute the <Tn> plan"), never automatically.
+- A step or checklist item is the unit of work and of commit: small, verifiable,
+  checkpointed per §6.
+- Tracker columns: task · branch · plan status · build status · step progress
+  (done/total + next) · last commit · blockers.
+- Branch `<tn>-<slug>` from the latest integrated line. A DONE, verified task is
+  merged into `main` and pushed by that session; the next task branches from
+  `main`.
 
-## 5. MULTI-SESSION RESUME PROTOCOL (the only entry procedure)
-1. Read per §1 (brief → tracker → active plan → STATE.md NEXT ACTION).
-2. Reconcile: `git log --oneline -15`, `git status`, and the filesystem must
-   agree with the tracker + STATE.md. Hard evidence (commits, files, plan
-   checkboxes) outranks prose. Minor drift: trust evidence, repair the
-   tracker/STATE.md, note the repair in the SESSION LOG. Suspected lost or
-   uncommitted work: STOP, ask the Lead. Before cutting a task branch, run
-   `git ls-remote origin`: if the branch already exists, check it out and
-   follow the NEXT ACTION in ITS `notes/STATE.md`, not `main`'s (a split task's
-   progress lives only on its branch until the task is merged).
-3. Report ≤5 sentences: current state, exact next step, discrepancies.
-4. Continue at NEXT ACTION (the first unchecked plan step). Never redo completed
-   steps; never re-ask decisions recorded in the APPROVAL LEDGER (`notes/LEDGER.md`).
-5. Before ending a session: the per-commit checkpoints (§6) have already left
-   the repo fully resumable; session end only ADDS the SESSION LOG handoff row
-   (what was accomplished, what is next, anything the successor must know) and
-   commits it. A session that ends without a handoff note violates protocol.
+## 5. RESUME PROTOCOL (the only entry procedure)
+1. Read per §1.
+2. Reconcile `git log --oneline -15`, `git status` and the files with tracker +
+   STATE.md; hard evidence (commits, files, checkboxes) outranks prose. Minor
+   drift: repair tracker/STATE.md, note it in the SESSION LOG. Suspected lost or
+   uncommitted work: STOP, ask the Lead. Before cutting a branch, `git ls-remote
+   origin`: if it exists, check it out and follow ITS `notes/STATE.md` NEXT ACTION.
+3. Report ≤5 sentences: state, exact next step, discrepancies.
+4. Continue at NEXT ACTION; never redo done steps or re-ask `notes/LEDGER.md`
+   decisions.
+5. Session end ADDS the SESSION LOG handoff row (done, next, must-knows) and
+   commits it. No handoff note = protocol violation.
 
 ## 6. COMMIT & PUSH POLICY
-- Commit AND PUSH frequently — after every good committable amount of VERIFIED
-  work: a plan section drafted, a build step done, a bug verified fixed.
-  Frequency is the point — it is what makes mid-task resume possible.
-- EVERY commit is a CHECKPOINT, in BOTH stages: before committing, update the
-  progress system and INCLUDE those updates in the SAME commit — check off the
-  finished plan-checklist item and/or build step in `docs/<Tn>-plan.md`, update
-  the tracker row in `notes/task.md` (plan/build status, step progress, last
-  commit), and repoint `notes/STATE.md` NEXT ACTION at the next unchecked box.
-  After the push the repo is a COMPLETE resume point: if the session dies
-  immediately after, a fresh session loses nothing. Never leave finished work
-  or progress updates sitting uncommitted.
-- Message format — a fresh session must understand the change from `git log`
-  ALONE. First line `<area>: <one-line purpose>`; body covers:
-  - WHAT: files / functions / behavior changed;
-  - WHY: the problem, requirement, or plan step it serves;
-  - STATE: what is true now, what remains open;
-  - NEXT: the next step;
-  - VERIFIED: commands + observed results; exit codes UNPIPED — a "clean" claim
-    requires an observed exit 0.
-- PUSH AUTHORITY (Lead, 2026-10-27; APPROVAL LEDGER): push verified commits
-  without asking, every time. The same holds for the §4 fast-forward into `main`
-  unless NEXT ACTION or the task row says to wait for the Lead. Push through the
-  `__github` integration proxy (`notes/STATE.md` GIT RECIPE has the command).
-- Never amend pushed commits; never force-push; never re-add the phase-1 canon removed in T4 S1.
-- END REPORT (Lead, 2026-10-28; APPROVAL LEDGER): the session's final message to
-  the Lead is at most 4 short lines, no tables:
-  1. Unit and result (one key number).
-  2. Commit hash, and whether it is merged.
-  3. Anything the Lead must decide, or "nothing".
-  4. Next unit.
-  Details go only in the commit message and the SESSION LOG.
+- Commit AND PUSH after every VERIFIED unit (plan section, build step, verified
+  fix); frequency makes resume possible.
+- Every commit is a CHECKPOINT: the same commit checks off the plan box, updates
+  the tracker row (status, progress, last commit) and repoints NEXT ACTION. Never
+  leave work or progress updates uncommitted.
+- REF CHECK before every commit, from `game/`: `node tools/check-repo-refs.mjs
+  --max 100000` — no NEW dangling refs; touched files 0 (ADR-030).
+- EVIDENCE (ADR-030): one summary ≤ 5 KB per step in `docs/evidence/<task>/`
+  (commands, exit codes, key numbers). Never commit raw `playwright.json`, bulk
+  logs or screenshots unless a ruling needs one image.
+- Message: `<area>: <one-line purpose>`; body WHAT · WHY · STATE (true now, open) ·
+  NEXT · VERIFIED (commands + results; exit codes UNPIPED; "clean" needs an
+  observed exit 0) — understandable from `git log` alone.
+- PUSH AUTHORITY (Lead, 2026-10-27): push verified commits without asking, and the
+  §4 fast-forward into `main` unless NEXT ACTION or the task row says wait. Push
+  via the `__github` proxy (STATE.md GIT RECIPE).
+- Never amend pushed commits, never force-push, never re-add removed history.
+- END REPORT (Lead, 2026-10-28): final message ≤ 4 short lines, no tables:
+  1. unit + result (one key number); 2. commit hash, merged or not; 3. what the
+  Lead must decide, or "nothing"; 4. next unit. Details: commit + SESSION LOG.
 
-## 7. CODE COMMENTS — write WHY, not what
-Important code and non-obvious functions get a SHORT (1–4 line) `// WHY:` comment
-at the decision site (constraint, ruling, tradeoff, gotcha), referencing the task
-id or CHANGES.md entry when one exists — so later sessions READ the reason in
-place instead of guessing or re-deriving. Do not narrate the obvious; do not write
-essays.
+## 7. CODE COMMENTS
+Non-obvious code gets a 1–4 line `// WHY:` at the decision site (constraint,
+ruling, tradeoff, gotcha), citing the task id or CHANGES.md entry. No narration of
+the obvious, no essays.
 
-## 8. PARKED (do not touch without a Lead directive naming them)
-- MS 1F — round-7 ruling PENDING: the option menu is at
-  `pre-t4:notes/reports/M1F.md` §15.7 (recommendation (a): rebase gate ≥ 2 → ≥ 1).
-  The 1F harness state is green except R5 by design; leave it that way.
-  R5 FAIL is WAIVED for all task verification (Lead, 2026-10-20): count it as
-  PASS, never a blocker or regression; do not change code to hide it.
-- MS 1G (IndexedDB saves) — DEFERRED, explicitly ignored until the Lead orders
-  it ("much later"). Do not start it, do not plan it.
+## 8. PARKED (only on a Lead directive naming them)
+- 1F: round-7 ruling PENDING (menu `pre-t4:notes/reports/M1F.md` §15.7; rec. (a)
+  rebase gate ≥ 2 → ≥ 1). Green except R5, by design; leave it. R5 FAIL is WAIVED
+  (Lead, 2026-10-20): counts as PASS in all verification; never hide it in code.
+- 1G (IndexedDB saves): DEFERRED; do not start or plan it.
 
-## 9. HARD STOPS (always)
-Any impulse to change a ratified constant/formula/threshold · any new library ·
-a milestone regression page you cannot fix · suspected lost work · any doubt
-about whether a change is allowed — STOP, write the options, ask the Lead.
-During A1, also: any edit outside `docs/audit/**`, `game/tools/audit/**` and the
-process files (`notes/task.md`, `notes/STATE.md`, `pre-t4:docs/A1-plan.md`).
-The Lead is the repo owner.
-Outside A1, a technical choice (including a ratified constant, formula,
-threshold or a new library) is NOT a hard stop: decide it under §13 and record
-an ADR. Stop and ask the Lead only for look-and-feel/gameplay preferences,
-suspected lost work, or deleting the Lead's work.
+## 9. HARD STOPS
+STOP, write the options and ask the Lead (repo owner) on: a regression page you
+cannot fix · suspected lost work · deleting the Lead's work · look-and-feel or
+gameplay preferences · doubt whether a change is allowed. A technical choice
+(ratified constant, formula, threshold, new library) is NOT a hard stop: decide it
+under §13 with an ADR.
 
-## 10. AMENDMENT LOG
-- 2026-10-19 Phase-2 transition (Lead order): brief rewritten for game feature
-  builders; assembly brief archived verbatim at
-  `pre-t4:notes/archive/AGENT_BRIEF-assembly.md`; task system installed (`notes/task.md`
-  + `docs/<Tn>-plan.md` schema); commit+push after every completed step with
-  WHAT/WHY/STATE/NEXT/VERIFIED messages; merge-to-main between tasks (supersedes
-  phase-1 "never push main"); `pre-t4:Milestone/*.txt`, `pre-t4:notes/reports/`,
-  `pre-t4:notes/patches/`, `pre-t4:notes/archive/` moved off the reading list;
-  `pre-t4:Design_specs/` = optional background, code wins; 1F parked, 1G explicitly
-  deferred; NEXT ACTION = "T1 plan".
-- 2026-10-19 Amendment (Lead, same day): planning is NOT one-shot — plan files
-  carry a PLANNING CHECKLIST and are authored section by section across
-  sessions, exactly like the build. EVERY commit (planning or building) is a
-  checkpoint: the plan checkbox, tracker row, and STATE.md NEXT ACTION updates
-  ride in the SAME commit, so each push is a complete resume point. Lead gate
-  added between plan READY and build start: execute only on the Lead's order.
-- 2026-10-20 R5 waiver (Lead): the M1F R5 FAIL is deferred to later work and
-  counts as PASS in every task's verification/regression check (m1f spec exit
-  1 caused only by R5 is expected). No code, row or threshold changes (§8).
-- 2026-10-21 Audit amendment (Lead): T1 PAUSED at B11; new task A1 engine audit
-  (read-only) is active; §11 AUDIT MODE added; session budget 50 OLU per session
-  stated as binding for every task; sessions from now on run on high-capability
-  models.
+## 10. AMENDMENTS (full text: `git show bb9637d:AGENT_BRIEF.md`)
+- 10-19 Phase 2 (Lead): task system, commit+push per step, merge to `main`; 1F parked, 1G deferred.
+- 10-19 (Lead): incremental planning; every commit a checkpoint; Lead gate.
+- 10-20 R5 waiver (Lead, §8). · 10-21 A1 audit, T1 paused, 50 OLU budget (§12). · 10-21 §13 (Lead).
+- 10-26 banner repair (s104) · branch check `git ls-remote` (s112, §5).
+- 10-27 LEAN READ (Lead, s121). · 10-28 END REPORT, lean code read (Lead).
+- 10-28 rebuilt 1F gates (s142, ADR-026) · phase-1 canon removed (s151, ADR-030) · AAA goal (Lead, s153c).
+- 10-28 T4 S7 (s156): trimmed to the T4 layout; §11 AUDIT MODE and A1-only clauses retired (A1 DONE; `docs/history/A1.md`); §6 REF CHECK + EVIDENCE. No other rule change.
 
-- 2026-10-21 Goal & authority (Lead): §13 added. Real-looking, real-time solar
-  system on an optimised, flexible engine; major rework allowed when clearly
-  better; the session makes all technical calls (ADR in docs/decisions/); the
-  Lead answers only look-and-feel questions; no-mess safeguards.
+## 11. AUDIT MODE — RETIRED (A1 DONE 2026-10-26; `docs/history/A1.md`)
 
-- 2026-10-26 Banner repair (session 104): the top banner still named A1 as active
-  after the Lead's 2026-10-26 acceptance (APPROVAL LEDGER). It now points at the fix
-  tasks; §11 is history. No rule changed.
+## 12. SESSION BUDGET (Lead, 2026-10-21; every task)
+- Session = 50 OLU, ONE unit (plan item or build step) that finishes, verifies,
+  commits and pushes inside it.
+- Wrap up at ~40 OLU (~10 OLU reserve for commit + push; late steps cost more);
+  up to 50 is allowed; unused budget is waste (Lead, 2026-10-28).
+- After bootstrap, check the meter and take the largest slice ending near ~40. If
+  it won't fit: commit the done part as `<id>a`, add unchecked `<id>b` directly
+  below with the rest, repoint NEXT ACTION. Never end with uncommitted work.
+- Quality over quantity: done early → improve that unit (mutants, edge cases,
+  second run, tighter evidence), not a new unit.
+- Fresh bot per session: the OLU meter is a lifetime total per bot.
 
-- 2026-10-26 Branch-check rule (Lead suggestion, session 112): §5 step 2 now
-  requires `git ls-remote origin` before cutting a task branch. Why: a split
-  F2b's NEXT ACTION lived only on its branch, `main` still said "cut from main",
-  and a second session redid the work as a duplicate session 111.
-
-- 2026-10-27 Lean read (Lead, session 121): §1 gained the LEAN READ rule. Why:
-  sessions 120 and 121 each spent ~28 of 50 OLU on bootstrap reading (full tracker,
-  full STATE.md history) and could not start a unit. No other rule changed.
-
-- 2026-10-28 End report (Lead): §6 gained the END REPORT rule (final message ≤4
-  short lines, no tables). Why: only the start report was capped, so end reports
-  ran long. No other rule changed.
-
-- 2026-10-28 Lean code read (Lead): §1 LEAN READ gained the code bullet (`grep -rn`
-  + `sed -n` ranges, never whole large files). Why: the rule lived only in the
-  session starter prompt, which the Lead is shortening. No other rule changed.
-
-- 2026-10-28 F2f close-out (session 142): §2 regression bullet now names the rebuilt
-  1F gates instead of the retired shipped m1f rows (ADR-026). No rule changed.
-
-- 2026-10-28 T4 S1 (session 151): the phase-1 canon (Lead ruling (a)) and
-  `notes/{reports,patches,archive}/` removed from the tree; §2 lists them as removed;
-  references point at `pre-t4:<path>` (ADR-030); "never stage" became "never re-add".
-  No other rule changed.
-- 2026-10-28 Product goal (Lead, session 153c): §13 gained the AAA product-goal
-  bullet (publishable AAA browser game, not a prototype).
-
-## 11. AUDIT MODE (binds only while the active task is A1)
-Why: the milestone specs were written by GLM 5.3 and the engine by GLM 5.3 Flash
-(Lead, 2026-10-21). Specs, code and tests are all suspect; a session that defends
-the existing code cannot audit it.
-- READ-ONLY: never edit `game/src/**`, `game/e2e/**`, `game/playwright.config.ts`,
-  `Milestone/**`, `Design_specs/**`. Write only `docs/audit/**`, `game/tools/audit/**`
-  (new files) and the process files.
-- §2 DO-NOT-READ is lifted for A1: read `Milestone/*.txt` (targeted grep, never a
-  whole file), `pre-t4:Design_specs/`, and `pre-t4:notes/reports/` as needed.
-- §3 "when code looks odd, assume there is a reason" is SUSPENDED for A1. Treat
-  `// WHY:` comments, CHANGES.md and reports as claims to verify, not as proof.
-- "Code wins every conflict" does NOT apply in A1: a spec/code conflict is a
-  finding, and the auditor judges which side is right on physics and math.
-- RATIFIED items (§3) and parked 1F (§8) MAY be audited and flagged; changing them
-  happens in a later fix task under §13 (ADR + evidence).
-- Method, finding template, severity scale and budget rule: `pre-t4:docs/A1-plan.md` §6.
-
-## 12. SESSION BUDGET (binds every task; Lead, 2026-10-21)
-- One session = 50 OLU. Every committable unit (plan item, build step, audit
-  unit) must finish, verify, commit and push inside one session.
-- Do ONE unit per session. Start the wrap-up at about 40 OLU.
-- If a unit will not fit, commit what is done as `<id>a`, add an unchecked `<id>b`
-  box directly below it with the remaining scope, and repoint NEXT ACTION to it.
-  Never end a session with uncommitted work.
-- Quality over quantity: fewer, verified results beat many shallow ones.
-- The ~40 wrap-up reserves ~10 OLU for commit + push (late steps cost more as
-  the context grows); a session may use up to 50. Unused budget is waste
-  (Lead, 2026-10-28).
-- Size the unit to end near ~40: after bootstrap, check the meter and take the
-  largest slice of the task that fits (split with `<id>a`/`<id>b` only if it
-  won't).
-- If the unit is done and verified well before ~40, spend the rest on that same
-  unit's quality (more mutants/edge cases, a second verification run, tighter
-  evidence) — not on a new unit.
-- Run each session in a fresh bot: the OLU meter query is a lifetime total per
-  bot, so a reused bot starts above 0.
-
-## 13. PROJECT GOAL & DECISION AUTHORITY (Lead, 2026-10-21; binds every task)
-- **Product goal (Lead, 2026-10-28).** SOLARIS is a publishable AAA browser game,
-  not a prototype or a "vibe" game. Every design and technical choice aims at
-  shipped commercial quality in look, feel, performance and stability. A finished
-  task leaves no placeholder or stopgap in place of the real thing.
-- **Goal.** A game that looks like a real solar system: every planet and moon
-  rotates and orbits, computed in real time. The engine must be optimised,
-  flexible, high-performance and a solid foundation, so later features (e.g.
-  fighting aliens, vehicles, new bodies) can be added without a rewrite.
-- **Realism vs performance.** Looking real is the main requirement. Where exact
-  simulation is impossible or too costly (heavy fps drops), use a workaround that
-  still looks real (LOD, impostors, analytic rails, precomputation, approximation)
-  and document the approximation.
-- **Major change is allowed** — architecture, pipeline, state model, physics
-  method, libraries — when it is clearly better for the goal.
-- **The session decides technical questions** (engineering, physics, state,
-  pipeline, performance) using its own best judgment. Do NOT ask the Lead to
-  choose between technical options.
-- **Ask the Lead only about look and feel / gameplay** (e.g. "should the Sun be
-  blinding like the real Sun, or comfortable to look at?"), in plain language,
-  with a recommended default.
-- **ADR for every significant technical decision:** `docs/decisions/ADR-NNN-<slug>.md`
-  (Context · Options · Decision · Why · Consequences), in the same commit.
-- **No-mess safeguards:**
-  1. Never delete the Lead's work: supersede, move or archive (in git history: `git show pre-t4:<path>`, ADR-030);
-     git history stays intact; never force-push.
-  2. Rework happens on a task branch in session-sized steps (§12); every commit
-     leaves typecheck, build and the task's tests green.
-  3. Before replacing or retiring a test gate, the new independent check lands first.
-  4. Any change claimed as an optimisation shows measured frame time / heap
-     before and after.
-  5. `main` changes only by merging a finished task.
-- During A1, everything above is only **flagged and proposed**; changes happen in
-  the fix tasks that follow.
-
+## 13. GOAL & DECISION AUTHORITY (Lead, 2026-10-21; every task)
+- **Product (Lead, 2026-10-28):** a publishable AAA browser game, not a prototype
+  or "vibe" game; every choice aims at shipped commercial quality in look, feel,
+  performance and stability; a finished task leaves no placeholder or stopgap.
+- **Goal:** a real-looking solar system — every planet and moon rotates and
+  orbits, computed in real time — on an optimised, flexible engine that later
+  features (aliens, vehicles, new bodies) extend without a rewrite.
+- **Realism vs performance:** looking real comes first; where exact simulation is
+  impossible or costs heavy fps, use a real-looking workaround (LOD, impostors,
+  analytic rails, precomputation, approximation) and document it.
+- **Major change is allowed** (architecture, pipeline, state model, physics,
+  libraries) when clearly better for the goal.
+- **The session decides technical questions** by its own judgment; never ask the
+  Lead to pick between technical options.
+- **Ask the Lead only about look and feel / gameplay**, in plain language, with a
+  recommended default (e.g. "blinding real Sun, or comfortable to look at?").
+- **ADR per significant technical decision:** `docs/decisions/ADR-NNN-<slug>.md`
+  (Context · Options · Decision · Why · Consequences), same commit.
+- **No-mess safeguards:** 1. never delete the Lead's work — supersede, move or
+  archive (`git show pre-t4:<path>`, ADR-030), never force-push; 2. rework on a
+  task branch in §12-sized steps, each commit green on typecheck, build and the
+  task's tests; 3. a replacement gate lands before the old one retires; 4. an
+  optimisation claim shows measured frame time / heap before and after; 5. `main`
+  changes only by merging a finished task.
