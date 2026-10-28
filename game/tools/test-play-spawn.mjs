@@ -32,7 +32,10 @@ const A2 = { planetRadius: 1364.5, planetMu: 1.62 * 1364.5 * 1364.5, gravityRang
   accelTau: 0.15, stepHeight: 0.5, snapDistance: 0.4, groundClearance: 0.02,
   maxWalkSlopeDeg: 50, slideAngleDeg: 45, kineticFriction: 0.6, slideGripTau: 0.06,
   eyeHeight: 1.62, crouchEyeHeight: 0.95, upBlendWeight: 0.65, airborneUpTau: 2.0,
-  autoTurnRate: 6, rcsAccel: 1.2, rcsBudgetMax: 20, rcsRegen: 0.5, sweepGap: 0.25 }
+  autoTurnRate: 6, rcsAccel: 1.2, rcsBudgetMax: 20, rcsRegen: 0.5, sweepGap: 0.25,
+  // WHY: B11 (ADR-027, Q2a/Q3 rulings) added the opt-in KCC fields to MOON_ASTRONAUT;
+  // this literal was not updated then, so the field count read 28 vs 26 (found at B13).
+  coyoteTime: 0.10, airControl: 0.3 }
 const K = cfg.MOON_ASTRONAUT
 for (const k of Object.keys(A2)) eq(K[k], A2[k], `MOON_ASTRONAUT.${k}`)
 eq(Object.keys(K).length, Object.keys(A2).length, 'MOON_ASTRONAUT field count')

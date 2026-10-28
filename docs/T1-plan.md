@@ -2,7 +2,7 @@
 
 - Task: **T1** (playable moon) — definition: `notes/task.md` § "T1 — PLAYABLE MOON"
 - Branch: `t1-playable-moon`
-- Stage: **BUILDING** (resumed by the Lead 2026-10-28) — plan READY (7/7); build 12/13 done (B1–B12), next B13 close-out
+- Stage: **BUILDING — awaiting Lead acceptance** — plan READY (7/7); build 13/13 done (B1–B13); stage → DONE after the Lead accepts
 - Last updated: 2026-10-21
 - **Resume at the FIRST UNCHECKED BOX** (planning item or build step).
 - Rules: planning changes NO game code (plan + process files only); each checked
@@ -2534,7 +2534,7 @@ or reordered. A step that fails its checks is not committed as done.
     (CLICK_TO_PLAY ≤ 20 s, no console errors, non-blank canvas, HUD speed > 0
     after W). Checked as SKIPPED if the Lead declines Q6.
 
-- [ ] **B13 — Close-out.**
+- [x] **B13 — Close-out.** DONE (session 146): full §13 automated matrix green on the final tree (evidence `docs/audit/evidence/T1/B13/`); one stale test literal fixed (test-play-spawn 69/70 → 72/72). Manual MT1–MT16 (hardware WebGL, human) NOT RUN in the VM — owed by the Lead in the acceptance play-test; headless stand-ins check-play-b4/b5/b6/b7/b9 exit 0.
   - Run the full §13 verification matrix once on the final tree; record
     every result in the commit.
   - Tracker: build status DONE (pending Lead acceptance); STATE.md NEXT
