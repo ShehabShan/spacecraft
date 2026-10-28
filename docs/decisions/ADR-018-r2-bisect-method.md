@@ -12,7 +12,7 @@ A1-U01-1: R2 (Sun ground-truth footprint) has failed in every recorded m1f run s
 
 ## Decision
 - New `game/tools/audit/f2fa-m1f-observe.mjs` does the following. It runs `vite build` and `vite preview` in a commit's own git worktree. It opens `?page=m1f` in headless Chrome using the same channel and headless mode as the shipped `playwright.config.ts`. It waits up to 1200 s for the acceptance line, then records the badges and every row detail. It edits nothing in the worktree.
-- Driver scripts: `f2fa-observe-both.sh` (parent, then candidate) and `f2fa-r2-bisect.sh` (the shipped spec at both commits). Evidence: `pre-t4:docs/audit/evidence/F2f/a/`.
+- Driver scripts: `pre-t4:game/tools/audit/f2fa-observe-both.sh` (parent, then candidate) and `pre-t4:game/tools/audit/f2fa-r2-bisect.sh` (the shipped spec at both commits). Evidence: `pre-t4:docs/audit/evidence/F2f/a/`.
 - A commit counts as "good" for R2 only if its own unedited harness renders the R2 badge PASS. The whole-suite verdict does not decide this, because R5 fails at both commits and stays under the waiver.
 
 ## Consequence

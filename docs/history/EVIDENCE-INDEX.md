@@ -119,3 +119,25 @@ T4 S3a kept 18 files of `game/tools/audit/` and the phase-1 `game/tools/diag-*` 
 | `game/tools/audit/u27b3b2b2b2b2a-m1a-timing-recheck.mjs` | named in FINDINGS.md |
 | `game/tools/audit/u27c-coverage-check.py` | named in U27c-fix-tasks.md |
 | `game/tools/r4-cdp-driver.mjs` | named in ADR-024-r4-gate-design.md, m1f-r4.spec.ts, M1fR4Gate.tsx |
+
+### S3b probe runs (session 152c)
+
+Each kept probe run from `game/` (the two `.py` tools from the repo root) on 7b3950e. The four exit-1 probes were re-run at the `pre-t4` tag in a worktree and fail the same way there, so the T4 cleanup did not cause them. They are rechecks pinned to older code or specs (drift), and are kept as citations.
+
+| probe | exit | result |
+|---|---|---|
+| `f3abbba-shape-probe.mjs` | 0 | `ok=true` |
+| `f3abbbba-scale-laws.mjs` | 0 | LAWS 8/8 |
+| `u03-r3r4r5-validity.mjs` | 0 | CONFIRMED 22/22 |
+| `u27-findings-index.py` | 0 | no-severity: [] |
+| `u27c-coverage-check.py` | 0 | 55/55 findings covered, RESULT PASS |
+| `u27b1-k1-recheck.mjs` | 0 | PASS 11/11 |
+| `u27b3b2a-r3-recheck.mjs` | 0 | PASS 26/26 |
+| `u27b3b2b2b2b1-m1a-recheck.mjs` | 0 | SUMMARY 50/50 |
+| `u27b3b2b2b2b2a-m1a-timing-recheck.mjs` | 0 | SUMMARY 27/27 |
+| `u27-k2d-recheck.mjs` | 1 | 13/14 (U27-k2d report recorded 14/14 exit 0); same at `pre-t4` |
+| `u27-k4-recheck.mjs` | 1 | SUMMARY 14/19; same at `pre-t4` |
+| `u27b2-k2a-recheck.mjs` (`--expose-gc`) | 1 | `Error: heap clauses large`; same at `pre-t4` |
+| `u27b3a-k2b-recheck.mjs` | 1 | ENOENT `game/e2e/m1f.spec.ts` (spec retired by ADR-026); same at `pre-t4` |
+
+Not run standalone: `f2fa-m1f-observe.mjs` (needs a worktree and port), `f2fb-make-variant.py` (builds a worktree variant), `r4-cdp-driver.mjs` (driven by the m1f-r4 spec), `u27b1-ts-loader.mjs` and `u01-gate-run1.log` (inputs to other probes).
