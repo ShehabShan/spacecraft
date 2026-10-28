@@ -65,3 +65,18 @@ can see (U27b2 remedy 2). R4b needs CDP, so the spec/self-test, not the page, mu
   and only then can it be retired (ADR-005, safeguard 3).
 - R5 stays waived.
 - Evidence: `docs/audit/evidence/F2f/cda/`.
+
+## Amendment (F2fcdb, session 139, 2026-10-28): R4b and R4c implemented
+- **Driver.** The page exposes `window.__r4` with these members:
+  - `burn(n, render)` runs the same fixture frame as R4a; with `render` set, it also runs `executePasses`.
+  - `cal(kind, n)` runs the known-rate controls.
+  - `post(m)` hands back the measurements.
+  The page owns budgets and verdicts. `game/tools/r4-cdp-driver.mjs` measures over CDP, and the spec and the self-test both use it. If nothing is posted within `?wait=` (default 150 s), R4b/R4c FAIL "instrument missing".
+- **R4b.** `HeapProfiler.startSampling` (interval 32, objects collected by minor and major GC included) samples the warmed burn: 3,000 pure frames and 300 render frames. The budget is 64 B/frame (same as `alloc-lib.mjs`). Calibration requires noop < 0.5, obj3 16–64 and f64x16 ≥ **64** B/iter. That last bound is lower than node's 128 because Chrome keeps the 128-byte backing store off the V8 heap: it measured 112–113. The row reports a per-clause fail list.
+- **R4c.** The trend is 2× `HeapProfiler.collectGarbage` → `Runtime.getHeapUsage` around 3 rounds: pure 10,000 frames and render 600, each after one unmeasured warm round (the first render round measured 37 B/frame of cache fill). The budget is median |x| ≤ 8 B/frame. A large negative reading fails, unlike the shipped R4's `delta < 0`. Calibration is a retained {a,b} control, which must read ≥ 12 B/iter (measured 24.3).
+- **Mutant holders.** They are published on `window.__r4hold`, because the first build's minifier removed write-only pushes.
+- **Measured.** R4a PASS; R4b FAIL on render only; R4c PASS.
+- **Finding F2fcdb-1.** The shipped `executePasses` render path allocates ~1.6 KB/frame: three.js `setFromProjectionMatrix` ~730 B, render internals ~230 B and MultiCameraRig ~187 B are the top sampled sites. The cause is not isolated. The pure frame path is ~54 B/frame. The spec pins ['PASS','FAIL','PASS'] with `fails: [render]`; fixing F2fcdb-1 flips it to all-PASS.
+- **Mutants.** `churn` (4 escaping objects/frame) turns R4b red on pure as well, while R4c stays green. `leak` (one retained object/frame) turns R4c red at ~24 B/frame.
+- **Retiring the shipped R4.** It may now be retired (safeguard 3 is met), but that is left to the F2f close-out.
+- **Evidence.** `docs/audit/evidence/F2f/cdb/`.
