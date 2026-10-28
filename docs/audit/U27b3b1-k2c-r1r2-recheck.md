@@ -23,7 +23,7 @@ The R1 frozen-image difference and R2 Sun coverage/center values are supplied ex
 
 ### A1-U02-1 — Re-confirmed S1; qualify “cannot fail”
 
-**Claim:** every instance's rendered angle matches f64 truth, and the audit reads written matrices. Source: `game/src/test/Milestone1F_TestHarness.tsx:28-30,1094-1122,1149-1150` at base; matching claim in `Milestone/Milestone 1F.txt:885-887,1907`.
+**Claim:** every instance's rendered angle matches f64 truth, and the audit reads written matrices. Source: `game/src/test/Milestone1F_TestHarness.tsx:28-30,1094-1122,1149-1150` at base; matching claim in `pre-t4:Milestone/Milestone 1F.txt:885-887,1907`.
 
 **Observed:** six ranks cause six checks of slot 0 only. The unmodified fixture passes both the actual predicate and independent submitted-geometry oracle (maximum angle error **2.86e-10 rad**, direction error 0). These in-memory mutants still pass the actual predicate while the independent oracle rejects:
 

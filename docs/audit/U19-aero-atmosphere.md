@@ -3,7 +3,7 @@
 - Unit: U19 (`docs/A1-plan.md` §5, Phase C) · Session 75 · 2026-10-23 · audited @ 061a0ae
 - Files read in full: `game/src/core/physics/atmosphere.ts` (120), `game/src/core/physics/aerodynamics.ts` (136);
   call sites in `game/src/core/physics/flightController.ts` (config 113–145, tick 375–560, contact 700–748).
-  Specs: `Milestone/Milestone 1D.txt` lines 16–42, 43, 75 (grep); `Design_specs/00` line 22, `02` §4, `03` atmosphereHeight (grep).
+  Specs: `pre-t4:Milestone/Milestone 1D.txt` lines 16–42, 43, 75 (grep); `pre-t4:Design_specs/00` line 22, `02` §4, `03` atmosphereHeight (grep).
 - Lead extension (2026-10-23): also check the T2 requirement in `notes/task.md`
   (per-body real atmospheres, a manual landing that the atmosphere affects, 2,000 m/s for deep space only).
 - Probe: `game/tools/audit/u19-aero-atmosphere.mjs`. It imports the real atmosphere, aerodynamics,
@@ -27,7 +27,7 @@
 ### A1-U19-1 — the atmosphere is not hydrostatic: H = 1,200 m implies g = 68.9 m/s² (7× the planet)
 - Severity: S2     Confidence: confirmed
 - Category: spec | engine
-- Location: `game/src/core/physics/atmosphere.ts:46–56` (EARTHSCALE_ATMOSPHERE), `:92–94` (pressureAt), `flightController.ts:541` (telemetry pressure) @ 061a0ae; `Milestone/Milestone 1D.txt:16`
+- Location: `game/src/core/physics/atmosphere.ts:46–56` (EARTHSCALE_ATMOSPHERE), `:92–94` (pressureAt), `flightController.ts:541` (telemetry pressure) @ 061a0ae; `pre-t4:Milestone/Milestone 1D.txt:16`
 - Claim: Milestone 1D line 16 derives H_s = Rs·T/g, compresses H 7× ("same ~7× compression factor as the catalog's linear scale"), and calls this "internally consistent".
 - Evidence:
   - H itself was compressed, but T (288 K) and g (9.81 m/s²) were not. The H that matches the planet's g is 8,432 m. With H = 1,200 m and T = 288 K, the implied g is 68.93 m/s² (`A.g_implied_by_H`, ratio 7.03).
@@ -91,7 +91,7 @@
 ### A1-U19-4 — one Earth-scale atmosphere for every body; the catalog's atmosphereHeight is never read; no cruise/boost regime exists
 - Severity: S1     Confidence: confirmed
 - Category: engine | spec (T2 gap)
-- Location: `atmosphere.ts:46` (the only profile), `flightController.ts:134–145` (EARTHSCALE_FLIGHT, the only config; `atmosphere: EARTHSCALE_ATMOSPHERE` at 139), `celestialData.ts:76/89–187/252` @ 061a0ae; `Design_specs/00_VISION_AND_RULES.txt:22`
+- Location: `atmosphere.ts:46` (the only profile), `flightController.ts:134–145` (EARTHSCALE_FLIGHT, the only config; `atmosphere: EARTHSCALE_ATMOSPHERE` at 139), `celestialData.ts:76/89–187/252` @ 061a0ae; `pre-t4:Design_specs/00_VISION_AND_RULES.txt:22`
 - Claim:
   - T2: every body with a real atmosphere gets its own real-world-based profile; airless bodies are vacuum; 2,000 m/s is a deep-space speed only.
   - Spec 00:22: "400 m/s soft cruise. 1,600 m/s Boost (allowed anywhere outside atmospheres). 2,000 m/s absolute hard cap."
@@ -152,7 +152,7 @@
 ### A1-U19-7 — documentation errors: the Milestone 1D v_safe table's 2 km row is wrong; the "< 2 %" lapse claim; v_safe omits βL
 - Severity: S3     Confidence: confirmed
 - Category: doc
-- Location: `Milestone/Milestone 1D.txt:20–24` (table), `atmosphere.ts:15–18` (header), `aerodynamics.ts:69–73` @ 061a0ae
+- Location: `pre-t4:Milestone/Milestone 1D.txt:20–24` (table), `atmosphere.ts:15–18` (header), `aerodynamics.ts:69–73` @ 061a0ae
 - Evidence:
   - The 2 km row of the table: ρ 0.231 in code (the table says 0.152) and v_safe 349 m/s (the table says 430). All other rows match within 0.35 % (probe D).
   - The "< 2 %" claim is false above about 2 km (A1-U19-1).

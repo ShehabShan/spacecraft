@@ -62,7 +62,7 @@ see that the unit fits its budget.
   - Classify the cause:
     - (i) the Sun was culled at the suite pose. `LIVE_SECONDS = 120` is wall
       time (harness ~1394), so the end pose may depend on machine speed (see
-      `notes/reports/M1F.md` §15.4);
+      `pre-t4:notes/reports/M1F.md` §15.4);
     - (ii) the MSAA render target readback was blank under SwiftShader;
     - (iii) a real defect.
   - Evidence: badges plus the R2/R3 detail strings from each run, and the
@@ -99,15 +99,15 @@ see that the unit fits its budget.
   - Flaky heap rows: is each one a real leak or a bad bound?
 
 ### Phase B — Specs
-- [x] **U10a Design_specs 02 + catalog/play scale** — DONE (`docs/audit/U10-design-specs-scale.md`: spec 02 lost every formula (9 empty slots); catalog radii follow two laws — Mars < Mercury, Charon/Titania > Moon; Earth 14.7° wide in the Moon sky (real 1.9°); play Moon 1:1,273 with real g — horizon 66 m, relief 26 % of R; `game/tools/audit/u10a-scale-sanity.mjs`)
-- [x] **U10b Design_specs cross-spec sanity** — DONE (`docs/audit/U10-design-specs-scale.md` §U10b: speed cap has no frame — every planet outruns 2,000 m/s at 30× (S1); day longer than a year (S2); spec 05 1B "real-world positions" impossible (S2); gravityRange ≠ SOI, Sun has no range (S2); atmospheres up to 160 % of R (S2); specs built on Rapier (S2); 4× S3; look-and-feel question on orbit speed; `game/tools/audit/u10b-cross-spec.mjs`) (specs 00, 01, 03, 04, 05 in full, ~355 lines)
+- [x] **U10a Design_specs 02 + catalog/play scale** — DONE (`docs/audit/U10-design-specs-scale.md`: spec 02 lost every formula (9 empty slots); catalog radii follow two laws — Mars < Mercury, Charon/Titania > Moon; Earth 14.7° wide in the Moon sky (real 1.9°); play Moon 1:1,273 with real g — horizon 66 m, relief 26 % of R; `pre-t4:game/tools/audit/u10a-scale-sanity.mjs`)
+- [x] **U10b Design_specs cross-spec sanity** — DONE (`docs/audit/U10-design-specs-scale.md` §U10b: speed cap has no frame — every planet outruns 2,000 m/s at 30× (S1); day longer than a year (S2); spec 05 1B "real-world positions" impossible (S2); gravityRange ≠ SOI, Sun has no range (S2); atmospheres up to 160 % of R (S2); specs built on Rapier (S2); 4× S3; look-and-feel question on orbit speed; `pre-t4:game/tools/audit/u10b-cross-spec.mjs`) (specs 00, 01, 03, 04, 05 in full, ~355 lines)
   - Do the specs contradict each other (and spec 02)?
   - Floating-origin lattice (256 m / rebase 1,024 m) vs body scale (Moon R 1,364.5 m); 30× time scale vs orbit periods; gravityRange vs SOI/Hill; atmosphere heights; artistic Sun 20,000 m and portalDist 80,000 m.
   - Append to `docs/audit/U10-design-specs-scale.md` (findings A1-U10-5…).
 
 ### Phase C — Engine core (spec grep per module: see the table in §6.2)
 - [x] **U11 precision + floating origin** — DONE (`docs/audit/U11-precision-floating-origin.md`: adapter never re-shows a re-registered entity (S2); unregistering the focus silently re-focuses entities[0] and rebases there (S2); live writable origin breaks Δ (S3); power-of-two rationale overstated — render exactness comes from subtract-then-narrow order, Δ f32-exact to 2^32 m (S3); lattice, order, ≤128 post-tick bound clean; `game/tools/audit/u11-precision-origin.mjs`) (`core/math/precisionMath.ts` 170, `core/types.ts` 123, `render/FloatingOriginAdapter.ts` 118; Milestone 1A)
-- [x] **U12 orbits + catalog** — DONE (`docs/audit/U12-orbits-catalog.md`: no body rotates — no spin rail, pole or prime meridian; the only spin is a KCC-private integrated scalar (S1); rail accepts e ≥ 1 / a < 0 and goes NaN silently (S2); all 16 orbits circular + coplanar (S2); Newton exit never met at e ≥ 0.9999, accuracy fine (S3); wrapAngle range [−π, π) (S3); Triton g 8 % off its mass fact (S3); catalog = spec 03 except moon portalDist (U10-12); `game/tools/audit/u12-orbits-catalog.mjs`) (`core/orbit/celestialData.ts` 261, `KeplerRail.ts` 254, `types.ts` 105; Milestone 1B)
+- [x] **U12 orbits + catalog** — DONE (`docs/audit/U12-orbits-catalog.md`: no body rotates — no spin rail, pole or prime meridian; the only spin is a KCC-private integrated scalar (S1); rail accepts e ≥ 1 / a < 0 and goes NaN silently (S2); all 16 orbits circular + coplanar (S2); Newton exit never met at e ≥ 0.9999, accuracy fine (S3); wrapAngle range [−π, π) (S3); Triton g 8 % off its mass fact (S3); catalog = spec 03 except moon portalDist (U10-12); `pre-t4:game/tools/audit/u12-orbits-catalog.mjs`) (`core/orbit/celestialData.ts` 261, `KeplerRail.ts` 254, `types.ts` 105; Milestone 1B)
   - Check Kepler solver convergence and edge cases (e → 1, M near π).
   - Check that catalog values match their stated sources.
   - Does every body also ROTATE (sidereal period, obliquity, prime meridian),

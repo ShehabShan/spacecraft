@@ -14,7 +14,7 @@ Bootstrap: clean 4d0692b = origin/a1-engine-audit; tracker parent convention agr
 
 Review base: `4d0692b`. Reviewer: platform-reported `gpt-6-astra` / OpenAI (evidence `model-meter.json`); the historical-majority-model condition remains unresolved. This is a Node predicate/core/adapter review, **not** a browser/GPU/frame-time certification.
 
-Read in full: `Milestone1A_TestHarness.tsx`, `precisionMath.ts`, `SimulationCore.ts`, `FloatingOriginAdapter.ts`, original `u08-m1a-validity.mjs`. Targeted specification passages: `Milestone/Milestone 1A.txt:29,85–99,114` (not the whole milestone). Catalog scale checked at `celestialData.ts:106–114`.
+Read in full: `Milestone1A_TestHarness.tsx`, `precisionMath.ts`, `SimulationCore.ts`, `FloatingOriginAdapter.ts`, original `u08-m1a-validity.mjs`. Targeted specification passages: `pre-t4:Milestone/Milestone 1A.txt:29,85–99,114` (not the whole milestone). Catalog scale checked at `celestialData.ts:106–114`.
 
 ## Method and independent controls
 New probe: `game/tools/audit/u27b3b2b2b2b1-m1a-recheck.mjs`.

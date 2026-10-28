@@ -6,7 +6,7 @@
 - Files read in full: `game/src/core/simulation/SimulationCore.ts` (486). Also read the
   callers' accumulator code: `play/controller/PlayerController.ts:75–90`,
   `play/frame/playFrame.ts:80–110`, `play/world/moonWorld.ts:60–110, 145`.
-- Specs: `Design_specs/01_ARCHITECTURE.txt` §1 (canonical tick order, lines 8–16),
+- Specs: `pre-t4:Design_specs/01_ARCHITECTURE.txt` §1 (canonical tick order, lines 8–16),
   `02_PHYSICS_AND_SCALE.txt` §6 (lines 61–64), `00_VISION_AND_RULES.txt` lines 13, 39.
 - Probes (real core, nothing written):
   - `node --expose-gc tools/audit/u13-simulation-core.mjs` → **PROBE_EXIT=0**, controls 4/4

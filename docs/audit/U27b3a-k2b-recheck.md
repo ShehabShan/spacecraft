@@ -22,7 +22,7 @@ The following contract was written before running the probes:
 > fail even with a PASSED log.
 
 **Source-claim qualification:** archived assembly brief §3.7
-(`notes/archive/AGENT_BRIEF-assembly.md:183–193`) explicitly requires collecting
+(`pre-t4:notes/archive/AGENT_BRIEF-assembly.md:183–193`) explicitly requires collecting
 console messages, asserting PASSED and scraping badges. It does **not** explicitly
 require zero errors or every badge to equal PASS. Thus the original U08 report's
 wording “the specs fail on a page error” and “brief §3.7 asserts every row passed”

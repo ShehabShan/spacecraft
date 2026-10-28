@@ -53,15 +53,11 @@ need. The process files are mostly history, and reading them in full costs ~25 O
 - `notes/task.md` + `docs/<Tn>-plan.md` + `notes/STATE.md` — the task system (§4).
 - `notes/CHANGES.md` — change log. APPEND an entry for every code change you make
   (format: date · task · file · what · why · evidence · source).
-- DO NOT READ (lifted during A1 — see §11; kept in the repo for history/audit only — reading them wastes
-  context and invites overturning settled decisions):
-  - `Milestone/*.txt` — the seven assembly deliverables. Their content is already
-    IN the code; where they differ from the code, the code is right.
-  - `notes/reports/` and `notes/patches/` — assembly-phase evidence and addenda.
-  - `notes/archive/` — the archived phase-1 brief (superseded by this file).
-- OPTIONAL BACKGROUND: `Design_specs/` — the original design vision. Consult for
-  feature context if useful; the CODE wins every conflict. Never edit it.
-- `game/src/test/Milestone1X_TestHarness.tsx` — assembly acceptance pages, still
+- REMOVED in T4 S1 (Lead ruling (a), 2026-10-28; ADR-030): the phase-1 canon
+  (seven assembly deliverables, original design vision) and the phase-1 reports,
+  addenda and archived brief. Their content is in the code; the CODE wins every
+  conflict. Read one only if a task needs it: `git show pre-t4:<path>`.
+- `game/src/test/Milestone1<X>_TestHarness.tsx` — assembly acceptance pages, still
   runnable (`?page=m1a` … `?page=m1e`). With the rebuilt 1F gates `?page=m1fR1` …
   `?page=m1fR5` (`npx playwright test e2e/m1f-r`) they are your REGRESSION suite
   (§3). The shipped `?page=m1f` rows are retired (ADR-026); the page stays for
@@ -113,8 +109,7 @@ The engine is unusual BY DESIGN. When code looks odd, assume there is a reason
   from the latest integrated line. When a task is DONE and verified, merge its
   branch into `main` and push; the NEXT task branches from `main`. (This replaces
   the phase-1 "never push main" rule: `main` now receives completed-task merges,
-  pushed by the merging session. Never force-push. Never stage `Design_specs/`
-  or `Milestone/`.)
+  pushed by the merging session. Never force-push. Never re-add the phase-1 canon removed in T4 S1.)
 
 ## 5. MULTI-SESSION RESUME PROTOCOL (the only entry procedure)
 1. Read per §1 (brief → tracker → active plan → STATE.md NEXT ACTION).
@@ -158,8 +153,7 @@ The engine is unusual BY DESIGN. When code looks odd, assume there is a reason
   without asking, every time. The same holds for the §4 fast-forward into `main`
   unless NEXT ACTION or the task row says to wait for the Lead. Push through the
   `__github` integration proxy (STATE.md SESSION LOG row 129 has the command).
-- Never amend pushed commits; never force-push; never stage `Design_specs/` or
-  `Milestone/`.
+- Never amend pushed commits; never force-push; never re-add the phase-1 canon removed in T4 S1.
 - END REPORT (Lead, 2026-10-28; APPROVAL LEDGER): the session's final message to
   the Lead is at most 4 short lines, no tables:
   1. Unit and result (one key number).
@@ -177,7 +171,7 @@ essays.
 
 ## 8. PARKED (do not touch without a Lead directive naming them)
 - MS 1F — round-7 ruling PENDING: the option menu is at
-  `notes/reports/M1F.md` §15.7 (recommendation (a): rebase gate ≥ 2 → ≥ 1).
+  `pre-t4:notes/reports/M1F.md` §15.7 (recommendation (a): rebase gate ≥ 2 → ≥ 1).
   The 1F harness state is green except R5 by design; leave it that way.
   R5 FAIL is WAIVED for all task verification (Lead, 2026-10-20): count it as
   PASS, never a blocker or regression; do not change code to hide it.
@@ -199,12 +193,12 @@ suspected lost work, or deleting the Lead's work.
 ## 10. AMENDMENT LOG
 - 2026-10-19 Phase-2 transition (Lead order): brief rewritten for game feature
   builders; assembly brief archived verbatim at
-  `notes/archive/AGENT_BRIEF-assembly.md`; task system installed (`notes/task.md`
+  `pre-t4:notes/archive/AGENT_BRIEF-assembly.md`; task system installed (`notes/task.md`
   + `docs/<Tn>-plan.md` schema); commit+push after every completed step with
   WHAT/WHY/STATE/NEXT/VERIFIED messages; merge-to-main between tasks (supersedes
-  phase-1 "never push main"); `Milestone/*.txt`, `notes/reports/`,
-  `notes/patches/`, `notes/archive/` moved off the reading list;
-  `Design_specs/` = optional background, code wins; 1F parked, 1G explicitly
+  phase-1 "never push main"); `pre-t4:Milestone/*.txt`, `pre-t4:notes/reports/`,
+  `pre-t4:notes/patches/`, `pre-t4:notes/archive/` moved off the reading list;
+  `pre-t4:Design_specs/` = optional background, code wins; 1F parked, 1G explicitly
   deferred; NEXT ACTION = "T1 plan".
 - 2026-10-19 Amendment (Lead, same day): planning is NOT one-shot — plan files
   carry a PLANNING CHECKLIST and are authored section by section across
@@ -249,6 +243,11 @@ suspected lost work, or deleting the Lead's work.
 - 2026-10-28 F2f close-out (session 142): §2 regression bullet now names the rebuilt
   1F gates instead of the retired shipped m1f rows (ADR-026). No rule changed.
 
+- 2026-10-28 T4 S1 (session 151): the phase-1 canon (Lead ruling (a)) and
+  `notes/{reports,patches,archive}/` removed from the tree; §2 lists them as removed;
+  references point at `pre-t4:<path>` (ADR-030); "never stage" became "never re-add".
+  No other rule changed.
+
 ## 11. AUDIT MODE (binds only while the active task is A1)
 Why: the milestone specs were written by GLM 5.3 and the engine by GLM 5.3 Flash
 (Lead, 2026-10-21). Specs, code and tests are all suspect; a session that defends
@@ -257,7 +256,7 @@ the existing code cannot audit it.
   `Milestone/**`, `Design_specs/**`. Write only `docs/audit/**`, `game/tools/audit/**`
   (new files) and the process files.
 - §2 DO-NOT-READ is lifted for A1: read `Milestone/*.txt` (targeted grep, never a
-  whole file), `Design_specs/`, and `notes/reports/` as needed.
+  whole file), `pre-t4:Design_specs/`, and `pre-t4:notes/reports/` as needed.
 - §3 "when code looks odd, assume there is a reason" is SUSPENDED for A1. Treat
   `// WHY:` comments, CHANGES.md and reports as claims to verify, not as proof.
 - "Code wins every conflict" does NOT apply in A1: a spec/code conflict is a
@@ -306,7 +305,7 @@ the existing code cannot audit it.
 - **ADR for every significant technical decision:** `docs/decisions/ADR-NNN-<slug>.md`
   (Context · Options · Decision · Why · Consequences), in the same commit.
 - **No-mess safeguards:**
-  1. Never delete the Lead's work: supersede, move or archive (`notes/archive/`);
+  1. Never delete the Lead's work: supersede, move or archive (in git history: `git show pre-t4:<path>`, ADR-030);
      git history stays intact; never force-push.
   2. Rework happens on a task branch in session-sized steps (§12); every commit
      leaves typecheck, build and the task's tests green.

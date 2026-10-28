@@ -109,8 +109,8 @@ fixture is grounded for 396/600 ticks.
 - `game/src/core/physics/flightController.ts:393–403,446–457,487–501,525–535,690–745`:
   atmosphere-relative velocity versus raw-position cap, radial gravity,
   static terrain queries and LANDED velocity assignment.
-- `Design_specs/00_VISION_AND_RULES.txt:14–15,22–23,41`;
-  `Design_specs/01_ARCHITECTURE.txt:9–13,38–40`: macro/micro clocks, hard-cap
+- `pre-t4:Design_specs/00_VISION_AND_RULES.txt:14–15,22–23,41`;
+  `pre-t4:Design_specs/01_ARCHITECTURE.txt:9–13,38–40`: macro/micro clocks, hard-cap
   wording, parented compose and transport. Specs were searched by relevant terms.
 - `AGENT_BRIEF.md` §13 supplies the project goal; `notes/STATE.md` APPROVAL
   LEDGER contains the settled 2026-10-22/23 visual and speed-regime rulings.

@@ -30,7 +30,7 @@ The result reproduced in **3/3 runs** at two different frame rates (6 and 11 FPS
 - Location: `game/src/test/Milestone1F_TestHarness.tsx:1121-1131` @ cd743e8 (Sun pose); commit 3057899 "F-01..F-12 batch".
 - Claim: R2's Sun ground truth renders the Sun disk at the projected centre: coverage 85–115%, centre within 1.5 px.
 - Evidence:
-  - **Before 3057899.** The last recorded 1F gate state is round-6b/round-7: badges `[P,P,P,P,F]`, R2 PASS (`notes/STATE.md` IN-FLIGHT; `notes/reports/M1F.md`).
+  - **Before 3057899.** The last recorded 1F gate state is round-6b/round-7: badges `[P,P,P,P,F]`, R2 PASS (`notes/STATE.md` IN-FLIGHT; `pre-t4:notes/reports/M1F.md`).
   - **What 3057899 changed.** F-12 rewrote the Sun pose. Before, it was absolute `drv` with up (0,1,0). After, it is `drv − O` with radial up `normalize(drv)`.
   - **No gate run on that commit.** Its VERIFIED line is only `TSC_EXIT=0 BUILD_EXIT=0; diag r7 W base smoke`.
   - **After 3057899.** Every recorded run is R2 FAIL: session 46, plus this unit's 3/3 runs.

@@ -23,7 +23,7 @@ and reversed directions, while passing the unmodified engine and responding
 to direct position faults. This tests gate sensitivity, not new production
 defects or browser rendering.
 
-Specification: targeted `Milestone/Milestone 1B.txt:35–82`
+Specification: targeted `pre-t4:Milestone/Milestone 1B.txt:35–82`
 (§1.3 basis, §1.4 host μ and retrograde convention); :97 explicitly requires
 bit-matched reference expressions. That bit-matching requirement is itself
 the suspect design, not a reason to accept correlated errors.

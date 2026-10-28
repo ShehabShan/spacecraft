@@ -25,7 +25,7 @@ The old report is a claim to retest, not evidence for this session.
 - **Location:** `game/src/test/Milestone1C_TestHarness.tsx:419–503`, specifically
   `:487` skips different faces; complete T3 predicate `:547–549`, header claim
   `:15–18`, boot self-test `:191–221`, periodic call `:722–725`, all at `6632762`.
-  Spec: `Milestone/Milestone 1C.txt:34,38–47,1336–1339` (targeted passages only).
+  Spec: `pre-t4:Milestone/Milestone 1C.txt:34,38–47,1336–1339` (targeted passages only).
 - **Claim:** normals agree bitwise at every shared edge and positions agree to
   5e-3 m, including cube-face boundaries and corners.
 - **Evidence:** exact source-extracted audit and complete T3 predicate accept

@@ -29,7 +29,7 @@ sign-off of other K2 members. Game code and old probes are unchanged.
 - Location at `184dc6e`: `game/src/test/Milestone1D_TestHarness.tsx:645–674`
   (actual T1 predicate and detail), `game/src/core/physics/atmosphere.ts:60–83,113–120`;
   `game/src/core/physics/flightController.ts:137` (fixture spin).
-  Spec: `Milestone/Milestone 1D.txt` lines 16, 72, 75,
+  Spec: `pre-t4:Milestone/Milestone 1D.txt` lines 16, 72, 75,
   1161–1163 and 1773–1829.
 - Claim: T1's passing result supports the exponential smooth density law,
   Mach and rotating-atmosphere transport.

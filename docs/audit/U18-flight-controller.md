@@ -22,7 +22,7 @@
 ### A1-U18-1 — yaw and roll are mirrored: D / → steer the ship LEFT
 - Severity: S1     Confidence: confirmed
 - Category: engine + spec
-- Location: `flightController.ts:153` (body frame doc), `:416–417` (`wx = −roll·max`, `wy = +yaw·max`) @ 21e63b1. Also `Milestone/Milestone 1D.txt:35` ("+Z = X×Y (left)") and harness `Milestone1D_TestHarness.tsx:460–461`.
+- Location: `flightController.ts:153` (body frame doc), `:416–417` (`wx = −roll·max`, `wy = +yaw·max`) @ 21e63b1. Also `pre-t4:Milestone/Milestone 1D.txt:35` ("+Z = X×Y (left)") and harness `Milestone1D_TestHarness.tsx:460–461`.
 - Claim: the body frame is right-handed with +Z = X×Y "left". +yaw means nose right, and +roll means roll right.
 - Evidence: in a right-handed frame, X×Y = +Z points RIGHT of a ship looking along +X with +Y up (the probe gets fwd×up = (0,0,1)). Every sign derived from "+Z is left" is therefore mirrored. Each probe below ran 0.5 s with full input:
   - `A.yaw+1.fwd·right0=-0.1234`: the nose moved left.

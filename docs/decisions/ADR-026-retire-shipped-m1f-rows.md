@@ -16,7 +16,7 @@ The shipped page is still used for other things: manual mode `?page=m1f&manual=1
 
 ## Decision
 Option 3.
-- `game/e2e/m1f.spec.ts` → `notes/archive/m1f.spec.ts` (`git mv`, byte-identical; history intact). Playwright's `testDir` is `e2e`, so it no longer runs.
+- `game/e2e/m1f.spec.ts` → `pre-t4:notes/archive/m1f.spec.ts` (`git mv`, byte-identical; history intact). Playwright's `testDir` is `e2e`, so it no longer runs.
 - `Milestone1F_TestHarness.tsx`: rows unchanged; a WHY comment above TEST_ORDER names this ADR. The page stays for manual mode and the tools.
 - The m1f regression is `npx playwright test e2e/m1f-r` (five specs). Known-red pins ride inside the specs: R3 pins `['FAIL','FAIL','FAIL']` (the A1-U03-1 descending hole [220000, 225647] m and finding F2fccbb-1, impostor ~1.35× mesh area), R4 pins `['PASS','FAIL','PASS']` with R4b failing only its render clause (finding F2fcdb-1, `executePasses` ~1.6 KB/frame). R1, R2, R5 are green. A pinned spec passes only while the measured defect is exactly the pinned one; a fix must re-pin it.
 - The e2e plumbing gate (ADR-001, `game/tools/test-e2e-plumbing.mjs`) replaces the m1f spec with the three rebuilt specs on the `runAcceptanceGate` contract (m1f-r1/r2/r5): 10 cases × 8 specs = 80 runs. R3/R4 use their own pinned assertions, not the contract, so they are not in that matrix.

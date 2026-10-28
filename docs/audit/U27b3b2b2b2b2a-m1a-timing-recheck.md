@@ -56,7 +56,7 @@ Sources at base:
 
 - **Severity:** S1 · **Confidence:** confirmed · **Category:** test/spec
 - **Location:** `game/src/test/Milestone1A_TestHarness.tsx:23,115–117,205–227,402–404,462–473`
-  @ `9add690`; `Milestone/Milestone 1A.txt:90,1149,1335–1356,1591–1595`.
+  @ `9add690`; `pre-t4:Milestone/Milestone 1A.txt:90,1149,1335–1356,1591–1595`.
 - **Claim:** stable frame time and “origin shifts cost no stutter frame.”
 - **Evidence:** original timing repros re-confirm; new independent probe
   **27/27 twice, exit 0**. Details below.

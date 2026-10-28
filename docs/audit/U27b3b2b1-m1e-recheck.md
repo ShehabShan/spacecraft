@@ -52,7 +52,7 @@ readonly-canary statement was already refuted by U27b2 and is not endorsed here.
 **Location:** `game/src/test/Milestone1E_TestHarness.tsx:677–746`
 (launch up, tilt subtraction, prediction, verdict);
 `game/src/core/physics/astronautKCC.ts:589–608` (launch along terrain normal).
-Spec: `Milestone/Milestone 1E.txt:51–54,2990`, at the audited base.
+Spec: `pre-t4:Milestone/Milestone 1E.txt:51–54,2990`, at the audited base.
 
 **Claim:** the row measures the approximately 1.8 cm westward drift of a vertical
 jump and demonstrates agreement with theory.
@@ -130,7 +130,7 @@ separate ADR-backed decision. **Size:** one test-only session, no ratified chang
 
 **Category:** test. **Confidence:** confirmed.
 
-**Location:** harness `:600–672`; spec `Milestone/Milestone 1E.txt:24`.
+**Location:** harness `:600–672`; spec `pre-t4:Milestone/Milestone 1E.txt:24`.
 **Claim:** no yaw snaps; great-circle holonomy is an endpoint property.
 
 **Evidence:**

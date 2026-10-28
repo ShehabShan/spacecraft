@@ -1,14 +1,14 @@
 # A1-U10a — Design_specs physics + scale sanity (part a: spec 02 + catalog/play scale)
 
 - Unit: U10a (session 64, PromptQL bot, VM v2 2 vCPU/4 GB) · base commit 2a99c82
-- Scope done: `Design_specs/02_PHYSICS_AND_SCALE.txt` (read in full, 63 lines), the
+- Scope done: `pre-t4:Design_specs/02_PHYSICS_AND_SCALE.txt` (read in full, 63 lines), the
   catalog radii, orbit radii and surface gravities in `game/src/core/orbit/celestialData.ts`,
   and the play-moon config `game/src/play/world/moonConfig.ts`.
 - Scope left (U10b): specs 00, 01, 03, 04 and 05 read in full; cross-spec contradictions;
   the floating-origin lattice against the body scale; the 30× time scale against the orbit
   periods; gravity range against SOI/Hill; atmosphere heights; the artistic Sun and portal
   distances.
-- Probe: `game/tools/audit/u10a-scale-sanity.mjs` reads the spec and catalog text only
+- Probe: `pre-t4:game/tools/audit/u10a-scale-sanity.mjs` reads the spec and catalog text only
   and compares them with real mean radii and semi-major axes from the IAU/NASA fact sheets.
   Run it from `game/` with `node tools/audit/u10a-scale-sanity.mjs`. **PROBE_EXIT=0**.
 
@@ -22,7 +22,7 @@ Expected behaviour, written before reading the code:
 ### A1-U10-1 — Spec 02 has lost every formula: 9 empty value/formula slots
 - Severity: S2     Confidence: confirmed
 - Category: spec
-- Location: `Design_specs/02_PHYSICS_AND_SCALE.txt` lines 7, 9, 17–25, 29, 32–34, 44–46, 55–57, 62
+- Location: `pre-t4:Design_specs/02_PHYSICS_AND_SCALE.txt` lines 7, 9, 17–25, 29, 32–34, 44–46, 55–57, 62
 - Claim: §1–§6 define the tick length, Earth's game radius, the four §2 "Celestial Scaling
   Formulas" (radius, planet distance, moon orbit distance, gravity range), the §3 μ formula
   and its Earth example, the atmosphere height, density curve and drag map, the portal
@@ -35,14 +35,14 @@ Expected behaviour, written before reading the code:
   unverifiable, and A1-U10-2 cannot say which law is intended.
 - Proposed fix: restore the formulas from the original source (the Lead's design doc) into a
   new spec revision. If that source is gone, reverse-derive the laws from the catalog and mark
-  them as derived. `Design_specs/` is never edited in place, so this means a superseding file
+  them as derived. `pre-t4:Design_specs/` is never edited in place, so this means a superseding file
   plus an ADR.
 - Fix task size: one session.
 
 ### A1-U10-2 — Catalog radii follow two different compression laws; Mars is smaller than Mercury, Charon and Titania larger than the Moon
 - Severity: S2     Confidence: confirmed
 - Category: spec (data)
-- Location: `game/src/core/orbit/celestialData.ts` radiusGame (lines ~85–190) @ 2a99c82; `Design_specs/03_DATA_AND_CELESTIALS.txt` lines 11–173 (same values)
+- Location: `game/src/core/orbit/celestialData.ts` radiusGame (lines ~85–190) @ 2a99c82; `pre-t4:Design_specs/03_DATA_AND_CELESTIALS.txt` lines 11–173 (same values)
 - Claim: there is one radius-compression law (spec 02 §2.1, now blank) that keeps proportional relationships.
 - Evidence (probe table): with p defined by R_game ∝ R_real^p relative to Earth (5,000 m):
   - **√-law (p ≈ 0.50)**: 10 bodies fit R = 5000·√(R/R_E) within 3.6 %. These are Mercury,
@@ -120,7 +120,7 @@ the mountains to look more lunar and keep the big Earth as an artistic choice.
 
 ## U10b — Cross-spec sanity (specs 00, 01, 03, 04, 05 vs each other and spec 02)
 
-Session 65 (2026-10-22) · @ 0a2ff11 · probe `game/tools/audit/u10b-cross-spec.mjs` (reads spec + engine text only; run from `game/`: `node tools/audit/u10b-cross-spec.mjs` → PROBE_EXIT=0, 88 lines). All numbers below come from that probe. Read in full: specs 00 (41 lines), 01 (56), 02 (63), 03 (179), 04 (40), 05 (38).
+Session 65 (2026-10-22) · @ 0a2ff11 · probe `pre-t4:game/tools/audit/u10b-cross-spec.mjs` (reads spec + engine text only; run from `game/`: `node tools/audit/u10b-cross-spec.mjs` → PROBE_EXIT=0, 88 lines). All numbers below come from that probe. Read in full: specs 00 (41 lines), 01 (56), 02 (63), 03 (179), 04 (40), 05 (38).
 
 ### A1-U10-5 — The speed limits have no reference frame, and every planet and moon outruns them
 - Severity: S1     Confidence: confirmed

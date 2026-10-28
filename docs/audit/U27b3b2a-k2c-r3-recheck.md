@@ -10,7 +10,7 @@
 
 Expected properties were written before reading the R3 implementation in
 [`claims-before-source.md`](U27b3b2a-evidence/claims-before-source.md).
-Source was then checked against `Milestone/Milestone 1F.txt:70–86,1973–2050`
+Source was then checked against `pre-t4:Milestone/Milestone 1F.txt:70–86,1973–2050`
 (targeted passages, not the whole file), and the original repro was read and rerun.
 
 New probe: `game/tools/audit/u27b3b2a-r3-recheck.mjs`.

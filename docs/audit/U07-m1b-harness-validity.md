@@ -1,7 +1,7 @@
 # A1-U07 — m1b harness validity (orbits · catalog · Kepler rails)
 
 - Unit: A1-U07 (`docs/A1-plan.md` §5 Phase A) · audited at `5a11dc6` · session 59 (2026-10-22)
-- Files read in full: `game/src/test/Milestone1B_TestHarness.tsx` suite region (:1–110 header + singletons, :300–662 reference + `runSuite`), `game/src/core/orbit/KeplerRail.ts` (254), `game/src/core/orbit/celestialData.ts` (:1–62 banner, :190–261 derivation), `SimulationCore.ts` (:160–200 time API, :396–476 tick), `e2e/m1b.spec.ts`. `Milestone/Milestone 1B.txt`: targeted grep only (period, vis-viva, Kepler-3, retrograde, reversibility).
+- Files read in full: `game/src/test/Milestone1B_TestHarness.tsx` suite region (:1–110 header + singletons, :300–662 reference + `runSuite`), `game/src/core/orbit/KeplerRail.ts` (254), `game/src/core/orbit/celestialData.ts` (:1–62 banner, :190–261 derivation), `SimulationCore.ts` (:160–200 time API, :396–476 tick), `e2e/m1b.spec.ts`. `pre-t4:Milestone/Milestone 1B.txt`: targeted grep only (period, vis-viva, Kepler-3, retrograde, reversibility).
 - Probe: `game/tools/audit/u07-m1b-validity.mjs`. It runs the REAL `SimulationCore` + `KeplerRail` in Node and the harness's `referencePosition … runSuite` sliced VERBATIM (harness lines 316–661, esbuild type-strip; only `publishSuite`/`suiteState` stubbed). It then runs 3 controls that must fail, 7 mutations, and independent physics truth.
 - Command: `cd game && node tools/audit/u07-m1b-validity.mjs` → **PROBE_EXIT=0** (run 1: 22/23 confirmed; run 2: 23/23 confirmed; controls OK in both). The one line that differs between runs is the GC-dependent heap verdict, which is itself finding A1-U07-3.
 
@@ -73,7 +73,7 @@
 ### A1-U07-6 — Documented period table is stale by up to 11 s
 - Severity: S2     Confidence: confirmed
 - Category: doc
-- Location: `game/src/core/orbit/celestialData.ts:38-43` (banner table) @ 5a11dc6; the same table appears in `Milestone/Milestone 1B.txt` (≈ :545-550).
+- Location: `game/src/core/orbit/celestialData.ts:38-43` (banner table) @ 5a11dc6; the same table appears in `pre-t4:Milestone/Milestone 1B.txt` (≈ :545-550).
 - Claim: "Derived period table (documented values; code computes exactly)".
 - Evidence: independent T = 2π√(a³/μ) vs the table (`doc-table-stale`): Mercury 4,379.3 vs 4,381 · Venus 6,961.3 vs 6,963 · Jupiter 30,387.1 vs 30,392 · Saturn 48,144.2 vs 48,139 · Uranus 81,133.1 vs 81,144 · Neptune 113,257.9 vs 113,254. Earth, Mars, Pluto and all 7 moons agree to ±1 s. The code is right; the table is wrong.
 - Impact: a later session that checks the code against this table will "find" non-existent errors or "fix" correct code.

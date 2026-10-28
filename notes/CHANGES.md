@@ -4,7 +4,7 @@
 tree by the §10 multi-session protocol install — the state carriers live at
 the repo root. Format: date · milestone · file · what · why · evidence · source.)
 
-No canon file (Design_specs/, Milestone/) is ever modified; entries below
+No canon file (pre-t4:Design_specs/, pre-t4:Milestone/) is ever modified; entries below
 touch only scaffolding created by this assembly (brief §3) and, where
 applicable, code fixes proven by failing acceptance output.
 
@@ -66,7 +66,7 @@ applicable, code fixes proven by failing acceptance output.
    the brief requires; demo cruft removed. · Evidence: n/a (creation). ·
    Source: brief §3.1, §3.5, §3.6.
 
-5. 2026-10-14 · scaffold · game/tools/extract.mjs · Heading regex includes
+5. 2026-10-14 · scaffold · pre-t4:game/tools/extract.mjs · Heading regex includes
    the Lead-approved OPTIONAL trailing parenthetical
    (`### N. \`path\` (…)`) with an enforced invariant: the parenthetical
    branch may match exactly ONE heading in the entire canon — 1B's
@@ -123,7 +123,7 @@ Observations (NO change made — recorded for the Lead):
    2026-10-14; brief §10.4 amendment log.
 
 8. 2026-10-14 · protocol · notes/ (tree), notes/CHANGES.md (this file),
-   notes/reports/ · Created the §10 state-carrier tree at the repo root;
+   pre-t4:notes/reports/ · Created the §10 state-carrier tree at the repo root;
    relocated the change log from game/notes/CHANGES.md (git mv; contents
    unchanged except this header note and the entries below). · The §10
    protocol defines root-level notes/ as the canonical carrier location. ·
@@ -143,7 +143,7 @@ Observations (NO change made — recorded for the Lead):
     directive STEP 1. · Evidence: git log d849d6b. · Source: brief §10.1
     write discipline; directive STEP 1.
 
-11. 2026-10-14 · 1A · notes/reports/M1A.md · Milestone 1A report (§8.6)
+11. 2026-10-14 · 1A · pre-t4:notes/reports/M1A.md · Milestone 1A report (§8.6)
     persisted to the reports tree per §10 — evidence must outlive its
     session. Content identical to the report delivered in chat; output
     blocks verbatim. · Lead directive §10 state carriers. · Evidence: file
@@ -151,7 +151,7 @@ Observations (NO change made — recorded for the Lead):
 
 ## 2026-10-14 — Milestone 1B (stopped at step 2)
 
-12. 2026-10-14 · 1B/step0 · notes/reports/M1B.md · F6 pre-scan executed
+12. 2026-10-14 · 1B/step0 · pre-t4:notes/reports/M1B.md · F6 pre-scan executed
    read-only over all seven canon files; table + exact 1C anomaly source
    recorded. No canon touched. · Lead-ordered pre-scan. · Evidence: commit
    fc3368c. · Source: Approval Ledger 2026-10-14; AGENT_BRIEF.md §10.4.
@@ -161,7 +161,7 @@ Observations (NO change made — recorded for the Lead):
    5 blocks verbatim (2393 lines); parenthetical invariant held (exactly one
    match — the sanctioned SimulationCore overlay, 395→486 lines; setSimTime/
    fastForward/reverse/getCelestialStates verified). · §8 loop step 1. ·
-   Evidence: extraction report in notes/reports/M1B.md; commit 1d302df. ·
+   Evidence: extraction report in pre-t4:notes/reports/M1B.md; commit 1d302df. ·
    Source: brief §4, §7-1B.
 
 14. 2026-10-14 · 1B/step2 · src/test/Milestone1B_TestHarness.tsx (NO change
@@ -170,7 +170,7 @@ Observations (NO change made — recorded for the Lead):
    F6 scope: badge-detail nested template missing `$` (extracted L466 =
    canon 1734) and HUD fmtSimTime ternary missing `$` AND else-branch
    (extracted L998 = canon 2266). Both in F6-FORBIDDEN string classes →
-   hard stop, exact sources pasted to the Lead in notes/reports/M1B.md §3. ·
+   hard stop, exact sources pasted to the Lead in pre-t4:notes/reports/M1B.md §3. ·
    Change policy §6 + F6 ratification stop clause. · Evidence: tsc output
    (TS1109/TS1128/TS1005) pasted in report. · Source: AGENT_BRIEF.md §10.4
    F6; §6.
@@ -208,8 +208,8 @@ Observations (NO change made — recorded for the Lead):
    thread, canon 1656/2226 quotes). · Source: Lead ruling 2026-10-14 (F7);
    brief §6.
 
-18. 2026-10-14 · 1C (pre-scan) · notes/reports/M1C-canon-tail.txt,
-   notes/reports/M1C-canon-suite-tail.txt · Persisted the Lead-requested
+18. 2026-10-14 · 1C (pre-scan) · pre-t4:notes/reports/M1C-canon-tail.txt,
+   pre-t4:notes/reports/M1C-canon-suite-tail.txt · Persisted the Lead-requested
    verbatim last-80-lines (canon 2245–2324) plus a supplement (canon
    1800–1945: suite results assembly, anomalous verdict line, store head).
    NEW canon defect found: canon 1902 `seamless': {` — results key lost its
@@ -232,7 +232,7 @@ Observations (NO change made — recorded for the Lead):
    build clean after deletion; gate output below (M1B.md §Step 5). · Source:
    Lead ruling 2026-10-15 (F9); AGENT_BRIEF.md §10.4.
 
-20. 2026-10-15 · protocol · notes/patches/1C-CP.md (created) · 1C-CP
+20. 2026-10-15 · protocol · pre-t4:notes/patches/1C-CP.md (created) · 1C-CP
    addendum persisted VERBATIM as delivered: ITEM 1 = 1C verdict console.log
    full replacement text + application rule; ITEM 2 = canon-1902 `seamless'`
    opening-quote restoration. TO BE APPLIED AT 1C EXTRACTION TIME. · Lead
@@ -273,7 +273,7 @@ Observations (NO change made — recorded for the Lead):
    diagnosis to root cause with protocol-level proof; BOTH defects routed
    to the Lead (F10a/F10b) — no unauthorized fixes. 1A/1B regression GREEN. ·
    §6 + standing damage protocol (new defect class: authorial race/test-
-   contract bugs → route like F9). · Evidence: notes/reports/M1C.md §3–5. ·
+   contract bugs → route like F9). · Evidence: pre-t4:notes/reports/M1C.md §3–5. ·
    Source: brief §6; Lead rulings F9/standing protocol.
 
 25. 2026-10-15 · 1C/step4 · game/src/test/Milestone1C_TestHarness.tsx,
@@ -346,7 +346,7 @@ Observations (NO change made — recorded for the Lead):
    so the static shell's registration is view-dependent → geoMin(150) ≠
    geoMax(151) → constancy fails. Both are acceptance-logic calibrations →
    Lead only. Regression 1A/1B/1C GREEN. · §6 (may NOT touch acceptance
-   logic) + F9/F10 routing precedent. · Evidence: notes/reports/M1D.md §3–4,
+   logic) + F9/F10 routing precedent. · Evidence: pre-t4:notes/reports/M1D.md §3–4,
    diag traces. · Source: brief §6; Lead directive 2026-10-15 (1D).
 
 31. 2026-10-15 · 1D/step5 · game/src/test/Milestone1D_TestHarness.tsx ·
@@ -370,7 +370,7 @@ Observations (NO change made — recorded for the Lead):
    aca7047). The user EXPLICITLY GAVE PERMISSION for these files to be
    committed and pushed to GitHub (home-PC access via pull). No engine or
    canon content; read-only observation tools cited as evidence in
-   notes/reports/M1B–M1D. · User authorization 2026-10-15. · Evidence: this
+   pre-t4:notes/reports/M1B–M1D. · User authorization 2026-10-15. · Evidence: this
    commit. · Source: user (Lead) direct instruction.
 
 ## 2026-10-16 — Milestone 1E (extraction + fixes)
@@ -460,9 +460,9 @@ Observations (NO change made — recorded for the Lead):
    transient, detected + landed), and alt0 read from STALE pre-swap
    telemetry (teleportSurface does not fill telemetry; climbGain 103.3 m is
    cross-field contamination). Scan params + STEEP TerrainParams pasted in
-   notes/reports/M1E.md per watch item 5.b. · §6 (may NOT touch acceptance
+   pre-t4:notes/reports/M1E.md per watch item 5.b. · §6 (may NOT touch acceptance
    logic) + F9/F10/F11 routing precedent + standing damage protocol. ·
-   Evidence: notes/reports/M1E.md §3–5 (verbatim gate output + diag scrape).
+   Evidence: pre-t4:notes/reports/M1E.md §3–5 (verbatim gate output + diag scrape).
    · Source: brief §6; directive 5.b/5.d.
 
 ## 2026-10-16 — Milestone 1E (F14–F17 applied per Lead ruling + re-run)
@@ -529,7 +529,7 @@ Observations (NO change made — recorded for the Lead):
    verbatim (a)/(b)/(c) replication; firstAirborneTick=null) — value
    outside the pre-authorized [−0.15,−0.05) window → routed per ruling.
    · §6 + the ruling's stop-and-route terms. · Evidence:
-   notes/reports/M1E.md §4–5; game/tools/diag-m1e-core.mjs (2d7bf7f). ·
+   pre-t4:notes/reports/M1E.md §4–5; game/tools/diag-m1e-core.mjs (2d7bf7f). ·
    Source: Lead ruling 2026-10-16 (items 7c, 8).
 
 41. 2026-10-16 · 1E/fixes-2 · game/src/core/physics/astronautKCC.ts (F18),
@@ -564,7 +564,7 @@ Observations (NO change made — recorded for the Lead):
    BUILD_EXIT=0 PLAYWRIGHT_EXIT=0 — `[Milestone1E] acceptance PASSED`
    6/6 badges + full 1A/1B/1C/1D regression GREEN ("5 passed (1.9m)") —
    browser and Node agree number-for-number. · Lead ruling 2026-10-16
-   (R1/R2/R3 = F18/F19/F20). · Evidence: notes/reports/M1E.md §3–4. ·
+   (R1/R2/R3 = F18/F19/F20). · Evidence: pre-t4:notes/reports/M1E.md §3–4. ·
    Source: Lead ruling 2026-10-16; brief §6 (evidence-backed fix path).
 
 ## 2026-10-16 — Milestone 1F (extraction + F3 expanded + F21)
@@ -685,7 +685,7 @@ Observations (NO change made — recorded for the Lead):
     non-vacuous: near pass 33 draw calls/frame live; R1 determinism + R5
     straddler byte-zero diffs are real. · §6 (may NOT touch acceptance
     logic) + F9/F10/F11 routing precedent + standing damage protocol. ·
-    Evidence: notes/reports/M1F.md §4–6 (verbatim gate output + both probe
+    Evidence: pre-t4:notes/reports/M1F.md §4–6 (verbatim gate output + both probe
     transcripts). · Source: brief §6; directive items 4–5.
 
 47. 2026-10-16 · 1F/tools · game/tools/diag-m1f-core.mjs, game/tools/
@@ -746,7 +746,7 @@ Observations (NO change made — recorded for the Lead):
     px) — vacuous until F27; R5's straddle byte-zero diffs remain valid
     determinism but likely never framed satB. · §6 + item 9's
     paste-raw-numbers demand + F25c's stop condition. · Evidence:
-    notes/reports/M1F.md §9 (verbatim output + probe transcripts). ·
+    pre-t4:notes/reports/M1F.md §9 (verbatim output + probe transcripts). ·
     Source: Lead ruling 2026-10-16 items 4c, 9.
 
 50. 2026-10-16 · 1F/tools · game/tools/diag-m1f-r2.mjs (created) ·
@@ -1061,7 +1061,7 @@ Observations (NO change made — recorded for the Lead):
     round-6b directive item 6 + §10.2.
 
 71. 2026-10-19 · 1F/tools · game/tools/diag-m1f-r7.mjs (created),
-    notes/reports/evidence/M1F-r7-walks.json (created) · Round-7 Track A
+    pre-t4:notes/reports/evidence/M1F-r7-walks.json (created) · Round-7 Track A
     Node instrument per the Lead directive: staged walk-outcome site
     search (A screen 2,425 sites over the 0.62 rad cap + old-stream
     top-up; B/C ranked-pool + 0.5° refinement walks; D calibration
@@ -1144,7 +1144,7 @@ Observations (NO change made — recorded for the Lead):
     docs): M1F.md §15 report count fix: 409→400 zero-crossing, 7→6 admissible
     (net>200 filter). · Evidence: TSC_EXIT=0, node --check, gate smoke. ·
     Source: same batch.
-76. 2026-10-19 · 1F/F-11 docs · notes/reports/M1F.md §15.2 · Report counts:
+76. 2026-10-19 · 1F/F-11 docs · pre-t4:notes/reports/M1F.md §15.2 · Report counts:
     409→400 zero-crossing (400+29=429), 7→6 admissible 1-crossing sites under
     the coded `net>200` filter (7 matches `net>0` and includes legacy #1454;
     6 fresh). · Notes-only. · F-11.
@@ -1451,7 +1451,7 @@ Observations (NO change made — recorded for the Lead):
 
 - 2026-10-28 · F2f (F2fceb quality, session 141) · `game/src/test/M1fR5Gate.tsx`, `game/tools/test-m1f-r5-gate.mjs` · mutant `?mut=rebaseonly`: the Sun is sampled only on rebase frames, as the shipped R5 did; R5b must fail on samples 2 ≠ frames 4,800 · why: proves the count-equality check catches the A1-U03-6 sampling defect directly · evidence `docs/audit/evidence/F2f/ceb/selftest-q-run*.txt` (8 cases ×2 exit 0), `spec-q-run.txt` exit 0 · source ADR-025 amendment
 
-- 2026-10-28 · F2f (close-out, session 142) · `game/e2e/m1f.spec.ts` → `notes/archive/m1f.spec.ts` (git mv, verbatim); `game/tools/test-e2e-plumbing.mjs` (spec map: m1f → m1f-r1/r2/r5, 80 runs); `game/src/test/Milestone1F_TestHarness.tsx` (WHY comment only, rows unchanged) · retire the shipped m1f acceptance rows R1–R5 · why: all five rebuilt gates have landed (§13 safeguard 3), and A1 showed the shipped rows blind · evidence `docs/audit/evidence/F2f/close/` (plumbing 80/80 exit 0; mutant 6ce1d08 exit 1; m1f-r specs 5 passed exit 0; tsc exit 0) · source ADR-026
+- 2026-10-28 · F2f (close-out, session 142) · `game/e2e/m1f.spec.ts` → `pre-t4:notes/archive/m1f.spec.ts` (git mv, verbatim); `game/tools/test-e2e-plumbing.mjs` (spec map: m1f → m1f-r1/r2/r5, 80 runs); `game/src/test/Milestone1F_TestHarness.tsx` (WHY comment only, rows unchanged) · retire the shipped m1f acceptance rows R1–R5 · why: all five rebuilt gates have landed (§13 safeguard 3), and A1 showed the shipped rows blind · evidence `docs/audit/evidence/F2f/close/` (plumbing 80/80 exit 0; mutant 6ce1d08 exit 1; m1f-r specs 5 passed exit 0; tsc exit 0) · source ADR-026
 
 - 2026-10-28 · T1 (B11, session 144) · `game/src/core/physics/astronautKCC.ts`, `game/src/play/world/moonConfig.ts`, `game/src/play/controller/PlayerController.ts`, `game/tools/test-play-controller.mjs`, new `game/tools/test-kcc-default-trace.mjs` · opt-in `coyoteTime`/`airControl` KCC fields (default 0, guarded before any arithmetic); MOON_ASTRONAUT 0.10 s / 0.3; controller accepts a press in the coyote window and reads `coyoteJumps` as the launch edge · why: plan §5.3, Lead rulings Q2a/Q3 (2026-10-20); ADR-027 · evidence `docs/audit/evidence/T1/B11/` (default-path trace byte-equal to the 9c4ee90 pins; test-play-controller 76/76; m1e + m1f-r, test-kcc-gate green; alloc gate unchanged known red) · source: Lead ruling + ADR-027
 
@@ -1469,3 +1469,4 @@ Observations (NO change made — recorded for the Lead):
 - 2026-10-28 · T3 (S3 close-out, session 150) · no code change · Lead accepted the rim frame-time result (1.052 vs 1.05, one rAF quantum); ADR-029 accepted; S3 evidence re-run on 25c419d · why: plan §7 S3 close · evidence `docs/audit/evidence/T3/S3/reverify-summary.txt` · source: Lead ruling 2026-10-28
 - 2026-10-28 · T3 (accepted, session 150c) · no code change · Lead accepted T3; plan stage DONE; `t3-better-moon` fast-forwarded into `main` · why: plan §7 S4 · evidence `docs/audit/evidence/T3/S4/summary.txt` · source: Lead acceptance 2026-10-28
 - 2026-10-28 · T4 (S0, session 151) · `game/tools/check-repo-refs.mjs` (new), `docs/decisions/ADR-030-repo-layout-history-pointer.md` (new) · dangling repo-path gate with `--self-test`; tag `pre-t4` anchors all pre-cleanup history · why: plan S0, the gate lands before any deletion · evidence: S0 commit message · source: ADR-030
+- 2026-10-28 · T4 (S1, session 151) · removed `Milestone/`, `Design_specs/`, `notes/{reports,patches,archive}/`, `.DS_Store`, `game/tools/extract.mjs`, `game/tools/audit/u10{a,b}-*.mjs`, `u12-orbits-catalog.mjs`; comment path in `game/src/test/Milestone1F_TestHarness.tsx` · phase-1 history out of the tree, references rewritten to `pre-t4:<path>` · why: plan S1, Lead ruling (a) · evidence: S1 commit message · source: ADR-030

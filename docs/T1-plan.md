@@ -106,7 +106,7 @@ import or regress the M1F acceptance harness.
   touch or gamepad input.
 - Sourcing, loading, or shipping any external GLB/FBX asset in V1 (only the
   interface and the swap path are in scope).
-- Any edit to `Design_specs/` or `Milestone/`. No change to M1F acceptance
+- Any edit to `pre-t4:Design_specs/` or `pre-t4:Milestone/`. No change to M1F acceptance
   rows, thresholds, or R5/F-09/F-10 behavior. The M1F round-7 ruling and the
   1G milestone stay parked.
 - Importing anything test-only into the play page:
@@ -163,8 +163,8 @@ names, exports and APIs.
   - `src/render/MultiCameraRig.tsx`
   - `src/workers/terrainWorker.ts`
   - `three` and `@react-three/fiber`
-- **Not touched**: `src/test/**`, `e2e/m1*.spec.ts`, `Design_specs/`,
-  `Milestone/`.
+- **Not touched**: `src/test/**`, `e2e/m1*.spec.ts`, `pre-t4:Design_specs/`,
+  `pre-t4:Milestone/`.
 - **Process files** (each checkpoint): `docs/T1-plan.md`, `notes/task.md`,
   `notes/STATE.md`.
 
@@ -2545,7 +2545,7 @@ or reordered. A step that fails its checks is not committed as done.
 **12.3 Not a step** (excluded from every build step)
 - No edit to `Milestone1F_TestHarness.tsx` or any `src/test/**` file; no
   harness consolidation (Option A follow-up is a separate task, §1).
-- No GLB asset, no sound, no saves (1G), no Design_specs/Milestone staging.
+- No GLB asset, no sound, no saves (1G), no pre-t4:Design_specs/Milestone staging.
 - No KCC default change in any step; B11 is the only core touch and only on
   a ruling.
 
@@ -2715,7 +2715,7 @@ defaults until ruled)
 
 **14.3 Stop triggers** (any one → STOP, write the options, ask the Lead)
 - A check above fails and the fix would touch a ratified constant, the KCC
-  default path, a milestone harness, or `Design_specs/`/`Milestone/`.
+  default path, a milestone harness, or `pre-t4:Design_specs/`/`pre-t4:Milestone/`.
 - A push cannot be completed by either route (K9) — finished work would sit
   unpushed.
 - A regression badge differs from its baseline (other than the waived m1f R5).
