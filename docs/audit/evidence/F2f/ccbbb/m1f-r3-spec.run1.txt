@@ -1,0 +1,20 @@
+[WebServer] 
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+
+Running 1 test using 1 worker
+
+  [M1fR3Gate] R3a state-coupled sweep: FAIL — sweep (20 round trips, 1 m steps, rendered rules): down: 56480 holes in [220000, 225647] m; up: 0 holes; 0 doubles; 21 flips (need 21); max drawn-coverage dimming 1.000 (tol 0.010). live 60 Hz triangle (2 periods): down: 124 holes in [220062, 225569] m, [220063, 225569] m; up: 0 holes.
+  [M1fR3Gate] R3b rendered coverage: FAIL — drawn area vs full-opacity mesh reference area (tol 1 ± 0.25, n/a = FAIL): down 290:1.364! 245:1.333! 238:1.375! 232:0.765 228:0.085! 224:0.000! 222:0.000! 205:1.000; up 205:1.000 222:1.000 224:1.000 228:1.000 232:1.000 238:1.375! 245:1.333! 290:1.364!. fails: down [290, 245, 238, 228, 224, 222] km; up [238, 245, 290] km. reference area px/ideal π·r² (tol ±25%): 205:88/87.0 222:76/74.1 224:76/72.8 228:71/70.3 232:68/67.9 238:64/64.5 245:60/60.9 290:44/43.4. diagnostic max luminance ratio drawn/mesh-ref 2.574.
+  [M1fR3Gate] R3c silhouette A/B: FAIL — mesh-only vs impostor-only, R > 8 masks in a 48² window (areas ±25% of π·r², sym ≤ 0.5·2πr, centroid ≤ 0.5 px, repeat byte-identical): 228: mesh 71 imp 88 px vs π·r² 70.3, sym 17/14.9, Δc 0.11 px, repeat identical; 232: mesh 68 imp 88 px vs π·r² 67.9, sym 20/14.6, Δc 0.00 px, repeat identical; 236: mesh 68 imp 88 px vs π·r² 65.6, sym 20/14.4, Δc 0.00 px, repeat identical. fails: [228(imp-area,sym) 232(imp-area,sym) 236(imp-area,sym)].
+  [M1fR3Gate] acceptance FAILED
+  [.WebGL-0x1fcc00155600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+  [.WebGL-0x1fcc00155600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+  [.WebGL-0x1fcc00155600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+  [.WebGL-0x1fcc00155600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
+[m1fR3 gate] badges: ["FAIL","FAIL","FAIL"]
+  ✓  1 e2e/m1f-r3.spec.ts:11:1 › M1F R3 rebuilt gate (pinned known-red: R3a, R3b, R3c) (904ms)
+
+  1 passed (6.5s)

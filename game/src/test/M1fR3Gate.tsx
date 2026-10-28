@@ -9,7 +9,9 @@
  * It is RED by design until F8a fixes A1-U03-1. The spec pins the known-red vector.
  * Positive control `?ctl=ref` (test-only, not F8a's design): see `drawn`.
  * Mutants `?mut=meshhide` (mesh never drawn) / `?mut=noimp` (impostor never drawn) prove the
- * rows see each representation. R3c (silhouette A/B) is a later unit.
+ * rows see each representation. R3c (F2fccbbb) renders mesh-only vs impostor-only at 228/232/236 km
+ * on the same fixture: bounded areas, symmetric difference, centroid, byte-identical repeat.
+ * Its mutants `?mut=shift` (3 px), `?mut=scale` (×1.5) and `?mut=bright` (lit backdrop) act on R3c only.
  */
 import { useEffect, useState } from 'react';
 import * as THREE from 'three';
@@ -174,8 +176,22 @@ function sampleStates(): Record<Dir, Array<{ km: number; mesh: boolean }>> {
   return out;
 }
 
-async function rowR3b(gl: THREE.WebGLRenderer): Promise<Row> {
+type Shot = { lum: number; area: number; mask: Uint8Array; hash: number };
+/** R3c mutants only (ADR-023): impostor 3 px off-centre, impostor radius ×1.5, lit backdrop. */
+type Opts = { shift?: boolean; scale?: boolean; bright?: boolean };
+
+/** The isolated GPU fixture shared by R3b and R3c (one scene, one target, one probe). */
+function makeFixture(gl: THREE.WebGLRenderer) {
   const scene = new THREE.Scene();
+  // WHY (?mut=bright, A1-U03-3): the shipped R3(c) window sat on a lit background (U01 pixel
+  // [90,80,66]); R > 8 then marks every pixel. This far-pass full-screen quad reproduces it.
+  const backdrop = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({
+    vertexShader: /* glsl */`void main() { gl_Position = vec4(position.xy, 0.999, 1.0); }`,
+    fragmentShader: /* glsl */`void main() { gl_FragColor = vec4(90.0 / 255.0, 80.0 / 255.0, 66.0 / 255.0, 1.0); }`,
+    depthTest: false, depthWrite: false,
+  }));
+  backdrop.layers.set(2); backdrop.renderOrder = -1000; backdrop.frustumCulled = false; backdrop.visible = false;
+  scene.add(backdrop);
   const sky = new SkyImpostorPool(0);
   const mat = probeMaterial();
   const probe = new THREE.Mesh(new THREE.SphereGeometry(PROBE_R, 96, 64), mat);
@@ -188,27 +204,47 @@ async function rowR3b(gl: THREE.WebGLRenderer): Promise<Row> {
   const rt = new THREE.WebGLRenderTarget(W, H);
   const buf = new Uint8Array(W * H * 4);
 
-  const render = (d: number, meshVis: boolean, am: number, impVis: boolean, imp: number): { lum: number; area: number } => {
+  const right = new THREE.Vector3(1, 0, 0).applyQuaternion(q);
+  const fpx = (H / 2) / Math.tan((FOV * Math.PI) / 360);
+  const SHIFT_DIR = unit(DIR.x + (right.x * 3) / fpx, DIR.y + (right.y * 3) / fpx, DIR.z + (right.z * 3) / fpx);
+  const render = (d: number, meshVis: boolean, am: number, impVis: boolean, imp: number, o: Opts = {}): Shot => {
+    backdrop.visible = !!o.bright;
     probe.position.set(DIR.x * d, DIR.y * d, DIR.z * d);
     probe.visible = meshVis;
     mat.uniforms.uOpacity.value = am;
     mat.depthWrite = am > 0.95;                                  // harness rule
     probe.layers.mask = meshVis ? layerMaskFor(d - PROBE_R, d + PROBE_R) : 0;
-    sky.setBody(0, 'probe-a', 3, DIR.x, DIR.y, DIR.z, Math.asin(Math.min(1, PROBE_R / d)), d,
+    const th0 = Math.asin(Math.min(1, PROBE_R / d));
+    const th = o.scale ? Math.atan(1.5 * Math.tan(th0)) : th0;
+    const id = o.shift ? SHIFT_DIR : DIR;
+    sky.setBody(0, 'probe-a', 3, id.x, id.y, id.z, th, d,
       0.79, 0.44, 0.29, imp, impVis);
     sky.update(0, 0, 0, q.x, q.y, q.z, q.w, sc.x, sc.y, sc.z);
     RIG.poseOverride = { x: 0, y: 0, z: 0, qx: q.x, qy: q.y, qz: q.z, qw: q.w };
     gl.setRenderTarget(rt); executePasses(gl, scene); gl.setRenderTarget(null);
     RIG.poseOverride = null;
     gl.readRenderTargetPixels(rt, 0, 0, W, H, buf);
-    let lum = 0, area = 0;
+    let lum = 0, area = 0, k = 0;
+    const mask = new Uint8Array(4 * WIN * WIN);
     for (let y = H / 2 - WIN; y < H / 2 + WIN; y++) for (let x = W / 2 - WIN; x < W / 2 + WIN; x++) {
       const i = (y * W + x) * 4;
       lum += Math.max(0, buf[i] + buf[i + 1] + buf[i + 2] - BG_SUM);
-      if (buf[i] > 8) area++;                                     // harness silhouette threshold
+      if (buf[i] > 8) { area++; mask[k] = 1; }                    // harness silhouette threshold
+      k++;
     }
-    return { lum, area };
+    let h = 2166136261;                                           // FNV-1a over the whole target
+    for (let i = 0; i < buf.length; i++) { h ^= buf[i]; h = Math.imul(h, 16777619); }
+    return { lum, area, mask, hash: h >>> 0 };
   };
+  const dispose = (): void => {
+    rt.dispose(); probe.geometry.dispose(); mat.dispose();
+    backdrop.geometry.dispose(); (backdrop.material as THREE.Material).dispose();
+  };
+  return { render, dispose };
+}
+type Fixture = ReturnType<typeof makeFixture>;
+
+async function rowR3b(fx: Fixture): Promise<Row> {
 
   const states = sampleStates();
   const refs = new Map<number, { lum: number; area: number }>();
@@ -216,7 +252,7 @@ async function rowR3b(gl: THREE.WebGLRenderer): Promise<Row> {
   const failed: Record<Dir, number[]> = { down: [], up: [] };
   let refNote = '', lumRatio = 0;
   for (const km of R3B_KM) {
-    const ref = render(km * 1000, true, 1, false, 0);   // full-opacity mesh only
+    const ref = fx.render(km * 1000, true, 1, false, 0);   // full-opacity mesh only
     refs.set(km, ref);
     const ideal = Math.PI * idealR(km * 1000) ** 2;
     refNote += ` ${km}:${ref.area}/${ideal.toFixed(1)}`;
@@ -227,7 +263,7 @@ async function rowR3b(gl: THREE.WebGLRenderer): Promise<Row> {
       const d = s.km * 1000, r = drawn(d, s.mesh), ref = refs.get(s.km)!;
       const ideal = Math.PI * idealR(d) ** 2;
       const na = ref.lum <= 0 || Math.abs(ref.area / ideal - 1) > AREA_TOL;
-      const got = render(d, r.meshVis, r.am, r.impVis, r.imp);
+      const got = fx.render(d, r.meshVis, r.am, r.impVis, r.imp);
       // WHY (F2fccbb, ADR-023 amendment): coverage = drawn AREA ÷ reference area. Luminance is not a
       // coverage measure here: at full opacity the shipped impostor is ~2.5× brighter than the mesh
       // (finding F2fccbb-1), so a luminance ratio reports a shading defect as "coverage". The shading
@@ -240,7 +276,6 @@ async function rowR3b(gl: THREE.WebGLRenderer): Promise<Row> {
     }
     parts.push(`${dir} ${cells.join(' ')}`);
   }
-  rt.dispose(); probe.geometry.dispose(); mat.dispose();
   const pass = failed.down.length === 0 && failed.up.length === 0;
   return {
     pass,
@@ -252,6 +287,51 @@ async function rowR3b(gl: THREE.WebGLRenderer): Promise<Row> {
   };
 }
 
+/* -- R3c: silhouette A/B (ADR-023) -------------------------------------------------------------- */
+const R3C_KM = [228, 232, 236];
+
+/** Mask centroid in window pixels (NaN for an empty mask). */
+function centroid(m: Uint8Array): { x: number; y: number } {
+  let sx = 0, sy = 0, n = 0;
+  for (let i = 0; i < m.length; i++) if (m[i]) { sx += i % (2 * WIN); sy += Math.floor(i / (2 * WIN)); n++; }
+  return { x: sx / n, y: sy / n };
+}
+
+function rowR3c(fx: Fixture): Row {
+  // WHY (ADR-023, A1-U03-3): the shipped R3(c) compared a saturated 160² window, so sym = 0 was
+  // forced. Here both masks are bounded against π·r² (never vacuous), the background is the cleared
+  // rig colour unless ?mut=bright, and repeat renders must be byte-identical (replaces the 0-px flake).
+  const o: Opts = { shift: MUT === 'shift', scale: MUT === 'scale', bright: MUT === 'bright' };
+  const mv = MUT !== 'meshhide', iv = MUT !== 'noimp';
+  const cells: string[] = [], fails: string[] = [];
+  for (const km of R3C_KM) {
+    const d = km * 1000, r = idealR(d), ideal = Math.PI * r * r, symLim = 0.5 * 2 * Math.PI * r;
+    const m1 = fx.render(d, mv, 1, false, 0, o), m2 = fx.render(d, mv, 1, false, 0, o);
+    const i1 = fx.render(d, false, 0, iv, 1, o), i2 = fx.render(d, false, 0, iv, 1, o);
+    let sym = 0;
+    for (let k = 0; k < m1.mask.length; k++) sym += m1.mask[k] ^ i1.mask[k];
+    const cm = centroid(m1.mask), ci = centroid(i1.mask);
+    const dc = Math.hypot(cm.x - ci.x, cm.y - ci.y);
+    const same = m1.hash === m2.hash && i1.hash === i2.hash;
+    const why: string[] = [];
+    if (Math.abs(m1.area / ideal - 1) > AREA_TOL) why.push('mesh-area');
+    if (Math.abs(i1.area / ideal - 1) > AREA_TOL) why.push('imp-area');
+    if (sym > symLim) why.push('sym');
+    if (!(dc <= 0.5)) why.push('centroid');
+    if (!same) why.push('repeat');
+    if (why.length) fails.push(`${km}(${why.join(',')})`);
+    cells.push(`${km}: mesh ${m1.area} imp ${i1.area} px vs π·r² ${ideal.toFixed(1)}, sym ${sym}/${symLim.toFixed(1)}, ` +
+      `Δc ${Number.isNaN(dc) ? 'n/a' : dc.toFixed(2)} px, repeat ${same ? 'identical' : 'DIFFERS'}`);
+  }
+  return {
+    pass: fails.length === 0,
+    detail:
+      `mesh-only vs impostor-only, R > 8 masks in a ${2 * WIN}² window (areas ±${AREA_TOL * 100}% of π·r², ` +
+      `sym ≤ 0.5·2πr, centroid ≤ 0.5 px, repeat byte-identical): ${cells.join('; ')}. fails: [${fails.join(' ')}].` +
+      (CTL ? ` [ctl=${CTL}]` : '') + (MUT ? ` [mut=${MUT}]` : ''),
+  };
+}
+
 export default function M1fR3Gate() {
   const [rows, setRows] = useState<Array<[string, Row]> | null>(null);
   useEffect(() => {
@@ -259,7 +339,10 @@ export default function M1fR3Gate() {
     const gl = new THREE.WebGLRenderer({ canvas, antialias: false });
     gl.setPixelRatio(1); gl.setSize(W, H, false);
     void (async () => { try {
-      const res: Array<[string, Row]> = [['R3a state-coupled sweep', rowR3a()], ['R3b rendered coverage', await rowR3b(gl)]];
+      const fx = makeFixture(gl);
+      const res: Array<[string, Row]> = [['R3a state-coupled sweep', rowR3a()],
+        ['R3b rendered coverage', await rowR3b(fx)], ['R3c silhouette A/B', rowR3c(fx)]];
+      fx.dispose();
       setRows(res);
       for (const [k, r] of res) console.log(`[M1fR3Gate] ${k}: ${r.pass ? 'PASS' : 'FAIL'} — ${r.detail}`);
       const tag = [CTL ? `ctl=${CTL}` : '', MUT ? `mut=${MUT}` : ''].filter(Boolean).join(', ');
