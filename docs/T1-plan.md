@@ -2,7 +2,7 @@
 
 - Task: **T1** (playable moon) — definition: `notes/task.md` § "T1 — PLAYABLE MOON"
 - Branch: `t1-playable-moon`
-- Stage: **BUILDING** (resumed by the Lead 2026-10-28) — plan READY (7/7); build 11/13 done (B1–B11), next B12 Playwright smoke (Q6)
+- Stage: **BUILDING** (resumed by the Lead 2026-10-28) — plan READY (7/7); build 12/13 done (B1–B12), next B13 close-out
 - Last updated: 2026-10-21
 - **Resume at the FIRST UNCHECKED BOX** (planning item or build step).
 - Rules: planning changes NO game code (plan + process files only); each checked
@@ -2525,7 +2525,7 @@ or reordered. A step that fails its checks is not committed as done.
     badges, §13.5). With no ruling on record, this box is checked as **SKIPPED (no
     ruling)** with that reason in the commit, and no core file changes.
 
-- [ ] **B12 — OPTIONAL Playwright smoke (Q6).**
+- [x] **B12 — OPTIONAL Playwright smoke (Q6).** DONE (session 145): `e2e/play.spec.ts` PW_EXIT=0 ×2; 4 mutants exit 1.
   - **Ruled IN (2026-10-20): Q6 = yes**, because Playwright runs in the build
     VM (verified: Chrome 152 installed, `e2e/m1a.spec.ts` ran to its badges).
   - Files: `e2e/play.spec.ts` (+ `?autoplay=1` test mode in `PlayShell`,

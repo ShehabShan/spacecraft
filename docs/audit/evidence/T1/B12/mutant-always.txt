@@ -1,0 +1,33 @@
+[WebServer] 
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+
+Running 2 tests using 1 worker
+
+  ✘  1 e2e/play.spec.ts:50:1 › S1 play page: CLICK_TO_PLAY ≤ 20 s, non-blank canvas, autoplay inert, no errors (20.9s)
+  -  2 e2e/play.spec.ts:67:1 › S2 ?autoplay=1: PLAYING without a click, HUD speed > 0 after W, no errors
+
+
+  1) e2e/play.spec.ts:50:1 › S1 play page: CLICK_TO_PLAY ≤ 20 s, non-blank canvas, autoplay inert, no errors 
+
+    TimeoutError: page.waitForSelector: Timeout 20000ms exceeded.
+    Call log:
+      - waiting for locator('[data-phase="CLICK_TO_PLAY"]') to be visible
+
+
+      54 |   await page.waitForSelector('[data-phase]', { timeout: 30_000 })
+      55 |   const t0 = Date.now()
+    > 56 |   await page.waitForSelector('[data-phase="CLICK_TO_PLAY"]', { timeout: 20_000 })
+         |              ^
+      57 |   console.log(`[S1] CLICK_TO_PLAY ${Date.now() - t0} ms after the shell mounted`)
+      58 |   const st = await canvasStats(page)
+      59 |   console.log(`[S1] canvas colours=${st.colours} lit=${(st.litShare * 100).toFixed(2)}%`)
+        at /workspace/spacecraft/game/e2e/play.spec.ts:56:14
+
+    Error Context: test-results/play-S1-play-page-CLICK-TO-e8f72-as-autoplay-inert-no-errors/error-context.md
+
+  1 failed
+    e2e/play.spec.ts:50:1 › S1 play page: CLICK_TO_PLAY ≤ 20 s, non-blank canvas, autoplay inert, no errors 
+  1 did not run
