@@ -23,6 +23,8 @@ const CASES = [
   { mut: 'offframe', verdict: 'FAILED', rows: { [A]: OK_A, [B]: { want: 'FAIL', reason: /fails: \[Sat B 0 px ≤ 200; 1 m shift changes 0 px/, n: 1 } } },
   // single = Sat B forced to one layer (MID only) instead of the law's NEAR|MID
   { mut: 'single', verdict: 'FAILED', rows: { [A]: OK_A, [B]: { want: 'FAIL', reason: /fails: \[Sat B assigned mask 2 ≠ NEAR\|MID 3\];/, n: 1 } } },
+  // rebaseonly = the Sun is sampled only on rebase frames, as the shipped row did (A1-U03-6)
+  { mut: 'rebaseonly', verdict: 'FAILED', rows: { [A]: OK_A, [B]: { want: 'FAIL', reason: /fails: \[samples 2 ≠ frames 4800\];/, n: 1 } } },
   // sunstale = the Sun's render-local position is never rebased (A1-U03-6 class)
   { mut: 'sunstale', verdict: 'FAILED', rows: { [A]: OK_A, [B]: { want: 'FAIL', reason: /fails: \[Sun dir err > [\d.e-]+ rad on \d+ of \d+ frames; Sun 0 px on \d+ frames\];/, n: 1 } } },
 ]

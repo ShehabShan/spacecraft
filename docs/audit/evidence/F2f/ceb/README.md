@@ -12,6 +12,9 @@ R5b Sun part: a real SimulationCore camera flies the R5a h 0 route (4,000 m at 5
 Mutants (each turns only R5b red; R5a stays PASS):
 - `offframe` (Sat B behind the camera, same depth range): 0 px, and the 1 m shift changes 0 px;
 - `single` (Sat B forced to MID only): assigned mask 2 ≠ 3;
-- `sunstale` (Sun local never rebased): direction error up to 3.14 rad and 0 px on 2,538 of 4,800 frames.
+- `sunstale` (Sun local never rebased): direction error up to 3.14 rad and 0 px on 2,538 of 4,800 frames;
+- `rebaseonly` (quality pass; the shipped rebase-frames-only sampling): samples 2 ≠ frames 4,800.
+
+Quality pass: `selftest-q-run1.txt`, `selftest-q-run2.txt` (8 cases each, exit 0), `spec-q-run.txt` (exit 0).
 
 Files: `selftest-run1.txt`, `selftest-run2.txt` (7 cases each, AS EXPECTED, exit 0), `spec-run.txt` (badges PASS, PASS; exit 0). TSC exit 0.

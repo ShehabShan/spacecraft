@@ -252,6 +252,7 @@ function sunPart(gl: THREE.WebGLRenderer): Part {
     core.setVelocity('flyer', (tgt.x - e.absPos.x) / FIXED_DT, (tgt.y - e.absPos.y) / FIXED_DT, (tgt.z - e.absPos.z) / FIXED_DT);
     reb = 0;
     core.tick();
+    if (MUT === 'rebaseonly' && reb === 0) continue;      // mutant: the shipped rebase-frames-only sampling (A1-U03-6)
     const a = e.absPos, L = e.localPosF32, S = sun.localPosF32;
     // render side: the Sun relative to the camera from f32 locals (sunstale: the Sun never rebased)
     let sx = S[0] - L[0], sy = S[1] - L[1], sz = S[2] - L[2];
