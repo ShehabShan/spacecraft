@@ -10,6 +10,9 @@ applicable, code fixes proven by failing acceptance output.
 
 ---
 
+## 2026-10-28 — §12 OLU use (Lead ruling, docs only)
+- `AGENT_BRIEF.md` §12 (+4 bullets), `notes/STATE.md` APPROVAL LEDGER (+1 row) · why: sessions ended at ~25–35 of 50 OLU because units were cut small and the ~40 wrap-up was read as a stop line; the Lead ruled the ~40 mark only reserves ~10 OLU for commit + push · evidence: SESSION LOG stop figures (rows 34–46, 117–136), bot 37d496cf olu_usage ledger (session 138 ≈28 OLU) · source: Lead, 2026-10-28.
+
 ## 2026-10-27 — F2fcaba (session 131b): rebuilt m1f R2 gate, rows R2a + R2b
 - `game/src/test/M1fR2Gate.tsx` (new page `?page=m1fR2`), `game/src/main.tsx` (+1 static-map entry), `game/e2e/m1f-r2.spec.ts` (new), `game/tools/test-m1f-r2-gate.mjs` (new mutant self-test) · F2f/U27c §2 · why: the shipped m1f R2 row mixes the angular law with Sun visibility at an unchecked pose (ADR-019/020) · evidence `docs/audit/evidence/F2f/cab/` · ADR-021 (amended). No production code, shipped harness row or shipped spec changed.
 

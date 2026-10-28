@@ -250,6 +250,17 @@ the existing code cannot audit it.
   box directly below it with the remaining scope, and repoint NEXT ACTION to it.
   Never end a session with uncommitted work.
 - Quality over quantity: fewer, verified results beat many shallow ones.
+- The ~40 wrap-up reserves ~10 OLU for commit + push (late steps cost more as
+  the context grows); a session may use up to 50. Unused budget is waste
+  (Lead, 2026-10-28).
+- Size the unit to end near ~40: after bootstrap, check the meter and take the
+  largest slice of the task that fits (split with `<id>a`/`<id>b` only if it
+  won't).
+- If the unit is done and verified well before ~40, spend the rest on that same
+  unit's quality (more mutants/edge cases, a second verification run, tighter
+  evidence) — not on a new unit.
+- Run each session in a fresh bot: the OLU meter query is a lifetime total per
+  bot, so a reused bot starts above 0.
 
 ## 13. PROJECT GOAL & DECISION AUTHORITY (Lead, 2026-10-21; binds every task)
 - **Goal.** A game that looks like a real solar system: every planet and moon
