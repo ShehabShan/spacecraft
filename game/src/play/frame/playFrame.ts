@@ -6,11 +6,11 @@
 // only. B10: stage 11 HUD publish (HudPublisher, ≤ 10 Hz, double-buffered).
 // Zero allocation per frame: all scratch is created once in createPlayFrame.
 import {
-  rotateByQuatConjInto, rotateByQuatInto, spinQuatInto, type Quat, type Vec3,
+  spinQuatInto, type Quat, type Vec3,
 } from '../../core/physics/sphericalFrame';
 import { setDriverPose } from '../../render/MultiCameraRig';
 import type { MoonWorld } from '../world/moonWorld';
-import { applySkyState } from '../world/skyState';
+import { SKY_POSE_IO, applySkyStateIo } from '../world/skyState';
 import type { ThirdPersonCamera } from '../camera/ThirdPersonCamera';
 import type { InputState } from '../input/InputState';
 import type { PlayStoreLike } from '../ui/shellRuntime';
@@ -120,14 +120,37 @@ export function createPlayFrame(w: MoonWorld, cam: ThirdPersonCamera, shell?: Pl
     // 8. camera post-step: lagged spring arm with the shell; snap pose without
     // (the B4b static path test-play-frame checks).
     if (shell) cam.poseInto(kcc, clock.dt); else cam.poseInto(kcc);
-    rotateByQuatInto(qS, cam.offsetPlanet.x, cam.offsetPlanet.y, cam.offsetPlanet.z, off);
+    // WHY (T5 S1bbbbba): rotateByQuatInto is not inlined here, and every double
+    // argument of a non-inlined call boxes a HeapNumber; same arithmetic order as
+    // rotateByQuatInto, so the result is bit-identical.
+    {
+      const vx = cam.offsetPlanet.x, vy = cam.offsetPlanet.y, vz = cam.offsetPlanet.z;
+      const tx = 2 * (qS.y * vz - qS.z * vy);
+      const ty = 2 * (qS.z * vx - qS.x * vz);
+      const tz = 2 * (qS.x * vy - qS.y * vx);
+      off.x = vx + qS.w * tx + (qS.y * tz - qS.z * ty);
+      off.y = vy + qS.w * ty + (qS.z * tx - qS.x * tz);
+      off.z = vz + qS.w * tz + (qS.x * ty - qS.y * tx);
+    }
     quatMulInto(qS, cam.quatPlanet, qW);
     const dx = alp[0] + off.x, dy = alp[1] + off.y, dz = alp[2] + off.z;
     setDriverPose(dx, dy, dz, qW.x, qW.y, qW.z, qW.w);
     // 9. sky + layers
-    applySkyState(w, dx, dy, dz, qW.x, qW.y, qW.z, qW.w);
+    const sp = SKY_POSE_IO; // WHY (T5 S1bbbbba): pose via f64 slots, see applySkyStateIo
+    sp[0] = dx; sp[1] = dy; sp[2] = dz; sp[3] = qW.x; sp[4] = qW.y; sp[5] = qW.z; sp[6] = qW.w;
+    applySkyStateIo(w, sp);
     // 10. LOD + streaming — every phase (camera position, planet frame)
-    rotateByQuatConjInto(qS, kcc.absPos.x + off.x, kcc.absPos.y + off.y, kcc.absPos.z + off.z, camP);
+    {
+      // WHY (T5 S1bbbbba): rotateByQuatConjInto inlined, same order (see above).
+      const vx = kcc.absPos.x + off.x, vy = kcc.absPos.y + off.y, vz = kcc.absPos.z + off.z;
+      const cx = -qS.x, cy = -qS.y, cz = -qS.z, cw = qS.w;
+      const tx = 2 * (cy * vz - cz * vy);
+      const ty = 2 * (cz * vx - cx * vz);
+      const tz = 2 * (cx * vy - cy * vx);
+      camP.x = vx + cw * tx + (cy * tz - cz * ty);
+      camP.y = vy + cw * ty + (cz * tx - cx * tz);
+      camP.z = vz + cw * tz + (cx * ty - cy * tx);
+    }
     w.lod.update(camP.x, camP.y, camP.z);
     w.pool.pump();
     // 11. loading gate + HUD publish (B10)

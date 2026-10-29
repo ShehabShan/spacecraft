@@ -1,0 +1,52 @@
+T5 S1bbbbba evidence (session 163, bot dd8c49c0, VM v2 2 vCPU/4 GB). Base ceed1ca (t5-bigger-moon).
+From game/, exit codes unpiped. Fresh VM: npm ci 0; npx playwright install chromium 0.
+
+ROOT CAUSE (new, general): a double passed as an ARGUMENT to a non-inlined call is boxed
+into a fresh HeapNumber at the call site, the same as a double return. Standalone probe
+(7 args, callee too big to inline): --no-turbo-inlining double args 130.5 B/call,
+Float64Array slots 16.5, Smi args 16.3 (control); inlining ON all 16.4.
+--trace-turbo-inlining on the gate: applySkyState, rotateByQuatInto/ConjInto, poseInto,
+animator.update, sampleTelemetry, simulate, advance and SkyImpostorPool.update are NOT
+inlined into playFrame/applySkyState, so their double args boxed every frame.
+
+CHANGE (call boundaries only, no arithmetic change)
+- SkyImpostorPool.ts: SKY_UPDATE_IO = Float64Array(10); updateIo(io); update(...) = wrapper.
+- skyState.ts: SKY_POSE_IO = Float64Array(7); applySkyStateIo(c, pose); applySkyState(...)
+  = wrapper (tests/audit); hot path calls c.sky.updateIo(SKY_UPDATE_IO).
+- playFrame.ts: pose via SKY_POSE_IO + applySkyStateIo; rotateByQuatInto/ConjInto inlined
+  as local blocks in the same arithmetic order (bit-identical).
+- Tried, reverted: MoonLod in-place class camPlanet + updateFromCamPlanet: the cost moved
+  into updateFromCamPlanet (68 B), no net gain; lod.update unchanged.
+
+STEP CHECKS (test-alloc-gate.mjs plain, exit 1 known red ADR-002 until S1bbbbbb)
+  play.idle 1145.7 (base) -> sky slots + rotate inlined 884.0 -> final 889.2 B/frame;
+    retained 0.03.
+  play.walk 1636.5 -> 1363.8 -> 1362.8; retained 0.03.
+  Top idle now: playFrame 242.9, applySkyStateIo 129.6, ThirdPersonCamera.poseInto 82.1,
+    animStateMachine.step 76.6, CharacterTelemetry.sampleTelemetry 65.4,
+    ProceduralAnimator.idlePose 62.1. Walk adds blendPose 163.7, KCC _groundedTick 149.1,
+    _flightTick 78.6.
+
+MATRIX M (final tree; command -> exit | result)
+npx tsc --noEmit 0 · npm run build 0
+test-play-anim 0 115/115 · controller 0 76/76 · frame 0 26/26 · lod 0 32/32 · perf 0 19/19
+  (heap delta -11336 B) · rig 0 97/97 · shell 0 101/101 · spawn 0 74/74 · world 0 27/27
+  (run with node --expose-gc)
+test-moon-profile 0 16/16 (SHA-256 pins unchanged), --self-test 0 4/4
+test-moon-material 0 16/16, --self-test 0 4/4
+test-kcc-default-trace 0 PASS · test-kcc-gate 0, --self-test 0
+F-gates: orbit 0 9/9, precision 0 7/7, seam 0, flight 0, scale-law 0 11/11,
+  rail-validation 0 35/35, real-body-data 0 63/63, spin-law 0 PASS
+test-alloc-gate --self-test 0 8/8 · test-alloc-loops --self-test 0 8/8
+playwright e2e/play.spec.ts e2e/m1e.spec.ts e2e/m1f-r 0 | 8 passed
+playwright e2e/m1a e2e/m1b e2e/m1c e2e/m1d 0 | 4 passed
+check-repo-refs --max 100000 0 | scanned 184 files, dangling 0
+
+REMAINING FOR S1bbbbbb (chain probe, no-inlining, idle): dt args from playFrame to
+poseInto/animator.update/sampleTelemetry/simulate/advance/hud.step; terrainField hash01
+via craterLayerIo/moonHeightIo; chunkArcWidth per record in applySkyStateIo; impostorMath
+thetaEdge/quadHalfSize/elevationAngle; KeplerRail evaluate/wrapAngle/solveKeplerE;
+ProceduralAnimator writeOut/update/blendPose/idlePose>dropLegs/gaitLeg/gaitFreq;
+poseInto>lookAtQuatIo/hypot3/transport; KCC frameQuatInto/_groundedTick/_flightTick/_sweep;
+three.js setFromQuaternion>setFromRotationMatrix>clamp; moonMaterial.setFrame. Then
+consumer migration and the strict real-tree churn check.

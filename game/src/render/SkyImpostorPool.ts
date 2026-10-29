@@ -30,6 +30,9 @@ import {
 
 
 export const IMPOSTOR_CAPACITY = 24;
+/** Shared input slots for SkyImpostorPool.updateIo: [drvX, drvY, drvZ, qx, qy, qz, qw,
+ *  sunCamX, sunCamY, sunCamZ]. Boot-made; callers fill it, then call updateIo. */
+export const SKY_UPDATE_IO = new Float64Array(10);
 
 
 /* -- shared GLSL (the probe mesh reuses FRAG_BODY verbatim) --------------- */
@@ -243,6 +246,20 @@ export class SkyImpostorPool {
     qx: number, qy: number, qz: number, qw: number,
     sunCamX: number, sunCamY: number, sunCamZ: number,
   ): void {
+    const io = SKY_UPDATE_IO;
+    io[0] = drvX; io[1] = drvY; io[2] = drvZ; io[3] = qx; io[4] = qy; io[5] = qz; io[6] = qw;
+    io[7] = sunCamX; io[8] = sunCamY; io[9] = sunCamZ;
+    this.updateIo(io);
+  }
+
+  /** update() with its 10 inputs in a Float64Array (layout SKY_UPDATE_IO).
+   *  WHY (T5 S1bbbbba): a double passed as an argument to a non-inlined call is
+   *  boxed into a fresh HeapNumber at the call site (~16 B each, standalone probe);
+   *  typed-array slots carry the same f64 values unboxed. */
+  updateIo(io: Float64Array): void {
+    const drvX = io[0], drvY = io[1], drvZ = io[2];
+    const qx = io[3], qy = io[4], qz = io[5], qw = io[6];
+    const sunCamX = io[7], sunCamY = io[8], sunCamZ = io[9];
     // 1. collect active indices
     const order = this._order;
     let n = 0;

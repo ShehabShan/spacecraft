@@ -14,7 +14,7 @@ import {
   bodyGeometryInto, elevationAngle, fullyBelowHorizon, thetaEdge,
   type SkyGeometry,
 } from '../../core/render/impostorMath';
-import type { SkyImpostorPool } from '../../render/SkyImpostorPool';
+import { SKY_UPDATE_IO, type SkyImpostorPool } from '../../render/SkyImpostorPool';
 import type { ChunkRecord } from '../../render/TerrainMeshPool';
 import { MID_BIT, NEAR_BIT, layerMaskFor } from '../../render/MultiCameraRig';
 import { HEIGHT_SLACK } from './moonConfig';
@@ -67,6 +67,20 @@ const sunGeom: SkyGeometry = new SkyGeo();
 export function applySkyState(
   c: SkyCtx, px: number, py: number, pz: number, qx: number, qy: number, qz: number, qw: number,
 ): void {
+  const io = SKY_POSE_IO;
+  io[0] = px; io[1] = py; io[2] = pz; io[3] = qx; io[4] = qy; io[5] = qz; io[6] = qw;
+  applySkyStateIo(c, io);
+}
+
+/** Driver-pose input slots for applySkyStateIo: [px, py, pz, qx, qy, qz, qw]. */
+export const SKY_POSE_IO = new Float64Array(7);
+
+/** applySkyState with the pose in Float64Array slots (layout SKY_POSE_IO).
+ *  WHY (T5 S1bbbbba): doubles passed as arguments to a non-inlined call box a
+ *  HeapNumber each at the call site; the hot frame path uses this form. */
+export function applySkyStateIo(c: SkyCtx, pose: Float64Array): void {
+  const px = pose[0], py = pose[1], pz = pose[2];
+  const qx = pose[3], qy = pose[4], qz = pose[5], qw = pose[6];
   // F22: horizon-cull up = ABSOLUTE radial normalize(O + local).
   const o = c.core.getOrigin();
   const upL = hypot3(px + o.x, py + o.y, pz + o.z) || 1; // WHY (T5 S1bbbb): 3-arg Math.hypot boxes per call
@@ -90,7 +104,10 @@ export function applySkyState(
   // scratch keeps the zero-GC invariant (B4a decision).
   _qCam.x = qx; _qCam.y = qy; _qCam.z = qz; _qCam.w = qw;
   const sunCam = rotateByQuatConjInto(_qCam, sunGeom.dirX, sunGeom.dirY, sunGeom.dirZ, _vA);
-  c.sky.update(px, py, pz, qx, qy, qz, qw, sunCam.x, sunCam.y, sunCam.z);
+  const su = SKY_UPDATE_IO;
+  su[0] = px; su[1] = py; su[2] = pz; su[3] = qx; su[4] = qy; su[5] = qz; su[6] = qw;
+  su[7] = sunCam.x; su[8] = sunCam.y; su[9] = sunCam.z;
+  c.sky.updateIo(su);
   c.sky.stars.position.set(px, py, pz);
   const sunBody = c.sky.bodies[0];
   c.glow.position.set(sunBody.stagedPX, sunBody.stagedPY, sunBody.stagedPZ);
