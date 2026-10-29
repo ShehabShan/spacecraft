@@ -1,0 +1,51 @@
+T5 S1bbbbbba evidence (session 164, bot 0cc532aa, VM v2 2 vCPU/4 GB). Base 2ea6728 (t5-bigger-moon).
+Recon only, no code change. From game/, exit codes unpiped.
+Fresh VM: npm ci 0; npx playwright install chromium 0.
+
+WHY SPLIT: bootstrap (GitHub 404 until the Lead connected it; protocol-v2 clone hang) plus
+this recon reached ~27 OLU, so the S1bbbbbb code change, matrix M and m1a-m1d (~25 OLU)
+would not fit inside the 40 OLU wrap (brief §12). S1bbbbbb is split into S1bbbbbba (this
+recon) and S1bbbbbbb (the change).
+
+BASELINE (node --expose-gc tools/test-alloc-gate.mjs, exit 1 = known red, ADR-002)
+  play.idle 893.0 B/frame, retained 0.00 (s163: 889.2; run-to-run noise)
+  play.walk 1366.7 B/frame, retained 0.21 (s163: 1362.8)
+  top idle: playFrame 245.6, applySkyStateIo 129.6, ThirdPersonCamera.poseInto 82.5,
+    animStateMachine.step 75.9, CharacterTelemetry.sampleTelemetry 65.5,
+    ProceduralAnimator.idlePose 63.9. Walk adds blendPose 168.3, KCC _groundedTick 151.0,
+    _flightTick 78.3.
+
+INLINING INTO playFrame (node --expose-gc --trace-turbo-inlining tools/test-alloc-gate.mjs)
+  NOT inlined (reason 5): applySkyStateIo, ThirdPersonCamera.poseInto, preStep,
+    quatFromFrameInto, sampleTelemetry, terrainNormalInto, and one `update` (the trace does
+    not name the receiver: animator.update or lod.update).
+  Inlined: three.js set() (position/quaternion), terrainMaterial.setFrame, PlayClock.step,
+    kcc.frameQuatInto, spinQuatInto, setDriverPose, pool.pump, beginFrame, getOrigin,
+    getState, setVisible, clearEdges, stateName getters.
+  So setFrame's 7 doubles and the set() doubles do not box; the playFrame self bytes come
+  from double ARGS of the non-inlined calls (s163 root cause).
+
+DOUBLE ARGS THAT playFrame STILL PASSES TO CALLS (src/play/frame/playFrame.ts)
+  ctrl.simulate(input, cam, clock.dt, 5)       PlayerController.ts:78
+  core.advance(clock.dt)                       SimulationCore.ts:377 (also m1a-m1f harnesses)
+  sampleTelemetry(kcc, ctrl, input, clock.dt, telem)  CharacterTelemetry.ts:31
+  w.animator.update(telem, clock.dt)           ProceduralAnimator.ts:264 -> sm.step(t, dt)
+  cam.poseInto(kcc, clock.dt)                  ThirdPersonCamera.ts:122
+  w.lod.update(camP.x, camP.y, camP.z)         MoonLod.ts:134
+  hud.step(delta, clock.dt, ...)               hudPublisher.ts:34
+  gate.step(delta, frac)                       shellStages.ts:54 (LOADING only)
+
+DESIGN FOR S1bbbbbbb (decided under §13; no Lead question)
+  dt source object, not a double arg: PlayClock already holds `dt` as a class field, so the
+  hot callees take a `{ readonly dt: number }` source (core defines the interface; core
+  imports nothing from play) and read `src.dt` once. Numeric-arg forms stay as thin
+  wrappers for tests and harnesses, then the consumers migrate. hud.step also needs the raw
+  delta: store it as a PlayClock field in step(). Same arithmetic, so bit-identical.
+  sampleTelemetry already writes out.dt; animator.update can read t.dt instead of its arg.
+  lod.update: s163 in-place camPlanet moved the cost (no gain); next try Float64Array slots.
+  After the dt boundaries: the chain list in S1bbbbba.txt (hash01, chunkArcWidth,
+  impostorMath, KeplerRail wrapAngle, ProceduralAnimator, KCC ticks), then restore the strict
+  real-tree churn check (test-alloc-gate.mjs line ~227 switches by itself below 256 B).
+
+GIT (this VM): clone/fetch through the __github proxy work with protocol.version=1 and the
+wiki credential helper (one 401 challenge, then 200); protocol v2 hangs on the POST.
