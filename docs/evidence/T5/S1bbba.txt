@@ -1,0 +1,49 @@
+T5 S1bbba evidence (session 161, bot 391351b9, VM v2 2 vCPU/4 GB). Base 96fa0eb (t5-bigger-moon).
+From game/, exit codes unpiped. Fresh VM: npm ci 0; npx playwright install chromium 0.
+
+CHANGE (same root cause as S1ba/S1bba: V8 boxes a HeapNumber per double arg/return of a
+non-inlined call; new finding: 3-arg Math.hypot also boxes per call in the play frame)
+- ThirdPersonCamera.ts poseInto: spinQuatInto + rotateByQuatConjInto inlined into locals
+  (px, py, pz; same expression order); module scratch _qS/_p removed. Terrain cut and camera
+  floor read height through TerrainField.io + heightFromIo(). Camera quat via new
+  lookAtQuatIo(Float64Array(9) [eye, target, up], out) with quatFromFrameInto inlined;
+  lookAtQuatInto keeps its signature (loads the slots, calls lookAtQuatIo).
+- terrainField.ts TerrainField: public `get io()` and `heightFromIo()` (io[0..2] -> io[3]).
+- sphericalFrame.ts: hypot3(x, y, z), V8 MathHypot algorithm (Kahan sum of (x/max)^2,
+  sqrt*max); replaces Math.hypot in the camera (9 sites).
+
+HYPOT3 EQUIVALENCE (node, Object.is vs Math.hypot)
+- 5e6 random triples (magnitudes 1e-20..1e20, 10% +-0): 0 mismatches
+- edges [0,0,0] [-0,-0,-0] [Inf,NaN,1] [NaN,-Inf,2] [NaN,1,2] [1e308 x3] [3,4,0]
+  [1e-320,1e-320,0] [5e-324,0,0]: 0 mismatches
+- probe 2e7 calls: Math.hypot 1,202 scavenges vs hypot3 313
+
+STEP CHECKS
+test-alloc-gate.mjs (plain)   1 | GATE=FAIL known red (ADR-002, until S1bbbb)
+  play.idle 2537.0 (this session's base run) -> camera inline 2349.0 -> +hypot3 1912.9 B/frame
+  (re-run 1902.5); retained 0.00. play.walk 2989.2 -> 2340.2.
+  Top idle now (B/frame): KeplerRail.evaluate 329.0, playFrame 262.1, ThirdPersonCamera.poseInto
+  229.9, skyState.applySkyState 144.6, astronautKCC._groundedTick 130.8,
+  sphericalFrame.rotateByQuatConjInto 97.5
+test-play-controller.mjs      0 | PASS 76/76 (boom geometry, lag, FP offsets: bit-level asserts)
+test-play-frame.mjs           0 | PASS 26/26 (offsetPlanet/quatPlanet snapshot row)
+test-moon-profile.mjs         0 | PASS 16/16 (SHA-256 pins unchanged)
+test-kcc-gate.mjs             0 | pass (traces unchanged) · test-kcc-default-trace 0 | PASS
+
+MATRIX M (command -> exit | result)
+npx tsc --noEmit 0 | clean · npm run build 0 | built
+test-play-anim 0 115/115 · controller 0 76/76 · frame 0 26/26 · lod 0 32/32 · perf 0 19/19
+  (heap delta -16440 B) · rig 0 97/97 · shell 0 101/101 · spawn 0 74/74 · world 0 27/27
+  (run with node --expose-gc: the heap row fails without it)
+test-moon-profile --self-test 0 4/4 · test-moon-material 0 16/16, --self-test 0 4/4
+test-kcc-gate --self-test 0
+F-gates: orbit 0 9/9, precision 0 7/7, seam 0 (sources unchanged), flight 0, scale-law 0 11/11,
+  rail-validation 0 35/35, real-body-data 0 63/63, spin-law 0 PASS
+test-alloc-gate --self-test 0 8/8 · test-alloc-loops --self-test 0 6/6
+playwright e2e/play.spec.ts e2e/m1e.spec.ts e2e/m1f-r 0 | 8 passed (R5 waived)
+playwright e2e/m1a e2e/m1b e2e/m1c e2e/m1d 0 | 4 passed
+check-repo-refs --max 100000 0 | dangling 0
+
+REMAINING FOR S1bbbb: KeplerRail.evaluate 329, playFrame 262, poseInto remainder 230
+(likely double stores into {x,y,z} fields: offsetPlanet, lag, prevPivot, heading),
+applySkyState 145, KCC _groundedTick 131, rotateByQuatConjInto callers 98, rest < 100.

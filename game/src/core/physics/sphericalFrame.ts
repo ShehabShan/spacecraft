@@ -247,3 +247,21 @@ export function signedAngleAbout(
   const cz = fx * ty - fy * tx;
   return Math.atan2(cx * ux + cy * uy + cz * uz, fx * tx + fy * ty + fz * tz);
 }
+
+
+// WHY (T5 S1bbb, F5a): Math.hypot with 3 args is a non-inlined builtin call that boxes
+// a HeapNumber per call in the play frame (probe: 4x the scavenges of this helper).
+// Same algorithm as V8's MathHypot (Kahan-compensated sum of (x/max)^2, sqrt·max),
+// bit-identical to Math.hypot on 5e6 random triples plus the ±0/Inf/NaN edges.
+export function hypot3(x: number, y: number, z: number): number {
+  const ax = Math.abs(x), ay = Math.abs(y), az = Math.abs(z);
+  if (ax === Infinity || ay === Infinity || az === Infinity) return Infinity;
+  if (ax !== ax || ay !== ay || az !== az) return NaN;
+  let max = ax > ay ? ax : ay; if (az > max) max = az;
+  if (max === 0) return 0;
+  let sum = 0, comp = 0;
+  let n = ax / max, s = n * n - comp, p = sum + s; comp = (p - sum) - s; sum = p;
+  n = ay / max; s = n * n - comp; p = sum + s; comp = (p - sum) - s; sum = p;
+  n = az / max; s = n * n - comp; p = sum + s; comp = (p - sum) - s; sum = p;
+  return Math.sqrt(sum) * max;
+}

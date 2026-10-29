@@ -182,6 +182,12 @@ export class TerrainField {
     return io[3];
   }
 
+  /** Hot-path I/O slots (T5 S1bbb, F5a): a consumer writes a unit direction to
+   *  io[0..2], calls heightFromIo() and reads the height from io[3] — the same value
+   *  as terrainHeight, with no double crossing a non-inlined call. */
+  get io(): Float64Array { return this._io; }
+  heightFromIo(): void { this.heightIo(); }
+
   /** terrainHeight of _io[0..2] → _io[3]. Zero allocation. */
   private heightIo(): void {
     // WHY (T3, ADR-028): without params.moon the field below is evaluated exactly as
