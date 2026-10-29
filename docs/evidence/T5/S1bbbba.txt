@@ -1,0 +1,55 @@
+T5 S1bbbba evidence (session 162, bot 21d98a48, VM v2 2 vCPU/4 GB). Base 359e566 (t5-bigger-moon).
+From game/, exit codes unpiped. Fresh VM: npm ci 0; npx playwright install chromium 0.
+
+ROOT CAUSE (new, general): the `{x,y,z}` object-literal hidden class is shared bundle-wide
+and generalised to tagged fields, so every double stored into a literal-backed Vec3 boxes a
+HeapNumber. Standalone probe (17 objects x 3 double stores per call, sampling interval 32):
+literal 821 B/iter vs class 16.5 B/iter (~48 B per store); class initialised with 0 16.4;
+4-field {x,y,z,w} literal 16.1 standalone (polluted in the bundle all the same).
+
+CHANGE (object constructors only, no arithmetic change)
+- sphericalFrame.ts: new `class Vec3d implements Vec3`, `class Quatd implements Quat`.
+- Boot-allocated numeric literals -> new Vec3d / new Quatd: KeplerRail 3/0 (absPos, basisP,
+  basisQ), playFrame 2/3, ThirdPersonCamera 5/1, skyState 1/2, astronautKCC 31/2,
+  SimulationCore 6/0, PlayerController 3/1, CharacterTelemetry 1/0.
+- skyState.ts: `class SkyGeo implements SkyGeometry` for _geo/sunGeom; upL via hypot3.
+- CharacterTelemetry.ts: Math.hypot (3 args) -> hypot3.
+- tools/alloc-lib.mjs withMutant churn: private keys + doubles {chA,chB,chC}, as
+  test-alloc-gate (F3abbbbbc). The old {x:k,y:k,z:k} Smi literal cost ~97 B only while the
+  game polluted the shared map; with Vec3d it fell to ~48 B and m1b churn_adds_300_500B
+  went MISMATCH (+192.7 B/tick). After: +377.2 B/tick, ok.
+
+STEP CHECKS
+test-alloc-gate.mjs (plain)   1 | GATE=FAIL known red (ADR-002, until S1bbbbb)
+  play.idle 1909.6 (base) -> KeplerRail Vec3d 1585.3 -> all literals 1200.6
+  -> +SkyGeo/hypot3 1145.6 (re-run 1151.2) B/frame; retained 0.03.
+  play.walk 2352.2 -> 2031.8 -> 1665.4 -> 1632.3 (re-run 1628.0); retained 0.15.
+  Top idle now (B/frame): playFrame 454.2, skyState.applySkyState 178.7,
+  ThirdPersonCamera.poseInto 80.3, animStateMachine.step 76.1,
+  CharacterTelemetry.sampleTelemetry 64.9, ProceduralAnimator.idlePose 63.5.
+  Walk adds ProceduralAnimator.blendPose 166.7, astronautKCC._groundedTick 151.8, _flightTick 79.9.
+test-alloc-loops --self-test  0 | 8/8 (base 6/6: m1b now clean, so its 2 churn checks apply)
+  m1b.core.tick 800.7 -> 24.0 B/tick PASS; m1d.integrateFlight 901 (unchanged);
+  m1e.integrateTick 1723 -> ~1695..1788 (noisy).
+
+MATRIX M (final tree; command -> exit | result)
+npx tsc --noEmit 0 · npm run build 0
+test-play-anim 0 115/115 · controller 0 76/76 · frame 0 26/26 · lod 0 32/32 · perf 0 19/19
+  (heap delta -11224 B) · rig 0 97/97 · shell 0 101/101 · spawn 0 74/74 · world 0 27/27
+  (run with node --expose-gc)
+test-moon-profile 0 16/16 (SHA-256 pins unchanged), --self-test 0 4/4
+test-moon-material 0 16/16, --self-test 0 4/4
+test-kcc-default-trace 0 PASS · test-kcc-gate 0 (trace c0f8d537ee2d78af unchanged),
+  --self-test 0 10/10
+F-gates: orbit 0 9/9, precision 0 7/7, seam 0 14/14, flight 0 12/12, scale-law 0 11/11,
+  rail-validation 0 35/35, real-body-data 0 63/63, spin-law 0 PASS
+test-alloc-gate --self-test 0 8/8 · test-alloc-loops --self-test 0 8/8
+playwright e2e/play.spec.ts e2e/m1e.spec.ts e2e/m1f-r 0 | 8 passed (R5 waived)
+playwright e2e/m1a e2e/m1b e2e/m1c e2e/m1d 0 | 4 passed (m1d burnHeap=0B)
+check-repo-refs --max 100000 0 | dangling 0
+
+REMAINING FOR S1bbbbb (call-chain probe: gate copy with chain keys, node --no-turbo-inlining):
+double returns of non-inlined calls: terrainField craterLayerIo > hash01, chunkArcWidth per
+record in applySkyState, impostorMath elevationAngle/thetaEdge/quadHalfSize,
+SkyImpostorPool.update, KeplerRail wrapAngle; ProceduralAnimator update/writeOut;
+animStateMachine.step. Then consumer migration and the strict real-tree churn check.
