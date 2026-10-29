@@ -5,17 +5,16 @@ and update it instead of `notes/STATE.md`, `notes/task.md` and `notes/CHANGES.md
 stay with T5 until T5 merges into `main`. Each track keeps its own notes in
 notes/T6-<track>.md (created by the track's first session).
 
-**NEXT ACTION (T6 planning session, branch `t6-look-and-feel`):** write the T6 plan,
-docs/T6-plan.md, per the PLAN FILE SCHEMA in `notes/task.md`. Plan only, no build. Work
-section by section and commit and push a few sections per commit (brief §4, §12). At
-READY, STOP for the Lead's order. The plan must contain:
+**NEXT ACTION (T6 planning, branch `t6-look-and-feel`):** continue docs/T6-plan.md at its FIRST
+UNCHECKED BOX (sections 1–3 done, session 160). Plan only, no build; commit and push a few
+sections per commit (brief §4, §12). At READY, STOP for the Lead's order. The plan must contain:
 1. The six tracks below, each with its goal, steps sized to one 50-OLU session, and gates.
 2. File ownership: which files and directories each track may edit. Shared files such as
-   `game/src/play/playFrame.ts` and the scene setup get named hooks or registration points,
+   `game/src/play/frame/playFrame.ts` and the scene setup get named hooks or registration points,
    built in a first "T6-core" step on `t6-look-and-feel`, so tracks add files instead of
    editing the same lines.
 3. The integration procedure (below) and per-track verification (matrix M from
-   `docs/evidence/T5/S1a.txt` plus the track's own gates).
+   `88c51b8:docs/evidence/T5/S1a.txt` plus the track's own gates).
 4. Dependencies. Audio and Character can build before T5 merges. Light, Surface, Objects
    and World build after T5 is merged into `main` and `main` is merged into
    `t6-look-and-feel`, because T5 changes the radius, terrain and LOD.
