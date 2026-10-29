@@ -21,6 +21,9 @@ import { EARTH_R, PLAY_BODIES, type SkyCtx } from './skyState';
 import type { CharacterAnimator } from '../character/CharacterAnimator';
 import { ProceduralAnimator } from '../character/ProceduralAnimator';
 import { buildAstronautRig } from '../character/AstronautRig';
+import { addMoonLights } from './lighting';
+import { createT6Hooks, type T6Hooks } from '../t6/t6Hooks';
+import { mountContributors, T6_CONTRIBUTORS } from '../t6/sceneContributors';
 
 /** The pool surface the play world uses: the LOD subset + frame/teardown. */
 // WHY (B4c): attach/primeAll/unprimeAll join the surface because PlayPage
@@ -56,6 +59,8 @@ export interface MoonWorld extends SkyCtx {
   spawnDir: Vec3;
   /** Character animator; its root hangs under characterRoot (§7.4). */
   animator: CharacterAnimator;
+  /** T6 C1 registration points (frame hooks, foot events, placement; plan §4.2). */
+  t6: T6Hooks;
   /** Teleport the KCC back to the spawn site (R key, §10). */
   respawnPlayer(): void;
   /** §6.4 teardown — workers, meshes, GPU resources, the entity. */
@@ -116,12 +121,7 @@ export function createMoonWorld(opts: MoonWorldOptions): MoonWorld {
   const spinGroup = new THREE.Group();   // moon-fixed: terrain, shell
   const skyGroup = new THREE.Group();    // moon-centred inertial: Earth, glow, stars
   sceneRoot.add(spinGroup, skyGroup);
-  const sunLight = new THREE.DirectionalLight(0xfff1de, 2.2);
-  sunLight.position.set(sunDir.x * 8000, sunDir.y * 8000, sunDir.z * 8000);
-  const earthLight = new THREE.DirectionalLight(0x8fb4e8, 0.28);
-  earthLight.position.set(earthDir.x * 8000, earthDir.y * 8000, earthDir.z * 8000);
-  sceneRoot.add(sunLight, sunLight.target, earthLight, earthLight.target,
-    new THREE.AmbientLight(0x2a3850, 0.5));
+  addMoonLights(sceneRoot, sunDir, earthDir); // T6 C1: moved unchanged to lighting.ts
   const shell = new THREE.Mesh(                 // core shell (no see-through)
     new THREE.SphereGeometry(MOON_R - MAX_TERRAIN_H - 40, 40, 28),
     new THREE.MeshStandardMaterial({ color: 0x0d1118, roughness: 1 }),
@@ -143,12 +143,17 @@ export function createMoonWorld(opts: MoonWorldOptions): MoonWorld {
   characterRoot.add(animator.root);
   // MoonLod samples terrainHeight at construction → after step 1.
   const lod = new MoonLod(pool, MOON_R);
+  const t6 = createT6Hooks();
+  let unmountT6 = (): void => {};
 
   const world: MoonWorld = {
     core, adapter, astroState, kcc, sky, pool, terrainMaterial, lod, moonAbs: moonState.absPos, earthVec, earthDist,
-    earthMesh, glow, characterRoot, sceneRoot, spinGroup, skyGroup, earthDir, sunDir, spawnDir, animator,
+    earthMesh, glow, characterRoot, sceneRoot, spinGroup, skyGroup, earthDir, sunDir, spawnDir, animator, t6,
     respawnPlayer() { kcc.teleportSurface(spawnDir.x, spawnDir.y, spawnDir.z); syncEntity(); },
     dispose() {
+      // WHY (T6 C1, plan §4.2): contributors go first, in reverse mount order, while the
+      // scene they added to is still intact; then their frame hooks are dropped.
+      unmountT6(); t6.frameHooks.clear();
       pool.disposeAll();
       disposeMesh(sky.mesh); disposeMesh(sky.stars);
       disposeMesh(shell); disposeMesh(earthMesh); disposeMesh(glow);
@@ -156,6 +161,8 @@ export function createMoonWorld(opts: MoonWorldOptions): MoonWorld {
       core.unregisterEntity(PLAY_ENTITY_ID);
     },
   };
+  // T6 C1: scene contributors mount after the scene graph is built (plan §4.2).
+  unmountT6 = mountContributors(world, T6_CONTRIBUTORS);
   return world;
 }
 

@@ -4,7 +4,7 @@
   branches `t6-<track>` are cut from it at READY (`notes/T6-STATE.md`)
 - Stage: READY (7/7 sections, session 160). LEAD GATE: build only on the Lead's order
   ("execute the T6 plan"); the first build step is C1 (§5.0)
-- Last updated: 2026-10-29 (session 160)
+- Last updated: 2026-10-29 (session 161: build started on the Lead's order; C1a done)
 - Resume at the FIRST UNCHECKED BOX (planning item or build step).
 
 ## PLANNING CHECKLIST
@@ -155,12 +155,15 @@ listed in §6.1. Each step's commit carries one evidence summary (≤ 5 KB) at
 summary.
 
 ### 5.0 T6-core (serial, on `t6-look-and-feel`, before any track branch is cut)
-- [ ] **C1** Hook scaffolding: `frameHooks`, `sceneContributors` (with the manifest and six
+- [x] **C1a** (session 161; evidence `docs/evidence/T6/C1a.txt`) Hook scaffolding: `frameHooks`, `sceneContributors` (with the manifest and six
   stub `register.ts` files), `footEvents` (the ring only), `placement`, `hudSlots`. Wire them
   into `playFrame.ts` and `moonWorld.ts`, and move the lights unchanged into
   `world/lighting.ts`. New `tools/test-t6-hooks.mjs`. Gate: M green with no re-pins, and
   `test-alloc-gate` plain unchanged. Empty hooks change no frame output
   (`test-play-frame` 26/26).
+- [ ] **C1b** The rest of C1: `src/play/t6/hudSlots.ts` (named readouts published through
+  the existing HudPublisher, ≤ 10 Hz) with `test-t6-hooks` rows, and the full M run including
+  the Playwright rows. Gate as C1.
 - [ ] **C2** `shaderSlots` on the ADR-029 injection, the `postPipeline` pass-through and
   shell `onPhase`. Gate: with every slot empty, the shader source equals the pre-C2 source
   byte for byte (new `test-moon-material` row); M green. ADR-040 (T6 hook architecture).

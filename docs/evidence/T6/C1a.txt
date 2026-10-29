@@ -1,0 +1,33 @@
+T6 C1a evidence (session 161, bot 401460b0, 2026-10-29) on t6-look-and-feel, parent 80732b7
+Run from game/ with node --expose-gc; exit codes unpiped.
+
+Baseline (pre-C1): tsc 0; test-play-frame 0 PASS 26/26; test-alloc-gate plain 1 GATE=FAIL (red as ADR-002 expects, STATE row 156b).
+After C1a:
+npx tsc --noEmit exit 0
+npm run build exit 0
+test-t6-hooks exit 0 PASS 25/25 (run() heap delta -17464 B / 200k runs)
+test-play-frame exit 0 PASS 26/26 (no re-pin; empty hooks change no frame output)
+test-play-world 0 27/27 · test-play-shell 0 101/101 · test-play-rig 0 97/97 · test-play-perf 0 19/19 · test-play-anim 0 115/115
+test-play-controller exit 0 | test-play-controller PASS 76/76
+test-play-lod exit 0 | [test-play-lod] PASS 32/32
+test-play-spawn exit 0 | [test-play-spawn] PASS 74/74
+test-moon-material exit 0 | test-moon-material PASS 16/16
+test-kcc-default-trace exit 0 | kcc-default-trace PASS
+test-moon-profile --self-test exit 0 | [test-moon-profile] SELF-TEST PASS 4/4
+test-alloc-gate --self-test exit 0 | self_test=8/8
+test-alloc-loops --self-test exit 0 | self_test=6/6
+test-flight-gate exit 0 | {"productionSha256":"bc1d30e2b1e26234f4c69978414ca8d04688bdeda188084654677f40062eb1e9:7c2611c54e98b1775574af637c764605a430384ec182410f6e33b8
+test-orbit-gate exit 0 | ORBIT GATE PASS 9/9
+test-precision-gate exit 0 | PRECISION GATE PASS 7/7
+test-rail-validation exit 0 | rail-validation gate: 35/35 PASS
+test-real-body-data exit 0 | PASSED 63/63
+test-scale-law exit 0 | SCALE-LAW GATE PASS 11/11
+test-seam-gate exit 0 | production sources unchanged (4 files hashed)
+test-spin-law exit 0 | SPIN-LAW PASS
+
+test-alloc-gate plain: exit 1 GATE=FAIL both before and after; no new site; top sites within noise:
+  idle applySkyState 4752.8 -> 4738.9 B; poseInto 1413.8 -> 1414.5; sampleSurfaceInto 1049.8 -> 1045.5; playFrame 260.9 -> 265.2
+  retained B/frame walk 0.15 -> 0.15, idle 0.00 -> 0.03
+check-repo-refs --max 100000: see commit body (run before commit).
+
+Not in C1a (moved to C1b): hudSlots; Playwright rows of M (play.spec, m1e, m1f-r, m1a-m1d).

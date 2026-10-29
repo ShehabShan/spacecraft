@@ -5,12 +5,12 @@ and update it instead of `notes/STATE.md`, `notes/task.md` and `notes/CHANGES.md
 stay with T5 until T5 merges into `main`. Each track keeps its own notes in
 notes/T6-<track>.md (created by the track's first session).
 
-**NEXT ACTION (LEAD GATE, branch `t6-look-and-feel`):** the T6 plan `docs/T6-plan.md` is READY
-(session 160). Wait for the Lead's order ("execute the T6 plan"); then a fresh bot runs
-build step C1 (plan §5.0) on `t6-look-and-feel`. Track branches are cut only after C3.
-Audio and Character may start then; Light, Surface, Objects and World wait for the T5 merge
-(plan §6.2). Open Lead questions Q1–Q4 (plan §7.1) have defaults; the plan runs on them
-until the Lead rules.
+**NEXT ACTION (BUILD, branch `t6-look-and-feel`):** the Lead ordered the T6 build (session 161).
+C1a is done (hooks, contributors, foot-event ring, placement, `lighting.ts`, `test-t6-hooks`).
+Next: a fresh bot runs **C1b** (plan §5.0): `hudSlots` plus the full M run with Playwright, then
+C2 and C3. Track branches are cut only after C3. Audio and Character may start then; Light,
+Surface, Objects and World wait for the T5 merge (plan §6.2). Open Lead questions Q1–Q4
+(plan §7.1) have defaults; the plan runs on them until the Lead rules.
 
 ## Lead directive and rulings, 2026-10-29 (session 159, bot 964bf319)
 
@@ -68,3 +68,4 @@ Inputs: `docs/T5-T6-ideas.md` §2–§6 and the T6 definition in `notes/task.md`
 | 159 | 2026-10-29 | T6 directive recorded (bot 964bf319, while on T5 S1ba) | Cut `t6-look-and-feel` from `main`; this file; brief §10 amendment; LEDGER entry. No plan yet. | T6 planning session on `t6-look-and-feel` (NEXT ACTION above). |
 | 160 | 2026-10-29 | T6 plan (bot 4e4774a1) | GitHub was not enabled (404); the Lead connected it. `docs/T6-plan.md` written 0 → READY in commits b9f1743, 8f65be8, 2dd9c48, 5d6f37c, b166544 and a final fix: ownership table, T6-core hooks C1–C3, 30 track steps (A5 K6 L6 S4 O4 W5), matrix M + integration + frame budget, Q1–Q4 asked with defaults. Fixed 2 dangling refs in this file. | LEAD GATE; on order: C1 in a fresh bot. |
 | 161 | 2026-10-29 | Bootstrap at the T6 Lead gate (bot 401460b0, VM v2 2 vCPU/4 GB) | GitHub was not enabled (404); the Lead connected it. A proxy clone hangs on the v2 POST, so the clone went direct as the GIT RECIPE says. Plan check against `game/src`: the 9 existing paths in plan §4–§5.0 resolve; the other names are new C1–C3 files. ADR-040 and up is free (latest ADR-030). playFrame stages 7, 8 and 10 match §4.2. The four named gate tools exist. Checker: 184 files, 0 dangling. No plan change. | LEAD GATE; on "execute the T6 plan": C1 in a fresh bot. |
+| 161b | 2026-10-29 | T6 C1a (same bot 401460b0; Lead: build here) | Lead ordered the build. C1a: `src/play/t6/` frameHooks, sceneContributors + manifest + six stub `register.ts`, footEvents ring, placement, `t6Hooks`; lights moved unchanged to `world/lighting.ts`; wired into playFrame (after stages 7, 8, 10) and moonWorld (mount after scene graph, reverse dispose). `test-t6-hooks` 25/25; play suites green, test-play-frame 26/26 no re-pin; alloc plain unchanged. Push POSTs wait on the Lead's approval prompt. | C1b (hudSlots + full M with Playwright) in a fresh bot, then C2, C3. |

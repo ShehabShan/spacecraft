@@ -66,6 +66,9 @@ export function createPlayFrame(w: MoonWorld, cam: ThirdPersonCamera, shell?: Pl
   const now = shell?.now ?? (() => performance.now());
   const ctrl = new PlayerController(w.kcc);
   const hud = new HudPublisher(PLAY_HUD_INTERVAL_S);
+  // WHY (T6 C1, plan §4.2): T6 frame hooks run between canonical stages, never reorder them;
+  // empty slots are a zero-length loop (no frame-output or allocation change).
+  const hooks = w.t6.frameHooks;
   let lastTicks = 0;
   const fn = function playFrame(delta: number): void {
     const { core, kcc } = w;
@@ -116,6 +119,7 @@ export function createPlayFrame(w: MoonWorld, cam: ThirdPersonCamera, shell?: Pl
     else telem.dt = clock.dt;
     w.animator.setVisible(!cam.firstPerson);
     w.animator.update(telem, clock.dt);
+    hooks.afterTelemetry.run(telem, clock.dt); // T6: audio, dust, footprints
     // 8. camera post-step: lagged spring arm with the shell; snap pose without
     // (the B4b static path test-play-frame checks).
     if (shell) cam.poseInto(kcc, clock.dt); else cam.poseInto(kcc);
@@ -123,12 +127,14 @@ export function createPlayFrame(w: MoonWorld, cam: ThirdPersonCamera, shell?: Pl
     quatMulInto(qS, cam.quatPlanet, qW);
     const dx = alp[0] + off.x, dy = alp[1] + off.y, dz = alp[2] + off.z;
     setDriverPose(dx, dy, dz, qW.x, qW.y, qW.z, qW.w);
+    hooks.afterCamera.run(telem, clock.dt); // T6: shadow fit, visor env, listener pose
     // 9. sky + layers
     applySkyState(w, dx, dy, dz, qW.x, qW.y, qW.z, qW.w);
     // 10. LOD + streaming — every phase (camera position, planet frame)
     rotateByQuatConjInto(qS, kcc.absPos.x + off.x, kcc.absPos.y + off.y, kcc.absPos.z + off.z, camP);
     w.lod.update(camP.x, camP.y, camP.z);
     w.pool.pump();
+    hooks.beforeRender.run(telem, clock.dt); // T6: post-pipeline uniforms
     // 11. loading gate + HUD publish (B10)
     if (shell) {
       const st = shell.store.getState();
