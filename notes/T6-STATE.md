@@ -6,7 +6,7 @@ stay with T5 until T5 merges into `main`. Each track keeps its own notes in
 notes/T6-<track>.md (created by the track's first session).
 
 **NEXT ACTION (T6 planning, branch `t6-look-and-feel`):** continue docs/T6-plan.md at its FIRST
-UNCHECKED BOX (sections 1–3 done, session 160). Plan only, no build; commit and push a few
+UNCHECKED BOX (sections 1–4 done, session 160). Plan only, no build; commit and push a few
 sections per commit (brief §4, §12). At READY, STOP for the Lead's order. The plan must contain:
 1. The six tracks below, each with its goal, steps sized to one 50-OLU session, and gates.
 2. File ownership: which files and directories each track may edit. Shared files such as
