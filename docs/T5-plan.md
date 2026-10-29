@@ -2,7 +2,7 @@
 
 - Task: T5 · Branch: `t5-bigger-moon` (cut from `main` @ 787b9d4, session 156c)
 - Stage: READY (7/7 sections, session 157b) — LEAD GATE: build starts only on the Lead's "execute the T5 plan"
-- Last updated: 2026-10-29 (session 157b)
+- Last updated: 2026-10-29 (session 157b, follow-up)
 - Resume at the FIRST UNCHECKED BOX (planning item or build step).
 - Source: Lead directive 2026-10-28 (150d, item 2) and ruling (b) (150e), `notes/LEDGER.md`; definition `notes/task.md` §T5; inputs `docs/T5-T6-ideas.md` §0, §1, §6.
 - Prerequisites F5a–F5d are folded into T5 as its first build steps (ADR-031).
@@ -47,6 +47,8 @@ The play Moon (`?page=play`) gets its real radius, 1,737 km, and real surface gr
 - `game/src/play/world/spawn.ts`: spawn search at real R.
 - `game/src/play/world/skyState.ts`, `game/src/play/world/moonMaterial.ts`: check for scale-dependent terms.
 - `game/src/play/camera/ThirdPersonCamera.ts`: clearance probe bounds.
+- `game/src/play/PlayPage.tsx`: camera `near` 0.1 / `far` 3,000 m, sized for the small Moon; at about 100 km LOD reach the far plane and depth scheme change (S8).
+- `game/src/core/physics/flightController.ts`: DDA sweep lattice `DDA_LATTICE` 2048 cells per face side (2.7–4.9 m arc at today's R; about 0.6–1.2 km at R = 1,737 km, calc) is R-dependent and is derived from R in S7 (shared with the m1d harness, so the harness value stays bit-identical).
 - Terrain service consumers (F5a API change only, behaviour unchanged): `game/src/core/physics/astronautKCC.ts`, `game/src/core/physics/flightController.ts`, `game/src/play/controller/PlayerController.ts`, `game/src/play/frame/playFrame.ts`, `game/src/play/character/CharacterTelemetry.ts`, `game/src/test/Milestone1C_TestHarness.tsx`, `game/src/test/Milestone1D_TestHarness.tsx`, `game/src/test/Milestone1E_TestHarness.tsx`, `game/src/test/Milestone1F_TestHarness.tsx`, `game/src/test/M1fR2Gate.tsx`.
 - Gates to re-pin or extend: `game/tools/test-play-lod.mjs`, `game/tools/test-play-spawn.mjs`, `game/tools/test-play-world.mjs`, `game/tools/test-moon-profile.mjs`, `game/tools/test-alloc-gate.mjs`, `game/tools/test-kcc-gate.mjs`, `game/tools/test-kcc-default-trace.mjs`, `game/tools/test-seam-gate.mjs`, `game/tools/test-flight-gate.mjs`, `game/tools/check-play-frametime.mjs`, `game/tools/test-play-perf.mjs`, `game/e2e/play.spec.ts`. New gates are named in Steps.
 - Docs: ADR-031 (fold), one ADR per significant step decision, `notes/CHANGES.md`.
@@ -59,7 +61,7 @@ Each step is one §12 session unit. If a step will not fit in one session, it is
 - [ ] **S4 — F5d: pool, drop accounting, leaf budget.** Mesh pool size ≤ worker sets. Every dropped chunk request is counted and its stale ownership removed. A leaf budget falls back to coarser leaves when the request set exceeds it. Closes F5d.
 - [ ] **S5 — Metre-scale crater ladder (candidate).** A profile in metres: crater layers on a power-law ladder (N(>D) ∝ D⁻²) from about 50 km down to about 2 m, each layer on its own lattice with its own prune, plus metre-scale fBm and km-scale mare rims and floors. As in T3 S1, the candidate lives in `test-moon-profile` and is evaluated at R = 1,737 km; play is not wired yet. ADR-028 amendment.
 - [ ] **S6 — GPU precision gate.** Gate `tools/test-gpu-precision.mjs` measures the worker's Float32 chunk-local vertex error against Float64 positions for every LOD level at R = 1.737e6 m, and checks the cube-sphere mapping (`spherify.ts`) at the deepest level. If a level fails, move it to camera-relative positions in the same step.
-- [ ] **S7 — Real size.** `MOON_PARAMS.radius` = 1,737,000 m with the S5 profile wired. `MOON_MU` = 1.62·R². Set the KCC `gravityRange`, derived bounds, occluder sphere and camera clearance bounds for the new R. Re-derive the spawn search in metres; the spawn stays on a mare floor with the ruled Earth framing (ADR-017). Write the replacement pins first (test-play-spawn, test-play-world, test-kcc-default-trace moon trace, `e2e/play.spec.ts`), then retire the old ones, and list every re-pin in the commit.
+- [ ] **S7 — Real size.** `MOON_PARAMS.radius` = 1,737,000 m with the S5 profile wired. `MOON_MU` = 1.62·R². Set the KCC `gravityRange`, derived bounds, occluder sphere and camera clearance bounds for the new R. Derive `DDA_LATTICE` from R so the face cells stay at metre scale (`test-flight-gate` stays green on its own fixture). Re-derive the spawn search in metres; the spawn stays on a mare floor with the ruled Earth framing (ADR-017). Write the replacement pins first (test-play-spawn, test-play-world, test-kcc-default-trace moon trace, `e2e/play.spec.ts`), then retire the old ones, and list every re-pin in the commit.
 - [ ] **S8 — F5c and performance at final R.** Drawn and collision terrain agree near the actor at every LOD level. Frame time and heap are measured A/B against 787b9d4. A whole-Moon view from orbit still composes (rebase 1,024 m, `MID_FAR_LIMIT` 300 km). If the frame time is over budget, tune worker count (2 or 4), prune and leaf budget in this step. Closes F5c.
 - [ ] **S9 — Close-out.** The full matrix on the S8 commit, then the Lead's play acceptance, then a fast-forward into `main` and push (brief §4).
 
@@ -89,7 +91,7 @@ Steps that touch shared terrain, KCC or render code also run `e2e/m1a`…`m1d` (
 
 ## Risks & open decisions
 - **Frame time.** More crater layers cost more per vertex (terrain evaluation already costs 1.88× pre-T3, ADR-028). Mitigations are per-layer prune, the leaf budget and 4 workers. S5 records the cost ratio early, and S8 is the hard gate.
-- **Depth precision at about 100 km LOD reach.** The camera near/far range may z-fight on distant relief. S8 checks it. A logarithmic or reversed depth buffer is the fallback, decided with an ADR in that step.
+- **Depth precision at about 100 km LOD reach.** `PlayPage.tsx` sets camera `far` = 3,000 m, so terrain beyond 3 km would be clipped at real size. S8 raises the far plane to the LOD reach and checks distant relief for z-fighting (near 0.1 m to far about 100 km is a 10⁶ ratio). A logarithmic or reversed depth buffer is the fallback, decided with an ADR in that step.
 - **KCC at real size.** `gravityRange`, snap and sweep bounds were tuned at R = 1,364.5 m. The S7 KCC trace re-pin may surface slope or step behaviour changes. Ratified rules (step/slope, C¹ cap) change only with an ADR (§13).
 - **Spawn search cost.** The boot-only search (about 159 ms today) scales with probe count. S7 keeps it boot-only and records its time.
 - **Harness pages.** The milestone pages keep R = 1,364.5 m fixtures. If an S1–S4 service change alters them, it is a regression to fix in that step (brief §3).
