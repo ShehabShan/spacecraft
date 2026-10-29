@@ -2,12 +2,12 @@
 
 - Task: T6 · Branch: `t6-look-and-feel` (cut from `main` @ 787b9d4, session 159); track
   branches `t6-<track>` are cut from it at READY (`notes/T6-STATE.md`)
-- Stage: PLANNING (4/7 sections)
+- Stage: PLANNING (5/7 sections)
 - Last updated: 2026-10-29 (session 160)
 - Resume at the FIRST UNCHECKED BOX (planning item or build step).
 
 ## PLANNING CHECKLIST
-- [x] Goal · [x] Scope IN · [x] Scope OUT · [x] Affected modules · [ ] Steps ·
+- [x] Goal · [x] Scope IN · [x] Scope OUT · [x] Affected modules · [x] Steps ·
   [ ] Verification per step · [ ] Risks & open decisions
 
 ## 1. Goal
@@ -145,3 +145,121 @@ T5 keeps ADR-031–039. T6-core and integration use 040–044, Light 045–049, 
 Character 055–059, Objects 060–064, Audio 065–069 and World 070–074. A track that runs out
 of numbers asks the integration session for a new block (075 and up). It never takes a
 number from another track's range.
+
+## 5. Steps
+Each box is one 50-OLU session that finishes, verifies, commits and pushes (brief §12).
+A step that will not fit is split into `<id>a` and `<id>b` in place. "M" means matrix M,
+listed in §6.1. Each step's commit carries one evidence summary (≤ 5 KB) at
+`docs/evidence/<T6>/<id>.txt`. A track session creates that directory with its first
+summary.
+
+### 5.0 T6-core (serial, on `t6-look-and-feel`, before any track branch is cut)
+- [ ] **C1** Hook scaffolding: `frameHooks`, `sceneContributors` (with the manifest and six
+  stub `register.ts` files), `footEvents` (the ring only), `placement`, `hudSlots`. Wire them
+  into `playFrame.ts` and `moonWorld.ts`, and move the lights unchanged into
+  `world/lighting.ts`. New `tools/test-t6-hooks.mjs`. Gate: M green with no re-pins, and
+  `test-alloc-gate` plain unchanged. Empty hooks change no frame output
+  (`test-play-frame` 26/26).
+- [ ] **C2** `shaderSlots` on the ADR-029 injection, the `postPipeline` pass-through and
+  shell `onPhase`. Gate: with every slot empty, the shader source equals the pre-C2 source
+  byte for byte (new `test-moon-material` row); M green. ADR-040 (T6 hook architecture).
+- [ ] **C3** Drive the foot events from `ProceduralAnimator`. Add `tools/check-assets.mjs`
+  (with `--self-test` mutants: missing row, SHA mismatch, over budget) and the `ASSETS.md`
+  template, and add the gate to M. Gate: M green; event counts in a scripted walk match
+  the animator's plants. **Then the track branches may be cut.**
+
+### 5.1 Audio (`t6-audio`) — may start after C3, before T5 merges
+- [ ] **A1** Engine: an AudioContext unlocked through `onPhase`, master and helmet buses
+  (suit-conduction low-pass), a boot-allocated voice pool, a mute/volume control. ADR-065
+  covers formats and the engine. Gate: `test-t6-audio-engine` (OfflineAudioContext render,
+  no node created per frame); no AudioContext before the gesture.
+- [ ] **A2** Helmet breathing driven by exertion (speed, jumps, landings), relaxing at
+  rest. Gate: the breath rate tracks a scripted exertion curve; rendered loudness stays in
+  range.
+- [ ] **A3** Suit-conducted footsteps and landing thumps from foot events, scaled by
+  landing speed. Vacuum rule: no airborne sound from the world. Gate: one sound per
+  plant, ±1 frame; the landing gain is monotone in landing speed.
+- [ ] **A4** Radio chatter and static (strict CC0 by default, Q4) with a HUD caption slot,
+  spaced and never overlapping. Gate: the scheduler test, `check-assets`.
+- [ ] **A5** Adaptive score: silence on the open Moon, then layers that swell near
+  placement-registered landmarks; final mix. Gate: score state over a scripted route; the
+  perf row shows audio time ≤ 0.5 ms per frame.
+
+### 5.2 Character (`t6-character`) — may start after C3, before T5 merges
+- [ ] **K1** Read the rig and animation modules. Measure the cost of the current rig
+  against a rigged CC0 GLB candidate, and record the choice in ADR-055. Gate: M green;
+  the evidence holds the measurement.
+- [ ] **K2** Suit model and PBR materials (fabric, backpack, hoses, gold visor), per
+  ADR-055. Gate: `test-play-rig` re-pinned with a reason; draw calls and triangles within
+  the §6.3 budget.
+- [ ] **K3** A visor that reflects the sky, Earth and Sun (an environment map built at
+  boot and refreshed on a slow cadence). Gate: no per-frame allocation; perf row.
+- [ ] **K4** Low-g locomotion: the Apollo lope and skip, and walk and run blends driven
+  by speed and slope. Foot-event timing comes from the gait. Gate: `test-play-anim` rows
+  for gait phase and foot plants; no foot sliding above 5 cm per plant.
+- [ ] **K5** Jump anticipation, an air pose, and landing compression scaled by landing
+  speed. Gate: `test-play-anim` rows per state; the anim state machine has no stuck
+  state.
+- [ ] **K6** (only if Q2 stays the default) A jetpack boost on the existing RCS: thrust and
+  fuel in the controller, a plume visual, a fuel HUD slot. Gate: `test-play-controller`
+  rows (fuel bounds, no thrust when empty); `test-kcc-default-trace` unchanged with the
+  boost unused.
+
+### 5.3 Light (`t6-light`) — after T5 merges and `main` is merged into `t6-look-and-feel`
+- [ ] **L1** Neutral-grey albedo (≈ `0x8a8a88`, mare ×0.6) and black shadows (ambient ≤
+  0.08, earthshine the only fill). Gate: luminance statistics of a fixed frame (shadow
+  mean below the target); `test-moon-material` re-pinned with a reason.
+- [ ] **L2** A sun shadow map fitted around the player in `afterCamera`, texel-snapped so
+  it does not swim when the origin rebases. Character, boulders and set pieces cast
+  shadows. Gate: a shadow row at a fixed pose; perf row before and after.
+- [ ] **L3** A low sun at the spawn (Q3, about 10°) through the spawn criterion. Gate:
+  `test-play-spawn` re-pinned with the new sun elevation; Earth still in view.
+- [ ] **L4** Lunar BRDF (Lommel-Seeliger/Hapke-style with opposition surge) in the `brdf`
+  slot. ADR-045. Gate: shader unit rows (limb brightening, phase curve); perf row.
+- [ ] **L5** Terrain-scale shadows in the `shadowing` slot (a horizon map per chunk or a
+  short height ray-march), so crater floors go black at a low sun. ADR-046. Gate: a
+  shadowed-crater-floor row; perf row. Split a/b if needed.
+- [ ] **L6** Post pipeline: tone mapping, exposure, bloom of registered emissives. Gate:
+  perf row; with no emissives registered, the bloom output equals no bloom.
+
+### 5.4 Surface (`t6-surface`) — after the T5 merge
+- [ ] **S1** Bright ray masks on young craters in the `albedo` slot, derived from the T5
+  crater lattice (deterministic). Gate: the mask agrees with the lattice at sample points.
+- [ ] **S2** Triplanar regolith detail within about 30 m, fading out with distance (CC0 or
+  procedural). Gate: no visible tiling at 2 m (stats row); perf row; `check-assets`.
+- [ ] **S3** Footprint decals from foot events: a boot-allocated pool, oldest recycled
+  first, kept through origin rebases. Gate: decal count bounded; rebase row.
+- [ ] **S4** Ballistic dust from steps, landings and the jetpack: pure parabolas under lunar
+  g with no drag, settling on contact. Gate: the particle path matches the analytic
+  parabola to 1e-3; zero-GC row.
+
+### 5.5 Objects (`t6-objects`) — after the T5 merge
+- [ ] **O1** Static KCC obstacles (sphere, capsule and box proxies in a boot-allocated grid
+  broadphase), queried from `astronautKCC.ts`. ADR-060. Gate: `test-kcc-default-trace`
+  identical with no obstacles; new `test-t6-objects-kcc` (step-up, slide, no tunnelling at
+  the speed cap); `test-kcc-gate` green.
+- [ ] **O2** Boulder fields: instanced, deterministic on the crater lattice with ejecta near
+  rims. Rocks under the 0.5 m step height are decorative; larger ones register obstacles
+  and skip reserved discs. Gate: determinism row; obstacle agreement; perf row.
+- [ ] **O3** Glowing crystals: emissive, instanced, registered for bloom. Gate: perf row.
+- [ ] **O4** A crashed lander (CC0 GLB) 200–400 m from the spawn as the first goal, with a
+  collision proxy and a placement reservation. Gate: `check-assets`; reachability walk.
+
+### 5.6 World (`t6-world`) — after the T5 merge and after O1 is integrated
+- [ ] **W1** Set-piece framework: a flat-site finder on the analytic terrain, reservations,
+  loading on approach, collision proxies through O1 obstacles. ADR-070. Gate: site rows
+  (slope, distance); unload balances load.
+- [ ] **W2** Lunar outpost: houses with warm window light. Gate: `check-assets`; perf row
+  near the outpost.
+- [ ] **W3** Greenhouse dome with large *Moon Fairy Tale*-style trees and a still pond.
+  Gate: perf row inside the dome; collision walk.
+- [ ] **W4** Glowing crystal grotto built on the surface (arch or overhang). Gate:
+  collision walk; bloom registered; audio landmark registered.
+- [ ] **W5** Far landmarks, visible from the spawn and reachable, plus a heading cue. Gate:
+  visibility rows at range; perf row.
+
+### 5.7 Integration and close-out (on `t6-look-and-feel`)
+- [ ] **I1…In** One integration session per finished track (procedure in §6.2), in the
+  order the tracks finish. Each adds its row here when it runs.
+- [ ] **IX** T6 close-out: full M, a frame-time and heap report against §6.3, a Lead
+  acceptance tour, and then the merge into `main` (brief §4, §13 safeguard 5).
