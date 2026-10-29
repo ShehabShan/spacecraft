@@ -49,6 +49,7 @@ import type { CelestialState } from '../orbit/types';
 import { KeplerRail } from '../orbit/KeplerRail';
 import { CELESTIAL_CONFIGS } from '../orbit/celestialData';
 import { Vec3d } from '../physics/sphericalFrame'; // WHY (T5 S1bbbb): class-backed scratch, see Vec3d
+import { DtCell, type DtSource } from './dtSource';
 
 
 /** Fixed logic timestep (Spec 02.6): 1 tick = 1/60 game-seconds. */
@@ -374,7 +375,18 @@ export class SimulationCore {
   /* ----------------------- fixed-step governor -------------------------- */
 
 
+  private readonly _dtCell = new DtCell();
+
+  /** Numeric-arg form of `advanceFrom` (harnesses, tools, tests). */
   advance(dtRealSeconds: number): void {
+    const c = this._dtCell; c.dt = dtRealSeconds; this.advanceFrom(c);
+  }
+
+  /** advance() reading dt from `src` once.
+   *  WHY (T5 S1bbbbbbb, F5a): the play frame calls this with its PlayClock so no
+   *  double crosses the call boundary (it would box a HeapNumber per frame). */
+  advanceFrom(src: DtSource): void {
+    const dtRealSeconds = src.dt;
     if (!Number.isFinite(dtRealSeconds) || dtRealSeconds <= 0) {
       return;
     }

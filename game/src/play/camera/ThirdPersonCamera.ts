@@ -10,6 +10,7 @@ import {
 import { activeTerrainField } from '../../core/terrain/terrainField';
 import { MAX_TERRAIN_H, MOON_R, PLAY_TUNING } from '../world/moonConfig';
 import { Vec3d, Quatd } from '../../core/physics/sphericalFrame'; // WHY (T5 S1bbbb): class-backed scratch, see Vec3d
+import { DtCell, type DtSource } from '../../core/simulation/dtSource';
 
 /** The InputState members the camera reads (stage 3). */
 export interface CameraInput { lookDX: number; lookDY: number; zoomDelta: number; toggleCamEdge: boolean }
@@ -120,6 +121,17 @@ export class ThirdPersonCamera {
    *  its target): the B4b static path. dt = 0 (frozen) leaves the pose as is
    *  when the character is still. Zero allocation. */
   poseInto(kcc: AstronautKCC, dt?: number): void {
+    if (dt === undefined) { this.poseFrom(kcc, null); return; }
+    const c = this._dtCell; c.dt = dt; this.poseFrom(kcc, c);
+  }
+
+  private readonly _dtCell = new DtCell();
+
+  /** poseInto() reading dt from `src` once; `null` = snap (poseInto without dt).
+   *  WHY (T5 S1bbbbbbb, F5a): playFrame passes its PlayClock, so no double
+   *  argument crosses this non-inlined call (it would box per frame). */
+  poseFrom(kcc: AstronautKCC, src: DtSource | null): void {
+    const dt = src === null ? 0 : src.dt;
     const T = PLAY_TUNING, tf = activeTerrainField(), tio = tf.io, la = _la;
     // inertial → planet: spinQuatInto + rotateByQuatConjInto inlined in the same
     // expression order (T5 S1bbb, F5a: no boxed double args; bit-identical).
@@ -154,7 +166,7 @@ export class ThirdPersonCamera {
     // §9.4 follow smoothing as a planet-frame LAG OFFSET (K4: no render-local cache).
     const L = this.lag, pv = this.prevPivot;
     const mx = Px - pv.x, my = Py - pv.y, mz = Pz - pv.z;
-    const snap = dt === undefined || !this.hasPrev || mx * mx + my * my + mz * mz > SNAP_M * SNAP_M;
+    const snap = src === null || !this.hasPrev || mx * mx + my * my + mz * mz > SNAP_M * SNAP_M;
     if (snap) { L.x = 0; L.y = 0; L.z = 0; } else {
       const keep = dt > 0 ? Math.exp(-dt / T.camPosTau) : 1; // 1 − k
       L.x = keep * (L.x - mx); L.y = keep * (L.y - my); L.z = keep * (L.z - mz);
@@ -179,7 +191,7 @@ export class ThirdPersonCamera {
     if (target < T.camDistMin) target = T.camDistMin;
     // §9.4 spring arm: shrink instantly (never clips), regrow with camBoomTau.
     if (snap || target <= this.boomLen) this.boomLen = target;
-    else if (dt! > 0) this.boomLen += (target - this.boomLen) * (1 - Math.exp(-dt! / T.camBoomTau));
+    else if (dt > 0) this.boomLen += (target - this.boomLen) * (1 - Math.exp(-dt / T.camBoomTau));
     const bl = this.boomLen;
     let Cx = Sx + bx * bl, Cy = Sy + by * bl, Cz = Sz + bz * bl;
     // camera height clamp: terrain(C) + clearance

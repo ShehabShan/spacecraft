@@ -16,7 +16,7 @@ import type { InputState } from '../input/InputState';
 import type { PlayStoreLike } from '../ui/shellRuntime';
 import { PLAY_TUNING } from '../world/moonConfig';
 import { LoadingGate, PlayClock } from './shellStages';
-import { createTelemetry, sampleTelemetry } from '../character/CharacterTelemetry';
+import { createTelemetry, sampleTelemetryFrom } from '../character/CharacterTelemetry';
 import { PlayerController } from '../controller/PlayerController';
 import { HudPublisher } from '../ui/hudPublisher';
 import { Vec3d, Quatd } from '../../core/physics/sphericalFrame'; // WHY (T5 S1bbbb): class-backed scratch, see Vec3d
@@ -96,8 +96,10 @@ export function createPlayFrame(w: MoonWorld, cam: ThirdPersonCamera, shell?: Pl
       // 4+5. controller ticks (step → kcc.update(1/60, 1) → postSimulate per
       // tick, B7a) then the core on the same dt (harness order: KCC, core).
       ctrl.beginFrame();
-      lastTicks = ctrl.simulate(input, cam, clock.dt, 5);
-      core.advance(clock.dt);
+      // WHY (T5 S1bbbbbbb, F5a): the *From forms read dt from the clock; a
+      // double argument to these non-inlined calls would box per frame.
+      lastTicks = ctrl.simulateFrom(input, cam, clock, 5);
+      core.advanceFrom(clock);
     }
     // 6. render extraction (spin composed ONCE here, §4.4 / K1)
     const o = core.getOrigin();
@@ -113,13 +115,13 @@ export function createPlayFrame(w: MoonWorld, cam: ThirdPersonCamera, shell?: Pl
     w.characterRoot.quaternion.set(qW.x, qW.y, qW.z, qW.w);
     // 7. telemetry + animation (ProceduralAnimator, B9c);
     // first person hides the rig (§9.4).
-    if (shell) sampleTelemetry(kcc, ctrl, shell.input, clock.dt, telem);
+    if (shell) sampleTelemetryFrom(kcc, ctrl, shell.input, clock, telem);
     else telem.dt = clock.dt;
     w.animator.setVisible(!cam.firstPerson);
-    w.animator.update(telem, clock.dt);
+    w.animator.updateFrom(telem, clock);
     // 8. camera post-step: lagged spring arm with the shell; snap pose without
     // (the B4b static path test-play-frame checks).
-    if (shell) cam.poseInto(kcc, clock.dt); else cam.poseInto(kcc);
+    if (shell) cam.poseFrom(kcc, clock); else cam.poseFrom(kcc, null);
     // WHY (T5 S1bbbbba): rotateByQuatInto is not inlined here, and every double
     // argument of a non-inlined call boxes a HeapNumber; same arithmetic order as
     // rotateByQuatInto, so the result is bit-identical.
@@ -151,14 +153,15 @@ export function createPlayFrame(w: MoonWorld, cam: ThirdPersonCamera, shell?: Pl
       camP.y = vy + cw * ty + (cz * tx - cx * tz);
       camP.z = vz + cw * tz + (cx * ty - cy * tx);
     }
-    w.lod.update(camP.x, camP.y, camP.z);
+    const lio = w.lod.camIo; lio[0] = camP.x; lio[1] = camP.y; lio[2] = camP.z;
+    w.lod.updateIo(); // WHY (T5 S1bbbbbbb): camera via Float64Array slots, no boxed args
     w.pool.pump();
     // 11. loading gate + HUD publish (B10)
     if (shell) {
       const st = shell.store.getState();
       // WHY: raw delta, every phase — the FPS readout must move in LOADING and
       // PAUSED too (§10.5); the hint fade uses clock.dt (PLAYING time only).
-      hud.step(delta, clock.dt, kcc, w.animator.stateName, cam.firstPerson, st);
+      hud.stepFrom(clock, kcc, w.animator.stateName, cam.firstPerson, st);
       if (st.phase === 'LOADING' && !gate.done) {
         // WHY: real delta, not clock.dt — loading time is wall time (§10.3).
         const s = w.spawnDir;

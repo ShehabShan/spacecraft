@@ -12,10 +12,15 @@ export const MAX_FRAME_DT = 0.1;
  */
 export class PlayClock {
   dt = 0;
+  /** Raw frame delta (s) of the last step(), every phase (HUD FPS readout).
+   *  WHY (T5 S1bbbbbbb, F5a): hot callees read dt/delta from the clock (a
+   *  DtSource) instead of taking them as boxed double arguments. */
+  delta = 0;
   resumedThisFrame = false;
   private wasPlaying = false;
 
   step(phase: PlayPhase, delta: number): number {
+    this.delta = delta;
     if (phase !== 'PLAYING') {
       this.wasPlaying = false; this.resumedThisFrame = false; this.dt = 0;
       return 0;

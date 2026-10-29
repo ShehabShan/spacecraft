@@ -1,0 +1,45 @@
+T5 S1bbbbbbba evidence (session 165, bot 9521c3a4, VM v2 2 vCPU/4 GB). Base 68328b7 (t5-bigger-moon).
+From game/, exit codes unpiped. Fresh VM: npm ci 0; npx playwright install chromium 0.
+
+WHY SPLIT: the dt + LOD call boundaries, matrix M and m1a-m1d reached ~35 OLU, so the
+rest of S1bbbbbbb (callee internals, consumer migration, strict churn check) does not fit
+the 40 OLU wrap (brief §12). S1bbbbbbb split S1bbbbbbba (this) / S1bbbbbbbb (the rest).
+
+CHANGE (call boundaries only, no arithmetic change; numeric forms kept as wrappers)
+- core/simulation/dtSource.ts (new): `DtSource { readonly dt }` + class `DtCell`.
+- SimulationCore.advanceFrom(src); PlayerController.simulateFrom(inp, cam, src, n);
+  sampleTelemetryFrom(kcc, ctrl, inp, src, out); ThirdPersonCamera.poseFrom(kcc, src|null)
+  (null = snap); HudPublisher.stepFrom(clock: HudClock {delta, dt}).
+- animStateMachine.stepFrom / ProceduralAnimator.updateFrom / CharacterAnimator.updateFrom
+  take play-local `AnimDtSource` (test-play-anim purity rows forbid core/ imports there).
+- PlayClock gets a `delta` field (raw frame delta, set in step()); playFrame passes the clock.
+- MoonLod: camPlanet Vec3d, `camIo` Float64Array(3) + updateIo(); hypot3 replaces 3-arg
+  Math.hypot in update. test-play-frame's LOD call counter wraps updateIo (the hot path).
+
+STEP CHECKS (node --expose-gc tools/test-alloc-gate.mjs plain, exit 1 known red ADR-002)
+  play.idle 890.5 (session base) -> 810.9 B/frame, retained 0.00
+  play.walk 1357.4 -> 1280.0 B/frame, retained 0.03
+  playFrame self 244.4 -> ~98 B/frame (dt/lod args no longer box). Top idle now:
+  132.3 B src/play/world/skyState.ts:applySkyStateIo@4603
+  97.8 B src/play/frame/playFrame.ts:playFrame@6013
+  82.6 B src/play/character/animStateMachine.ts:stepFrom@4938
+  80.7 B src/play/camera/ThirdPersonCamera.ts:poseFrom@6218
+  63.5 B src/play/character/CharacterTelemetry.ts:sampleTelemetryFrom@5823
+  61.5 B src/play/character/ProceduralAnimator.ts:idlePose@5136
+
+MATRIX M (final tree; command -> exit)
+tsc 0 · build 0 · test-play anim 115/115, controller 76/76, frame 26/26, lod 32/32, perf 19/19,
+  rig 97/97, shell 101/101, spawn 74/74, world PASS: all 0 (node --expose-gc)
+moon-profile 0 (SHA pins unchanged) + self-test 0 · moon-material 0 16/16 + self-test 0 4/4
+kcc-default-trace 0 PASS · kcc-gate 0 14/14, self-test 0 10/10
+F-gates 0: orbit 9/9, precision 7/7, seam 14/14, flight 12/12, scale-law 11/11,
+  rail-validation 35/35, real-body-data 63/63, spin-law PASS
+alloc-gate --self-test 0 8/8 · alloc-loops --self-test 0 8/8
+playwright play + m1e + m1f-r 0 | log: [M1fR5Gate] acceptance PASSED   8 passed (58.2s)
+playwright m1a-m1d 0 | .7 maxDv=10.30 rebases=8 recv=46 geo=151 burnHeap=0B   4 passed (2.3m)
+check-repo-refs --max 100000 0 | scanned 184 files; dangling 0 in 0 files
+
+NEXT (S1bbbbbbbb): callee internals per S1bbbbba.txt chain list (applySkyStateIo
+chunkArcWidth/impostorMath, poseFrom, stepFrom, sampleTelemetryFrom, idlePose/blendPose,
+KCC ticks, hash01, KeplerRail wrapAngle), consumer migration, strict churn check.
+GIT: provider id in this project is `github`, not `__github` (proxy path .../integration/github/...).

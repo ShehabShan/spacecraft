@@ -12,6 +12,7 @@ import {
 import { faceCubePointInto, spherifyInto, type Vec3Out } from '../../core/terrain/spherify';
 import type { TerrainMeshPool } from '../../render/TerrainMeshPool';
 import { HEIGHT_SLACK } from './moonConfig';
+import { Vec3d, hypot3 } from '../../core/physics/sphericalFrame';
 
 // WHY: harness 274–277 verbatim (K2: copied, not re-derived).
 export const LOD = {
@@ -44,7 +45,11 @@ export class MoonLod {
   readonly stats = { active: 0, pending: 0, candidates: 0 };
   private readonly pool: LodPool;
   private readonly R: number;
-  private readonly camPlanet = { x: 0, y: 0, z: 0 };
+  // WHY (T5 S1bbbbbbb, F5a): Vec3d, not a `{x,y,z}` literal (its shared hidden
+  // class boxes every double store, T5 S1bbbba).
+  private readonly camPlanet = new Vec3d(0, 0, 0);
+  /** Camera position (planet frame) slots read by `updateIo`. */
+  readonly camIo = new Float64Array(3);
   private camUX = 0; private camUY = 0; private camUZ = 0; private horizonDot = 0;
   private readonly candNodes: QNode[] = [];
   private readonly candDist = new Float64Array(64);
@@ -132,8 +137,16 @@ export class MoonLod {
    *  the PLANET frame (caller conjugates by the spin quat). Zero-alloc in
    *  steady state. Does not pump the pool (the frame loop does, §7). */
   update(camPlanetX: number, camPlanetY: number, camPlanetZ: number): void {
-    const camPlanet = this.camPlanet;
-    camPlanet.x = camPlanetX; camPlanet.y = camPlanetY; camPlanet.z = camPlanetZ;
+    const io = this.camIo; io[0] = camPlanetX; io[1] = camPlanetY; io[2] = camPlanetZ;
+    this.updateIo();
+  }
+
+  /** update() reading the camera from `camIo`.
+   *  WHY (T5 S1bbbbbbb, F5a): playFrame writes the slots, so no double argument
+   *  crosses this non-inlined call (it would box per frame). */
+  updateIo(): void {
+    const camPlanet = this.camPlanet, cio = this.camIo;
+    camPlanet.x = cio[0]; camPlanet.y = cio[1]; camPlanet.z = cio[2];
     // ---- harness updateLOD (360–434) ----
     const pool = this.pool, R = this.R, FACE_NODES = this.faces;
     const candNodes = this.candNodes, candDist = this.candDist;
@@ -145,7 +158,7 @@ export class MoonLod {
         if (n.pendingRec === i) { n.pendingRec = -1; n.activeRec = i; }
       }
     }
-    const cr = Math.hypot(camPlanet.x, camPlanet.y, camPlanet.z) || 1;
+    const cr = hypot3(camPlanet.x, camPlanet.y, camPlanet.z) || 1; // WHY (T5 S1bbbbbbb): 3-arg Math.hypot boxes; hypot3 bit-identical
     this.camUX = camPlanet.x / cr; this.camUY = camPlanet.y / cr; this.camUZ = camPlanet.z / cr;
     this.horizonDot = (R * R) / cr;
     this.candCount = 0;

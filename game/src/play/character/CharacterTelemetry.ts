@@ -6,6 +6,7 @@ import type { Vec3 } from '../../core/physics/sphericalFrame';
 import { terrainNormalInto } from '../../core/terrain/terrainField';
 import { kccVertSpeed, type ControlInput, type PlayerController } from '../controller/PlayerController';
 import { Vec3d, hypot3 } from '../../core/physics/sphericalFrame'; // WHY (T5 S1bbbb): class-backed scratch, see Vec3d
+import { DtCell, type DtSource } from '../../core/simulation/dtSource';
 
 export interface CharacterTelemetry {
   grounded: boolean; speed: number; vertSpeed: number; slopeDeg: number;
@@ -30,6 +31,17 @@ const DEG = 180 / Math.PI;
 /** Stage 7 (after postSimulate). Zero allocation. */
 export function sampleTelemetry(kcc: AstronautKCC, ctrl: PlayerController,
   inp: ControlInput, dt: number, out: CharacterTelemetry): void {
+  _dtCell.dt = dt; sampleTelemetryFrom(kcc, ctrl, inp, _dtCell, out);
+}
+
+const _dtCell = new DtCell();
+
+/** sampleTelemetry() reading dt from `src` once.
+ *  WHY (T5 S1bbbbbbb, F5a): playFrame passes its PlayClock, so no double
+ *  argument crosses this non-inlined call (it would box per frame). */
+export function sampleTelemetryFrom(kcc: AstronautKCC, ctrl: PlayerController,
+  inp: ControlInput, src: DtSource, out: CharacterTelemetry): void {
+  const dt = src.dt;
   const g = kcc.grounded, t = kcc.telemetry;
   out.grounded = g;
   out.speed = t.relSpeed;

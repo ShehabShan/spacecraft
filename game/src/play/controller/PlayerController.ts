@@ -8,6 +8,7 @@ import {
 } from '../../core/physics/sphericalFrame';
 import { MOON_ASTRONAUT, PLAY_TUNING } from '../world/moonConfig';
 import { Vec3d, Quatd } from '../../core/physics/sphericalFrame'; // WHY (T5 S1bbbb): class-backed scratch, see Vec3d
+import { DtCell, type DtSource } from '../../core/simulation/dtSource';
 
 /** What the controller needs from InputState (the test drives a plain stub). */
 export interface ControlInput {
@@ -76,6 +77,16 @@ export class PlayerController {
    *  drift at 30 Hz over the §9.6 script). Re-deriving them per tick keeps
    *  vDes = d·speed exactly and the outcome frame-rate independent. */
   simulate(inp: ControlInput, cam: HeadingSource, dt: number, maxSubsteps = 5): number {
+    const c = this._dtCell; c.dt = dt; return this.simulateFrom(inp, cam, c, maxSubsteps);
+  }
+
+  private readonly _dtCell = new DtCell();
+
+  /** simulate() reading dt from `src` once.
+   *  WHY (T5 S1bbbbbbb, F5a): playFrame passes its PlayClock, so no double
+   *  argument crosses this non-inlined call (it would box per frame). */
+  simulateFrom(inp: ControlInput, cam: HeadingSource, src: DtSource, maxSubsteps = 5): number {
+    const dt = src.dt;
     if (!(dt > 0)) return 0;
     const TICK = 1 / 60;
     this.acc += dt > 0.25 ? 0.25 : dt;

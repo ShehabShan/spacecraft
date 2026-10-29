@@ -3,6 +3,13 @@
 // Pure TS: no THREE, no core imports (telemetry is a type-only import), so the
 // machine is Node-testable and allocation-free (`tools/test-play-anim.mjs`).
 import type { CharacterTelemetry } from './CharacterTelemetry';
+/** Frame-dt source (PlayClock satisfies it structurally). WHY (T5 S1bbbbbbb,
+ *  F5a): play-local twin of the engine's DtSource, because the animator stays
+ *  free of engine imports (test-play-anim purity rows). */
+export interface AnimDtSource { readonly dt: number }
+
+/** Class-backed dt cell (unboxed double field) for the numeric-arg wrappers. */
+export class AnimDtCell implements AnimDtSource { dt = 0; }
 
 // WHY (§5.2): an `as const` object, not a `const enum` — esbuild's
 // isolatedModules mode cannot inline a const enum across files.
@@ -89,6 +96,14 @@ export class AnimStateMachine {
   get softDipD(): number { return K.softDipD * (1 - this.softDipT / K.softDipS); }
 
   step(t: Readonly<CharacterTelemetry>, dt: number): void {
+    const c = this._dtCell; c.dt = dt; this.stepFrom(t, c);
+  }
+
+  private readonly _dtCell = new AnimDtCell();
+
+  /** step() reading dt from `src` once (T5 S1bbbbbbb, F5a: no boxed double arg). */
+  stepFrom(t: Readonly<CharacterTelemetry>, src: AnimDtSource): void {
+    const dt = src.dt;
     this.interrupted = false;
     this.timeInState += dt;
     const r = dt / K.crouchEaseS;

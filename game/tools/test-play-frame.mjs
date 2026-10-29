@@ -50,8 +50,9 @@ function fakePool(meshCount) {
 const fp = fakePool(M.cfg.PLAY_POOL_OPTS.meshCount)
 const w = M.createMoonWorld({ spawnOverride: null, makePool: () => fp })
 let lodCalls = 0
-const lodUpdate = w.lod.update.bind(w.lod)
-w.lod.update = (x, y, z) => { lodCalls++; lodUpdate(x, y, z) }
+// T5 S1bbbbbbb: playFrame drives the LOD through updateIo (camera in lod.camIo slots)
+const lodUpdate = w.lod.updateIo.bind(w.lod)
+w.lod.updateIo = () => { lodCalls++; lodUpdate() }
 const cam = new M.ThirdPersonCamera()
 cam.frameToward(w.kcc, w.earthDir, w.earthDist); cam.pitchAtSpawn = cam.pitch
 const frame = M.createPlayFrame(w, cam)

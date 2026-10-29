@@ -23,7 +23,7 @@ starting point.
 | T2 atmospheres + manual landing + cruise speed | (not cut) | NOT STARTED — defined 2026-10-23 (Lead); no plan yet | NOT STARTED | — | — | Starts only on a Lead order; gap audited by A1-U19 (pre-t4:docs/audit/U19-aero-atmosphere.md: A1-U19-1..4 are T2 prerequisites; Lead look-and-feel rulings 2026-10-23: thin glowing atmosphere; soft/hard/crash landing) |
 | T3 better Moon (playable terrain) | `t3-better-moon` | `docs/T3-plan.md` | DONE 2026-10-28 · merged · ADR-028, 029 · gate `tools/test-moon-profile.mjs` | 5/5 | 7018e56 | — |
 | T4 repo cleanup (AI-oriented compaction) | `t4-repo-cleanup` | `docs/T4-plan.md` | DONE 2026-10-28 · ff-merged s156b · ADR-030 · gate `tools/check-repo-refs.mjs` | 9/9 | S8 (this commit) | — |
-| T5 bigger Moon | `t5-bigger-moon` (cut s156c) | `docs/T5-plan.md` READY 2026-10-29 (7/7, s157b) · ADR-031 (F5a–F5d folded in) | BUILDING — Lead "execute the T5 plan" 2026-10-29 | 6/15 · S1bbbbbba done s164 (`docs/evidence/T5/S1bbbbbba.txt`; S1bbbbbb split S1bbbbbba/S1bbbbbbb) · next: S1bbbbbbb | 2ea6728+1 | — (Lead ruled 2026-10-28: real size, radius 1,737 km) |
+| T5 bigger Moon | `t5-bigger-moon` (cut s156c) | `docs/T5-plan.md` READY 2026-10-29 (7/7, s157b) · ADR-031 (F5a–F5d folded in) | BUILDING — Lead "execute the T5 plan" 2026-10-29 | 7/16 · S1bbbbbbba done s165 (`docs/evidence/T5/S1bbbbbbba.txt`; S1bbbbbbb split S1bbbbbbba/S1bbbbbbbb) · next: S1bbbbbbbb | 68328b7+1 | — (Lead ruled 2026-10-28: real size, radius 1,737 km) |
 | T6 look-and-feel overhaul (animation, sound, textures, objects, colour) | (not cut) | NOT STARTED — Lead directive 2026-10-28; starts after T5 | NOT STARTED | — | — | — (Lead ruled 2026-10-28: cinematic style + sci-fi extras; in-helmet audio + ambient score; see STATE.md ledger) |
 
 

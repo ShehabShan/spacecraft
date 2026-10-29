@@ -8,8 +8,9 @@
 import type * as THREE from 'three';
 import type { CharacterAnimator } from './CharacterAnimator';
 import type { CharacterTelemetry } from './CharacterTelemetry';
+
 import { buildAstronautRig, disposeAstronautRig, JOINTS, RIG_DIMS, type AstronautRig, type JointName } from './AstronautRig';
-import { ANIM_TUNING, AnimState, AnimStateMachine, createLegPose, legDrop, LEG, type AnimStateId, type LegPose } from './animStateMachine';
+import { ANIM_TUNING, AnimState, AnimStateMachine, AnimDtCell, createLegPose, legDrop, LEG, type AnimDtSource, type AnimStateId, type LegPose } from './animStateMachine';
 
 /** Joint name → slot in PoseBuffer.q (JOINTS order). */
 export const JOINT_INDEX = Object.fromEntries(JOINTS.map((n, i) => [n, i])) as Record<JointName, number>;
@@ -262,8 +263,18 @@ export class ProceduralAnimator implements CharacterAnimator {
   get stateName(): string { return this.sm.stateName; }
 
   update(t: Readonly<CharacterTelemetry>, dt: number): void {
+    const c = this._dtCell; c.dt = dt; this.updateFrom(t, c);
+  }
+
+  private readonly _dtCell = new AnimDtCell();
+
+  /** update() reading dt from `src` once.
+   *  WHY (T5 S1bbbbbbb, F5a): playFrame passes its PlayClock, so no double
+   *  argument crosses this non-inlined call (it would box per frame). */
+  updateFrom(t: Readonly<CharacterTelemetry>, src: AnimDtSource): void {
+    const dt = src.dt;
     const sm = this.sm, tr0 = sm.transitions;
-    sm.step(t, dt);
+    sm.stepFrom(t, src);
     if (sm.transitions !== tr0) {
       // WHY (§8.2 Interrupt): freeze last frame's blended output as `prev`
       // so a transition fired mid-blend restarts from what is on screen.

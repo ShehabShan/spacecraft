@@ -11,6 +11,12 @@ import { makeHud, type PlayHud } from './playStore';
 
 export interface HudSink { setHud(h: PlayHud): void }
 
+/** Raw frame delta (s, every phase) and sim dt (s, PLAYING only); PlayClock has both. */
+export interface HudClock { readonly delta: number; readonly dt: number }
+
+/** Class-backed cell for the numeric-arg `step` wrapper (unboxed double fields). */
+class HudClockCell implements HudClock { delta = 0; dt = 0; }
+
 /** §10.5 controls-hint fade: 8 s of PLAYING or 20 m walked, whichever first. */
 export const HUD_HINT_SECONDS = 8;
 export const HUD_HINT_METRES = 20;
@@ -33,6 +39,18 @@ export class HudPublisher {
   /** Returns true when this call published (≤ 1 / minIntervalS per second). */
   step(delta: number, simDt: number, kcc: AstronautKCC, stateName: string,
     firstPerson: boolean, sink: HudSink): boolean {
+    const c = this._clockCell; c.delta = delta; c.dt = simDt;
+    return this.stepFrom(c, kcc, stateName, firstPerson, sink);
+  }
+
+  private readonly _clockCell = new HudClockCell();
+
+  /** step() reading the raw frame delta and the sim dt from `clock` once.
+   *  WHY (T5 S1bbbbbbb, F5a): playFrame passes its PlayClock, so no double
+   *  argument crosses this non-inlined call (it would box per frame). */
+  stepFrom(clock: HudClock, kcc: AstronautKCC, stateName: string,
+    firstPerson: boolean, sink: HudSink): boolean {
+    const delta = clock.delta, simDt = clock.dt;
     if (delta > 0) {
       const inst = 1 / delta;
       // WHY: time-constant EMA (α = 1 − e^(−Δ/τ)) so the reading settles in
