@@ -5,23 +5,12 @@ and update it instead of `notes/STATE.md`, `notes/task.md` and `notes/CHANGES.md
 stay with T5 until T5 merges into `main`. Each track keeps its own notes in
 notes/T6-<track>.md (created by the track's first session).
 
-**NEXT ACTION (T6 planning, branch `t6-look-and-feel`):** continue docs/T6-plan.md at its FIRST
-UNCHECKED BOX (sections 1–5 done, session 160). Plan only, no build; commit and push a few
-sections per commit (brief §4, §12). At READY, STOP for the Lead's order. The plan must contain:
-1. The six tracks below, each with its goal, steps sized to one 50-OLU session, and gates.
-2. File ownership: which files and directories each track may edit. Shared files such as
-   `game/src/play/frame/playFrame.ts` and the scene setup get named hooks or registration points,
-   built in a first "T6-core" step on `t6-look-and-feel`, so tracks add files instead of
-   editing the same lines.
-3. The integration procedure (below) and per-track verification (matrix M from
-   `88c51b8:docs/evidence/T5/S1a.txt` plus the track's own gates).
-4. Dependencies. Audio and Character can build before T5 merges. Light, Surface, Objects
-   and World build after T5 is merged into `main` and `main` is merged into
-   `t6-look-and-feel`, because T5 changes the radius, terrain and LOD.
-5. Asset policy: CC0 only, with the source URL recorded per file (Lead, 2026-10-28). Keep
-   the repo-size budget from ADR-030 in mind; large binaries need a plan.
-6. The open questions in `docs/T5-T6-ideas.md` §5 (Earth size, faster travel, Sun height),
-   asked in plain language with their defaults.
+**NEXT ACTION (LEAD GATE, branch `t6-look-and-feel`):** the T6 plan `docs/T6-plan.md` is READY
+(session 160). Wait for the Lead's order ("execute the T6 plan"); then a fresh bot runs
+build step C1 (plan §5.0) on `t6-look-and-feel`. Track branches are cut only after C3.
+Audio and Character may start then; Light, Surface, Objects and World wait for the T5 merge
+(plan §6.2). Open Lead questions Q1–Q4 (plan §7.1) have defaults; the plan runs on them
+until the Lead rules.
 
 ## Lead directive and rulings, 2026-10-29 (session 159, bot 964bf319)
 
@@ -77,3 +66,4 @@ Inputs: `docs/T5-T6-ideas.md` §2–§6 and the T6 definition in `notes/task.md`
 | Session | Date | Unit | Done | Next |
 |---|---|---|---|---|
 | 159 | 2026-10-29 | T6 directive recorded (bot 964bf319, while on T5 S1ba) | Cut `t6-look-and-feel` from `main`; this file; brief §10 amendment; LEDGER entry. No plan yet. | T6 planning session on `t6-look-and-feel` (NEXT ACTION above). |
+| 160 | 2026-10-29 | T6 plan (bot 4e4774a1) | GitHub was not enabled (404); the Lead connected it. `docs/T6-plan.md` written 0 → READY in 4 commits (b9f1743, 8f65be8, 2dd9c48, this one): ownership table, T6-core hooks C1–C3, 30 track steps (A5 K6 L6 S4 O4 W5), matrix M + integration + frame budget, Q1–Q4 asked with defaults. Fixed 2 dangling refs in this file. | LEAD GATE; on order: C1 in a fresh bot. |

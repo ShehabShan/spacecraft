@@ -2,13 +2,14 @@
 
 - Task: T6 · Branch: `t6-look-and-feel` (cut from `main` @ 787b9d4, session 159); track
   branches `t6-<track>` are cut from it at READY (`notes/T6-STATE.md`)
-- Stage: PLANNING (5/7 sections)
+- Stage: READY (7/7 sections, session 160). LEAD GATE: build only on the Lead's order
+  ("execute the T6 plan"); the first build step is C1 (§5.0)
 - Last updated: 2026-10-29 (session 160)
 - Resume at the FIRST UNCHECKED BOX (planning item or build step).
 
 ## PLANNING CHECKLIST
 - [x] Goal · [x] Scope IN · [x] Scope OUT · [x] Affected modules · [x] Steps ·
-  [ ] Verification per step · [ ] Risks & open decisions
+  [x] Verification per step · [x] Risks & open decisions
 
 ## 1. Goal
 Bring the play Moon (`/?page=play`) and the astronaut to shipped AAA look and feel.
@@ -263,3 +264,108 @@ summary.
   order the tracks finish. Each adds its row here when it runs.
 - [ ] **IX** T6 close-out: full M, a frame-time and heap report against §6.3, a Lead
   acceptance tour, and then the merge into `main` (brief §4, §13 safeguard 5).
+
+## 6. Verification per step
+
+### 6.1 Matrix M and per-step checks
+**Matrix M** is the T5 S1a matrix (`88c51b8:docs/evidence/T5/S1a.txt`) plus the T6 gates
+as they land. Run it from `game/`, with exit codes recorded unpiped:
+- `npx tsc --noEmit` · `npm run build`
+- `tools/test-play-{anim,controller,frame,lod,perf,rig,shell,spawn,world}.mjs`
+- `test-moon-profile --self-test` · `test-moon-material` (plain and `--self-test`) ·
+  `test-kcc-default-trace`
+- F-gates: orbit, precision, seam, flight, scale-law, rail-validation, real-body-data,
+  spin-law
+- `test-alloc-gate --self-test` · `test-alloc-loops --self-test`
+- `npx playwright test e2e/play.spec.ts e2e/m1e.spec.ts e2e/m1f-r` (R5 waived, brief §8) ·
+  `npx playwright test e2e/m1a e2e/m1b e2e/m1c e2e/m1d`
+- `node tools/check-repo-refs.mjs --max 100000` (dangling 0)
+- added by T6: `test-t6-hooks` (C1), `check-assets --self-test` and plain (C3), and every
+  `test-t6-<track>-*` gate once its track is integrated
+
+**Every step:** typecheck, build, the step's own gate (§5), the M rows for the modules it
+touches, `test-alloc-gate` plain (no new per-frame allocation), the ref check and, if it
+adds binaries, `check-assets`. A step that touches shared terrain, KCC or render code
+also runs `e2e/m1a`…`m1d` (brief §3). Every re-pin is listed in the commit body with its
+reason. **The last step of a track** runs the full M on the track branch before it asks
+for integration.
+
+Visual results cannot be checked by eye in headless runs. Light, Surface and World gates
+therefore assert numbers on fixed frames: luminance statistics, a pixel-row probe at a
+pinned pose and seed, and shader unit rows. Each track also commits one Lead-review
+screenshot per visual step, at most 200 KB, as allowed by ADR-030 when a ruling needs an
+image.
+
+### 6.2 Integration procedure (one integration session per finished track)
+1. Fetch. Merge `t6-look-and-feel` into the track branch on the track side if it has
+   fallen behind, so conflicts surface there first.
+2. On `t6-look-and-feel`, merge the track branch with `git merge --no-ff`. Never rebase,
+   squash or force-push.
+3. Resolve conflicts. Track-owned files keep the track's side. Integration-only files are
+   merged by hand, and the hook contract (§4.2) wins.
+4. Fold the track's `notes/T6-<track>.md` into `notes/CHANGES.md` (one digest line per
+   step) and into the T6 rows of the tracker in `notes/task.md`. The track notes file then
+   stays in place as a pointer.
+5. Run the full M plus the frame budget check (§6.3). If anything is red, fix it on the
+   integration branch or send it back to the track. Never push a red `t6-look-and-feel`.
+6. Push, add the `I<n>` row and a T6 SESSION LOG row, and update NEXT ACTION in
+   `notes/T6-STATE.md`.
+- **When `main` moves** (the T5 merge): an integration session merges `main` into
+  `t6-look-and-feel` and runs the full M. Open tracks then merge `t6-look-and-feel` into
+  their branches. The Light, Surface, Objects and World branches are cut only after this
+  merge.
+
+### 6.3 Frame-time and heap budget
+C1 measures the baseline frame time (p50/p95) and heap with `tools/check-play-frametime.mjs`
+and `test-play-perf`, on the spawn route and on a fixed walk, and commits the numbers.
+Every step that adds render or audio work records before and after numbers in the same
+environment (brief §13 safeguard 4). Allowed p95 additions over the baseline:
+
+| Track | Light | Surface | Character | Objects | Audio | World |
+|---|---|---|---|---|---|---|
+| p95 added | 3.0 ms | 1.0 ms | 1.0 ms | 1.5 ms | 0.5 ms (main thread) | 1.5 ms (at the set piece) |
+
+The plain `test-alloc-gate` stays at 0, and heap growth over the fixed walk stays within
+the current `test-play-perf` bound. A track over its share either optimises or stops and
+records the options (an ADR for a technical trade-off, the Lead for a visible quality
+trade-off).
+
+## 7. Risks & open decisions
+
+### 7.1 Open look-and-feel questions (Lead; asked 2026-10-29, session 160)
+The plan proceeds on these defaults until the Lead rules. A ruling changes only the
+steps named.
+
+| # | Question | Default | Steps affected |
+|---|---|---|---|
+| Q1 | Earth in the sky: keep the large Earth (about 14.7°) or show it at real size? | Keep it large | none (L3 keeps Earth in view) |
+| Q2 | Faster travel on the real-size Moon | Jetpack boost on the existing RCS; a rover later | K6, S4 |
+| Q3 | Sun height at the spawn | About 10°, for long black shadows | L3 |
+| Q4 | Radio voices: allow public-domain NASA Apollo audio, or strict CC0 only? | Strict CC0 (procedural or CC0 chatter and static) | A4 |
+
+### 7.2 Risks
+- **T5 slips or changes the terrain contract.** Four tracks wait for the T5 merge. Mitigation:
+  Audio and Character run first. Surface S1 and Objects O2 read the crater lattice only
+  through T5's merged API, and they re-read it after the merge rather than assuming it.
+- **Merge conflicts in shared files.** Mitigation: the hooks in §4.2 and the ownership table
+  in §4.1. A track that needs a change to an integration-only file asks for it and does not
+  make it.
+- **Shadow swimming and precision at real size.** The shadow camera is fitted in render-local
+  space and texel-snapped, and its tests run across an origin rebase (L2).
+- **KCC obstacle support is a core edit.** O1 must leave `test-kcc-default-trace`
+  identical when no obstacles exist, and it lands before any obstacle consumer (O2, O4,
+  W1).
+- **Frame budget.** The per-track shares in §6.3, measured before and after. Light L5
+  (terrain shadows) is the largest risk and may split into a/b, or fall back to a coarser
+  horizon map, recorded in an ADR.
+- **Repo size from assets.** The budget and gate in §4.3. Procedural content is preferred,
+  and an over-budget asset is a Lead stop.
+- **Character rig choice.** A GLB rig may break `test-play-rig` and `test-play-anim`
+  contracts. K1 decides by measurement in ADR-055, and the replacement gates land before
+  the old rows retire (brief §13 safeguard 3).
+- **Audio autoplay policy.** The context unlocks only from the CLICK_TO_PLAY gesture through
+  `onPhase`. Headless tests use OfflineAudioContext, and the B12 autoplay path stays
+  silent.
+- **Bloom and postprocessing within the fixed library set.** Only `three/examples/jsm` is
+  used, with no new dependency. If it cannot meet the budget, Light stops and records the
+  options in an ADR.
