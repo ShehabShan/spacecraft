@@ -292,9 +292,9 @@ for integration.
 
 Visual results cannot be checked by eye in headless runs. Light, Surface and World gates
 therefore assert numbers on fixed frames: luminance statistics, a pixel-row probe at a
-pinned pose and seed, and shader unit rows. Each track also commits one Lead-review
-screenshot per visual step, at most 200 KB, as allowed by ADR-030 when a ruling needs an
-image.
+pinned pose and seed, and shader unit rows. Screenshots stay out of the repo (brief §6,
+ADR-030). A track commits one image, at most 200 KB, only when a Lead look-and-feel ruling
+needs it, and otherwise posts review images in its bot chat.
 
 ### 6.2 Integration procedure (one integration session per finished track)
 1. Fetch. Merge `t6-look-and-feel` into the track branch on the track side if it has
