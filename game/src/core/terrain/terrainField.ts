@@ -142,8 +142,7 @@ export class TerrainField {
   private _crt: Float64Array; // [F, pOcc, rMin, rMax, depthK, rimK, seed, reach²] × layers
   private _mask: number;
   private _rim: number;
-  private readonly _sp: Vec3Out;
-  private readonly _sm: Vec3Out;
+  private readonly _ss: Float64Array;
   private readonly _cd: Vec3Out;
 
   constructor(params: TerrainParams) {
@@ -153,8 +152,7 @@ export class TerrainField {
     this._crt = new Float64Array(0);
     this._mask = 0;
     this._rim = 0;
-    this._sp = { x: 0, y: 0, z: 0 };
-    this._sm = { x: 0, y: 0, z: 0 };
+    this._ss = new Float64Array(6);
     this._cd = { x: 0, y: 0, z: 0 };
     this.prepareMoon(params.moon);
   }
@@ -307,13 +305,17 @@ export class TerrainField {
   }
 
   /** Surface point S(d̂) = (R + h(d̂))·d̂ for a (re-normalized) direction. */
-  private sampleSurfaceInto(dx: number, dy: number, dz: number, out: Vec3Out): void {
+  // WHY (T5 S1b): writes into the Float64Array scratch _ss at offset k (0 = S+, 3 = S-).
+  // Double stores into a shared {x,y,z} scratch box a HeapNumber per field; typed-array
+  // stores do not. Float64 slots hold the same doubles, so normals stay bit-identical.
+  private sampleSurfaceInto(dx: number, dy: number, dz: number, k: number): void {
     const inv = 1 / Math.sqrt(dx * dx + dy * dy + dz * dz);
     const ux = dx * inv, uy = dy * inv, uz = dz * inv;
     const r = this.params.radius + this.terrainHeight(ux, uy, uz);
-    out.x = ux * r;
-    out.y = uy * r;
-    out.z = uz * r;
+    const ss = this._ss;
+    ss[k] = ux * r;
+    ss[k + 1] = uy * r;
+    ss[k + 2] = uz * r;
   }
 
   /**
@@ -327,7 +329,7 @@ export class TerrainField {
    * ANY LOD, ANY worker. Zero allocation.
    */
   terrainNormalInto(dx: number, dy: number, dz: number, out: Vec3Out): Vec3Out {
-    const sp = this._sp, sm = this._sm;
+    const ss = this._ss;
     // canonical reference axis (least |component|, fixed tie order)
     let rx = 1, ry = 0, rz = 0;
     let m = Math.abs(dx);
@@ -342,14 +344,14 @@ export class TerrainField {
     const c = Math.cos(NORMAL_EPS), s = Math.sin(NORMAL_EPS);
     // rotation of d about t1 by ±ε: d± = d·c ± (t1 × d)·s
     const c1x = t1y * dz - t1z * dy, c1y = t1z * dx - t1x * dz, c1z = t1x * dy - t1y * dx;
-    this.sampleSurfaceInto(dx * c + c1x * s, dy * c + c1y * s, dz * c + c1z * s, sp);
-    this.sampleSurfaceInto(dx * c - c1x * s, dy * c - c1y * s, dz * c - c1z * s, sm);
-    const ax = sp.x - sm.x, ay = sp.y - sm.y, az = sp.z - sm.z;
+    this.sampleSurfaceInto(dx * c + c1x * s, dy * c + c1y * s, dz * c + c1z * s, 0);
+    this.sampleSurfaceInto(dx * c - c1x * s, dy * c - c1y * s, dz * c - c1z * s, 3);
+    const ax = ss[0] - ss[3], ay = ss[1] - ss[4], az = ss[2] - ss[5];
     // rotation of d about t2 by ±ε
     const c2x = t2y * dz - t2z * dy, c2y = t2z * dx - t2x * dz, c2z = t2x * dy - t2y * dx;
-    this.sampleSurfaceInto(dx * c + c2x * s, dy * c + c2y * s, dz * c + c2z * s, sp);
-    this.sampleSurfaceInto(dx * c - c2x * s, dy * c - c2y * s, dz * c - c2z * s, sm);
-    const bx = sp.x - sm.x, by = sp.y - sm.y, bz = sp.z - sm.z;
+    this.sampleSurfaceInto(dx * c + c2x * s, dy * c + c2y * s, dz * c + c2z * s, 0);
+    this.sampleSurfaceInto(dx * c - c2x * s, dy * c - c2y * s, dz * c - c2z * s, 3);
+    const bx = ss[0] - ss[3], by = ss[1] - ss[4], bz = ss[2] - ss[5];
     // outward normal
     let nx = ay * bz - az * by, ny = az * bx - ax * bz, nz = ax * by - ay * bx;
     const invn = 1 / Math.sqrt(nx * nx + ny * ny + nz * nz);

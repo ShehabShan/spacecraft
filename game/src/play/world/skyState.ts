@@ -7,7 +7,7 @@ import type { SimulationCore } from '../../core/simulation/SimulationCore';
 import type { AstronautKCC } from '../../core/physics/astronautKCC';
 import { chunkArcWidth } from '../../core/terrain/terrainField';
 import {
-  rotateByQuatConjInto, rotateByQuatInto, spinQuatInto,
+  rotateByQuatConjInto, spinQuatInto,
   type Quat, type Vec3,
 } from '../../core/physics/sphericalFrame';
 import {
@@ -56,7 +56,6 @@ export const skyStats = { near: 0, mid: 0, written: 0 };
 const _qS: Quat = { x: 0, y: 0, z: 0, w: 1 };
 const _qCam: Quat = { x: 0, y: 0, z: 0, w: 1 };
 const _vA: Vec3 = { x: 0, y: 0, z: 0 };
-const _vB: Vec3 = { x: 0, y: 0, z: 0 };
 const _geo: SkyGeometry = { dirX: 0, dirY: 0, dirZ: 0, dist: 0, theta: 0 };
 const sunGeom: SkyGeometry = { dirX: 0, dirY: 0, dirZ: 0, dist: 0, theta: 0 };
 
@@ -104,13 +103,23 @@ export function applySkyState(
   // WHY: §6.2 port gotcha — the harness computed _qS inside the (removed)
   // satellites block; the terrain loop below depends on it, so it stays here.
   spinQuatInto(c.kcc.spinPhase, _qS);
+  const qSx = _qS.x, qSy = _qS.y, qSz = _qS.z, qSw = _qS.w;
   const recs = c.pool.records;
   for (let i = 0; i < recs.length; i++) {
     const rec = recs[i];
     if (rec.state !== 2) { rec.mesh.layers.mask = 0; continue; }
-    rotateByQuatInto(_qS, rec.originX, rec.originY, rec.originZ, _vB);
+    // WHY (T5 S1b): rotateByQuatInto inlined into locals. Storing doubles into the shared
+    // {x,y,z} scratch _vB boxed a HeapNumber per field (~4.7 KB/frame over 96 records);
+    // same arithmetic order as rotateByQuatInto, so the result is bit-identical.
+    const vx = rec.originX, vy = rec.originY, vz = rec.originZ;
+    const tx = 2 * (qSy * vz - qSz * vy);
+    const ty = 2 * (qSz * vx - qSx * vz);
+    const tz = 2 * (qSx * vy - qSy * vx);
+    const rx = vx + qSw * tx + (qSy * tz - qSz * ty);
+    const ry = vy + qSw * ty + (qSz * tx - qSx * tz);
+    const rz = vz + qSw * tz + (qSx * ty - qSy * tx);
     const brad = chunkArcWidth(rec.level) * 0.75 + HEIGHT_SLACK;
-    const dx = _vB.x - o.x - px, dy = _vB.y - o.y - py, dz = _vB.z - o.z - pz;
+    const dx = rx - o.x - px, dy = ry - o.y - py, dz = rz - o.z - pz;
     const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
     assignObject(rec.mesh, d - brad, d + brad);
   }
