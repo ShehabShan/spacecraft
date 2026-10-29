@@ -240,7 +240,7 @@ summary.
   identical with no obstacles; new `test-t6-objects-kcc` (step-up, slide, no tunnelling at
   the speed cap); `test-kcc-gate` green.
 - [ ] **O2** Boulder fields: instanced, deterministic on the crater lattice with ejecta near
-  rims. Rocks under the 0.5 m step height are decorative; larger ones register obstacles
+  rims. Rocks under the KCC `stepHeight` (0.55 m) are decorative; larger ones register obstacles
   and skip reserved discs. Gate: determinism row; obstacle agreement; perf row.
 - [ ] **O3** Glowing crystals: emissive, instanced, registered for bloom. Gate: perf row.
 - [ ] **O4** A crashed lander (CC0 GLB) 200–400 m from the spawn as the first goal, with a
