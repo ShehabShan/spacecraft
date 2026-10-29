@@ -19,6 +19,7 @@ import { LoadingGate, PlayClock } from './shellStages';
 import { createTelemetry, sampleTelemetry } from '../character/CharacterTelemetry';
 import { PlayerController } from '../controller/PlayerController';
 import { HudPublisher } from '../ui/hudPublisher';
+import { Vec3d, Quatd } from '../../core/physics/sphericalFrame'; // WHY (T5 S1bbbb): class-backed scratch, see Vec3d
 
 /** §10.5 HUD publish interval (s) — the plan's createTelemetryPublisher(100). */
 export const PLAY_HUD_INTERVAL_S = 0.1;
@@ -54,11 +55,11 @@ export interface PlayFrameFn {
 
 /** Builds the MultiCameraRig onFrame callback for one world. */
 export function createPlayFrame(w: MoonWorld, cam: ThirdPersonCamera, shell?: PlayShellCtx): PlayFrameFn {
-  const qS: Quat = { x: 0, y: 0, z: 0, w: 1 };
-  const qF: Quat = { x: 0, y: 0, z: 0, w: 1 };
-  const qW: Quat = { x: 0, y: 0, z: 0, w: 1 };
-  const off: Vec3 = { x: 0, y: 0, z: 0 };
-  const camP: Vec3 = { x: 0, y: 0, z: 0 };
+  const qS: Quat = new Quatd(0, 0, 0, 1);
+  const qF: Quat = new Quatd(0, 0, 0, 1);
+  const qW: Quat = new Quatd(0, 0, 0, 1);
+  const off: Vec3 = new Vec3d(0, 0, 0);
+  const camP: Vec3 = new Vec3d(0, 0, 0);
   const clock = new PlayClock();
   // WHY (B6): boot telemetry record; B7's sampleTelemetry refills it in place.
   const telem = createTelemetry();

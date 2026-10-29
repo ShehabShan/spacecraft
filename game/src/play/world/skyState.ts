@@ -18,6 +18,7 @@ import type { SkyImpostorPool } from '../../render/SkyImpostorPool';
 import type { ChunkRecord } from '../../render/TerrainMeshPool';
 import { MID_BIT, NEAR_BIT, layerMaskFor } from '../../render/MultiCameraRig';
 import { HEIGHT_SLACK } from './moonConfig';
+import { Vec3d, Quatd, hypot3 } from '../../core/physics/sphericalFrame'; // WHY (T5 S1bbbb): class-backed scratch, see Vec3d
 
 // WHY: harness CAT_BODIES (~794–804) verbatim — impostor slots 0–8. Slots
 // 9/10 were the M1F probe pair (test-only, excluded per §6.2).
@@ -53,11 +54,13 @@ export interface SkyCtx {
 /** Layer counts of the last call (read-only; HUD/debug use). */
 export const skyStats = { near: 0, mid: 0, written: 0 };
 
-const _qS: Quat = { x: 0, y: 0, z: 0, w: 1 };
-const _qCam: Quat = { x: 0, y: 0, z: 0, w: 1 };
-const _vA: Vec3 = { x: 0, y: 0, z: 0 };
-const _geo: SkyGeometry = { dirX: 0, dirY: 0, dirZ: 0, dist: 0, theta: 0 };
-const sunGeom: SkyGeometry = { dirX: 0, dirY: 0, dirZ: 0, dist: 0, theta: 0 };
+const _qS: Quat = new Quatd(0, 0, 0, 1);
+const _qCam: Quat = new Quatd(0, 0, 0, 1);
+const _vA: Vec3 = new Vec3d(0, 0, 0);
+// WHY (T5 S1bbbb): a class owns its hidden class, so the per-body double stores stay unboxed (see Vec3d).
+class SkyGeo implements SkyGeometry { dirX = 0; dirY = 0; dirZ = 0; dist = 0; theta = 0 }
+const _geo: SkyGeometry = new SkyGeo();
+const sunGeom: SkyGeometry = new SkyGeo();
 
 /** Apply impostors, anchors and layer masks for a driver pose (render-local
  *  position p, camera quat q). Zero allocation. */
@@ -66,7 +69,7 @@ export function applySkyState(
 ): void {
   // F22: horizon-cull up = ABSOLUTE radial normalize(O + local).
   const o = c.core.getOrigin();
-  const upL = Math.hypot(px + o.x, py + o.y, pz + o.z) || 1;
+  const upL = hypot3(px + o.x, py + o.y, pz + o.z) || 1; // WHY (T5 S1bbbb): 3-arg Math.hypot boxes per call
   const obsX = c.moonAbs.x + o.x + px;
   const obsY = c.moonAbs.y + o.y + py;
   const obsZ = c.moonAbs.z + o.z + pz;

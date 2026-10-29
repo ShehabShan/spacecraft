@@ -7,6 +7,7 @@ import {
   rotateByQuatConjInto, spinQuatInto, transportVelocityInto, type Quat, type Vec3,
 } from '../../core/physics/sphericalFrame';
 import { MOON_ASTRONAUT, PLAY_TUNING } from '../world/moonConfig';
+import { Vec3d, Quatd } from '../../core/physics/sphericalFrame'; // WHY (T5 S1bbbb): class-backed scratch, see Vec3d
 
 /** What the controller needs from InputState (the test drives a plain stub). */
 export interface ControlInput {
@@ -16,10 +17,10 @@ export interface ControlInput {
 /** What the controller needs from the camera: the planet-frame heading (⊥ up). */
 export interface HeadingSource { readonly heading: Vec3 }
 
-const _qS: Quat = { x: 0, y: 0, z: 0, w: 1 };
-const _tv: Vec3 = { x: 0, y: 0, z: 0 };
-const _rv: Vec3 = { x: 0, y: 0, z: 0 };
-const _h: Vec3 = { x: 0, y: 0, z: 0 };
+const _qS: Quat = new Quatd(0, 0, 0, 1);
+const _tv: Vec3 = new Vec3d(0, 0, 0);
+const _rv: Vec3 = new Vec3d(0, 0, 0);
+const _h: Vec3 = new Vec3d(0, 0, 0);
 
 /** Relative (spin-frame) velocity along kcc.up — §5.2 vertSpeed. Zero-alloc. */
 export function kccVertSpeed(kcc: AstronautKCC, omega: number): number {

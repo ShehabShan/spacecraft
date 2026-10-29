@@ -31,6 +31,20 @@
 export interface Vec3 { x: number; y: number; z: number; }
 export interface Quat { x: number; y: number; z: number; w: number; }
 
+// WHY (T5 S1bbbb): the shared {x,y,z} literal hidden class is generalised to tagged
+// fields somewhere in the bundle, so every double stored into one boxes a HeapNumber
+// (~48 B/store measured). A class owns its map, keeps unboxed double fields and
+// stores allocate nothing. Use Vec3d for any {x,y,z} written in a tick loop.
+export class Vec3d implements Vec3 {
+  x: number; y: number; z: number;
+  constructor(x = 0, y = 0, z = 0) { this.x = x; this.y = y; this.z = z; }
+}
+/** Quat counterpart of Vec3d (own hidden class; unboxed double fields). */
+export class Quatd implements Quat {
+  x: number; y: number; z: number; w: number;
+  constructor(x = 0, y = 0, z = 0, w = 1) { this.x = x; this.y = y; this.z = z; this.w = w; }
+}
+
 
 export const TWO_PI = Math.PI * 2;
 

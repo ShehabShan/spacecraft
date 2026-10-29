@@ -50,6 +50,7 @@ import {
   type Quat, type Vec3,
 } from './sphericalFrame';
 import { terrainHeight, terrainNormalInto } from '../terrain/terrainField';
+import { Vec3d, Quatd } from './sphericalFrame'; // WHY (T5 S1bbbb): class-backed scratch, see Vec3d
 
 
 export type AstronautMode = 'SURFACE' | 'ZERO-G' | 'VEHICLE';
@@ -192,27 +193,27 @@ export interface AstronautIntegrity {
  * MODULE SCRATCH — allocated once per thread; integrateTick is
  * non-reentrant (single-threaded, one active controller per tick).
  * ======================================================================== */
-const _g: Vec3 = { x: 0, y: 0, z: 0 };
-const _gt: Vec3 = { x: 0, y: 0, z: 0 };
-const _nNew: Vec3 = { x: 0, y: 0, z: 0 };
-const _upT: Vec3 = { x: 0, y: 0, z: 0 };
-const _fwdT: Vec3 = { x: 0, y: 0, z: 0 };
-const _right: Vec3 = { x: 0, y: 0, z: 0 };
-const _vDes: Vec3 = { x: 0, y: 0, z: 0 };
-const _vT: Vec3 = { x: 0, y: 0, z: 0 };
-const _pTry: Vec3 = { x: 0, y: 0, z: 0 };
-const _dTry: Vec3 = { x: 0, y: 0, z: 0 };
-const _wall: Vec3 = { x: 0, y: 0, z: 0 };
-const _dS: Vec3 = { x: 0, y: 0, z: 0 };
-const _rel: Vec3 = { x: 0, y: 0, z: 0 };
-const _tmp: Vec3 = { x: 0, y: 0, z: 0 };
-const _tmp2: Vec3 = { x: 0, y: 0, z: 0 };
-const _qSpin: Quat = { x: 0, y: 0, z: 0, w: 1 };
-const _qTmp: Quat = { x: 0, y: 0, z: 0, w: 1 };
+const _g: Vec3 = new Vec3d(0, 0, 0);
+const _gt: Vec3 = new Vec3d(0, 0, 0);
+const _nNew: Vec3 = new Vec3d(0, 0, 0);
+const _upT: Vec3 = new Vec3d(0, 0, 0);
+const _fwdT: Vec3 = new Vec3d(0, 0, 0);
+const _right: Vec3 = new Vec3d(0, 0, 0);
+const _vDes: Vec3 = new Vec3d(0, 0, 0);
+const _vT: Vec3 = new Vec3d(0, 0, 0);
+const _pTry: Vec3 = new Vec3d(0, 0, 0);
+const _dTry: Vec3 = new Vec3d(0, 0, 0);
+const _wall: Vec3 = new Vec3d(0, 0, 0);
+const _dS: Vec3 = new Vec3d(0, 0, 0);
+const _rel: Vec3 = new Vec3d(0, 0, 0);
+const _tmp: Vec3 = new Vec3d(0, 0, 0);
+const _tmp2: Vec3 = new Vec3d(0, 0, 0);
+const _qSpin: Quat = new Quatd(0, 0, 0, 1);
+const _qTmp: Quat = new Quatd(0, 0, 0, 1);
 // B11 (ADR-027): coyote / air-control scratch, separate from the shared temps.
-const _b11A: Vec3 = { x: 0, y: 0, z: 0 };
-const _b11B: Vec3 = { x: 0, y: 0, z: 0 };
-const _b11C: Vec3 = { x: 0, y: 0, z: 0 };
+const _b11A: Vec3 = new Vec3d(0, 0, 0);
+const _b11B: Vec3 = new Vec3d(0, 0, 0);
+const _b11C: Vec3 = new Vec3d(0, 0, 0);
 
 
 const _nanSnap = {
@@ -224,13 +225,13 @@ const _nanSnap = {
 export class AstronautKCC {
   /* ---- live state (owned; mutated only by this class) -------------------- */
   /** Absolute position/velocity, Float64 (canonical when not grounded). */
-  readonly absPos: Vec3 = { x: 0, y: 0, z: 0 };
-  readonly absVel: Vec3 = { x: 0, y: 0, z: 0 };
+  readonly absPos: Vec3 = new Vec3d(0, 0, 0);
+  readonly absVel: Vec3 = new Vec3d(0, 0, 0);
   /** Planet-frame position (canonical when grounded on the body). */
-  readonly pLocal: Vec3 = { x: 0, y: 0, z: 0 };
+  readonly pLocal: Vec3 = new Vec3d(0, 0, 0);
   /** Transported character frame, PLANET frame (fwd ⊥ up, both unit). */
-  readonly up: Vec3 = { x: 0, y: 1, z: 0 };
-  readonly fwd: Vec3 = { x: 1, y: 0, z: 0 };
+  readonly up: Vec3 = new Vec3d(0, 1, 0);
+  readonly fwd: Vec3 = new Vec3d(1, 0, 0);
   readonly input: AstronautInput = {
     moveF: 0, moveR: 0, sprint: false, crouch: false, jump: false,
     turnRate: 0, rcsF: 0, rcsU: 0, rcsR: 0,
@@ -265,22 +266,22 @@ export class AstronautKCC {
   private _grounded = true;
   private _theta = 0;                 // spin phase (wrapped mod 2π)
   private _thetaPrev = 0;
-  private _vCtl: Vec3 = { x: 0, y: 0, z: 0 };   // tangential, planet frame
-  private _vSlide: Vec3 = { x: 0, y: 0, z: 0 };
+  private _vCtl: Vec3 = new Vec3d(0, 0, 0);   // tangential, planet frame
+  private _vSlide: Vec3 = new Vec3d(0, 0, 0);
   private _rcsBudget: number;
-  private _nCur: Vec3 = { x: 0, y: 1, z: 0 };   // cached analytic normal
+  private _nCur: Vec3 = new Vec3d(0, 1, 0);   // cached analytic normal
   private _hCur = 0;                              // cached surface height
   private _face = -1;
   private _vehicle: VehicleProvider | null = null;
-  private readonly _vehOffset: Vec3 = { x: 0, y: 0, z: 0 };
-  private readonly _vehUp: Vec3 = { x: 0, y: 1, z: 0 };
-  private readonly _vehFwd: Vec3 = { x: 1, y: 0, z: 0 };
+  private readonly _vehOffset: Vec3 = new Vec3d(0, 0, 0);
+  private readonly _vehUp: Vec3 = new Vec3d(0, 1, 0);
+  private readonly _vehFwd: Vec3 = new Vec3d(1, 0, 0);
   private _accumulator = 0;
   // WHY (B11, ADR-027): coyote window left after a walk-off (s) and the planet-frame
   // up (normal/radial blend) walked off. Written only when cfg.coyoteTime > 0, so the default path
   // never reads a non-zero value.
   private _coyoteLeft = 0;
-  private readonly _coyoteN: Vec3 = { x: 0, y: 1, z: 0 };
+  private readonly _coyoteN: Vec3 = new Vec3d(0, 1, 0);
   /** B11: coyote jumps fired so far (the play layer reads it as a launch edge). */
   coyoteJumps = 0;
   // M1A entity write-through (setup path).
@@ -1228,4 +1229,4 @@ export class AstronautKCC {
 }
 
 
-const _vehScratch: Vec3 = { x: 0, y: 0, z: 0 };
+const _vehScratch: Vec3 = new Vec3d(0, 0, 0);

@@ -48,6 +48,7 @@ import { calculateOrigin, copy, shouldRebase, sub } from '../math/precisionMath'
 import type { CelestialState } from '../orbit/types';
 import { KeplerRail } from '../orbit/KeplerRail';
 import { CELESTIAL_CONFIGS } from '../orbit/celestialData';
+import { Vec3d } from '../physics/sphericalFrame'; // WHY (T5 S1bbbb): class-backed scratch, see Vec3d
 
 
 /** Fixed logic timestep (Spec 02.6): 1 tick = 1/60 game-seconds. */
@@ -72,17 +73,17 @@ export class SimulationCore {
   private _entities: EntityState[] = [];
   private _entityIndex = new Map<EntityId, number>();
   private _focusId: EntityId | null = null;
-  private _origin: Vec3f64 = { x: 0, y: 0, z: 0 };
+  private _origin: Vec3f64 = new Vec3d(0, 0, 0);
 
 
-  private _focusLocal: Vec3f64 = { x: 0, y: 0, z: 0 };
-  private _candidateOrigin: Vec3f64 = { x: 0, y: 0, z: 0 };
+  private _focusLocal: Vec3f64 = new Vec3d(0, 0, 0);
+  private _candidateOrigin: Vec3f64 = new Vec3d(0, 0, 0);
 
 
   private readonly _rebaseEvent: RebaseEvent = {
-    oldOrigin: { x: 0, y: 0, z: 0 },
-    newOrigin: { x: 0, y: 0, z: 0 },
-    delta: { x: 0, y: 0, z: 0 },
+    oldOrigin: new Vec3d(0, 0, 0),
+    newOrigin: new Vec3d(0, 0, 0),
+    delta: new Vec3d(0, 0, 0),
     count: 0,
   };
 

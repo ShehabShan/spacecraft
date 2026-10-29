@@ -9,6 +9,7 @@ import {
 } from '../../core/physics/sphericalFrame';
 import { activeTerrainField } from '../../core/terrain/terrainField';
 import { MAX_TERRAIN_H, MOON_R, PLAY_TUNING } from '../world/moonConfig';
+import { Vec3d, Quatd } from '../../core/physics/sphericalFrame'; // WHY (T5 S1bbbb): class-backed scratch, see Vec3d
 
 /** The InputState members the camera reads (stage 3). */
 export interface CameraInput { lookDX: number; lookDY: number; zoomDelta: number; toggleCamEdge: boolean }
@@ -19,14 +20,14 @@ export interface FirstPersonSink { firstPerson: boolean }
 // (respawn/spawn placement), not motion — snap the lag instead of easing 50 m.
 const SNAP_M = 50;
 
-const _t: Vec3 = { x: 0, y: 0, z: 0 };
+const _t: Vec3 = new Vec3d(0, 0, 0);
 // WHY (T5 S1bbb, F5a): lookAt inputs [eye, target, up] go through Float64Array slots;
 // every double argument of a non-inlined call boxes a HeapNumber per frame.
 const _la = new Float64Array(9);
 
 export class ThirdPersonCamera {
   /** Planet-frame unit tangent the camera looks along (§9.4 orbit). */
-  readonly heading: Vec3 = { x: 1, y: 0, z: 0 };
+  readonly heading: Vec3 = new Vec3d(1, 0, 0);
   pitch: number = PLAY_TUNING.camPitchDefault;
   /** Desired (zoom) boom length, clamped to [camDistMin, camDistMax]. */
   dist: number = PLAY_TUNING.camDistance;
@@ -34,11 +35,11 @@ export class ThirdPersonCamera {
   boomLen: number = PLAY_TUNING.camDistance;
   firstPerson = false;
   /** Smoothed pivot − true pivot (planet frame, §9.4 follow smoothing). */
-  readonly lag: Vec3 = { x: 0, y: 0, z: 0 };
+  readonly lag: Vec3 = new Vec3d(0, 0, 0);
   /** Outputs of poseInto (planet frame): camera − character feet, and the camera quat. */
-  readonly offsetPlanet: Vec3 = { x: 0, y: 0, z: 0 };
-  readonly quatPlanet: Quat = { x: 0, y: 0, z: 0, w: 1 };
-  private readonly prevPivot: Vec3 = { x: 0, y: 0, z: 0 };
+  readonly offsetPlanet: Vec3 = new Vec3d(0, 0, 0);
+  readonly quatPlanet: Quat = new Quatd(0, 0, 0, 1);
+  private readonly prevPivot: Vec3 = new Vec3d(0, 0, 0);
   private hasPrev = false;
 
   /** WHY: takes the look-toward direction (plan said `reset(kcc)`): the static

@@ -5,6 +5,7 @@ import type { AstronautKCC } from '../../core/physics/astronautKCC';
 import type { Vec3 } from '../../core/physics/sphericalFrame';
 import { terrainNormalInto } from '../../core/terrain/terrainField';
 import { kccVertSpeed, type ControlInput, type PlayerController } from '../controller/PlayerController';
+import { Vec3d, hypot3 } from '../../core/physics/sphericalFrame'; // WHY (T5 S1bbbb): class-backed scratch, see Vec3d
 
 export interface CharacterTelemetry {
   grounded: boolean; speed: number; vertSpeed: number; slopeDeg: number;
@@ -23,7 +24,7 @@ export function createTelemetry(): CharacterTelemetry {
   };
 }
 
-const _n: Vec3 = { x: 0, y: 0, z: 0 };
+const _n: Vec3 = new Vec3d(0, 0, 0);
 const DEG = 180 / Math.PI;
 
 /** Stage 7 (after postSimulate). Zero allocation. */
@@ -47,7 +48,7 @@ export function sampleTelemetry(kcc: AstronautKCC, ctrl: PlayerController,
   out.dt = dt;
   if (g) {
     // §8.6: ground normal vs kcc.up, resolved on fwd / right; + = uphill ahead/right.
-    const p = kcc.pLocal, l = Math.hypot(p.x, p.y, p.z) || 1;
+    const p = kcc.pLocal, l = hypot3(p.x, p.y, p.z) || 1; // WHY (T5 S1bbbb): hypot3, bit-identical, no boxing
     terrainNormalInto(p.x / l, p.y / l, p.z / l, _n);
     const u = kcc.up, f = kcc.fwd;
     const rx = f.y * u.z - f.z * u.y, ry = f.z * u.x - f.x * u.z, rz = f.x * u.y - f.y * u.x;

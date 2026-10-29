@@ -86,7 +86,9 @@ export async function createInstrument({ bundleUrl, modOf }) {
 const churnRing = new Array(8)
 const leakBox = []
 export function withMutant(step, mutant) {
-  if (mutant === 'churn') return () => { step(); for (let k = 0; k < 4; k++) churnRing[k] = { x: k, y: k, z: k } }
+  // WHY (T5 S1bbbb): private keys + doubles, as test-alloc-gate (F3abbbbbc). The {x,y,z} Smi literal
+  // was ~97 B only while the game boxed doubles into the shared {x,y,z} map; with Vec3d it is ~48 B.
+  if (mutant === 'churn') return () => { step(); for (let k = 0; k < 4; k++) churnRing[k] = { chA: k + 0.5, chB: k + 0.25, chC: k + 0.125 } }
   if (mutant === 'leak') return () => { step(); leakBox.push({ a: 0, b: 0 }) }
   return step
 }

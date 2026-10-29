@@ -20,6 +20,7 @@
 
 
 import type { CelestialConfig, CelestialState } from './types';
+import { Vec3d } from '../physics/sphericalFrame';
 
 
 export const TWO_PI = Math.PI * 2;
@@ -162,11 +163,11 @@ export class KeplerRail {
     const state: CelestialState = {
       config: cfg,
       parentIndex,
-      absPos: { x: 0, y: 0, z: 0 },
+      absPos: new Vec3d(), // WHY (T5 S1bbbb): Vec3d, not a literal (boxed double stores)
       localPosF32: new Float32Array(3), // the ONE per-body buffer allocation
       orbitalSpeed: 0,
-      basisP: { x: 1, y: 0, z: 0 },
-      basisQ: { x: 0, y: 0, z: -1 },
+      basisP: new Vec3d(1, 0, 0),
+      basisQ: new Vec3d(0, 0, -1),
       semiMinor: 0,
     };
 
