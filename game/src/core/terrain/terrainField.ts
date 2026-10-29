@@ -140,8 +140,9 @@ export class TerrainField {
   // Opt-in Moon profile (T3, ADR-028): boot-time tables, evaluation pure in d.
   private _bas: Float64Array; // [dx, dy, dz, r, cosCull, rimAmp] × basins
   private _crt: Float64Array; // [F, pOcc, rMin, rMax, depthK, rimK, seed, reach²] × layers
-  private _mask: number;
-  private _rim: number;
+  // WHY (T5 S1bb, F5a): hot-path I/O slots [dx, dy, dz, h, mask, rim, fieldH, craterH]
+  // replace double args/returns of the inner calls (each boxed a HeapNumber per call).
+  private readonly _io: Float64Array;
   private readonly _ss: Float64Array;
   private readonly _cd: Vec3Out;
 
@@ -150,8 +151,7 @@ export class TerrainField {
     this.noise = new SimplexNoise(params.seed);
     this._bas = new Float64Array(0);
     this._crt = new Float64Array(0);
-    this._mask = 0;
-    this._rim = 0;
+    this._io = new Float64Array(8);
     this._ss = new Float64Array(6);
     this._cd = { x: 0, y: 0, z: 0 };
     this.prepareMoon(params.moon);
@@ -176,25 +176,41 @@ export class TerrainField {
    * fine detail. Max amplitude ~±900 m for TEST_PLANET.
    */
   terrainHeight(dx: number, dy: number, dz: number): number {
-    // WHY (T3, ADR-028): without params.moon the field below is evaluated exactly as
-    // before T3 (default-path SHA-256 pins in tools/test-moon-profile.mjs).
-    if (this.params.moon !== undefined) return this.moonHeight(dx, dy, dz);
-    return this.fieldHeight(dx, dy, dz);
+    const io = this._io;
+    io[0] = dx; io[1] = dy; io[2] = dz;
+    this.heightIo();
+    return io[3];
   }
 
-  /** The pre-T3 field: continents + masked ridges + detail (unchanged). */
-  private fieldHeight(dx: number, dy: number, dz: number): number {
-    const P = this.params, N = this.noise;
-    const c = N.fbm3(dx * P.continentFreq, dy * P.continentFreq, dz * P.continentFreq, 4, 2, 0.5);
-    const m = N.fbm3(
-      dx * P.maskFreq + 17.31, dy * P.maskFreq - 9.17, dz * P.maskFreq + 4.73, 3, 2, 0.5,
-    );
-    const r = N.ridged3(dx * P.mountainFreq, dy * P.mountainFreq, dz * P.mountainFreq, 4);
+  /** terrainHeight of _io[0..2] → _io[3]. Zero allocation. */
+  private heightIo(): void {
+    // WHY (T3, ADR-028): without params.moon the field below is evaluated exactly as
+    // before T3 (default-path SHA-256 pins in tools/test-moon-profile.mjs).
+    if (this.params.moon !== undefined) { this.moonHeightIo(); return; }
+    this.fieldHeightIo();
+    this._io[3] = this._io[6];
+  }
+
+  /** The pre-T3 field: continents + masked ridges + detail (unchanged) → _io[6]. */
+  private fieldHeightIo(): void {
+    const P = this.params, N = this.noise, nio = N.io, io = this._io;
+    const dx = io[0], dy = io[1], dz = io[2];
+    nio[0] = dx * P.continentFreq; nio[1] = dy * P.continentFreq; nio[2] = dz * P.continentFreq;
+    N.fbm3Io(4, 2, 0.5);
+    const c = nio[3];
+    nio[0] = dx * P.maskFreq + 17.31; nio[1] = dy * P.maskFreq - 9.17; nio[2] = dz * P.maskFreq + 4.73;
+    N.fbm3Io(3, 2, 0.5);
+    const m = nio[3];
+    nio[0] = dx * P.mountainFreq; nio[1] = dy * P.mountainFreq; nio[2] = dz * P.mountainFreq;
+    N.ridged3Io(4);
+    const r = nio[3];
     let mask = (m + 0.05) / 0.5;                       // smoothstep(−0.05, 0.45, m)
     mask = mask < 0 ? 0 : mask > 1 ? 1 : mask;
     mask = mask * mask * (3 - 2 * mask);
-    const d = N.fbm3(dx * P.detailFreq, dy * P.detailFreq, dz * P.detailFreq, 3, 2, 0.5);
-    return c * P.continentAmp + r * mask * P.mountainAmp + d * P.detailAmp;
+    nio[0] = dx * P.detailFreq; nio[1] = dy * P.detailFreq; nio[2] = dz * P.detailFreq;
+    N.fbm3Io(3, 2, 0.5);
+    const d = nio[3];
+    io[6] = c * P.continentAmp + r * mask * P.mountainAmp + d * P.detailAmp;
   }
 
   private prepareMoon(m: MoonProfile | undefined): void {
@@ -221,8 +237,10 @@ export class TerrainField {
     this._bas = bas; this._crt = crt;
   }
 
-  /** Basin mask (max over basins, 1 = mare floor) and summed rim height → _mask/_rim. */
-  private basinsInto(dx: number, dy: number, dz: number, m: MoonProfile): void {
+  /** Basin mask (max over basins, 1 = mare floor) and summed rim height of _io[0..2]
+   *  → _io[4] / _io[5]. */
+  private basinsIo(m: MoonProfile): void {
+    const io = this._io, dx = io[0], dy = io[1], dz = io[2];
     const w = m.shoreWidth, sig = m.rimSigma, off = m.rimOffset, bas = this._bas;
     let mask = 0, rim = 0;
     for (let i = 0; i < bas.length; i += 6) {
@@ -237,12 +255,13 @@ export class TerrainField {
       const g = (a - r - off) / sig;
       rim += bas[i + 5] * Math.exp(-g * g);
     }
-    this._mask = mask; this._rim = rim;
+    io[4] = mask; io[5] = rim;
   }
 
   /** One crater layer: 3D cell lattice of d (continuous across cube faces), 3×3×3
    *  neighbourhood with a cell-box prune; bowl (depthK·r) + Gaussian rim (rimK·r). */
-  private craterLayer(dx: number, dy: number, dz: number, i: number): number {
+  private craterLayerIo(i: number): void {
+    const io = this._io, dx = io[0], dy = io[1], dz = io[2];
     const crt = this._crt;
     const F = crt[i], pOcc = crt[i + 1], rMin = crt[i + 2], rMax = crt[i + 3];
     const depthK = crt[i + 4], rimK = crt[i + 5], seed = crt[i + 6] | 0, r2 = crt[i + 7];
@@ -280,38 +299,53 @@ export class TerrainField {
         }
       }
     }
-    return h;
+    io[7] = h;
   }
 
-  private moonHeight(dx: number, dy: number, dz: number): number {
-    const m = this.params.moon as MoonProfile;
-    this.basinsInto(dx, dy, dz, m);
-    const mask = this._mask;
-    const hh = mask < 1 ? this.fieldHeight(dx, dy, dz) : 0;  // mare floor replaces it fully
+  /** Moon height of _io[0..2] → _io[3]. Same expression order as before S1bb. */
+  private moonHeightIo(): void {
+    const m = this.params.moon as MoonProfile, io = this._io;
+    const dx = io[0], dy = io[1], dz = io[2];
+    this.basinsIo(m);
+    const mask = io[4];
+    let hh = 0;
+    if (mask < 1) { this.fieldHeightIo(); hh = io[6]; }  // mare floor replaces it fully
     const ff = m.floorFreq;
-    const fl = mask > 0 ? m.floorHeight + this.noise.fbm3(dx * ff, dy * ff, dz * ff, 3, 2, 0.5) * m.floorAmp : 0;
+    let fl = 0;
+    if (mask > 0) {
+      const N = this.noise, nio = N.io;
+      nio[0] = dx * ff; nio[1] = dy * ff; nio[2] = dz * ff;
+      N.fbm3Io(3, 2, 0.5);
+      fl = m.floorHeight + nio[3] * m.floorAmp;
+    }
     let cr = 0;
     const crt = this._crt;
-    for (let i = 0; i < crt.length; i += 8) cr += this.craterLayer(dx, dy, dz, i);
-    return hh * (1 - mask) + fl * mask + this._rim + (1 - m.mareCraterDamp * mask) * cr;
+    for (let i = 0; i < crt.length; i += 8) { this.craterLayerIo(i); cr += io[7]; }
+    io[3] = hh * (1 - mask) + fl * mask + io[5] + (1 - m.mareCraterDamp * mask) * cr;
   }
 
   /** Mare mask at unit d (1 = basin floor, 0 = highland); 0 without a Moon profile. */
   moonMareMask(dx: number, dy: number, dz: number): number {
     const m = this.params.moon;
     if (m === undefined) return 0;
-    this.basinsInto(dx, dy, dz, m);
-    return this._mask;
+    const io = this._io;
+    io[0] = dx; io[1] = dy; io[2] = dz;
+    this.basinsIo(m);
+    return io[4];
   }
 
   /** Surface point S(d̂) = (R + h(d̂))·d̂ for a (re-normalized) direction. */
   // WHY (T5 S1b): writes into the Float64Array scratch _ss at offset k (0 = S+, 3 = S-).
   // Double stores into a shared {x,y,z} scratch box a HeapNumber per field; typed-array
   // stores do not. Float64 slots hold the same doubles, so normals stay bit-identical.
-  private sampleSurfaceInto(dx: number, dy: number, dz: number, k: number): void {
+  // S1bb: the direction comes in through _io[0..2] (no boxed double args).
+  private sampleSurfaceIo(k: number): void {
+    const io = this._io, dx = io[0], dy = io[1], dz = io[2];
     const inv = 1 / Math.sqrt(dx * dx + dy * dy + dz * dz);
     const ux = dx * inv, uy = dy * inv, uz = dz * inv;
-    const r = this.params.radius + this.terrainHeight(ux, uy, uz);
+    io[0] = ux; io[1] = uy; io[2] = uz;
+    this.heightIo();
+    const r = this.params.radius + io[3];
     const ss = this._ss;
     ss[k] = ux * r;
     ss[k + 1] = uy * r;
@@ -329,7 +363,7 @@ export class TerrainField {
    * ANY LOD, ANY worker. Zero allocation.
    */
   terrainNormalInto(dx: number, dy: number, dz: number, out: Vec3Out): Vec3Out {
-    const ss = this._ss;
+    const ss = this._ss, io = this._io;
     // canonical reference axis (least |component|, fixed tie order)
     let rx = 1, ry = 0, rz = 0;
     let m = Math.abs(dx);
@@ -344,13 +378,13 @@ export class TerrainField {
     const c = Math.cos(NORMAL_EPS), s = Math.sin(NORMAL_EPS);
     // rotation of d about t1 by ±ε: d± = d·c ± (t1 × d)·s
     const c1x = t1y * dz - t1z * dy, c1y = t1z * dx - t1x * dz, c1z = t1x * dy - t1y * dx;
-    this.sampleSurfaceInto(dx * c + c1x * s, dy * c + c1y * s, dz * c + c1z * s, 0);
-    this.sampleSurfaceInto(dx * c - c1x * s, dy * c - c1y * s, dz * c - c1z * s, 3);
+    io[0] = dx * c + c1x * s; io[1] = dy * c + c1y * s; io[2] = dz * c + c1z * s; this.sampleSurfaceIo(0);
+    io[0] = dx * c - c1x * s; io[1] = dy * c - c1y * s; io[2] = dz * c - c1z * s; this.sampleSurfaceIo(3);
     const ax = ss[0] - ss[3], ay = ss[1] - ss[4], az = ss[2] - ss[5];
     // rotation of d about t2 by ±ε
     const c2x = t2y * dz - t2z * dy, c2y = t2z * dx - t2x * dz, c2z = t2x * dy - t2y * dx;
-    this.sampleSurfaceInto(dx * c + c2x * s, dy * c + c2y * s, dz * c + c2z * s, 0);
-    this.sampleSurfaceInto(dx * c - c2x * s, dy * c - c2y * s, dz * c - c2z * s, 3);
+    io[0] = dx * c + c2x * s; io[1] = dy * c + c2y * s; io[2] = dz * c + c2z * s; this.sampleSurfaceIo(0);
+    io[0] = dx * c - c2x * s; io[1] = dy * c - c2y * s; io[2] = dz * c - c2z * s; this.sampleSurfaceIo(3);
     const bx = ss[0] - ss[3], by = ss[1] - ss[4], bz = ss[2] - ss[5];
     // outward normal
     let nx = ay * bz - az * by, ny = az * bx - ax * bz, nz = ax * by - ay * bx;

@@ -1,0 +1,38 @@
+T5 S1bba evidence (session 160, bot 00fd093e, VM v2 2 vCPU/4 GB). Base eb004c4 (t5-bigger-moon).
+From game/, exit codes unpiped. Fresh VM: npm ci 0; npx playwright install chromium 0.
+
+CHANGE (S1ba root cause: V8 boxes a HeapNumber per double arg/return of a non-inlined call)
+- noise.ts SimplexNoise: Float64Array(4) `io` slots [x, y, z, result]; noise3Io/fbm3Io/ridged3Io
+  read io[0..2], write io[3]. noise3/fbm3/ridged3 keep their signatures (load io, call *Io).
+- terrainField.ts TerrainField: Float64Array(8) `_io` slots [dx, dy, dz, h, mask, rim, fieldH,
+  craterH] replace _mask/_rim and the double args/returns of the inner chain: heightIo,
+  fieldHeightIo, basinsIo, craterLayerIo, moonHeightIo, sampleSurfaceIo. terrainHeight,
+  moonMareMask, terrainNormalInto keep their signatures. Expression order unchanged.
+- moonMaterial.ts: comment rename basinsInto -> basinsIo.
+
+STEP CHECKS
+test-alloc-gate.mjs (plain)   1 | GATE=FAIL known red (ADR-002, until S1bbb)
+  play.idle 4856.1 (this session's base run) -> 2552.6 B/frame, retained 0.00
+  moonHeight, noise3 and terrainNormalInto left the top list. Top now: ThirdPersonCamera.poseInto
+  674.8, KeplerRail.evaluate 328.9, playFrame 261.4, ThirdPersonCamera.lookAtQuatInto 227.1,
+  skyState.applySkyState 148.4, astronautKCC._groundedTick 129.0
+test-moon-profile.mjs         0 | PASS 16/16 (SHA-256 pins unchanged: bit-identical heights)
+test-kcc-gate.mjs             0 | 14/14 (second-body-isolation trace c0f8d537ee2d78af unchanged)
+test-kcc-default-trace.mjs    0 | PASS
+
+MATRIX M (command -> exit | result)
+npx tsc --noEmit 0 | clean · npm run build 0 | built
+test-play-anim 0 115/115 · controller 0 76/76 · frame 0 26/26 · lod 0 32/32 · perf 0 19/19
+  (heap delta -16912 B) · rig 0 97/97 · shell 0 101/101 · spawn 0 74/74 · world 0 27/27
+test-moon-profile --self-test 0 4/4 · test-moon-material 0 16/16, --self-test 0 4/4
+test-kcc-gate --self-test 0
+F-gates: orbit 0 9/9, precision 0 7/7, seam 0 (sources unchanged), flight 0, scale-law 0 11/11,
+  rail-validation 0 35/35, real-body-data 0 63/63, spin-law 0 PASS
+test-alloc-gate --self-test 0 8/8 · test-alloc-loops --self-test 0 6/6
+playwright e2e/play.spec.ts e2e/m1e.spec.ts e2e/m1f-r 0 | 8 passed (R5 waived)
+playwright e2e/m1a e2e/m1b e2e/m1c e2e/m1d 0 | 4 passed
+check-repo-refs --max 100000 0 | dangling 0
+
+REMAINING FOR S1bbb (plain gate top, B/frame): ThirdPersonCamera.poseInto 675 + lookAtQuatInto 227,
+KeplerRail.evaluate 329, playFrame 261, applySkyState 148, KCC _groundedTick 129, rest < 100 each.
+Same cause expected: double args/returns of non-inlined calls and double stores into {x,y,z} fields.

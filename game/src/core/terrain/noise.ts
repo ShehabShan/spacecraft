@@ -44,9 +44,14 @@ export class SimplexNoise {
   readonly seed: number;
   readonly perm: Uint8Array;
   readonly permMod12: Uint8Array;
+  // WHY (T5 S1bb, F5a): hot-path I/O slots [x, y, z, result]. A double passed to or
+  // returned from a non-inlined call boxes a HeapNumber; Float64Array slots do not.
+  // The *Io methods run the same arithmetic as their number-returning forms (same bits).
+  readonly io: Float64Array;
 
   constructor(seed: number) {
     this.seed = seed;
+    this.io = new Float64Array(4);
     this.perm = new Uint8Array(512);
     this.permMod12 = new Uint8Array(512);
     const rand = mulberry32(seed);
@@ -64,7 +69,16 @@ export class SimplexNoise {
 
   /** 3D simplex noise, roughly [−1, 1]. Pure, allocation-free, deterministic. */
   noise3(xin: number, yin: number, zin: number): number {
-    const perm = this.perm, permMod12 = this.permMod12;
+    const io = this.io;
+    io[0] = xin; io[1] = yin; io[2] = zin;
+    this.noise3Io();
+    return io[3];
+  }
+
+  /** noise3 of io[0..2] → io[3]. Zero allocation. */
+  noise3Io(): void {
+    const io = this.io, perm = this.perm, permMod12 = this.permMod12;
+    const xin = io[0], yin = io[1], zin = io[2];
     const F3 = 1 / 3, G3 = 1 / 6;
     let n0 = 0, n1 = 0, n2 = 0, n3 = 0;
     const s = (xin + yin + zin) * F3;
@@ -109,34 +123,56 @@ export class SimplexNoise {
       t3 *= t3;
       n3 = t3 * t3 * (GRAD3[gi] * x3 + GRAD3[gi + 1] * y3 + GRAD3[gi + 2] * z3);
     }
-    return 32 * (n0 + n1 + n2 + n3);
+    io[3] = 32 * (n0 + n1 + n2 + n3);
   }
 
 
   /** Fractional Brownian motion, normalized to ~[−1, 1]. */
   fbm3(x: number, y: number, z: number, octaves: number, lacunarity: number, gain: number): number {
+    const io = this.io;
+    io[0] = x; io[1] = y; io[2] = z;
+    this.fbm3Io(octaves, lacunarity, gain);
+    return io[3];
+  }
+
+  /** fbm3 of io[0..2] → io[3]. Zero allocation. */
+  fbm3Io(octaves: number, lacunarity: number, gain: number): void {
+    const io = this.io, x = io[0], y = io[1], z = io[2];
     let amp = 1, freq = 1, sum = 0, norm = 0;
     for (let o = 0; o < octaves; o++) {
-      sum += amp * this.noise3(x * freq, y * freq, z * freq);
+      io[0] = x * freq; io[1] = y * freq; io[2] = z * freq;
+      this.noise3Io();
+      sum += amp * io[3];
       norm += amp;
       amp *= gain;
       freq *= lacunarity;
     }
-    return sum / norm;
+    io[3] = sum / norm;
   }
 
 
   /** Ridged multifractal, [0, 1] — sharp mountain crests. */
   ridged3(x: number, y: number, z: number, octaves: number): number {
+    const io = this.io;
+    io[0] = x; io[1] = y; io[2] = z;
+    this.ridged3Io(octaves);
+    return io[3];
+  }
+
+  /** ridged3 of io[0..2] → io[3]. Zero allocation. */
+  ridged3Io(octaves: number): void {
+    const io = this.io, x = io[0], y = io[1], z = io[2];
     let amp = 1, freq = 1, sum = 0, norm = 0;
     for (let o = 0; o < octaves; o++) {
-      const n = 1 - Math.abs(this.noise3(x * freq, y * freq, z * freq));
+      io[0] = x * freq; io[1] = y * freq; io[2] = z * freq;
+      this.noise3Io();
+      const n = 1 - Math.abs(io[3]);
       sum += amp * n * n;
       norm += amp;
       amp *= 0.5;
       freq *= 2;
     }
-    return sum / norm;
+    io[3] = sum / norm;
   }
 }
 

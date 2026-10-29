@@ -2,7 +2,7 @@
 // WHY (ADR-029): shader injection into MeshStandardMaterial, no new vertex
 // attribute. The worker chunk format, TerrainMeshPool and the core stay
 // untouched; the mask is recomputed per vertex from the moon-fixed direction
-// with the same smoothstep as terrainField `basinsInto` (test-moon-material
+// with the same smoothstep as terrainField `basinsIo` (test-moon-material
 // pins the mirror against `moonMareMask`).
 import * as THREE from 'three';
 import type { MoonProfile } from '../../core/terrain/terrainField';
