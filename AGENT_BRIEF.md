@@ -149,6 +149,7 @@ under §13 with an ADR.
 - 10-27 LEAN READ (Lead, s121). · 10-28 END REPORT, lean code read (Lead).
 - 10-28 rebuilt 1F gates (s142, ADR-026) · phase-1 canon removed (s151, ADR-030) · AAA goal (Lead, s153c).
 - 10-28 T4 S7 (s156): trimmed to the T4 layout; §11 AUDIT MODE and A1-only clauses retired (A1 DONE; `docs/history/A1.md`); §6 REF CHECK + EVIDENCE. No other rule change.
+- 10-29 T6 parallel tracks (Lead, s159): T6 runs as tracks on separate branches and bots, merged through `t6-look-and-feel`; the starter prompt names the branch; T6 sessions read and update `notes/T6-STATE.md` (amends §4 for T6).
 
 ## 11. AUDIT MODE — RETIRED (A1 DONE 2026-10-26; `docs/history/A1.md`)
 
