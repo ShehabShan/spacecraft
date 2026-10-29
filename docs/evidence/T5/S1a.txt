@@ -1,0 +1,33 @@
+T5 S1a evidence (session 158, bot 25702658, VM v2 2 vCPU/4 GB). Base 0abde5d (t5-bigger-moon).
+From game/, exit codes unpiped. Fresh VM: npm ci 0; npx playwright install chromium 0.
+
+CHANGE: noise.ts SimplexNoise(seed) owns perm/permMod12; terrainField.ts TerrainField(params) owns
+params, noise, _bas/_crt/_mask/_rim, scratch _sp/_sm/_cd. initTerrainField returns the instance;
+module functions (terrainHeight, terrainNormalInto, chunkOriginInto, moonMareMask, chunkArcWidth,
+skirtDepthFor, activeTerrainParams, initNoise/noise3/fbm3/ridged3) are wrappers over a default
+instance. 35 call sites unchanged. New: activeTerrainField().
+
+STEP CHECKS
+test-moon-profile.mjs           0 | PASS 16/16 (SHA-256 pins unchanged: field bit-identical)
+test-kcc-gate.mjs               0 | 14/14 (was 13/13; new row second-body-isolation:
+  3000-tick steered trace sha c0f8d537ee2d78af before == after building + sampling a second
+  Moon-profile body (seed 20240119); 1024-dir default height+normal bits unchanged; bodies differ)
+test-kcc-gate.mjs --self-test   0 | 10/10 (new mutants second-body-shares-params,
+  second-body-shares-noise both red on second-body-isolation only)
+test-alloc-gate.mjs (plain)     1 | GATE=FAIL known red (ADR-002, until S1b)
+  play.idle 9771.8 B/frame (S1 baseline 9914.0; no rise), retained 0.03
+  top: skyState.applySkyState 4746.2, ThirdPersonCamera.poseInto 1089.4,
+  terrainField sampleSurfaceInto 972.8, moonHeight 816.2, noise3 442.6, KeplerRail.evaluate 326.0
+
+MATRIX M (command -> exit | result)
+npx tsc --noEmit 0 | clean · npm run build 0 | built
+test-play-anim 0 115/115 · controller 0 76/76 · frame 0 26/26 · lod 0 32/32 · perf 0 19/19
+  (heap delta -18056 B) · rig 0 97/97 · shell 0 101/101 · spawn 0 74/74 · world 0 27/27
+test-moon-profile --self-test 0 4/4 · test-moon-material 0 16/16, --self-test 0 4/4
+test-kcc-default-trace 0 PASS
+F-gates: orbit 0 9/9, precision 0 7/7, seam 0 14/14, flight 0 12/12, scale-law 0 11/11,
+  rail-validation 0 35/35, real-body-data 0 63/63, spin-law 0 PASS
+test-alloc-gate --self-test 0 8/8 · test-alloc-loops --self-test 0 6/6
+playwright e2e/play.spec.ts e2e/m1e.spec.ts e2e/m1f-r 0 | 8 passed (R5 waived, R3 pinned vector)
+playwright e2e/m1a e2e/m1b e2e/m1c e2e/m1d 0 | 4 passed
+check-repo-refs --max 100000 0 | dangling 0

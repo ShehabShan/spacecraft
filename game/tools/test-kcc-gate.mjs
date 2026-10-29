@@ -196,6 +196,47 @@ const gcSteer = (k) => {
 }
 const CLIMB = { stepHeight: 60, snapDistance: 60, slideAngleDeg: 89, maxWalkSlopeDeg: 89 }
 
+// ---- second-body isolation (T5 S1a, F5a) -------------------------------------------------------
+// WHY: before S1a the terrain service was a module singleton, so a second body's init rewrote the
+// first body's params and noise tables. The row runs a steered walk on the default body, builds and
+// samples a second (Moon-profile, other seed) TerrainField, then reruns the walk: the per-tick
+// trace bits and the default height bits must be unchanged, and the two bodies must differ.
+const SECOND_BODY = { name: 'S1a second body', radius: 1364.5, seed: 20240119,
+  continentFreq: 2.3, continentAmp: 95, maskFreq: 3.7, mountainFreq: 6.5, mountainAmp: 27.6,
+  detailFreq: 22, detailAmp: 5.6, moon: { basins: [1, 0, 0, 0.35, 0, 1, 0, 0.2], shoreWidth: 0.04,
+    rimSigma: 0.03, rimOffset: 0.02, rimAmp0: 10, rimAmpPerRad: 40, floorHeight: -20, floorFreq: 3,
+    floorAmp: 4, mareCraterDamp: 0.6, craters: [24, 0.5, 20, 90, 0.2, 0.05, 911] } }
+const fib = (n) => Array.from({ length: n }, (_, i) => {
+  const y = 1 - (2 * (i + 0.5)) / n, r = Math.sqrt(1 - y * y), t = i * 2.399963229728653
+  return [Math.cos(t) * r, y, Math.sin(t) * r]
+})
+function traceSha(M, dir, ticks) {
+  const k = new M.K.AstronautKCC(M.K.EARTHSCALE_ASTRONAUT), dt = 1 / 60, buf = new Float64Array(ticks * 9)
+  k.teleportSurface(dir[0], dir[1], dir[2]); k.autoTurnEnabled = false
+  Object.assign(k.input, { moveF: 1, moveR: 0, sprint: true, crouch: false, jump: false, turnRate: 0 })
+  for (let i = 0; i < ticks; i++) {
+    k.input.turnRate = gcSteer(k); k.integrateTick(dt)
+    buf.set([k.pLocal.x, k.pLocal.y, k.pLocal.z, k.up.x, k.up.y, k.up.z, k.fwd.x, k.fwd.y, k.fwd.z], i * 9)
+  }
+  return createHash('sha256').update(Buffer.from(buf.buffer)).digest('hex')
+}
+function heightSha(TFn, dirs) {
+  const b = new Float64Array(dirs.length * 4), o = { x: 0, y: 0, z: 0 }
+  dirs.forEach((d, i) => { b[i * 4] = TFn.terrainHeight(d[0], d[1], d[2]); TFn.terrainNormalInto(d[0], d[1], d[2], o); b[i * 4 + 1] = o.x; b[i * 4 + 2] = o.y; b[i * 4 + 3] = o.z })
+  return createHash('sha256').update(Buffer.from(b.buffer)).digest('hex')
+}
+function secondBody(M) {
+  const dir = unit([Math.cos(0.1745), Math.sin(0.1745) * Math.SQRT1_2, Math.sin(0.1745) * Math.SQRT1_2]), dirs = fib(1024)
+  const t0 = traceSha(M, dir, 3000), h0 = heightSha(M.TF, dirs)
+  const B = new M.TF.TerrainField(SECOND_BODY), o = { x: 0, y: 0, z: 0 }
+  let mare = 0
+  for (const d of dirs) { B.terrainHeight(d[0], d[1], d[2]); B.terrainNormalInto(d[0], d[1], d[2], o); mare += B.moonMareMask(d[0], d[1], d[2]) }
+  const hB = heightSha(B, dirs), t1 = traceSha(M, dir, 3000), h1 = heightSha(M.TF, dirs)
+  return { traceBefore: t0.slice(0, 16), traceAfter: t1.slice(0, 16), traceUnchanged: t0 === t1,
+    defaultFieldUnchanged: h0 === h1, bodiesDiffer: hB !== h0, secondBodyMareSum: mare,
+    defaultIsActive: M.TF.activeTerrainField().params === M.TF.TEST_PLANET }
+}
+
 // ---- the gate --------------------------------------------------------------------------------
 function gate(real, smooth) {
   const rows = []
@@ -233,6 +274,10 @@ function gate(real, smooth) {
     check(`yaw-${id}`, st.obs === st.ticks && st.yawBad === 0,
       { maxResidualDeg: st.maxYawResDeg, worstResOverDelta2: st.worstRatio, bad: st.yawBad, boundK: YAW_K })
   }
+
+  // D. Second-body isolation (T5 S1a, F5a): a per-body TerrainField never perturbs the default body.
+  const sb = secondBody(real)
+  check('second-body-isolation', sb.traceUnchanged && sb.defaultFieldUnchanged && sb.bodiesDiffer && sb.defaultIsActive && sb.secondBodyMareSum > 0, sb)
   return rows
 }
 async function runGate(rw = []) { return gate(await load(rw), await load([...rw, SMOOTH])) }
@@ -251,6 +296,14 @@ const MUTANTS = [
   { id: 'yaw-snap-8deg', red: ['yaw-walk-corner', 'yaw-walk-steep'], rw: [SNAP(8, 1000)] },
   { id: 'yaw-creep-0.05deg-per-tick', red: ['yaw-walk-corner', 'yaw-walk-steep'], rw: [SNAP(0.05, 1)] },
 ]
+// WHY (T5 S1a): the pre-S1a singleton failure, re-created on the instance: a second body's
+// construction writes its params / noise into the default instance.
+MUTANTS.push(
+  { id: 'second-body-shares-params', red: ['second-body-isolation'], rw: [['tf', '    this.params = params;\n',
+    '    this.params = params;\n    try { if (_tf) (_tf as any).params = params; } catch { /* TDZ at default init */ }\n']] },
+  { id: 'second-body-shares-noise', red: ['second-body-isolation'], rw: [['tf', '    this.noise = new SimplexNoise(params.seed);\n',
+    '    this.noise = new SimplexNoise(params.seed);\n    try { if (_tf) (_tf as any).noise = this.noise; } catch { /* TDZ at default init */ }\n']] },
+)
 if (DELIB) MUTANTS.push({ id: 'deliberate-noop', red: ['profile-pinned'], rw: [] })
 
 let code = 0
