@@ -1,0 +1,17 @@
+T5 S1 baseline (session 157b, bot a8dc4a95, VM v2). Tree 9a26532 (t5-bigger-moon; no code change since 787b9d4).
+From game/: npm ci exit 0.
+node --expose-gc tools/test-alloc-gate.mjs -> exit 1, GATE=FAIL (known red until F5a, ADR-002)
+  play.idle.alloc_B_per_frame=9914.0  retained_B_per_frame=0.00
+  play.idle top allocators (B/frame):
+    4737.6 src/play/world/skyState.ts:applySkyState
+    1426.2 src/play/camera/ThirdPersonCamera.ts:poseInto
+    1048.6 src/core/terrain/terrainField.ts:sampleSurfaceInto
+     439.6 src/core/terrain/noise.ts:noise3
+     325.3 src/core/orbit/KeplerRail.ts:evaluate
+     268.0 src/play/frame/playFrame.ts:playFrame
+  play.walk top: ThirdPersonCamera.poseInto 1418.9, sampleSurfaceInto 725.7, noise3 423.0, moonHeight 329.1, KeplerRail.evaluate 325.3
+Reading: the terrain path (sampleSurfaceInto + noise3 + moonHeight) has no `new` or object literals, so its bytes are
+most likely V8 boxing of doubles (module-level `let` doubles such as _mask/_rim, and object fields). That is a hypothesis for S1b to confirm, not a finding.
+About 64 % of play.idle is outside the terrain service (skyState, camera, KeplerRail, playFrame), so F5a alone does not turn the plain gate green.
+Module-level terrain state that blocks a per-body instance: terrainField.ts P, _bas, _crt, _mask, _rim, _sp, _sm, _cd; noise.ts perm, permMod12, activeSeed.
+initTerrainField call sites: 9 in game/src (moonWorld, terrainWorker, harnesses m1c/m1d/m1e x3/m1f, M1fR2Gate), 26 in game/tools (gates and audit probes).

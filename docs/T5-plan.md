@@ -1,8 +1,8 @@
 # T5 — BIGGER MOON (REAL SIZE) — PLAN
 
 - Task: T5 · Branch: `t5-bigger-moon` (cut from `main` @ 787b9d4, session 156c)
-- Stage: READY (7/7 sections, session 157b) — LEAD GATE: build starts only on the Lead's "execute the T5 plan"
-- Last updated: 2026-10-29 (session 157b, follow-up)
+- Stage: BUILDING (0/10; the Lead ordered "execute the T5 plan" on 2026-10-29, session 157b)
+- Last updated: 2026-10-29 (session 157b, S1 split)
 - Resume at the FIRST UNCHECKED BOX (planning item or build step).
 - Source: Lead directive 2026-10-28 (150d, item 2) and ruling (b) (150e), `notes/LEDGER.md`; definition `notes/task.md` §T5; inputs `docs/T5-T6-ideas.md` §0, §1, §6.
 - Prerequisites F5a–F5d are folded into T5 as its first build steps (ADR-031).
@@ -55,7 +55,8 @@ The play Moon (`?page=play`) gets its real radius, 1,737 km, and real surface gr
 ## Steps (one commit each; verify per the next section)
 Each step is one §12 session unit. If a step will not fit in one session, it is split as `<id>a` / `<id>b` (brief §12). Every step commit also checks its box, updates the tracker row and repoints STATE.md NEXT ACTION (brief §6).
 - [x] **P0** Plan (this file), ADR-031, tracker and STATE.md (session 157).
-- [ ] **S1 — F5a: per-body terrain service.** `TerrainField` becomes an instance created per body (`initTerrainField` returns it), with allocation-free `heightAt` / `normalInto` and no module singleton. Migrate every consumer listed in Affected modules, with behaviour unchanged. A second body's init no longer moves the Moon KCC. Restore the strict real-tree churn check in `test-alloc-gate` (F3a follow-up 4). Closes F5a.
+- [ ] **S1a — F5a part 1: per-body terrain instance.** `TerrainField` becomes an instance created per body: params, Moon tables, scratch vectors and the noise permutation tables move off module scope (`terrainField.ts` P, _bas, _crt, _mask, _rim, _sp, _sm, _cd; `noise.ts` perm, permMod12). `initTerrainField` returns the instance. The module functions stay as thin wrappers over a default instance, so the 35 call sites (S1 baseline) are unchanged and output is bit-identical (`test-moon-profile` SHA-256 pins). A new `test-kcc-gate` row shows that a second body's init leaves the Moon KCC trace bit-identical.
+- [ ] **S1b — F5a part 2: zero allocation.** Remove the per-frame allocation in the terrain height/normal path (sampleSurfaceInto, noise3, moonHeight) and in the other play.idle allocators named in the S1 baseline (skyState.applySkyState, ThirdPersonCamera.poseInto, KeplerRail.evaluate, playFrame), with an ADR-002 amendment if the gate's scope note changes. Migrate the consumers off the wrappers. Restore the strict real-tree churn check in `test-alloc-gate` (F3a follow-up 4). Closes F5a.
 - [ ] **S2 — F5b: normals and height bound.** Replace the fixed `NORMAL_EPS` with analytic normals where the profile terms allow, and a level-matched ε elsewhere. Derive the height bound and slack from the params, replacing the hand-typed `MAX_TERRAIN_H` 360 and `HEIGHT_SLACK` 420. Set the DDA slope bound from measurement. Add gate `tools/test-terrain-normals.mjs`. Closes F5b.
 - [ ] **S3 — Lazy LOD.** `MoonLod` grows its quadtree from a boot-allocated node pool, replacing the 341-node-per-face preallocated tree. `MAX_LEVEL` is derived from R and the target quad size (about 2 m). At today's R the selected leaf set must equal the old tree's on the pinned camera paths, so play is unchanged. Write the `test-play-lod` replacement pins first (pool size, max level, leaf-set equality), then retire the 341/2,046 pins.
 - [ ] **S4 — F5d: pool, drop accounting, leaf budget.** Mesh pool size ≤ worker sets. Every dropped chunk request is counted and its stale ownership removed. A leaf budget falls back to coarser leaves when the request set exceeds it. Closes F5d.
@@ -75,11 +76,12 @@ Each step is one §12 session unit. If a step will not fit in one session, it is
 - `test-alloc-gate --self-test` and `test-alloc-loops --self-test`.
 - `npx playwright test e2e/play.spec.ts e2e/m1e.spec.ts e2e/m1f-r` (R5 waived, R3 at its pinned known-red vector).
 - `node tools/check-repo-refs.mjs --max 100000`.
-Steps that touch shared terrain, KCC or render code also run `e2e/m1a`…`m1d` (brief §3). Each step commits one evidence summary of at most 5 KB, `S<n>.txt` in the T5 evidence directory (ADR-030, created by S1), and lists every re-pin in its commit body.
+Steps that touch shared terrain, KCC or render code also run `e2e/m1a`…`m1d` (brief §3). Each step commits one evidence summary of at most 5 KB, `docs/evidence/T5/S<n>.txt` (ADR-030; the directory was created with `S1-baseline.txt`), and lists every re-pin in its commit body.
 
 | Step | Step-specific checks (expected) | Plus |
 |---|---|---|
-| S1 | Plain `test-alloc-gate.mjs` exits 0, with play.idle per-frame bytes reported before (9,921.8 B/frame at 787b9d4) and after (§13 safeguard 4). The strict churn check is back and green. In a new `test-kcc-gate` row, a second body's init leaves the Moon KCC trace bit-identical | M + m1a–m1d |
+| S1a | `test-moon-profile` SHA-256 pins unchanged (bit-identical field). The new `test-kcc-gate` row shows a second body's init leaves the Moon KCC trace bit-identical. Plain `test-alloc-gate` bytes reported, with no rise over the S1 baseline | M + m1a–m1d |
+| S1b | Plain `test-alloc-gate.mjs` exits 0, with play.idle per-frame bytes reported before (9,914.0 B/frame, S1 baseline) and after (§13 safeguard 4). The strict churn check is back and green | M + m1a–m1d |
 | S2 | `test-terrain-normals` shows converged-site normal error below its bound at every LOD level, with self-test mutants (old fixed ε, under-sized height bound, loosened STEEP bound; from U27b4ba via `game/tools/audit/u27-k4-recheck.mjs`) red. `test-kcc-gate` and `test-kcc-default-trace` stay green, or each re-pin is listed with its cause | M + m1a–m1d |
 | S3 | The replacement `test-play-lod` pins pass, with leaf-set equality to the old tree on the pinned paths. `test-play-perf` heap delta is ≈ 0, `test-seam-gate` passes, and `check-play-frametime` A/B against S2 has median ≤ 1.05× | M |
 | S4 | The 144-on-96 drop mutant is red and shipped green. Drop counters balance and no stale ownership is left after a stress path. Over budget, the leaf set coarsens rather than dropping (new `test-play-lod` rows). `test-alloc-gate` plain stays 0 | M |
